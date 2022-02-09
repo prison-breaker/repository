@@ -1,0 +1,197 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="소스 파일">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="헤더 파일">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="리소스 파일">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="헤더 파일\DirectX">
+      <UniqueIdentifier>{571ee66e-30c5-47a7-8f6d-9929140a1ca7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\DirectX">
+      <UniqueIdentifier>{dbabf076-8912-4065-961f-6fb311cd90cf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Scenes">
+      <UniqueIdentifier>{b57e65c4-1832-4f91-91fe-49bbe3b8b30e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Scenes">
+      <UniqueIdentifier>{8c32ea8f-03e7-4460-8f3b-53f835fd2b37}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Shaders">
+      <UniqueIdentifier>{488c507a-8552-4556-9e47-27a3c7410692}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Shaders">
+      <UniqueIdentifier>{be66a8fc-e9b5-4ed6-9b9b-bd9d5993f0f7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="쉐이더 파일">
+      <UniqueIdentifier>{9d19d74f-4b37-4999-abe4-b1c124dd7251}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Object">
+      <UniqueIdentifier>{925d8140-55d6-42bb-83df-c1ed190af1d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Object">
+      <UniqueIdentifier>{c3e7e4c0-5e26-4772-b11f-3e77fc2719e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Mesh">
+      <UniqueIdentifier>{c37ff432-7bc0-47a2-86af-a6256acfd81f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Mesh">
+      <UniqueIdentifier>{06c107b3-7762-4043-808e-d2fd0c09efaf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Camera">
+      <UniqueIdentifier>{1e34ea17-ef47-4525-9bfc-fe10d28f1cd7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Camera">
+      <UniqueIdentifier>{ac33206f-4eb3-47fa-b70c-9b1fbe99ddb7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Texture">
+      <UniqueIdentifier>{70a69a67-d819-49b8-be8f-685de605652d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Texture">
+      <UniqueIdentifier>{123ef2b9-2cfa-4fb1-bd4e-b60e317a3ef2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Manager">
+      <UniqueIdentifier>{a643409f-ad27-401c-9a31-6dad5f1931a2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Manager">
+      <UniqueIdentifier>{dccf2aa2-28ce-429f-b098-4bdd48df99f5}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Main.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Framework.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Timer.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="DDSTextureLoader12.cpp">
+      <Filter>소스 파일\DirectX</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene.cpp">
+      <Filter>소스 파일\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="GameScene.cpp">
+      <Filter>소스 파일\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="Shader.cpp">
+      <Filter>소스 파일\Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="GameObject.cpp">
+      <Filter>소스 파일\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>소스 파일\Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="Player.cpp">
+      <Filter>소스 파일\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>소스 파일\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture.cpp">
+      <Filter>소스 파일\Texture</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneManager.cpp">
+      <Filter>소스 파일\Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureManager.cpp">
+      <Filter>소스 파일\Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="BilboardMesh.cpp">
+      <Filter>소스 파일\Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="SkyBoxShader.cpp">
+      <Filter>소스 파일\Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="SkyBox.cpp">
+      <Filter>소스 파일\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="BilboardObject.cpp">
+      <Filter>소스 파일\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="ShadowMapShader.cpp">
+      <Filter>소스 파일\Shaders</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Framework.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Timer.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DX12.h">
+      <Filter>헤더 파일\DirectX</Filter>
+    </ClInclude>
+    <ClInclude Include="DDSTextureLoader12.h">
+      <Filter>헤더 파일\DirectX</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene.h">
+      <Filter>헤더 파일\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="GameScene.h">
+      <Filter>헤더 파일\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader.h">
+      <Filter>헤더 파일\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="GameObject.h">
+      <Filter>헤더 파일\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>헤더 파일\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Player.h">
+      <Filter>헤더 파일\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>헤더 파일\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>헤더 파일\Texture</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneManager.h">
+      <Filter>헤더 파일\Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureManager.h">
+      <Filter>헤더 파일\Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="BilboardMesh.h">
+      <Filter>헤더 파일\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="SkyBoxShader.h">
+      <Filter>헤더 파일\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="SkyBox.h">
+      <Filter>헤더 파일\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="BilboardObject.h">
+      <Filter>헤더 파일\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="ShadowMapShader.h">
+      <Filter>헤더 파일\Shaders</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="GameSceneShader.hlsl">
+      <Filter>쉐이더 파일</Filter>
+    </FxCompile>
+  </ItemGroup>
+</Project>
