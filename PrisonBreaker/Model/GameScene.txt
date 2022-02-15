@@ -1,59 +1,32 @@
 <GameScene> 
-	<Object>
-		<Name> 1 Ground
-		<TransformMatrix> 20 0 0 0 0 1 0 0 0 0 20 0 0 0 0 1 
+	<Object> 1
+		<Name> Model/Prisoner_1.txt
+		<Type> 1
+		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 -66.23321 1.116648 -142.44 1 
 	</Object>
-	<Object>
-		<Name> 1 Douglas
-		<TransformMatrix> 3 0 0 0 0 3 0 0 0 0 3 0 -75 0 -90 1 
+	<Object> 1
+		<Name> Model/Guard_1.txt
+		<Type> 2
+		<TransformMatrix> -1.192093E-07 0 1 0 0 1 0 0 -1 0 -1.192093E-07 0 95 1.032055 -156 1 
 	</Object>
-	<Object>
-		<Name> 46 Fence
-		<TransformMatrix> 3 0 0 0 0 -3.576279E-07 -3 0 0 3 -3.576279E-07 0 91.6578 0 -100.5533 1 
-		<TransformMatrix> 3 0 0 0 0 -3.576279E-07 -3 0 0 3 -3.576279E-07 0 74.97338 0 -100.5533 1 
-		<TransformMatrix> 3 0 0 0 0 -3.576279E-07 -3 0 0 3 -3.576279E-07 0 58.28896 0 -100.5533 1 
-		<TransformMatrix> 3 0 0 0 0 -3.576279E-07 -3 0 0 3 -3.576279E-07 0 41.60455 0 -100.5533 1 
-		<TransformMatrix> 3 0 0 0 0 -3.576279E-07 -3 0 0 3 -3.576279E-07 0 24.92013 0 -100.5533 1 
-		<TransformMatrix> 3 0 0 0 0 -3.576279E-07 -3 0 0 3 -3.576279E-07 0 8.235718 0 -100.5533 1 
-		<TransformMatrix> 3 0 0 0 0 -3.576279E-07 -3 0 0 3 -3.576279E-07 0 -8.448692 0 -100.5533 1 
-		<TransformMatrix> 3 0 0 0 0 -3.576279E-07 -3 0 0 3 -3.576279E-07 0 -25.1331 0 -100.5533 1 
-		<TransformMatrix> 3 0 0 0 0 -3.576279E-07 -3 0 0 3 -3.576279E-07 0 -41.81751 0 -100.5533 1 
-		<TransformMatrix> 3 0 0 0 0 -3.576279E-07 -3 0 0 3 -3.576279E-07 0 -58.50192 0 -100.5533 1 
-		<TransformMatrix> 3 0 0 0 0 -3.576279E-07 -3 0 0 3 -3.576279E-07 0 -91.6578 0 -100.5533 1 
-		<TransformMatrix> 0 0 -3 0 -3 0 0 0 0 3 0 0 -99.3687 0 -91.94053 1 
-		<TransformMatrix> 0 0 -3 0 -3 0 0 0 0 3 0 0 -99.3687 0 -75.25613 1 
-		<TransformMatrix> 0 0 -3 0 -3 0 0 0 0 3 0 0 -99.3687 0 -58.57172 1 
-		<TransformMatrix> 0 0 -3 0 -3 0 0 0 0 3 0 0 -99.3687 0 -41.88731 1 
-		<TransformMatrix> 0 0 -3 0 -3 0 0 0 0 3 0 0 -99.3687 0 -25.20289 1 
-		<TransformMatrix> 0 0 -3 0 -3 0 0 0 0 3 0 0 -99.3687 0 -8.518484 1 
-		<TransformMatrix> 0 0 -3 0 -3 0 0 0 0 3 0 0 -99.3687 0 8.165925 1 
-		<TransformMatrix> 0 0 -3 0 -3 0 0 0 0 3 0 0 -99.3687 0 24.85033 1 
-		<TransformMatrix> 0 0 -3 0 -3 0 0 0 0 3 0 0 -99.3687 0 41.53474 1 
-		<TransformMatrix> 0 0 -3 0 -3 0 0 0 0 3 0 0 -99.3687 0 58.21915 1 
-		<TransformMatrix> 0 0 -3 0 -3 0 0 0 0 3 0 0 -99.3687 0 74.89543 1 
-		<TransformMatrix> 0 0 -3 0 -3 0 0 0 0 3 0 0 -99.3687 0 91.57984 1 
-		<TransformMatrix> -3.000001 0 0 0 0 -3.576279E-07 3 0 0 3 -3.576279E-07 0 -91.37574 0 100.5533 1 
-		<TransformMatrix> -3.000001 0 0 0 0 -3.576279E-07 3 0 0 3 -3.576279E-07 0 -74.95437 0 100.5533 1 
-		<TransformMatrix> -3.000001 0 0 0 0 -3.576279E-07 3 0 0 3 -3.576279E-07 0 -58.26995 0 100.5533 1 
-		<TransformMatrix> -3.000001 0 0 0 0 -3.576279E-07 3 0 0 3 -3.576279E-07 0 -41.58554 0 100.5533 1 
-		<TransformMatrix> -3.000001 0 0 0 0 -3.576279E-07 3 0 0 3 -3.576279E-07 0 -24.90112 0 100.5533 1 
-		<TransformMatrix> -3.000001 0 0 0 0 -3.576279E-07 3 0 0 3 -3.576279E-07 0 -8.216709 0 100.5533 1 
-		<TransformMatrix> -3.000001 0 0 0 0 -3.576279E-07 3 0 0 3 -3.576279E-07 0 8.467702 0 100.5533 1 
-		<TransformMatrix> -3.000001 0 0 0 0 -3.576279E-07 3 0 0 3 -3.576279E-07 0 25.15212 0 100.5533 1 
-		<TransformMatrix> -3.000001 0 0 0 0 -3.576279E-07 3 0 0 3 -3.576279E-07 0 41.83653 0 100.5533 1 
-		<TransformMatrix> -3.000001 0 0 0 0 -3.576279E-07 3 0 0 3 -3.576279E-07 0 58.52094 0 100.5533 1 
-		<TransformMatrix> -3.000001 0 0 0 0 -3.576279E-07 3 0 0 3 -3.576279E-07 0 91.73471 0 100.5533 1 
-		<TransformMatrix> 0 0 3 0 3 0 0 0 0 3 0 0 99.44562 0 91.94054 1 
-		<TransformMatrix> 0 0 3 0 3 0 0 0 0 3 0 0 99.44562 0 75.25613 1 
-		<TransformMatrix> 0 0 3 0 3 0 0 0 0 3 0 0 99.44562 0 58.57173 1 
-		<TransformMatrix> 0 0 3 0 3 0 0 0 0 3 0 0 99.44562 0 41.88733 1 
-		<TransformMatrix> 0 0 3 0 3 0 0 0 0 3 0 0 99.44562 0 25.20291 1 
-		<TransformMatrix> 0 0 3 0 3 0 0 0 0 3 0 0 99.44562 0 8.518509 1 
-		<TransformMatrix> 0 0 3 0 3 0 0 0 0 3 0 0 99.44562 0 -8.165894 1 
-		<TransformMatrix> 0 0 3 0 3 0 0 0 0 3 0 0 99.44562 0 -24.85031 1 
-		<TransformMatrix> 0 0 3 0 3 0 0 0 0 3 0 0 99.44562 0 -41.53472 1 
-		<TransformMatrix> 0 0 3 0 3 0 0 0 0 3 0 0 99.44562 0 -58.21913 1 
-		<TransformMatrix> 0 0 3 0 3 0 0 0 0 3 0 0 99.44562 0 -74.90353 1 
-		<TransformMatrix> 0 0 3 0 3 0 0 0 0 3 0 0 99.44562 0 -91.57979 1 
+	<Object> 1
+		<Name> Model/Guard_2.txt
+		<Type> 2
+		<TransformMatrix> -1.192093E-07 0 1 0 0 1 0 0 -1 0 -1.192093E-07 0 95 1.032055 -164 1 
+	</Object>
+	<Object> 1
+		<Name> Model/Ground.txt
+		<Type> 3
+		<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 
+	</Object>
+	<Object> 1
+		<Name> Model/Building.txt
+		<Type> 3
+		<TransformMatrix> -1.192093E-07 0 -1 0 0 1 0 0 1 0 -1.192093E-07 0 90 1.2 -160 1 
+	</Object>
+	<Object> 1
+		<Name> Model/Cell.txt
+		<Type> 3
+		<TransformMatrix> -1.192093E-07 0 -1 0 0 1 0 0 1 0 -1.192093E-07 0 90 1.2 -160 1 
 	</Object>
 </GameScene>
