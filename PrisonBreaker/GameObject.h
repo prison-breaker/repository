@@ -1,30 +1,31 @@
 #pragma once
 #include "Mesh.h"
+#include "Material.h"
 #include "Camera.h"
 
 class CGameObject
 {
 protected:
-	bool				    m_IsAlive{};
+	bool				          m_IsAlive{};
+							      
+	tstring					      m_FrameName{};
+							      
+	XMFLOAT4X4		              m_WorldMatrix{ Matrix4x4::Identity() };
+	XMFLOAT4X4				      m_TransformMatrix{ Matrix4x4::Identity() };
+							      
+	shared_ptr<CMesh>	          m_Mesh{};
+	vector<shared_ptr<CMaterial>> m_Materials{};
+	BoundingOrientedBox			  m_BoundingBox{};
 
-	tstring					m_FrameName{};
-
-	XMFLOAT4X4		        m_WorldMatrix{ Matrix4x4::Identity() };
-	XMFLOAT4X4				m_TransformMatrix{ Matrix4x4::Identity() };
-
-	shared_ptr<CMesh>	    m_Mesh{};
-	shared_ptr<CTexture>    m_Texture{};
-	BoundingOrientedBox     m_BoundingBox{};
-
-	shared_ptr<CGameObject> m_SiblingObject{};
-	shared_ptr<CGameObject> m_ChildObject{};
+	shared_ptr<CGameObject>       m_SiblingObject{};
+	shared_ptr<CGameObject>       m_ChildObject{};
 
 public:
 	CGameObject() = default;
 	virtual ~CGameObject() = default;
 
 	static shared_ptr<CGameObject> LoadObjectFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName);
-	static shared_ptr<CGameObject> LoadObjectInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile);
+	static shared_ptr<CGameObject> LoadObjectInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile, unordered_map<tstring, shared_ptr<CMesh>>& MeshCache, unordered_map<tstring, vector<shared_ptr<CMaterial>>>& MaterialCache);
 
 	virtual void CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
@@ -59,7 +60,7 @@ public:
 	XMFLOAT3 GetPosition() const;
 
 	void SetMesh(const shared_ptr<CMesh>& Mesh);
-	void SetTexture(const shared_ptr<CTexture>& Texture);
+	void SetMaterial(const shared_ptr<CMaterial>& Material);
 
 	void SetBoundingBox(const BoundingOrientedBox& BoundingBox);
 	const BoundingOrientedBox& GetBoundingBox() const;

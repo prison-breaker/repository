@@ -280,7 +280,7 @@ void CFramework::UpdateShaderVariables()
 	m_MappedFrameworkInfo->m_TotalTime += m_Timer->GetElapsedTime();
 	m_MappedFrameworkInfo->m_ElapsedTime = m_Timer->GetElapsedTime();
 
-	m_D3D12GraphicsCommandList->SetGraphicsRootConstantBufferView(ROOT_PARAMETER_FRAMEWORKINFO, m_D3D12FrameworkInfo->GetGPUVirtualAddress());
+	m_D3D12GraphicsCommandList->SetGraphicsRootConstantBufferView(ROOT_PARAMETER_TYPE_FRAMEWORK_INFO, m_D3D12FrameworkInfo->GetGPUVirtualAddress());
 }
 
 void CFramework::ReleaseShaderVariables()

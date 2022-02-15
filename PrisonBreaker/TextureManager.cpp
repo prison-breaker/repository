@@ -12,7 +12,7 @@ void CTextureManager::CreateCbvSrvUavDescriptorHeaps(ID3D12Device* D3D12Device)
 {
 	D3D12_DESCRIPTOR_HEAP_DESC D3D12DescriptorHeapDesc{};
 
-	D3D12DescriptorHeapDesc.NumDescriptors = GetTextureTotalCount();
+	D3D12DescriptorHeapDesc.NumDescriptors = GetRegisteredTextureCount();
 	D3D12DescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	D3D12DescriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	D3D12DescriptorHeapDesc.NodeMask = 0;
@@ -28,16 +28,11 @@ void CTextureManager::CreateShaderResourceViews(ID3D12Device* D3D12Device)
 
 	for (const auto& Texture : m_Textures)
 	{
-		UINT TextureCount{ Texture.second->GetTextureCount() };
+		D3D12Device->CreateShaderResourceView(Texture.second->GetResource(), nullptr, D3D12CpuDescriptorHandle);
+		Texture.second->SetGpuDescriptorHandle(D3D12GpuDescriptorHandle);
 
-		for (UINT i = 0; i < TextureCount; ++i)
-		{
-			D3D12Device->CreateShaderResourceView(Texture.second->GetResource(i), nullptr, D3D12CpuDescriptorHandle);
-			Texture.second->SetGpuDescriptorHandle(i, D3D12GpuDescriptorHandle);
-
-			D3D12CpuDescriptorHandle.ptr += DescriptorIncrementSize;
-			D3D12GpuDescriptorHandle.ptr += DescriptorIncrementSize;
-		}
+		D3D12CpuDescriptorHandle.ptr += DescriptorIncrementSize;
+		D3D12GpuDescriptorHandle.ptr += DescriptorIncrementSize;
 	}
 }
 
@@ -64,16 +59,9 @@ shared_ptr<CTexture> CTextureManager::GetTexture(const tstring& TextureName)
 	return nullptr;
 }
 
-UINT CTextureManager::GetTextureTotalCount() const
+UINT CTextureManager::GetRegisteredTextureCount() const
 {
-	UINT TotalCount{};
-
-	for (auto& Texture : m_Textures)
-	{
-		TotalCount += Texture.second->GetTextureCount();
-	}
-
-	return TotalCount;
+	return (UINT)m_Textures.size();
 }
 
 void CTextureManager::SetDescriptorHeap(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)

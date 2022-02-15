@@ -20,7 +20,7 @@ void CCamera::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsComm
 	memcpy(&m_MappedCamera->m_ProjectionMatrix, &ProjectionMatrix, sizeof(XMFLOAT4X4));
 	memcpy(&m_MappedCamera->m_Position, &m_Position, sizeof(XMFLOAT3));
 
-	D3D12GraphicsCommandList->SetGraphicsRootConstantBufferView(ROOT_PARAMETER_CAMERA, m_D3D12Camera->GetGPUVirtualAddress());
+	D3D12GraphicsCommandList->SetGraphicsRootConstantBufferView(ROOT_PARAMETER_TYPE_CAMERA, m_D3D12Camera->GetGPUVirtualAddress());
 }
 
 void CCamera::ReleaseShaderVariables()
@@ -172,7 +172,7 @@ void CCamera::Rotate(const XMFLOAT4X4& WorldMatrix, float ElapsedTime)
 		WorldMatrix._31, WorldMatrix._32, WorldMatrix._33, 0.0f,
 				   0.0f,			0.0f,			 0.0f, 1.0f
 	};
-	XMFLOAT3 Position{ WorldMatrix._41, WorldMatrix._42, WorldMatrix._43 };
+	XMFLOAT3 Position{ WorldMatrix._41, WorldMatrix._42 + 5.0f, WorldMatrix._43 };
 	XMFLOAT3 NewOffset{ Vector3::TransformNormal(m_Offset, RotationMatrix) };
 	XMFLOAT3 NewPosition{ Vector3::Add(Position, NewOffset) };
 	XMFLOAT3 Direction{ Vector3::Subtract(NewPosition, m_Position) };

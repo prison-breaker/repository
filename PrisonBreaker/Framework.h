@@ -10,7 +10,7 @@ struct CB_FRAMEWORKINFO
 class CFramework
 {
 private:
-	TCHAR							  m_Title[TITLE_MAX_LENGTH]{};
+	TCHAR							  m_Title[MAX_TITLE_LENGTH]{};
 			
 	bool							  m_IsActive{};
 									  

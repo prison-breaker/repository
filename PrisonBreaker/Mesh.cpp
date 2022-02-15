@@ -1,17 +1,19 @@
 #include "stdafx.h"
 #include "Mesh.h"
 
-void CMesh::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
+void CMesh::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, UINT SubSetIndex)
 {
 	D3D12_VERTEX_BUFFER_VIEW VertexBufferViews[] = { m_D3D12PositionBufferView, m_D3D12NormalBufferView, m_D3D12TangentBufferView, m_D3D12BiTangentBufferView, m_D3D12TexCoordBufferView };
 
 	D3D12GraphicsCommandList->IASetVertexBuffers(0, _countof(VertexBufferViews), VertexBufferViews);
 	D3D12GraphicsCommandList->IASetPrimitiveTopology(m_D3D12PrimitiveTopology);
 
-	if (m_D3D12IndexBuffer)
+	UINT BufferSize{ (UINT)m_D3D12IndexBuffers.size() };
+
+	if (BufferSize > 0 && SubSetIndex < BufferSize)
 	{
-		D3D12GraphicsCommandList->IASetIndexBuffer(&m_D3D12IndexBufferView);
-		D3D12GraphicsCommandList->DrawIndexedInstanced(m_IndexCount, 1, 0, 0, 0);
+		D3D12GraphicsCommandList->IASetIndexBuffer(&m_D3D12IndexBufferViews[SubSetIndex]);
+		D3D12GraphicsCommandList->DrawIndexedInstanced(m_IndexCounts[SubSetIndex], 1, 0, 0, 0);
 	}
 	else
 	{
@@ -22,9 +24,6 @@ void CMesh::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 void CMesh::LoadMeshFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile)
 {
 	tstring Token{};
-	vector<XMFLOAT3> Positions{}, Normals{}, Tangents{}, BiTangents{};
-	vector<XMFLOAT2> TexCoords{};
-	vector<UINT> Indices{};
 
 	while (InFile >> Token)
 	{
@@ -37,23 +36,21 @@ void CMesh::LoadMeshFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandLis
 			InFile >> Center.x >> Center.y >> Center.z;
 			InFile >> Extents.x >> Extents.y >> Extents.z;
 
-			BoundingOrientedBox BoundingBox{ Center, Extents, Orientation };
-
-			SetBoundingBox(BoundingBox);
+			SetBoundingBox(BoundingOrientedBox{ Center, Extents, Orientation });
 		}
 		else if (!Token.compare(TEXT("<Positions>")))
 		{
 			InFile >> m_VertexCount;
-			Positions.reserve(m_VertexCount);
 
 			if (m_VertexCount > 0)
 			{
-				XMFLOAT3 Position{};
+				tcout << TEXT(" Á¤Á¡ ¼ö : ") << m_VertexCount << endl;
+
+				vector<XMFLOAT3> Positions{ m_VertexCount };
 
 				for (UINT i = 0; i < m_VertexCount; ++i)
 				{
-					InFile >> Position.x >> Position.y >> Position.z;
-					Positions.emplace_back(Position.x, Position.y, Position.z);
+					InFile >> Positions[i].x >> Positions[i].y >> Positions[i].z;
 				}
 
 				UINT Stride{ sizeof(XMFLOAT3) };
@@ -69,16 +66,14 @@ void CMesh::LoadMeshFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandLis
 			UINT VertexCount{};
 
 			InFile >> VertexCount;
-			Normals.reserve(VertexCount);
 
 			if (VertexCount > 0)
 			{
-				XMFLOAT3 Normal{};
+				vector<XMFLOAT3> Normals{ VertexCount };
 
 				for (UINT i = 0; i < VertexCount; ++i)
 				{
-					InFile >> Normal.x >> Normal.y >> Normal.z;
-					Normals.emplace_back(Normal.x, Normal.y, Normal.z);
+					InFile >> Normals[i].x >> Normals[i].y >> Normals[i].z;
 				}
 
 				UINT Stride{ sizeof(XMFLOAT3) };
@@ -94,16 +89,14 @@ void CMesh::LoadMeshFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandLis
 			UINT VertexCount{};
 
 			InFile >> VertexCount;
-			Tangents.reserve(VertexCount);
 
 			if (VertexCount > 0)
 			{
-				XMFLOAT4 Tangent{};
+				vector<XMFLOAT4> Tangents{ VertexCount };
 
 				for (UINT i = 0; i < VertexCount; ++i)
 				{
-					InFile >> Tangent.x >> Tangent.y >> Tangent.z >> Tangent.w;
-					Tangents.emplace_back(Tangent.x, Tangent.y, Tangent.z);
+					InFile >> Tangents[i].x >> Tangents[i].y >> Tangents[i].z >> Tangents[i].w;
 				}
 
 				UINT Stride{ sizeof(XMFLOAT3) };
@@ -119,16 +112,14 @@ void CMesh::LoadMeshFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandLis
 			UINT VertexCount{};
 
 			InFile >> VertexCount;
-			BiTangents.reserve(VertexCount);
 
 			if (VertexCount > 0)
 			{
-				XMFLOAT3 BiTangent{};
+				vector<XMFLOAT3> BiTangents{ VertexCount };
 
 				for (UINT i = 0; i < VertexCount; ++i)
 				{
-					InFile >> BiTangent.x >> BiTangent.y >> BiTangent.z;
-					BiTangents.emplace_back(BiTangent.x, BiTangent.y, BiTangent.z);
+					InFile >> BiTangents[i].x >> BiTangents[i].y >> BiTangents[i].z;
 				}
 
 				UINT Stride{ sizeof(XMFLOAT3) };
@@ -144,16 +135,14 @@ void CMesh::LoadMeshFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandLis
 			UINT VertexCount{};
 
 			InFile >> VertexCount;
-			TexCoords.reserve(VertexCount);
 
 			if (VertexCount > 0)
 			{
-				XMFLOAT2 TexCoord{};
+				vector<XMFLOAT2> TexCoords{ VertexCount };
 
 				for (UINT i = 0; i < VertexCount; ++i)
 				{
-					InFile >> TexCoord.x >> TexCoord.y;
-					TexCoords.emplace_back(TexCoord.x, TexCoord.y);
+					InFile >> TexCoords[i].x >> TexCoords[i].y;
 				}
 
 				UINT Stride{ sizeof(XMFLOAT2) };
@@ -164,27 +153,42 @@ void CMesh::LoadMeshFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandLis
 				m_D3D12TexCoordBufferView.SizeInBytes = Stride * VertexCount;
 			}
 		}
-		else if (!Token.compare(TEXT("<Indices>")))
+		else if (!Token.compare(TEXT("<SubMeshes>")))
 		{
-			InFile >> m_IndexCount;
-			Indices.reserve(m_IndexCount);
+			UINT SubMeshCount{};
 
-			if (m_IndexCount > 0)
+			InFile >> SubMeshCount;
+
+			if (SubMeshCount > 0)
 			{
-				UINT Index{};
+				m_IndexCounts.resize(SubMeshCount);
+				m_D3D12IndexBuffers.resize(SubMeshCount);
+				m_D3D12IndexUploadBuffers.resize(SubMeshCount);
+				m_D3D12IndexBufferViews.resize(SubMeshCount);
 
-				for (UINT i = 0; i < m_IndexCount; ++i)
+				for (UINT i = 0; i < SubMeshCount; ++i)
 				{
-					InFile >> Index;
-					Indices.emplace_back(Index);
+					// <Indices>
+					InFile >> Token;
+					InFile >> m_IndexCounts[i];
+
+					if (m_IndexCounts[i] > 0)
+					{
+						vector<UINT> Indices(m_IndexCounts[i]);
+
+						for (UINT j = 0; j < m_IndexCounts[i]; ++j)
+						{
+							InFile >> Indices[j];
+						}
+
+						UINT Stride{ sizeof(UINT) };
+
+						m_D3D12IndexBuffers[i] = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, Indices.data(), Stride * m_IndexCounts[i], D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_INDEX_BUFFER, m_D3D12IndexUploadBuffers[i].GetAddressOf());
+						m_D3D12IndexBufferViews[i].BufferLocation = m_D3D12IndexBuffers[i]->GetGPUVirtualAddress();
+						m_D3D12IndexBufferViews[i].Format = DXGI_FORMAT_R32_UINT;
+						m_D3D12IndexBufferViews[i].SizeInBytes = Stride * m_IndexCounts[i];
+					}
 				}
-
-				UINT Stride{ sizeof(UINT) };
-
-				m_D3D12IndexBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, Indices.data(), Stride * m_IndexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_INDEX_BUFFER, m_D3D12IndexUploadBuffer.GetAddressOf());
-				m_D3D12IndexBufferView.BufferLocation = m_D3D12IndexBuffer->GetGPUVirtualAddress();
-				m_D3D12IndexBufferView.Format = DXGI_FORMAT_R32_UINT;
-				m_D3D12IndexBufferView.SizeInBytes = Stride * m_IndexCount;
 			}
 		}
 		else if (!Token.compare(TEXT("</Mesh>")))
@@ -221,9 +225,17 @@ void CMesh::ReleaseUploadBuffers()
 		m_D3D12TexCoordUploadBuffer.ReleaseAndGetAddressOf();
 	}
 
-	if (m_D3D12IndexUploadBuffer)
+	if (!m_D3D12IndexUploadBuffers.empty())
 	{
-		m_D3D12IndexUploadBuffer.ReleaseAndGetAddressOf();
+		for (auto& UploadBuffer : m_D3D12IndexUploadBuffers)
+		{
+			if (UploadBuffer)
+			{
+				UploadBuffer.ReleaseAndGetAddressOf();
+			}
+		}
+
+		m_D3D12IndexUploadBuffers.shrink_to_fit();
 	}
 }
 

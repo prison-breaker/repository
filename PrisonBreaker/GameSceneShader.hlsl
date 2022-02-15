@@ -1,12 +1,17 @@
-#define MAX_LIGHTS		                              1
-#define POINT_LIGHT		                              1
-#define SPOT_LIGHT		                              2
-#define DIRECTIONAL_LIGHT			                  3
+#define MAX_LIGHTS		          1
+#define LIGHT_TYPE_POINT		  1
+#define LIGHT_TYPE_SPOT		      2
+#define LIGHT_TYPE_DIRECTIONAL	  3
+							      
+#define DEPTH_BUFFER_WIDTH	      2048
+#define DEPTH_BUFFER_HEIGHT	      2048
+#define DELTA_X                   (1.0f / DEPTH_BUFFER_WIDTH)
+#define DELTA_Y                   (1.0f / DEPTH_BUFFER_HEIGHT)
 
-#define DEPTH_BUFFER_WIDTH		                   2048
-#define DEPTH_BUFFER_HEIGHT		                   2048
-#define DELTA_X             (1.0f / DEPTH_BUFFER_WIDTH)
-#define DELTA_Y            (1.0f / DEPTH_BUFFER_HEIGHT)
+#define TEXTURE_MASK_ALBEDO_MAP	  0x01
+#define TEXTURE_MASK_METALLIC_MAP 0x02
+#define TEXTURE_MASK_NORMAL_MAP   0x04
+#define TEXTURE_MASK_SHADOW_MAP   0x08
 
 struct LIGHT
 {
@@ -54,11 +59,15 @@ cbuffer CB_LIGHT : register(b2)
 cbuffer CB_OBJECT : register(b3)
 {
 	matrix WorldMatrix : packoffset(c0);
+
+	float4 AlbedoColor : packoffset(c4);
+	uint   TextureMask : packoffset(c5);
 };
 
-Texture2D DiffuseMapTexture		  : register(t0);
-Texture2D NormalMapTexture		  : register(t1);
-Texture2D<float> ShadowMapTexture : register(t2);
+Texture2D AlbedoMapTexture		  : register(t0);
+Texture2D MetallicMapTexture	  : register(t1);
+Texture2D NormalMapTexture		  : register(t2);
+Texture2D<float> ShadowMapTexture : register(t3);
 
 SamplerState Sampler                    : register(s0);
 SamplerComparisonState PCFShadowSampler : register(s1);
@@ -82,16 +91,15 @@ float Get3x3ShadowFactor(float2 ShadowTexCoord, float Depth)
 
 // ====================================== LIGHT FUNCTION ======================================
 
-float4 DirectionalLight(int Index, float3 Normal, float2 TexCoord, float3 ToCamera)
+float4 DirectionalLight(int Index, float3 Normal, float3 ToCamera)
 {
 	float3 ToLight = -Lights[Index].m_Direction;
-	float DiffuseFactor = dot(ToLight, Normal);
-	float4 DiffuseColor = DiffuseMapTexture.Sample(Sampler, TexCoord);
+	float AlbedoFactor = max(0.35f, dot(ToLight, Normal));
 
-	return Lights[Index].m_Color * DiffuseFactor * DiffuseColor;
+	return Lights[Index].m_Color * AlbedoFactor * AlbedoColor;
 }
 
-float4 Lighting(float3 Position, float3 Normal, float2 TexCoord, float4 ShadowTexCoord)
+float4 Lighting(float3 Position, float3 Normal, float4 ShadowTexCoord)
 {
 	float3 ToCamera = normalize(CameraPosition - Position);
 	float4 Color = float4(0.0f, 0.0f, 0.0f, 0.0f);
@@ -101,11 +109,11 @@ float4 Lighting(float3 Position, float3 Normal, float2 TexCoord, float4 ShadowTe
 		if (Lights[i].m_IsActive)
 		{
 			float ShadowFactor = 1.0f;
-			ShadowFactor = Get3x3ShadowFactor(ShadowTexCoord.xy / ShadowTexCoord.ww, ShadowTexCoord.z / ShadowTexCoord.w);
+			ShadowFactor = max(0.3f, Get3x3ShadowFactor(ShadowTexCoord.xy / ShadowTexCoord.ww, ShadowTexCoord.z / ShadowTexCoord.w));
 
-			if (Lights[i].m_Type == DIRECTIONAL_LIGHT)
+			if (Lights[i].m_Type == LIGHT_TYPE_DIRECTIONAL)
 			{
-				Color += ShadowFactor * DirectionalLight(i, Normal, TexCoord, ToCamera);
+				Color += ShadowFactor * DirectionalLight(i, Normal, ToCamera);
 			}
 		}
 	}
@@ -113,13 +121,12 @@ float4 Lighting(float3 Position, float3 Normal, float2 TexCoord, float4 ShadowTe
 	return Color;
 }
 
-
 //float4 SpotLight(int Index, float3 Position, float3 Normal, float3 ToCamera, float2 TexCoord)
 //{
 //	float3 ToLight = Lights[Index].m_Position - Position;
 //	float Distance = length(ToLight);
 //	float DiffuseFactor = dot(ToLight, Normal);
-//	float4 DiffuseColor = DiffuseMapTexture.Sample(Sampler, TexCoord);
+//	float4 DiffuseColor = AlbedoMapTexture.Sample(Sampler, TexCoord);
 //
 //	if (Distance <= Lights[Index].m_Range)
 //	{
@@ -134,72 +141,10 @@ float4 Lighting(float3 Position, float3 Normal, float2 TexCoord, float4 ShadowTe
 //
 //	return float4(0.0f, 0.0f, 0.0f, 0.0f);
 //}
-//
-//float4 Lighting(float3 Position, float3 Normal, float2 TexCoord, float4 ShadowTexCoord)
-//{
-//	float3 ToCamera = normalize(CameraPosition - Position);
-//	float4 Color = float4(0.0f, 0.0f, 0.0f, 0.0f);
-//
-//	[unroll(MAX_LIGHTS)] for (int i = 0; i < MAX_LIGHTS; ++i)
-//	{
-//		if (Lights[i].m_IsActive)
-//		{
-//			float ShadowFactor = 1.0f;
-//			ShadowFactor = Get3x3ShadowFactor(ShadowTexCoord.xy / ShadowTexCoord.ww, ShadowTexCoord.z / ShadowTexCoord.w);
-//
-//			if (Lights[i].m_Type == DIRECTIONAL_LIGHT)
-//			{
-//				Color += DirectionalLight(i, Normal, TexCoord, ToCamera) * ShadowFactor;
-//			}
-//			else if (Lights[i].m_Type == SPOT_LIGHT)
-//			{
-//				Color += SpotLight(i, Position, Normal, ToCamera, TexCoord);// *ShadowFactor;
-//			}
-//		}
-//	}
-//
-//	return Color;
-//}
 
 // ====================================== BASIC SHADER ======================================
 
 struct VS_INPUT
-{
-	float3 m_Position  : POSITION;
-	float3 m_Normal    : NORMAL;
-	float2 m_TexCoord  : TEXCOORD;
-};
-
-struct VS_OUTPUT
-{
-	float4 m_Position   : SV_POSITION;
-	float3 m_PositionW  : POSITION;
-	float3 m_NormalW    : NORMAL;
-	float2 m_TexCoord   : TEXCOORD;
-};
-
-VS_OUTPUT VS_Main(VS_INPUT Input)
-{
-	VS_OUTPUT Output;
-
-	Output.m_PositionW = mul(float4(Input.m_Position, 1.0f), WorldMatrix).xyz;
-	Output.m_Position = mul(mul(float4(Output.m_PositionW, 1.0f), ViewMatrix), ProjectionMatrix);
-	Output.m_NormalW = mul(Input.m_Normal, (float3x3)WorldMatrix);
-	Output.m_TexCoord = Input.m_TexCoord;
-
-	return Output;
-}
-
-//float4 PS_Main(VS_OUTPUT Input) : SV_TARGET
-//{
-//	float4 AlbedoColor = DiffuseMapTexture.Sample(Sampler, Input.m_TexCoord);
-//
-//	return AlbedoColor + Lighting(Input.m_PositionW, Input.m_NormalW);
-//}
-
-// ====================================== BASIC SHADER WITH NORMALMAP ======================================
-
-struct VS_INPUT_WITH_NORMALMAP
 {
 	float3 m_Position  : POSITION;
 	float3 m_Normal    : NORMAL;
@@ -208,42 +153,67 @@ struct VS_INPUT_WITH_NORMALMAP
 	float2 m_TexCoord  : TEXCOORD;
 };
 
-struct VS_OUTPUT_WITH_NORMALMAP
+struct VS_OUTPUT
 {
-	float4 m_Position   : SV_POSITION;
-	float3 m_PositionW  : POSITION;
-	float3 m_NormalW    : NORMAL;
-	float3 m_TangentW   : TANGENT;
-	float3 m_BiTangentW : BITANGENT;
-	float2 m_TexCoord   : TEXCOORD;
+	float4 m_Position       : SV_POSITION;
+	float3 m_PositionW      : POSITION;
+	float3 m_NormalW        : NORMAL;
+	float3 m_TangentW       : TANGENT;
+	float3 m_BiTangentW     : BITANGENT;
+	float2 m_TexCoord       : TEXCOORD0;
+	float4 m_ShadowTexCoord : TEXCOORD1;
 };
 
-//VS_OUTPUT_WITH_NORMALMAP VS_Main_With_NormalMap(VS_INPUT_WITH_NORMALMAP Input)
-//{
-//	VS_OUTPUT_WITH_NORMALMAP Output;
-//
-//	Output.m_PositionW = mul(float4(Input.m_Position, 1.0f), WorldMatrix).xyz;
-//	Output.m_Position = mul(mul(float4(Output.m_PositionW, 1.0f), ViewMatrix), ProjectionMatrix);
-//	Output.m_NormalW = mul(Input.m_Normal, (float3x3)WorldMatrix);
-//	Output.m_TangentW = mul(Input.m_Tangent, (float3x3)WorldMatrix);
-//	Output.m_BiTangentW = mul(Input.m_BiTangent, (float3x3)WorldMatrix);
-//	Output.m_TexCoord = Input.m_TexCoord;
-//
-//	return Output;
-//}
-//
-//float4 PS_Main_With_NormalMap(VS_OUTPUT_WITH_NORMALMAP Input) : SV_TARGET
-//{
-//	float4 AlbedoColor = DiffuseMapTexture.Sample(Sampler, Input.m_TexCoord);
-//
-//	float3 Normal = NormalMapTexture.Sample(Sampler, Input.m_TexCoord).rgb;
-//	Normal = 2.0f * Normal - 1.0f;
-//
-//	float3x3 TBN = float3x3(Input.m_TangentW, Input.m_BiTangentW, Input.m_NormalW);
-//	float3 NormalW = mul(Normal, TBN);
-//	
-//	return AlbedoColor + Lighting(Input.m_PositionW, NormalW);
-//}
+VS_OUTPUT VS_Main(VS_INPUT Input)
+{
+	VS_OUTPUT Output;
+
+	float4 PositionW = mul(float4(Input.m_Position, 1.0f), WorldMatrix);
+	Output.m_PositionW = PositionW.xyz;
+	Output.m_Position = mul(mul(PositionW, ViewMatrix), ProjectionMatrix);
+	Output.m_NormalW = mul(Input.m_Normal, (float3x3)WorldMatrix);
+	Output.m_TangentW = mul(Input.m_Tangent, (float3x3)WorldMatrix);
+	Output.m_BiTangentW = mul(Input.m_BiTangent, (float3x3)WorldMatrix);
+	Output.m_TexCoord = Input.m_TexCoord;
+
+	if (Lights[0].m_IsActive)
+	{
+		Output.m_ShadowTexCoord = mul(PositionW, Lights[0].m_ToTexCoordMatrix);
+	}
+
+	return Output;
+}
+
+float4 PS_Main(VS_OUTPUT Input) : SV_TARGET
+{
+	float4 Color = float4(0.0f, 0.0f, 0.0f, 0.0f);
+
+	if (TextureMask & TEXTURE_MASK_ALBEDO_MAP)
+	{
+		Color += AlbedoMapTexture.Sample(Sampler, Input.m_TexCoord);
+	}
+
+	if (TextureMask & TEXTURE_MASK_METALLIC_MAP)
+	{
+		Color += MetallicMapTexture.Sample(Sampler, Input.m_TexCoord);
+	}
+
+	float3 NormalW = float3(0.0f, 0.0f, 0.0f);
+
+	if (TextureMask & TEXTURE_MASK_NORMAL_MAP)
+	{
+		float3x3 TBN = float3x3(Input.m_TangentW, Input.m_BiTangentW, Input.m_NormalW);
+		NormalW = normalize(mul(2.0f * NormalMapTexture.Sample(Sampler, Input.m_TexCoord).rgb - 1.0f, TBN));
+	}
+	else
+	{
+		NormalW = normalize(Input.m_NormalW);
+	}
+
+	float4 Illumination = Lighting(Input.m_PositionW, NormalW, Input.m_ShadowTexCoord);
+
+	return lerp(Color, Illumination, 0.65f); //Color * Illumination;
+}
 
 // ====================================== SKYBOX SHADER ======================================
 
@@ -327,7 +297,7 @@ void GS_SkyBox(point VS_OUTPUT_SKYBOX Input[1], inout TriangleStream<GS_OUTPUT_S
 
 float4 PS_SkyBox(GS_OUTPUT_SKYBOX Input) : SV_TARGET
 {
-	return DiffuseMapTexture.Sample(Sampler, Input.m_TexCoord);
+	return AlbedoMapTexture.Sample(Sampler, Input.m_TexCoord);
 }
 
 // ====================================== DEPTH WRITE SHADER ======================================
@@ -345,80 +315,4 @@ PS_OUTPUT_DEPTH PS_DetphWrite(VS_OUTPUT Input)
 	Output.m_Position = Output.m_Depth = Input.m_Position.z;
 
 	return Output;
-}
-
-// ====================================== SHADOWMAP SHADER ======================================
-
-struct VS_OUTPUT_SHADOW
-{
-	float4 m_Position		: SV_POSITION;
-	float3 m_PositionW	    : POSITION;
-	float3 m_NormalW	    : NORMAL;
-	float2 m_TexCoord		: TEXCOORD0;
-	float4 m_ShadowTexCoord : TEXCOORD1;
-};
-
-VS_OUTPUT_SHADOW VS_Shadow(VS_INPUT Input)
-{
-	VS_OUTPUT_SHADOW Output;
-
-	float4 PositionW = mul(float4(Input.m_Position, 1.0f), WorldMatrix);
-	Output.m_PositionW = PositionW.xyz;
-	Output.m_Position = mul(mul(PositionW, ViewMatrix), ProjectionMatrix);
-	Output.m_NormalW = mul(Input.m_Normal, (float3x3)WorldMatrix);
-	Output.m_TexCoord = Input.m_TexCoord;
-
-	if (Lights[0].m_IsActive)
-	{
-		Output.m_ShadowTexCoord = mul(PositionW, Lights[0].m_ToTexCoordMatrix);
-	}
-
-	return Output;
-}
-
-float4 PS_Shadow(VS_OUTPUT_SHADOW Input) : SV_TARGET
-{
-	return Lighting(Input.m_PositionW, Input.m_NormalW, Input.m_TexCoord, Input.m_ShadowTexCoord);
-}
-
-// ====================================== BASIC SHADER WITH NORMALMAP ======================================
-
-struct VS_OUTPUT_SHADOW_WITH_NORMALMAP
-{
-	float4 m_Position		: SV_POSITION;
-	float3 m_PositionW	    : POSITION;
-	float3 m_NormalW	    : NORMAL;
-	float3 m_TangentW	    : TANGENT;
-	float3 m_BiTangentW	    : BITANGENT;
-	float2 m_TexCoord	    : TEXCOORD0;
-	float4 m_ShadowTexCoord : TEXCOORD1;
-};
-
-VS_OUTPUT_SHADOW_WITH_NORMALMAP VS_Shadow_With_NormalMap(VS_INPUT_WITH_NORMALMAP Input)
-{
-	VS_OUTPUT_SHADOW_WITH_NORMALMAP Output;
-
-	float4 PositionW = mul(float4(Input.m_Position, 1.0f), WorldMatrix);
-	Output.m_PositionW = PositionW.xyz;
-	Output.m_Position = mul(mul(PositionW, ViewMatrix), ProjectionMatrix);
-	Output.m_NormalW = mul(Input.m_Normal, (float3x3)WorldMatrix);
-	Output.m_TangentW = mul(Input.m_Tangent, (float3x3)WorldMatrix);
-	Output.m_BiTangentW = mul(Input.m_BiTangent, (float3x3)WorldMatrix);
-	Output.m_TexCoord = Input.m_TexCoord;
-
-	if (Lights[0].m_IsActive)
-	{
-		Output.m_ShadowTexCoord = mul(PositionW, Lights[0].m_ToTexCoordMatrix);
-	}
-
-	return Output;
-}
-
-float4 PS_Shadow_With_NormalMap(VS_OUTPUT_SHADOW_WITH_NORMALMAP Input) : SV_TARGET
-{
-	float3 TexNormal = 2.0f * NormalMapTexture.Sample(Sampler, Input.m_TexCoord).rgb - 1.0f;
-	float3x3 TBN = float3x3(Input.m_TangentW, Input.m_BiTangentW, Input.m_NormalW);
-	float3 NormalW = mul(TexNormal, TBN);
-
-	return Lighting(Input.m_PositionW, NormalW, Input.m_TexCoord, Input.m_ShadowTexCoord);
 }

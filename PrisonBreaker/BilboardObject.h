@@ -5,11 +5,11 @@
 class CBilboardObject
 {
 protected:
-	shared_ptr<CTexture>	 m_Texture{};
+	vector<shared_ptr<CMaterial>> m_Materials{};
 
-	ComPtr<ID3D12Resource>	 m_D3D12PositionBuffer{};
-	ComPtr<ID3D12Resource>	 m_D3D12PositionUploadBuffer{};
-	D3D12_VERTEX_BUFFER_VIEW m_D3D12PositionBufferView{};
+	ComPtr<ID3D12Resource>	      m_D3D12PositionBuffer{};
+	ComPtr<ID3D12Resource>	      m_D3D12PositionUploadBuffer{};
+	D3D12_VERTEX_BUFFER_VIEW      m_D3D12PositionBufferView{};
 
 public:
 	CBilboardObject() = default;
@@ -19,5 +19,5 @@ public:
 
 	void ReleaseUploadBuffers();
 
-	void SetTexture(const shared_ptr<CTexture>& Texture);
+	void SetMaterial(const shared_ptr<CMaterial>& Material);
 };

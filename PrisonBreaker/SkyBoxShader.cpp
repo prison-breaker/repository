@@ -1,19 +1,10 @@
 #include "stdafx.h"
 #include "SkyBoxShader.h"
 
-CSkyBoxShader::CSkyBoxShader(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
+CSkyBoxShader::CSkyBoxShader(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList) :
+	m_SkyBox{ make_shared<CSkyBox>(D3D12Device, D3D12GraphicsCommandList) }
 {
-	shared_ptr<CTexture> Texture{ make_shared<CTexture>() };
-	Texture->LoadTextureFromDDSFile(D3D12Device, D3D12GraphicsCommandList, TEXTURE_TYPE_DIFFUSEMAP, TEXT("Texture/SkyBox_Back.dds"));
-	Texture->LoadTextureFromDDSFile(D3D12Device, D3D12GraphicsCommandList, TEXTURE_TYPE_DIFFUSEMAP, TEXT("Texture/SkyBox_Front.dds"));
-	Texture->LoadTextureFromDDSFile(D3D12Device, D3D12GraphicsCommandList, TEXTURE_TYPE_DIFFUSEMAP, TEXT("Texture/SkyBox_Right.dds"));
-	Texture->LoadTextureFromDDSFile(D3D12Device, D3D12GraphicsCommandList, TEXTURE_TYPE_DIFFUSEMAP, TEXT("Texture/SkyBox_Left.dds"));
-	Texture->LoadTextureFromDDSFile(D3D12Device, D3D12GraphicsCommandList, TEXTURE_TYPE_DIFFUSEMAP, TEXT("Texture/SkyBox_Top.dds"));
-	Texture->LoadTextureFromDDSFile(D3D12Device, D3D12GraphicsCommandList, TEXTURE_TYPE_DIFFUSEMAP, TEXT("Texture/SkyBox_Bottom.dds"));
-	CTextureManager::GetInstance()->RegisterTexture(TEXT("SkyBox"), Texture);
 
-	m_SkyBox = make_shared<CSkyBox>(D3D12Device, D3D12GraphicsCommandList);
-	m_SkyBox->SetTexture(Texture);
 }
 
 D3D12_INPUT_LAYOUT_DESC CSkyBoxShader::CreateInputLayout(UINT PSONum)

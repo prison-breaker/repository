@@ -1,7 +1,6 @@
 #pragma once
 #include "Player.h"
 #include "SkyBox.h"
-#include "Texture.h"
 
 class CCamera;
 

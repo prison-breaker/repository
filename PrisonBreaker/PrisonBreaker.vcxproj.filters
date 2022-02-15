@@ -52,17 +52,23 @@
     <Filter Include="헤더 파일\Camera">
       <UniqueIdentifier>{ac33206f-4eb3-47fa-b70c-9b1fbe99ddb7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="소스 파일\Texture">
-      <UniqueIdentifier>{70a69a67-d819-49b8-be8f-685de605652d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="헤더 파일\Texture">
-      <UniqueIdentifier>{123ef2b9-2cfa-4fb1-bd4e-b60e317a3ef2}</UniqueIdentifier>
-    </Filter>
     <Filter Include="소스 파일\Manager">
       <UniqueIdentifier>{a643409f-ad27-401c-9a31-6dad5f1931a2}</UniqueIdentifier>
     </Filter>
     <Filter Include="헤더 파일\Manager">
       <UniqueIdentifier>{dccf2aa2-28ce-429f-b098-4bdd48df99f5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Material">
+      <UniqueIdentifier>{58956089-ea42-4e47-8689-4522397255cb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Material">
+      <UniqueIdentifier>{23e5b0bd-27f6-461f-8538-b4c4747396ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Material\Texture">
+      <UniqueIdentifier>{123ef2b9-2cfa-4fb1-bd4e-b60e317a3ef2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Material\Texture">
+      <UniqueIdentifier>{70a69a67-d819-49b8-be8f-685de605652d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -103,7 +109,7 @@
       <Filter>소스 파일\Camera</Filter>
     </ClCompile>
     <ClCompile Include="Texture.cpp">
-      <Filter>소스 파일\Texture</Filter>
+      <Filter>소스 파일\Material\Texture</Filter>
     </ClCompile>
     <ClCompile Include="SceneManager.cpp">
       <Filter>소스 파일\Manager</Filter>
@@ -125,6 +131,9 @@
     </ClCompile>
     <ClCompile Include="ShadowMapShader.cpp">
       <Filter>소스 파일\Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.cpp">
+      <Filter>소스 파일\Material</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -165,7 +174,7 @@
       <Filter>헤더 파일\Camera</Filter>
     </ClInclude>
     <ClInclude Include="Texture.h">
-      <Filter>헤더 파일\Texture</Filter>
+      <Filter>헤더 파일\Material\Texture</Filter>
     </ClInclude>
     <ClInclude Include="SceneManager.h">
       <Filter>헤더 파일\Manager</Filter>
@@ -187,6 +196,9 @@
     </ClInclude>
     <ClInclude Include="ShadowMapShader.h">
       <Filter>헤더 파일\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Material.h">
+      <Filter>헤더 파일\Material</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

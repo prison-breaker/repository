@@ -1,5 +1,5 @@
 #pragma once
-#include "Texture.h"
+#include "Material.h"
 
 class CTextureManager
 {
@@ -22,7 +22,7 @@ public:
 	void RegisterTexture(const tstring& TextureName, const shared_ptr<CTexture>& Texture);
 	shared_ptr<CTexture> GetTexture(const tstring& TextureName);
 
-	UINT GetTextureTotalCount() const;
+	UINT GetRegisteredTextureCount() const;
 
 	void SetDescriptorHeap(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 };

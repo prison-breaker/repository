@@ -20,12 +20,11 @@ void CGameScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandLi
 	shared_ptr<CCamera> Camera{ make_shared<CCamera>() };
 	Camera->CreateShaderVariables(D3D12Device, D3D12GraphicsCommandList);
 	Camera->GeneratePerspectiveProjectionMatrix(90.0f, (float)CLIENT_WIDTH / (float)CLIENT_HEIGHT, 1.0f, 500.0f);
-	Camera->GenerateViewMatrix(XMFLOAT3(-75.0f, 15.0f, -120.0f), XMFLOAT3(0.0f, 0.0f, 1.0f));
+	Camera->GenerateViewMatrix(XMFLOAT3(0.0f, 5.0f, -100.0f), XMFLOAT3(0.0f, 0.0f, 1.0f));
 
 	// 플레이어 객체를 생성한다.
 	m_Player = make_shared<CPlayer>();
 	m_Player->SetCamera(Camera);
-	m_Player->SetAlive(true);
 
 	// 파일로부터 씬 객체들을 생성하고 배치한다.
 	LoadSceneFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Model/GameScene.txt"));
@@ -56,27 +55,29 @@ void CGameScene::ReleaseObjects()
 	
 void CGameScene::CreateRootSignature(ID3D12Device* D3D12Device)
 {
-	CD3DX12_DESCRIPTOR_RANGE D3D12DescriptorRanges[3]{};
+	CD3DX12_DESCRIPTOR_RANGE D3D12DescriptorRanges[4]{};
 
 	D3D12DescriptorRanges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
 	D3D12DescriptorRanges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);
 	D3D12DescriptorRanges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2);
+	D3D12DescriptorRanges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3);
 
-	CD3DX12_ROOT_PARAMETER D3D12RootParameters[7]{};
+	CD3DX12_ROOT_PARAMETER D3D12RootParameters[8]{};
 
-	D3D12RootParameters[ROOT_PARAMETER_FRAMEWORKINFO].InitAsConstantBufferView(0);					    // 프레임워크 정보(b0)
-	D3D12RootParameters[ROOT_PARAMETER_CAMERA].InitAsConstantBufferView(1);							    // 카메라 정보(b1)
-	D3D12RootParameters[ROOT_PARAMETER_LIGHT].InitAsConstantBufferView(2);							    // 조명 정보(b2)
-	D3D12RootParameters[ROOT_PARAMETER_OBJECT].InitAsConstants(16, 3);								    // 오브젝트 정보(b3)
-	D3D12RootParameters[ROOT_PARAMETER_DIFFUSEMAP].InitAsDescriptorTable(1, &D3D12DescriptorRanges[0]); // 텍스처 정보(AlbedoMap : t0)
-	D3D12RootParameters[ROOT_PARAMETER_NORMALMAP].InitAsDescriptorTable(1, &D3D12DescriptorRanges[1]);  // 텍스처 정보(NormalMap : t1)
-	D3D12RootParameters[ROOT_PARAMETER_SHADOWMAP].InitAsDescriptorTable(1, &D3D12DescriptorRanges[2]);  // 텍스처 정보(ShadowMap : t2)
+	D3D12RootParameters[ROOT_PARAMETER_TYPE_FRAMEWORK_INFO].InitAsConstantBufferView(0);					   // 프레임워크 정보(b0)
+	D3D12RootParameters[ROOT_PARAMETER_TYPE_CAMERA].InitAsConstantBufferView(1);							   // 카메라 정보(b1)
+	D3D12RootParameters[ROOT_PARAMETER_TYPE_LIGHT].InitAsConstantBufferView(2);							       // 조명 정보(b2)
+	D3D12RootParameters[ROOT_PARAMETER_TYPE_OBJECT].InitAsConstants(21, 3);								       // 오브젝트 정보(b3)
+	D3D12RootParameters[ROOT_PARAMETER_TYPE_ALBEDO_MAP].InitAsDescriptorTable(1, &D3D12DescriptorRanges[0]);   // 텍스처 정보(AlbedoMap : t0)
+	D3D12RootParameters[ROOT_PARAMETER_TYPE_METALLIC_MAP].InitAsDescriptorTable(1, &D3D12DescriptorRanges[1]); // 텍스처 정보(MetallicMap : t1)
+	D3D12RootParameters[ROOT_PARAMETER_TYPE_NORMAL_MAP].InitAsDescriptorTable(1, &D3D12DescriptorRanges[2]);   // 텍스처 정보(NormalMap : t2)
+	D3D12RootParameters[ROOT_PARAMETER_TYPE_SHADOW_MAP].InitAsDescriptorTable(1, &D3D12DescriptorRanges[3]);   // 텍스처 정보(ShadowMap : t3)
 	
 	D3D12_ROOT_SIGNATURE_FLAGS D3D12RootSignatureFlags{ D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT | D3D12_ROOT_SIGNATURE_FLAG_ALLOW_STREAM_OUTPUT }; // IA단계를 허용, 스트림 출력 단계를 허용
 	CD3DX12_STATIC_SAMPLER_DESC D3D12SamplerDesc[2]{};
 
 	D3D12SamplerDesc[0].Init(0, D3D12_FILTER_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_WRAP, D3D12_TEXTURE_ADDRESS_MODE_WRAP, D3D12_TEXTURE_ADDRESS_MODE_WRAP,
-		0.0f, 1, D3D12_COMPARISON_FUNC_ALWAYS, D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK, 0.0f, D3D12_FLOAT32_MAX, D3D12_SHADER_VISIBILITY_PIXEL, 0);
+		0.0f, 1, D3D12_COMPARISON_FUNC_ALWAYS, D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE, 0.0f, D3D12_FLOAT32_MAX, D3D12_SHADER_VISIBILITY_PIXEL, 0);
 	D3D12SamplerDesc[1].Init(1, D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT, D3D12_TEXTURE_ADDRESS_MODE_BORDER, D3D12_TEXTURE_ADDRESS_MODE_BORDER, D3D12_TEXTURE_ADDRESS_MODE_BORDER,
 		0.0f, 1, D3D12_COMPARISON_FUNC_LESS_EQUAL, D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE, 0.0f, D3D12_FLOAT32_MAX, D3D12_SHADER_VISIBILITY_PIXEL, 0);
 
@@ -102,7 +103,7 @@ void CGameScene::CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12Graphics
 void CGameScene::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
 	memcpy(m_MappedLights->m_Lights, m_Lights.data(), sizeof(CB_LIGHT) * (UINT)m_Lights.size());
-	D3D12GraphicsCommandList->SetGraphicsRootConstantBufferView(ROOT_PARAMETER_LIGHT, m_D3D12Lights->GetGPUVirtualAddress());
+	D3D12GraphicsCommandList->SetGraphicsRootConstantBufferView(ROOT_PARAMETER_TYPE_LIGHT, m_D3D12Lights->GetGPUVirtualAddress());
 }
 
 void CGameScene::ReleaseShaderVariables()
@@ -162,50 +163,50 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	XMFLOAT2 Delta{ 10.0f * ElapsedTime * (NewCursorPos.x - OldCursorPos.x), 10.0f * ElapsedTime * (NewCursorPos.y - OldCursorPos.y) };
 
 	// 1인칭 모드
-	m_Player->GetCamera()->Rotate(Delta.y, Delta.x, 0.0f);
-
-	if (GetAsyncKeyState('W') & 0x8000)
-	{
-		m_Player->GetCamera()->Move(Vector3::ScalarProduct(10.0f * ElapsedTime, m_Player->GetCamera()->GetLook(), false));
-	}
-
-	if (GetAsyncKeyState('S') & 0x8000)
-	{
-		m_Player->GetCamera()->Move(Vector3::ScalarProduct(-10.0f * ElapsedTime, m_Player->GetCamera()->GetLook(), false));
-	}
-
-	if (GetAsyncKeyState('A') & 0x8000)
-	{
-		m_Player->GetCamera()->Move(Vector3::ScalarProduct(-10.0f * ElapsedTime, m_Player->GetCamera()->GetRight(), false));
-	}
-
-	if (GetAsyncKeyState('D') & 0x8000)
-	{
-		m_Player->GetCamera()->Move(Vector3::ScalarProduct(10.0f * ElapsedTime, m_Player->GetCamera()->GetRight(), false));
-	}
-
-	// 3인칭 모드
-	//m_Player->Rotate(Delta.y, Delta.x, 0.0f, ElapsedTime);
+	//m_Player->GetCamera()->Rotate(Delta.y, Delta.x, 0.0f);
 
 	//if (GetAsyncKeyState('W') & 0x8000)
 	//{
-	//	m_Player->Move(m_Player->GetLook(), 5.0f * ElapsedTime);
+	//	m_Player->GetCamera()->Move(Vector3::ScalarProduct(10.0f * ElapsedTime, m_Player->GetCamera()->GetLook(), false));
 	//}
 
 	//if (GetAsyncKeyState('S') & 0x8000)
 	//{
-	//	m_Player->Move(m_Player->GetLook(), -5.0f * ElapsedTime);
+	//	m_Player->GetCamera()->Move(Vector3::ScalarProduct(-10.0f * ElapsedTime, m_Player->GetCamera()->GetLook(), false));
 	//}
 
 	//if (GetAsyncKeyState('A') & 0x8000)
 	//{
-	//	m_Player->Move(m_Player->GetRight(), -5.0f * ElapsedTime);
+	//	m_Player->GetCamera()->Move(Vector3::ScalarProduct(-10.0f * ElapsedTime, m_Player->GetCamera()->GetRight(), false));
 	//}
 
 	//if (GetAsyncKeyState('D') & 0x8000)
 	//{
-	//	m_Player->Move(m_Player->GetRight(), 5.0f * ElapsedTime);
+	//	m_Player->GetCamera()->Move(Vector3::ScalarProduct(10.0f * ElapsedTime, m_Player->GetCamera()->GetRight(), false));
 	//}
+
+	// 3인칭 모드
+	m_Player->Rotate(Delta.y, Delta.x, 0.0f, ElapsedTime);
+
+	if (GetAsyncKeyState('W') & 0x8000)
+	{
+		m_Player->Move(m_Player->GetLook(), 5.0f * ElapsedTime);
+	}
+
+	if (GetAsyncKeyState('S') & 0x8000)
+	{
+		m_Player->Move(m_Player->GetLook(), -5.0f * ElapsedTime);
+	}
+
+	if (GetAsyncKeyState('A') & 0x8000)
+	{
+		m_Player->Move(m_Player->GetRight(), -5.0f * ElapsedTime);
+	}
+
+	if (GetAsyncKeyState('D') & 0x8000)
+	{
+		m_Player->Move(m_Player->GetRight(), 5.0f * ElapsedTime);
+	}
 
 	// 방향성 조명 방향 변경
 	static float Angle = XMConvertToRadians(90.0f);
@@ -220,8 +221,8 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 		Angle -= 2.0f * ElapsedTime;
 	}
 
-	m_Lights[0].m_Position.x = 150.0f * cosf(Angle);
-	m_Lights[0].m_Position.z = -150.0f * sinf(Angle);
+	m_Lights[0].m_Position.x = 500.0f * cosf(Angle);
+	m_Lights[0].m_Position.z = -500.0f * sinf(Angle);
 	m_Lights[0].m_Direction.x = -cosf(Angle);
 	m_Lights[0].m_Direction.z = sinf(Angle);
 }
@@ -266,76 +267,62 @@ void CGameScene::LoadSceneFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComm
 	tifstream InFile{ FileName };
 	tstring Token{};
 
+	shared_ptr<CGameObject> Object{};
+	shared_ptr<CGameObject> Model{};
+	UINT ObjectCount{};
+	UINT ObjectType{};
+
 	while (InFile >> Token)
 	{
 		if (!Token.compare(TEXT("<Object>")))
 		{
-			int ObjectCount;
-
+			InFile >> ObjectCount;
+		}
+		else if (!Token.compare(TEXT("<Name>")))
+		{
 			InFile >> Token;
 
-			if (!Token.compare(TEXT("<Name>")))
+			Model = CGameObject::LoadObjectFromFile(D3D12Device, D3D12GraphicsCommandList, Token);
+		}
+		else if (!Token.compare(TEXT("<Type>")))
+		{
+			InFile >> ObjectType;
+		}
+		else if (!Token.compare(TEXT("<TransformMatrix>")))
+		{
+			XMFLOAT4X4 TransformMatrix{};
+
+			InFile >> TransformMatrix._11 >> TransformMatrix._12 >> TransformMatrix._13 >> TransformMatrix._14;
+			InFile >> TransformMatrix._21 >> TransformMatrix._22 >> TransformMatrix._23 >> TransformMatrix._24;
+			InFile >> TransformMatrix._31 >> TransformMatrix._32 >> TransformMatrix._33 >> TransformMatrix._34;
+			InFile >> TransformMatrix._41 >> TransformMatrix._42 >> TransformMatrix._43 >> TransformMatrix._44;
+
+			switch (ObjectType)
 			{
-				InFile >> ObjectCount;
-				InFile >> Token;
-
-				shared_ptr<CGameObject> Model{ CGameObject::LoadObjectFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Model/") + Token + TEXT(".txt")) };
-
-				if (!Token.compare(TEXT("Douglas")))
-				{
-					// <TransformMatrix>
-					InFile >> Token;
-
-					XMFLOAT4X4 TransformMatrix{};
-					InFile >> TransformMatrix._11 >> TransformMatrix._12 >> TransformMatrix._13 >> TransformMatrix._14;
-					InFile >> TransformMatrix._21 >> TransformMatrix._22 >> TransformMatrix._23 >> TransformMatrix._24;
-					InFile >> TransformMatrix._31 >> TransformMatrix._32 >> TransformMatrix._33 >> TransformMatrix._34;
-					InFile >> TransformMatrix._41 >> TransformMatrix._42 >> TransformMatrix._43 >> TransformMatrix._44;
-
-					Model->Scale(3.0f, 3.0f, 3.0f);
-					m_Player->SetChild(Model);
-					m_Player->SetPosition(XMFLOAT3(TransformMatrix._41, TransformMatrix._42, TransformMatrix._43));
-				}
-				else if (!Token.compare(TEXT("Ground")))
-				{
-					// <TransformMatrix>
-					InFile >> Token;
-
-					XMFLOAT4X4 TransformMatrix{};
-					InFile >> TransformMatrix._11 >> TransformMatrix._12 >> TransformMatrix._13 >> TransformMatrix._14;
-					InFile >> TransformMatrix._21 >> TransformMatrix._22 >> TransformMatrix._23 >> TransformMatrix._24;
-					InFile >> TransformMatrix._31 >> TransformMatrix._32 >> TransformMatrix._33 >> TransformMatrix._34;
-					InFile >> TransformMatrix._41 >> TransformMatrix._42 >> TransformMatrix._43 >> TransformMatrix._44;
-
-					shared_ptr<CGameObject> Ground = make_shared<CGameObject>();
-					Ground->SetAlive(true);
-					Ground->SetChild(Model);
-					Ground->SetTransformMatrix(TransformMatrix);
-
-					m_Structures.push_back(Ground);
-				}
-				else if (!Token.compare(TEXT("Fence")))
-				{
-					for (int i = 0; i < ObjectCount; ++i)
-					{
-						// <TransformMatrix>
-						InFile >> Token;
-
-						XMFLOAT4X4 TransformMatrix{};
-						InFile >> TransformMatrix._11 >> TransformMatrix._12 >> TransformMatrix._13 >> TransformMatrix._14;
-						InFile >> TransformMatrix._21 >> TransformMatrix._22 >> TransformMatrix._23 >> TransformMatrix._24;
-						InFile >> TransformMatrix._31 >> TransformMatrix._32 >> TransformMatrix._33 >> TransformMatrix._34;
-						InFile >> TransformMatrix._41 >> TransformMatrix._42 >> TransformMatrix._43 >> TransformMatrix._44;
-
-						shared_ptr<CGameObject> Fence = make_shared<CGameObject>();
-						Fence->SetAlive(true);
-						Fence->SetChild(Model);
-						Fence->SetTransformMatrix(TransformMatrix);
-
-						m_Structures.push_back(Fence);
-					}
-				}
+			case OBJECT_TYPE_PLAYER:
+				m_Player->SetAlive(true);
+				m_Player->SetChild(Model);
+				m_Player->SetTransformMatrix(TransformMatrix);
+				break;
+			case OBJECT_TYPE_GUARD:
+				Object = make_shared<CGameObject>();
+				Object->SetAlive(true);
+				Object->SetChild(Model);
+				Object->SetTransformMatrix(TransformMatrix);
+				m_Police.push_back(Object);
+				break;
+			case OBJECT_TYPE_STRUCTURE:
+				Object = make_shared<CGameObject>();
+				Object->SetAlive(true);
+				Object->SetChild(Model);
+				Object->SetTransformMatrix(TransformMatrix);
+				m_Structures.push_back(Object);
+				break;
 			}
+		}
+		else if (!Token.compare(TEXT("</GameScene>")))
+		{
+			break;
 		}
 	}
 }
@@ -345,11 +332,11 @@ void CGameScene::BuildLights()
 	LIGHT Lights[MAX_LIGHTS]{};
 
 	Lights[0].m_IsActive = true;
-	Lights[0].m_Type = DIRECTIONAL_LIGHT;
-	Lights[0].m_Position = XMFLOAT3(0.0f, 150.0f, -150.0f);
-	Lights[0].m_Direction = XMFLOAT3(0.0f, -1.0f, 1.0f);
+	Lights[0].m_Type = LIGHT_TYPE_DIRECTIONAL;
+	Lights[0].m_Position = XMFLOAT3(0.0f, 150.0f, -500.0f);
+	Lights[0].m_Direction = XMFLOAT3(0.0f, -0.5f, 1.0f);
 	Lights[0].m_Color = XMFLOAT4(0.65f, 0.65f, 0.65f, 1.0f);
-	Lights[0].m_Range = 500.0f;
+	Lights[0].m_Range = 1000.0f;
 
 	//Lights[1].m_IsActive = true;
 	//Lights[1].m_Type = SPOT_LIGHT;

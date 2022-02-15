@@ -14,10 +14,10 @@ void CBilboardObject::ReleaseUploadBuffers()
 	}
 }
 
-void CBilboardObject::SetTexture(const shared_ptr<CTexture>& Texture)
+void CBilboardObject::SetMaterial(const shared_ptr<CMaterial>& Material)
 {
-	if (Texture)
+	if (Material)
 	{
-		m_Texture = Texture;
+		m_Materials.push_back(Material);
 	}
 }
