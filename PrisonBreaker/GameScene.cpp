@@ -20,20 +20,33 @@ void CGameScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandLi
 	shared_ptr<CCamera> Camera{ make_shared<CCamera>() };
 	Camera->CreateShaderVariables(D3D12Device, D3D12GraphicsCommandList);
 	Camera->GeneratePerspectiveProjectionMatrix(90.0f, (float)CLIENT_WIDTH / (float)CLIENT_HEIGHT, 1.0f, 500.0f);
-	Camera->GenerateViewMatrix(XMFLOAT3(0.0f, 5.0f, -100.0f), XMFLOAT3(0.0f, 0.0f, 1.0f));
+	Camera->GenerateViewMatrix(XMFLOAT3(0.0f, 5.0f, -150.0f), XMFLOAT3(0.0f, 0.0f, 1.0f));
+	//Camera->GenerateOrthographicsProjectionMatrix((float)PLANE_WIDTH, (float)PLANE_HEIGHT, 1.0f, 500.f);
+	//Camera->GenerateViewMatrix(XMFLOAT3(0.0f, 30.0f, 0.0f), XMFLOAT3(0.0f, -0.65f, -1.0f));
 
 	// 플레이어 객체를 생성한다.
 	m_Player = make_shared<CPlayer>();
 	m_Player->SetCamera(Camera);
 
 	// 파일로부터 씬 객체들을 생성하고 배치한다.
-	LoadSceneFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Model/GameScene.txt"));
+	LoadSceneFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Model/GameScene.bin"));
+
+	// 그림자의 영향을 받는 객체들을 하나의 벡터에 저장한다.
+	vector<shared_ptr<CGameObject>> ShadyObjects{};
+	ShadyObjects.reserve(m_Guards.size() + m_Structures.size() + 2);
+	ShadyObjects.push_back(m_Player);
+	ShadyObjects.push_back(m_Ground);
+	copy(m_Guards.begin(), m_Guards.end(), back_inserter(ShadyObjects));
+	copy(m_Structures.begin(), m_Structures.end(), back_inserter(ShadyObjects));
 
 	// 각 객체들을 렌더링하기 위한 쉐이더를 생성한다.
-	m_DepthWriteShader = make_shared<CDepthWriteShader>(D3D12Device, D3D12GraphicsCommandList, m_Lights, m_Player, m_Police, m_Structures);
+	m_DepthWriteShader = make_shared<CDepthWriteShader>(D3D12Device, D3D12GraphicsCommandList, m_Lights, ShadyObjects);
 	m_DepthWriteShader->CreatePipelineStateObject(D3D12Device, m_D3D12RootSignature.Get());
 
-	shared_ptr<CShadowMapShader> ShadowMapShader{ make_shared<CShadowMapShader>(m_Player, m_Police, m_Structures) };
+	m_DebugShader = make_shared<CDebugShader>();
+	m_DebugShader->CreatePipelineStateObject(D3D12Device, m_D3D12RootSignature.Get());
+
+	shared_ptr<CShadowMapShader> ShadowMapShader{ make_shared<CShadowMapShader>(ShadyObjects) };
 	ShadowMapShader->CreatePipelineStateObject(D3D12Device, m_D3D12RootSignature.Get());
 	m_Shaders.push_back(ShadowMapShader);
 
@@ -45,7 +58,6 @@ void CGameScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandLi
 	CTextureManager::GetInstance()->CreateShaderResourceViews(D3D12Device);
 
 	CreateShaderVariables(D3D12Device, D3D12GraphicsCommandList);
-	ReleaseUploadBuffers();
 }
 
 void CGameScene::ReleaseObjects()
@@ -121,11 +133,11 @@ void CGameScene::ReleaseUploadBuffers()
 		m_Player->ReleaseUploadBuffers();
 	}
 
-	for (const auto& Police : m_Police)
+	for (const auto& Guard : m_Guards)
 	{
-		if (Police)
+		if (Guard)
 		{
-			Police->ReleaseUploadBuffers();
+			Guard->ReleaseUploadBuffers();
 		}
 	}
 
@@ -214,17 +226,18 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	if (GetAsyncKeyState(VK_NUMPAD4) & 0x8000)
 	{
 		Angle += 2.0f * ElapsedTime;
+
+		m_Lights[0].m_Direction.x = -cosf(Angle);
+		m_Lights[0].m_Direction.z = sinf(Angle);
 	}
 
 	if (GetAsyncKeyState(VK_NUMPAD6) & 0x8000)
 	{
 		Angle -= 2.0f * ElapsedTime;
-	}
 
-	m_Lights[0].m_Position.x = 500.0f * cosf(Angle);
-	m_Lights[0].m_Position.z = -500.0f * sinf(Angle);
-	m_Lights[0].m_Direction.x = -cosf(Angle);
-	m_Lights[0].m_Direction.z = sinf(Angle);
+		m_Lights[0].m_Direction.x = -cosf(Angle);
+		m_Lights[0].m_Direction.z = sinf(Angle);
+	}
 }
 
 void CGameScene::Animate(float ElapsedTime)
@@ -260,35 +273,102 @@ void CGameScene::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList) con
 			Shader->Render(D3D12GraphicsCommandList, m_Player->GetCamera());
 		}
 	}
+
+	if (m_DebugShader)
+	{
+		m_DebugShader->Render(D3D12GraphicsCommandList, m_Player->GetCamera());
+		m_Player->RenderBoundingBox(D3D12GraphicsCommandList, m_Player->GetCamera());
+
+		for (const auto& Guards : m_Guards)
+		{
+			Guards->RenderBoundingBox(D3D12GraphicsCommandList, m_Player->GetCamera());
+		}
+
+		for (const auto& Structure : m_Structures)
+		{
+			Structure->RenderBoundingBox(D3D12GraphicsCommandList, m_Player->GetCamera());
+		}
+	}
 }
 
 void CGameScene::LoadSceneFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName)
 {
-	tifstream InFile{ FileName };
+	tifstream InFile{ FileName, ios::binary };
 	tstring Token{};
 
 	shared_ptr<CGameObject> Object{};
 	shared_ptr<CGameObject> Model{};
-	UINT ObjectCount{};
 	UINT ObjectType{};
 
+#ifdef BINARY_MODE
+	while (true)
+	{
+		File::ReadStringFromFile(InFile, Token);
+
+		if (Token == TEXT("<Name>"))
+		{
+			File::ReadStringFromFile(InFile, Token);
+
+			Model = CGameObject::LoadObjectFromFile(D3D12Device, D3D12GraphicsCommandList, Token);
+		}
+		else if (Token == TEXT("<Type>"))
+		{
+			ObjectType = File::ReadIntegerFromFile(InFile);
+		}
+		else if (Token == TEXT("<TransformMatrix>"))
+		{
+			XMFLOAT4X4 TransformMatrix{};
+
+			InFile.read(reinterpret_cast<TCHAR*>(&TransformMatrix), sizeof(XMFLOAT4X4));
+
+			switch (ObjectType)
+			{
+			case OBJECT_TYPE_PLAYER:
+				m_Player->SetAlive(true);
+				m_Player->SetChild(Model);
+				m_Player->SetTransformMatrix(TransformMatrix);
+				break;
+			case OBJECT_TYPE_NPC:
+				Object = make_shared<CGameObject>();
+				Object->SetAlive(true);
+				Object->SetChild(Model);
+				Object->SetTransformMatrix(TransformMatrix);
+				m_Guards.push_back(Object);
+				break;
+			case OBJECT_TYPE_TERRAIN:
+				m_Ground = make_shared<CGameObject>();
+				m_Ground->SetAlive(true);
+				m_Ground->SetChild(Model);
+				m_Ground->SetTransformMatrix(TransformMatrix);
+				break;
+			case OBJECT_TYPE_STRUCTURE:
+				Object = make_shared<CGameObject>();
+				Object->SetAlive(true);
+				Object->SetChild(Model);
+				Object->SetTransformMatrix(TransformMatrix);
+				m_Structures.push_back(Object);
+				break;
+			}
+		}
+		else if (Token == TEXT("</GameScene>"))
+		{
+			break;
+		}
+	}
+#else
 	while (InFile >> Token)
 	{
-		if (!Token.compare(TEXT("<Object>")))
-		{
-			InFile >> ObjectCount;
-		}
-		else if (!Token.compare(TEXT("<Name>")))
+		if (Token == TEXT("<Name>"))
 		{
 			InFile >> Token;
 
 			Model = CGameObject::LoadObjectFromFile(D3D12Device, D3D12GraphicsCommandList, Token);
 		}
-		else if (!Token.compare(TEXT("<Type>")))
+		else if (Token == TEXT("<Type>"))
 		{
 			InFile >> ObjectType;
 		}
-		else if (!Token.compare(TEXT("<TransformMatrix>")))
+		else if (Token == TEXT("<TransformMatrix>"))
 		{
 			XMFLOAT4X4 TransformMatrix{};
 
@@ -304,12 +384,18 @@ void CGameScene::LoadSceneFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComm
 				m_Player->SetChild(Model);
 				m_Player->SetTransformMatrix(TransformMatrix);
 				break;
-			case OBJECT_TYPE_GUARD:
+			case OBJECT_TYPE_NPC:
 				Object = make_shared<CGameObject>();
 				Object->SetAlive(true);
 				Object->SetChild(Model);
 				Object->SetTransformMatrix(TransformMatrix);
-				m_Police.push_back(Object);
+				m_Guards.push_back(Object);
+				break;
+			case OBJECT_TYPE_TERRAIN:
+				m_Ground = make_shared<CGameObject>();
+				m_Ground->SetAlive(true);
+				m_Ground->SetChild(Model);
+				m_Ground->SetTransformMatrix(TransformMatrix);
 				break;
 			case OBJECT_TYPE_STRUCTURE:
 				Object = make_shared<CGameObject>();
@@ -320,11 +406,12 @@ void CGameScene::LoadSceneFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComm
 				break;
 			}
 		}
-		else if (!Token.compare(TEXT("</GameScene>")))
+		else if (Token == TEXT("</GameScene>"))
 		{
 			break;
 		}
 	}
+#endif
 }
 
 void CGameScene::BuildLights()
@@ -333,10 +420,10 @@ void CGameScene::BuildLights()
 
 	Lights[0].m_IsActive = true;
 	Lights[0].m_Type = LIGHT_TYPE_DIRECTIONAL;
-	Lights[0].m_Position = XMFLOAT3(0.0f, 150.0f, -500.0f);
-	Lights[0].m_Direction = XMFLOAT3(0.0f, -0.5f, 1.0f);
-	Lights[0].m_Color = XMFLOAT4(0.65f, 0.65f, 0.65f, 1.0f);
-	Lights[0].m_Range = 1000.0f;
+	Lights[0].m_Position = XMFLOAT3(0.0f, 50.0f, 0.0f);
+	Lights[0].m_Direction = XMFLOAT3(0.0f, -1.0f, -1.0f);
+	Lights[0].m_Color = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f); // XMFLOAT4(0.45f, 0.45f, 0.45f, 1.0f);
+	Lights[0].m_Range = 500.0f;
 
 	//Lights[1].m_IsActive = true;
 	//Lights[1].m_Type = SPOT_LIGHT;

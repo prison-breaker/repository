@@ -2,16 +2,15 @@
 #include "ShadowMapShader.h"
 #include "GameScene.h"
 
-CDepthWriteShader::CDepthWriteShader(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, vector<LIGHT>& Lights, shared_ptr<CPlayer>& Player, vector<shared_ptr<CGameObject>>& Police, vector<shared_ptr<CGameObject>>& Structures) :
+CDepthWriteShader::CDepthWriteShader(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, vector<LIGHT>& Lights, vector<shared_ptr<CGameObject>>& ShadyObjects) :
 	m_Lights{ Lights },
-	m_Player{ Player },
-	m_Police{ Police },
-	m_Structures{ Structures },
 	m_ProjectionMatrixToTexture{ 0.5f,  0.0f, 0.0f, 0.0f,
 	                             0.0f, -0.5f, 0.0f, 0.0f,
 	                             0.0f,  0.0f, 1.0f, 0.0f,
 	                             0.5f,  0.5f, 0.0f, 1.0f }
 {
+	m_ShadyObjects.assign(ShadyObjects.begin(), ShadyObjects.end());
+
 	m_LightCamera = make_shared<CCamera>();
 	m_LightCamera->SetViewport(0, 0, DEPTH_BUFFER_WIDTH, DEPTH_BUFFER_HEIGHT, 0.0f, 1.0f);
 	m_LightCamera->SetScissorRect(0, 0, DEPTH_BUFFER_WIDTH, DEPTH_BUFFER_HEIGHT);
@@ -28,14 +27,10 @@ CDepthWriteShader::CDepthWriteShader(ID3D12Device* D3D12Device, ID3D12GraphicsCo
 
 D3D12_INPUT_LAYOUT_DESC CDepthWriteShader::CreateInputLayout(UINT PSONum)
 {
-	const UINT InputElementCount{ 5 };
+	const UINT InputElementCount{ 1 };
 	D3D12_INPUT_ELEMENT_DESC* D3D12InputElementDescs{ new D3D12_INPUT_ELEMENT_DESC[InputElementCount] };
 
 	D3D12InputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	D3D12InputElementDescs[1] = { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	D3D12InputElementDescs[2] = { "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 2, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	D3D12InputElementDescs[3] = { "BITANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 3, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	D3D12InputElementDescs[4] = { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 4, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
 
 	D3D12_INPUT_LAYOUT_DESC D3D12InputLayoutDesc{};
 
@@ -52,7 +47,7 @@ D3D12_RASTERIZER_DESC CDepthWriteShader::CreateRasterizerState(UINT PSONum)
 	D3D12RasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
 	D3D12RasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
 	D3D12RasterizerDesc.FrontCounterClockwise = false;
-	D3D12RasterizerDesc.DepthBias = 50000;
+	D3D12RasterizerDesc.DepthBias = 30000;
 	D3D12RasterizerDesc.DepthBiasClamp = 0.0f;
 	D3D12RasterizerDesc.SlopeScaledDepthBias = 1.0f;
 	D3D12RasterizerDesc.DepthClipEnable = true;
@@ -66,12 +61,12 @@ D3D12_RASTERIZER_DESC CDepthWriteShader::CreateRasterizerState(UINT PSONum)
 
 D3D12_SHADER_BYTECODE CDepthWriteShader::CreateVertexShader(ID3DBlob* D3D12ShaderBlob, UINT PSONum)
 {
-	return CGraphicsShader::CompileShaderFromFile(L"GameSceneShader.hlsl", "VS_Main", "vs_5_1", D3D12ShaderBlob);
+	return CGraphicsShader::CompileShaderFromFile(L"GameSceneShader.hlsl", "VS_Position", "vs_5_1", D3D12ShaderBlob);
 }
 
 D3D12_SHADER_BYTECODE CDepthWriteShader::CreatePixelShader(ID3DBlob* D3D12ShaderBlob, UINT PSONum)
 {
-	return CGraphicsShader::CompileShaderFromFile(L"GameSceneShader.hlsl", "PS_DetphWrite", "ps_5_1", D3D12ShaderBlob);
+	return CGraphicsShader::CompileShaderFromFile(L"GameSceneShader.hlsl", "PS_DepthWrite", "ps_5_1", D3D12ShaderBlob);
 }
 
 DXGI_FORMAT CDepthWriteShader::GetRTVFormat(UINT PSONum, UINT RTVNum)
@@ -94,19 +89,10 @@ void CDepthWriteShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandLi
 
 	CGraphicsShader::Render(D3D12GraphicsCommandList, Camera);
 
-	m_Player->UpdateTransform(Matrix4x4::Identity());
-	m_Player->Render(D3D12GraphicsCommandList, Camera);
-
-	for (const auto& Police : m_Police)
+	for (const auto& ShadyObject : m_ShadyObjects)
 	{
-		Police->UpdateTransform(Matrix4x4::Identity());
-		Police->Render(D3D12GraphicsCommandList, Camera);
-	}
-
-	for (const auto& Structure : m_Structures)
-	{
-		Structure->UpdateTransform(Matrix4x4::Identity());
-		Structure->Render(D3D12GraphicsCommandList, Camera);
+		 ShadyObject->UpdateTransform(Matrix4x4::Identity());
+		 ShadyObject->Render(D3D12GraphicsCommandList, Camera);
 	}
 }
 
@@ -158,6 +144,8 @@ void CDepthWriteShader::CreateShadowMap(ID3D12GraphicsCommandList* D3D12Graphics
 
 		switch (m_Lights[0].m_Type)
 		{
+		case LIGHT_TYPE_POINT:
+			break;
 		case LIGHT_TYPE_SPOT:
 			m_LightCamera->GeneratePerspectiveProjectionMatrix(60.0f, (float)DEPTH_BUFFER_WIDTH / (float)DEPTH_BUFFER_HEIGHT, NearPlaneDistance, FarPlaneDistance);
 			break;
@@ -189,12 +177,9 @@ void CDepthWriteShader::CreateShadowMap(ID3D12GraphicsCommandList* D3D12Graphics
 
 //=========================================================================================================================
 
-CShadowMapShader::CShadowMapShader(shared_ptr<CPlayer>& Player, vector<shared_ptr<CGameObject>>& Police, vector<shared_ptr<CGameObject>>& Structures) :
-	m_Player{ Player },
-	m_Police{ Police },
-	m_Structures{ Structures }
+CShadowMapShader::CShadowMapShader(vector<shared_ptr<CGameObject>>& ShadyObjects)
 {
-
+	m_ShadyObjects.assign(ShadyObjects.begin(), ShadyObjects.end());
 }
 
 D3D12_INPUT_LAYOUT_DESC CShadowMapShader::CreateInputLayout(UINT PSONum)
@@ -236,18 +221,8 @@ void CShadowMapShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandLis
 	CTextureManager::GetInstance()->GetTexture(TEXT("ShadowMap"))->UpdateShaderVariable(D3D12GraphicsCommandList);
 	CGraphicsShader::Render(D3D12GraphicsCommandList, Camera);
 
-	m_Player->UpdateTransform(Matrix4x4::Identity());
-	m_Player->Render(D3D12GraphicsCommandList, Camera);
-
-	for (const auto& Police : m_Police)
+	for (const auto& ShadyObject : m_ShadyObjects)
 	{
-		Police->UpdateTransform(Matrix4x4::Identity());
-		Police->Render(D3D12GraphicsCommandList, Camera);
-	}
-
-	for (const auto& Structure : m_Structures)
-	{
-		Structure->UpdateTransform(Matrix4x4::Identity());
-		Structure->Render(D3D12GraphicsCommandList, Camera);
+		ShadyObject->Render(D3D12GraphicsCommandList, Camera);
 	}
 }

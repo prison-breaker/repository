@@ -6,23 +6,21 @@ struct LIGHT;
 class CDepthWriteShader : public CGraphicsShader
 {
 private:
-	vector<LIGHT>&					 m_Lights;
-	shared_ptr<CCamera>			     m_LightCamera{};
+	vector<LIGHT>&					m_Lights;
+	shared_ptr<CCamera>			    m_LightCamera{};
 
-	shared_ptr<CPlayer>&             m_Player;
-	vector<shared_ptr<CGameObject>>& m_Police;
-	vector<shared_ptr<CGameObject>>& m_Structures;
+	vector<shared_ptr<CGameObject>> m_ShadyObjects{};
 					 
-	ComPtr<ID3D12DescriptorHeap>     m_D3D12RtvDescriptorHeap{};
-	ComPtr<ID3D12DescriptorHeap>     m_D3D12DsvDescriptorHeap{};
+	ComPtr<ID3D12DescriptorHeap>    m_D3D12RtvDescriptorHeap{};
+	ComPtr<ID3D12DescriptorHeap>    m_D3D12DsvDescriptorHeap{};
 									 
-	ComPtr<ID3D12Resource>		     m_D3D12DepthBuffer{};
-	shared_ptr<CTexture>		     m_DepthTexture{};
+	ComPtr<ID3D12Resource>		    m_D3D12DepthBuffer{};
+	shared_ptr<CTexture>		    m_DepthTexture{};
 									 
-	XMFLOAT4X4						 m_ProjectionMatrixToTexture{};
+	XMFLOAT4X4						m_ProjectionMatrixToTexture{};
 
 public:
-	CDepthWriteShader(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, vector<LIGHT>& Lights, shared_ptr<CPlayer>& Player, vector<shared_ptr<CGameObject>>& Police, vector<shared_ptr<CGameObject>>& Structures);
+	CDepthWriteShader(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, vector<LIGHT>& Lights, vector<shared_ptr<CGameObject>>& ShadyObjects);
 	virtual ~CDepthWriteShader() = default;
 
 	virtual D3D12_INPUT_LAYOUT_DESC CreateInputLayout(UINT PSONum = 0);
@@ -48,12 +46,10 @@ public:
 class CShadowMapShader : public CGraphicsShader
 {
 private:
-	shared_ptr<CPlayer>& m_Player;
-	vector<shared_ptr<CGameObject>>& m_Police;
-	vector<shared_ptr<CGameObject>>& m_Structures;
+	vector<shared_ptr<CGameObject>> m_ShadyObjects{};
 
 public:
-	CShadowMapShader(shared_ptr<CPlayer>& Player, vector<shared_ptr<CGameObject>>& Police, vector<shared_ptr<CGameObject>>& Structures);
+	CShadowMapShader(vector<shared_ptr<CGameObject>>& ShadyObjects);
 	virtual ~CShadowMapShader() = default;
 
 	virtual D3D12_INPUT_LAYOUT_DESC CreateInputLayout(UINT PSONum = 0);

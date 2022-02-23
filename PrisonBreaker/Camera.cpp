@@ -104,7 +104,7 @@ void CCamera::GenerateFrustum()
 	m_Frustum.Transform(m_Frustum, InverseViewMatrix);
 }
 
-bool CCamera::IsInFrustum(const BoundingOrientedBox& BoundingBox) const
+bool CCamera::IsInFrustum(const BoundingBox& BoundingBox) const
 {
 	return m_Frustum.Intersects(BoundingBox);
 }

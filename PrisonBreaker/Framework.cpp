@@ -375,7 +375,10 @@ void CFramework::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, 
 
 void CFramework::ProcessInput()
 {
-	CSceneManager::GetInstance()->ProcessInput(m_hWnd, m_Timer->GetElapsedTime());
+	if (m_IsActive)
+	{
+		CSceneManager::GetInstance()->ProcessInput(m_hWnd, m_Timer->GetElapsedTime());
+	}
 }
 
 void CFramework::Animate()

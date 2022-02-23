@@ -143,7 +143,7 @@ namespace DX
 		DDS_ALPHA_MODE DDSAlphaMode{ DDS_ALPHA_MODE_UNKNOWN };
 		bool IsCubeMap{};
 
-		DX::ThrowIfFailed(DirectX::LoadDDSTextureFromFileEx(D3D12Device, FileName.c_str(), 0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_DEFAULT, D3D12Texture.GetAddressOf(),
+		DX::ThrowIfFailed(DirectX::LoadDDSTextureFromFileEx(D3D12Device, wstring{ FileName.begin(), FileName.end() }.c_str(), 0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_DEFAULT, D3D12Texture.GetAddressOf(),
 			DDSData, Subresources, &DDSAlphaMode, &IsCubeMap));
 
 		UINT64 Bytes{ GetRequiredIntermediateSize(D3D12Texture.Get(), 0, (UINT)Subresources.size()) };
@@ -168,6 +168,27 @@ namespace DX
 
 		D3D12ResourceBarrier = D3D12ResourceBarrier.Transition(Resource, BeforeState, AfterState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, D3D12_RESOURCE_BARRIER_FLAG_NONE);
 		D3D12GraphicsCommandList->ResourceBarrier(1, &D3D12ResourceBarrier);
+	}
+}
+
+namespace File
+{
+	UINT ReadIntegerFromFile(tifstream& InFile)
+	{
+		UINT Value{};
+
+		InFile.read(reinterpret_cast<TCHAR*>(&Value), sizeof(int));
+
+		return Value;
+	}
+
+	void ReadStringFromFile(tifstream& InFile, tstring& Token)
+	{
+		UINT Length{};
+		
+		InFile.read(reinterpret_cast<TCHAR*>(&Length), sizeof(BYTE));
+		Token.resize(Length);
+		InFile.read(reinterpret_cast<TCHAR*>(&Token[0]), sizeof(BYTE) * Length);
 	}
 }
 

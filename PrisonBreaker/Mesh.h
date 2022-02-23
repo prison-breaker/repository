@@ -27,23 +27,28 @@ protected:
 	ComPtr<ID3D12Resource>	        m_D3D12TexCoordBuffer{};
 	ComPtr<ID3D12Resource>	        m_D3D12TexCoordUploadBuffer{};
 	D3D12_VERTEX_BUFFER_VIEW        m_D3D12TexCoordBufferView{};
-							 
+	
+	ComPtr<ID3D12Resource>			m_D3D12BoundingBoxPositionBuffer{};
+	ComPtr<ID3D12Resource>	        m_D3D12BoundingBoxPositionUploadBuffer{};
+	D3D12_VERTEX_BUFFER_VIEW        m_D3D12BoundingBoxPositionBufferView{};
+
 	vector<ComPtr<ID3D12Resource>>  m_D3D12IndexBuffers{};
 	vector<ComPtr<ID3D12Resource>>  m_D3D12IndexUploadBuffers{};
 	vector<D3D12_INDEX_BUFFER_VIEW>	m_D3D12IndexBufferViews{};
 							 
-	BoundingOrientedBox		        m_BoundingBox{};
+	BoundingBox						m_BoundingBox{};
 
 public:
 	CMesh() = default;
-	virtual ~CMesh() = default;
-
-	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, UINT SubSetIndex);
+	~CMesh() = default;
 
 	void LoadMeshFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile);
 
 	void ReleaseUploadBuffers();
 
-	void SetBoundingBox(const BoundingOrientedBox& BoundingBox);
-	const BoundingOrientedBox& GetBoundingBox() const;
+	void SetBoundingBox(const BoundingBox& BoundingBox);
+	const BoundingBox& GetBoundingBox() const;
+
+	void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, UINT SubSetIndex);
+	void RenderBoundingBox(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 };

@@ -55,7 +55,7 @@ public:
 	const XMFLOAT4X4& GetProjectionMatrix() const;
 
 	void GenerateFrustum();
-	bool IsInFrustum(const BoundingOrientedBox& BoundingBox) const;
+	bool IsInFrustum(const BoundingBox& BoundingBox) const;
 
 	const XMFLOAT3& GetRight() const;
 	const XMFLOAT3& GetUp() const;

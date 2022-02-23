@@ -7,10 +7,8 @@ ATOM MyRegisterClass(HINSTANCE hInstance);
 BOOL InitInstance(HINSTANCE, int);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
-int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPTSTR lpCmdLine, _In_ int nCmdShow)
+int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPTSTR lpCmdLine, _In_ int nCmdShow)
 {
-    locale::global(locale("ko_KR.UTF-8"));
-
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
     MyRegisterClass(hInstance);
@@ -42,9 +40,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
 ATOM MyRegisterClass(HINSTANCE hInstance)
 {
-    WNDCLASSEXW wcex{};
+    WNDCLASSEX wcex{};
 
-    wcex.cbSize = sizeof(WNDCLASSEXW);
+    wcex.cbSize = sizeof(WNDCLASSEX);
     wcex.style = CS_HREDRAW | CS_VREDRAW;
     wcex.lpfnWndProc = WndProc;
     wcex.cbClsExtra = 0;
@@ -57,7 +55,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     wcex.lpszClassName = TEXT("WndClass");
     wcex.hIconSm = nullptr;
 
-    return RegisterClassExW(&wcex);
+    return RegisterClassExA(&wcex);
 }
 
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
@@ -69,7 +67,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     
     AdjustWindowRect(&Rect, Style, FALSE);
     
-    HWND hWnd{ CreateWindowW(TEXT("WndClass"), TEXT("Prison Breaker"), Style, 0, 0, Rect.right - Rect.left, Rect.bottom - Rect.top, nullptr, nullptr, hInstance, nullptr) };
+    HWND hWnd{ CreateWindowA(TEXT("WndClass"), TEXT("Prison Breaker"), Style, 0, 0, Rect.right - Rect.left, Rect.bottom - Rect.top, nullptr, nullptr, hInstance, nullptr) };
 
     if (!hWnd)
     {
@@ -103,15 +101,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         CFramework::GetInstance()->ProcessKeyboardMessage(hWnd, message, wParam, lParam);
         break;
     case WM_DESTROY:
-#ifdef DEBUG_MODE
-    {
-        ComPtr<IDXGIDebug1> DXGIDebug{};
-
-        DX::ThrowIfFailed(DXGIGetDebugInterface1(0, __uuidof(IDXGIDebug1), (void**)DXGIDebug.GetAddressOf()));
-        DX::ThrowIfFailed(DXGIDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_DETAIL));
-#endif
         PostQuitMessage(0);
-    }
         break;
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);

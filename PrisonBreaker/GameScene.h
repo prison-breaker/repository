@@ -2,6 +2,7 @@
 #include "Scene.h"
 #include "SkyBoxShader.h"
 #include "ShadowMapShader.h"
+#include "DebugShader.h"
 
 struct LIGHT
 {
@@ -38,11 +39,13 @@ private:
 	CB_LIGHT*							m_MappedLights{};
 
 	shared_ptr<CPlayer>				    m_Player{};
-	vector<shared_ptr<CGameObject>>     m_Police{};
+	vector<shared_ptr<CGameObject>>     m_Guards{};
+	shared_ptr<CGameObject>				m_Ground{};
 	vector<shared_ptr<CGameObject>>		m_Structures{};
 
 	shared_ptr<CDepthWriteShader>		m_DepthWriteShader{};
 	vector<shared_ptr<CGraphicsShader>> m_Shaders{};
+	shared_ptr<CDebugShader>			m_DebugShader{};
 
 public:
 	CGameScene() = default;

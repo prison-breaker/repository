@@ -94,7 +94,7 @@ float Get3x3ShadowFactor(float2 ShadowTexCoord, float Depth)
 float4 DirectionalLight(int Index, float3 Normal, float3 ToCamera)
 {
 	float3 ToLight = -Lights[Index].m_Direction;
-	float AlbedoFactor = max(0.35f, dot(ToLight, Normal));
+	float AlbedoFactor = max(0.05f, dot(ToLight, Normal));
 
 	return Lights[Index].m_Color * AlbedoFactor * AlbedoColor;
 }
@@ -109,7 +109,7 @@ float4 Lighting(float3 Position, float3 Normal, float4 ShadowTexCoord)
 		if (Lights[i].m_IsActive)
 		{
 			float ShadowFactor = 1.0f;
-			ShadowFactor = max(0.3f, Get3x3ShadowFactor(ShadowTexCoord.xy / ShadowTexCoord.ww, ShadowTexCoord.z / ShadowTexCoord.w));
+			ShadowFactor = max(0.1f, Get3x3ShadowFactor(ShadowTexCoord.xy / ShadowTexCoord.ww, ShadowTexCoord.z / ShadowTexCoord.w));
 
 			if (Lights[i].m_Type == LIGHT_TYPE_DIRECTIONAL)
 			{
@@ -120,27 +120,6 @@ float4 Lighting(float3 Position, float3 Normal, float4 ShadowTexCoord)
 
 	return Color;
 }
-
-//float4 SpotLight(int Index, float3 Position, float3 Normal, float3 ToCamera, float2 TexCoord)
-//{
-//	float3 ToLight = Lights[Index].m_Position - Position;
-//	float Distance = length(ToLight);
-//	float DiffuseFactor = dot(ToLight, Normal);
-//	float4 DiffuseColor = AlbedoMapTexture.Sample(Sampler, TexCoord);
-//
-//	if (Distance <= Lights[Index].m_Range)
-//	{
-//		ToLight /= Distance;
-//
-//		float Alpha = max(dot(-ToLight, Lights[Index].m_Direction), 0.0f);
-//		float SpotFactor = pow(max(((Alpha - Lights[Index].m_Phi) / (Lights[Index].m_Theta - Lights[Index].m_Phi)), 0.0f), Lights[Index].m_Falloff);
-//		float AttenuationFactor = 1.0f / dot(Lights[Index].m_Attenuation, float3(1.0f, Distance, Distance * Distance));
-//
-//		return Lights[Index].m_Color * DiffuseColor * DiffuseFactor;//2.0f * Lights[Index].m_Color + DiffuseColor * DiffuseFactor * SpotFactor * AttenuationFactor;
-//	}
-//
-//	return float4(0.0f, 0.0f, 0.0f, 0.0f);
-//}
 
 // ====================================== BASIC SHADER ======================================
 
@@ -166,9 +145,10 @@ struct VS_OUTPUT
 
 VS_OUTPUT VS_Main(VS_INPUT Input)
 {
-	VS_OUTPUT Output;
+	VS_OUTPUT Output = (VS_OUTPUT)0;
 
 	float4 PositionW = mul(float4(Input.m_Position, 1.0f), WorldMatrix);
+
 	Output.m_PositionW = PositionW.xyz;
 	Output.m_Position = mul(mul(PositionW, ViewMatrix), ProjectionMatrix);
 	Output.m_NormalW = mul(Input.m_Normal, (float3x3)WorldMatrix);
@@ -195,7 +175,7 @@ float4 PS_Main(VS_OUTPUT Input) : SV_TARGET
 
 	if (TextureMask & TEXTURE_MASK_METALLIC_MAP)
 	{
-		Color += MetallicMapTexture.Sample(Sampler, Input.m_TexCoord);
+		//Color += MetallicMapTexture.Sample(Sampler, Input.m_TexCoord);
 	}
 
 	float3 NormalW = float3(0.0f, 0.0f, 0.0f);
@@ -203,11 +183,12 @@ float4 PS_Main(VS_OUTPUT Input) : SV_TARGET
 	if (TextureMask & TEXTURE_MASK_NORMAL_MAP)
 	{
 		float3x3 TBN = float3x3(Input.m_TangentW, Input.m_BiTangentW, Input.m_NormalW);
-		NormalW = normalize(mul(2.0f * NormalMapTexture.Sample(Sampler, Input.m_TexCoord).rgb - 1.0f, TBN));
+
+		NormalW = mul(2.0f * NormalMapTexture.Sample(Sampler, Input.m_TexCoord).rgb - 1.0f, TBN);
 	}
 	else
 	{
-		NormalW = normalize(Input.m_NormalW);
+		NormalW = Input.m_NormalW;
 	}
 
 	float4 Illumination = Lighting(Input.m_PositionW, NormalW, Input.m_ShadowTexCoord);
@@ -237,12 +218,14 @@ struct GS_OUTPUT_SKYBOX
 
 VS_OUTPUT_SKYBOX VS_SkyBox(VS_INPUT_SKYBOX Input)
 {
-	VS_OUTPUT_SKYBOX Output;
+	VS_OUTPUT_SKYBOX Output = (VS_OUTPUT_SKYBOX)0;
 
-	float4x4 CameraWorldMatrix = { 1.0f, 0.0f, 0.0f, 0.0f,
-								   0.0f, 1.0f, 0.0f, 0.0f,
-								   0.0f, 0.0f, 1.0f, 0.0f,
-									CameraPosition,  1.0f };
+	float4x4 CameraWorldMatrix = {
+		1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		 CameraPosition,  1.0f
+	};
 
 	Output.m_Center = (float3)mul(float4(Input.m_Position, 1.0f), CameraWorldMatrix);
 	Output.m_Size = Input.m_Size;
@@ -270,21 +253,21 @@ void GS_SkyBox(point VS_OUTPUT_SKYBOX Input[1], inout TriangleStream<GS_OUTPUT_S
 	float HalfWidth = 0.5f * Input[0].m_Size.x;
 	float HalfHeight = 0.5f * Input[0].m_Size.y;
 
-	float4 Vertices[4];
+	float4 Vertices[4] = {
+		float4(Input[0].m_Center + HalfWidth * Right - HalfHeight * Up, 1.0f),
+		float4(Input[0].m_Center + HalfWidth * Right + HalfHeight * Up, 1.0f),
+		float4(Input[0].m_Center - HalfWidth * Right - HalfHeight * Up, 1.0f),
+		float4(Input[0].m_Center - HalfWidth * Right + HalfHeight * Up, 1.0f)
+	};
 
-	Vertices[0] = float4(Input[0].m_Center + HalfWidth * Right - HalfHeight * Up, 1.0f);
-	Vertices[1] = float4(Input[0].m_Center + HalfWidth * Right + HalfHeight * Up, 1.0f);
-	Vertices[2] = float4(Input[0].m_Center - HalfWidth * Right - HalfHeight * Up, 1.0f);
-	Vertices[3] = float4(Input[0].m_Center - HalfWidth * Right + HalfHeight * Up, 1.0f);
+	float2 TexCoords[4] = {
+		float2(0.0f, 1.0f),
+		float2(0.0f, 0.0f),
+		float2(1.0f, 1.0f),
+		float2(1.0f, 0.0f)
+	};
 
-	float2 TexCoords[4];
-
-	TexCoords[0] = float2(0.0f, 1.0f);
-	TexCoords[1] = float2(0.0f, 0.0f);
-	TexCoords[2] = float2(1.0f, 1.0f);
-	TexCoords[3] = float2(1.0f, 0.0f);
-
-	GS_OUTPUT_SKYBOX Output;
+	GS_OUTPUT_SKYBOX Output = (GS_OUTPUT_SKYBOX)0;
 
 	for (int i = 0; i < 4; ++i)
 	{
@@ -308,11 +291,23 @@ struct PS_OUTPUT_DEPTH
 	float m_Depth    : SV_Depth;
 };
 
-PS_OUTPUT_DEPTH PS_DetphWrite(VS_OUTPUT Input)
+float4 VS_Position(float3 Input : POSITION) : SV_POSITION
 {
-	PS_OUTPUT_DEPTH Output;
+	return mul(mul(mul(float4(Input, 1.0f), WorldMatrix), ViewMatrix), ProjectionMatrix);
+}
 
-	Output.m_Position = Output.m_Depth = Input.m_Position.z;
+PS_OUTPUT_DEPTH PS_DepthWrite(float4 Input : SV_POSITION)
+{
+	PS_OUTPUT_DEPTH Output = (PS_OUTPUT_DEPTH)0;
+
+	Output.m_Position = Output.m_Depth = Input.z;
 
 	return Output;
+}
+
+// ====================================== BOUNDINGBOX SHADER ======================================
+
+float4 PS_BoundingBox(float4 Input : SV_POSITION) : SV_TARGET
+{
+	return float4(0.0f, 1.0f, 0.0f, 1.0f);
 }

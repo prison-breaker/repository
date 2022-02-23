@@ -22,7 +22,7 @@ D3D12_SHADER_BYTECODE CShader::CompileShaderFromFile(LPCWSTR FileName, LPCSTR Sh
 	}
 	else if (D3D12ErrorBlob)
 	{
-		OutputDebugString(L"쉐이더를 컴파일하지 못했습니다.");
+		OutputDebugString(TEXT("쉐이더를 컴파일하지 못했습니다."));
 	}
 
 	return D3D12ShaderBytecode;

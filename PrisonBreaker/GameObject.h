@@ -15,7 +15,7 @@ protected:
 							      
 	shared_ptr<CMesh>	          m_Mesh{};
 	vector<shared_ptr<CMaterial>> m_Materials{};
-	BoundingOrientedBox			  m_BoundingBox{};
+	BoundingBox					  m_BoundingBox{};
 
 	shared_ptr<CGameObject>       m_SiblingObject{};
 	shared_ptr<CGameObject>       m_ChildObject{};
@@ -62,8 +62,8 @@ public:
 	void SetMesh(const shared_ptr<CMesh>& Mesh);
 	void SetMaterial(const shared_ptr<CMaterial>& Material);
 
-	void SetBoundingBox(const BoundingOrientedBox& BoundingBox);
-	const BoundingOrientedBox& GetBoundingBox() const;
+	void SetBoundingBox(const BoundingBox& BoundingBox);
+	const BoundingBox& GetBoundingBox() const;
 
 	void SetChild(const shared_ptr<CGameObject>& ChildObject);
 
@@ -75,4 +75,6 @@ public:
 	void Scale(float Pitch, float Yaw, float Roll);
 	void Rotate(float Pitch, float Yaw, float Roll);
 	void Rotate(const XMFLOAT3& Axis, float Angle);
+
+	void RenderBoundingBox(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera);
 };

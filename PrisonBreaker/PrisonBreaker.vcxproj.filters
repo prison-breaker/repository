@@ -135,6 +135,9 @@
     <ClCompile Include="Material.cpp">
       <Filter>소스 파일\Material</Filter>
     </ClCompile>
+    <ClCompile Include="DebugShader.cpp">
+      <Filter>소스 파일\Shaders</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -199,6 +202,9 @@
     </ClInclude>
     <ClInclude Include="Material.h">
       <Filter>헤더 파일\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugShader.h">
+      <Filter>헤더 파일\Shaders</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

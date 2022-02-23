@@ -1,12 +1,15 @@
 #pragma once
 
 #define DEBUG_MODE
+#define BINARY_MODE
+
 #define WIN32_LEAN_AND_MEAN
 
 #define EPSILON			      1.0e-10f
 
 #define MAX_TITLE_LENGTH	        64
 #define MAX_LIGHTS                   1
+#define MAX_BOUNDINGBOX_INDICES		36
 
 #define CLIENT_WIDTH		      1920
 #define	CLIENT_HEIGHT		      1080
@@ -23,7 +26,8 @@
 enum OBJECT_TYPE
 {
 	OBJECT_TYPE_PLAYER = 1,
-	OBJECT_TYPE_GUARD,
+	OBJECT_TYPE_NPC,
+	OBJECT_TYPE_TERRAIN,
 	OBJECT_TYPE_STRUCTURE
 };
 
@@ -69,6 +73,8 @@ enum TEXTURE_TYPE
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <iterator>
+#include <algorithm>
 using namespace std;
 
 // DirectX Header
@@ -89,18 +95,24 @@ using namespace DirectX::PackedVector;
 using Microsoft::WRL::ComPtr;
 
 #ifdef _UNICODE
-#pragma comment(linker, "/entry:wWinMainCRTStartup /subsystem:console")
-typedef std::wstring   tstring;
-typedef std::wifstream tifstream;
 #define tcout wcout
 #define tcin  wcin
+#pragma comment(linker, "/entry:wWinMainCRTStartup /subsystem:console")
 #else
-#pragma comment(linker, "/entry:WinMainCRTStartup /subsystem:console")
-typedef std::string	   tstring;
-typedef std::ifstream  tifstream;
 #define tcout cout
 #define tcin  cin
+#pragma comment(linker, "/entry:WinMainCRTStartup /subsystem:console")
 #endif
+
+typedef basic_string<TCHAR>        tstring;
+typedef basic_istream<TCHAR>       tistream;
+typedef basic_ostream<TCHAR>       tostream;
+typedef basic_fstream<TCHAR>       tfstream;
+typedef basic_ifstream<TCHAR>      tifstream;
+typedef basic_ofstream<TCHAR>      tofstream;
+typedef basic_stringstream<TCHAR>  tstringstream;
+typedef basic_istringstream<TCHAR> tistringstream;
+typedef basic_ostringstream<TCHAR> tostringstream;
 
 // Managers
 #include "SceneManager.h"
@@ -116,6 +128,12 @@ namespace DX
 	ComPtr<ID3D12Resource> CreateTextureResourceFromDDSFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName, D3D12_RESOURCE_STATES D3D12ResourceStates, ID3D12Resource** D3D12UploadBuffer);
 
 	void ResourceTransition(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState);
+}
+
+namespace File
+{
+	UINT ReadIntegerFromFile(tifstream& InFile);
+	void ReadStringFromFile(tifstream& InFile, tstring& Token);
 }
 
 namespace Random

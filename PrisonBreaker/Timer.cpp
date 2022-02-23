@@ -89,8 +89,8 @@ UINT CTimer::GetFrameRate(LPTSTR Title, UINT Characters) const
 {
 	if (Title)
 	{
-		_itow_s(m_FrameRate, Title, Characters, 10);
-		wcscat_s(Title, Characters, _T(" FPS)"));
+		_itot_s(m_FrameRate, Title, Characters, 10);
+		_tcscat_s(Title, Characters, _T(" FPS)"));
 	}
 
 	return m_FrameRate;

@@ -3,26 +3,45 @@
 
 shared_ptr<CGameObject> CGameObject::LoadObjectFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName)
 {
-	tifstream InFile{ FileName };
+	tifstream InFile{ FileName, ios::binary };
 	tstring Token{};
 
 	shared_ptr<CGameObject> NewObject{};
 	unordered_map<tstring, shared_ptr<CMesh>> MeshCache{};
 	unordered_map<tstring, vector<shared_ptr<CMaterial>>> MaterialCache{};
 
-	while (InFile >> Token)
+#ifdef BINARY_MODE
+	while (true)
 	{
-		if (!Token.compare(TEXT("<Hierarchy>")))
+		File::ReadStringFromFile(InFile, Token);
+
+		if (Token == TEXT("<Hierarchy>"))
 		{
 			tcout << FileName << TEXT(" 로드 시작...") << endl;
 			NewObject = CGameObject::LoadObjectInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile, MeshCache, MaterialCache);
 		}
-		else if (!Token.compare(TEXT("</Hierarchy>")))
+		else if (Token == TEXT("</Hierarchy>"))
 		{
 			tcout << FileName << TEXT(" 로드 완료...") << endl;
 			break;
 		}
 	}
+#else
+	while (InFile >> Token)
+	{
+		if (Token == TEXT("<Hierarchy>"))
+		{
+			tcout << FileName << TEXT(" 로드 시작...") << endl;
+			NewObject = CGameObject::LoadObjectInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile, MeshCache, MaterialCache);
+		}
+		else if (Token == TEXT("</Hierarchy>"))
+		{
+			tcout << FileName << TEXT(" 로드 완료...") << endl;
+			break;
+		}
+	}
+#endif
+
 
 	return NewObject;
 }
@@ -32,43 +51,128 @@ shared_ptr<CGameObject> CGameObject::LoadObjectInfoFromFile(ID3D12Device* D3D12D
 	tstring Token{};
 	shared_ptr<CGameObject> NewObject{};
 
+#ifdef BINARY_MODE
+	while (true)
+	{
+		File::ReadStringFromFile(InFile, Token);
+
+		if (Token == TEXT("<Frame>"))
+		{
+			File::ReadStringFromFile(InFile, Token);
+
+			NewObject = make_shared<CGameObject>();
+			NewObject->SetAlive(true);
+			NewObject->m_FrameName = Token;
+
+			if (MeshCache.count(NewObject->m_FrameName))
+			{
+				NewObject->SetMesh(MeshCache[NewObject->m_FrameName]);
+			}
+
+			if (MaterialCache.count(NewObject->m_FrameName))
+			{
+				copy(MaterialCache[NewObject->m_FrameName].begin(), MaterialCache[NewObject->m_FrameName].end(), back_inserter(NewObject->m_Materials));
+			}
+		}
+		else if (Token == TEXT("<TransformMatrix>"))
+		{
+			InFile.read(reinterpret_cast<TCHAR*>(&NewObject->m_TransformMatrix), sizeof(XMFLOAT4X4));
+		}
+		else if (Token == TEXT("<Mesh>"))
+		{
+			File::ReadStringFromFile(InFile, Token);
+
+			if (Token != TEXT("Null"))
+			{
+				shared_ptr<CMesh> Mesh{ make_shared<CMesh>() };
+
+				Mesh->LoadMeshFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
+				NewObject->SetMesh(Mesh);
+				MeshCache.emplace(NewObject->m_FrameName, Mesh);
+			}
+		}
+		else if (Token == TEXT("<Materials>"))
+		{
+			UINT MaterialCount{ File::ReadIntegerFromFile(InFile) };
+
+			if (MaterialCount > 0)
+			{
+				NewObject->m_Materials.reserve(MaterialCount);
+
+				for (UINT i = 0; i < MaterialCount; ++i)
+				{
+					shared_ptr<CMaterial> Material{ make_shared<CMaterial>() };
+
+					Material->LoadMaterialFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
+					NewObject->m_Materials.push_back(Material);
+				}
+
+				MaterialCache.emplace(NewObject->m_FrameName, NewObject->m_Materials);
+			}
+		}
+		else if (Token == TEXT("<ChildCount>"))
+		{
+			UINT ChildCount{ File::ReadIntegerFromFile(InFile) };
+
+			if (ChildCount > 0)
+			{
+				for (UINT i = 0; i < ChildCount; ++i)
+				{
+					shared_ptr<CGameObject> ChildObject{ CGameObject::LoadObjectInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile, MeshCache, MaterialCache) };
+
+					if (ChildObject)
+					{
+						NewObject->SetChild(ChildObject);
+					}
+				}
+			}
+		}
+		else if (Token == TEXT("</Frame>"))
+		{
+			break;
+		}
+	}
+#else
 	while (InFile >> Token)
 	{
-		if (!Token.compare(TEXT("<Frame>")))
+		if (Token == TEXT("<Frame>"))
 		{
 			NewObject = make_shared<CGameObject>();
 			NewObject->SetAlive(true);
 
 			InFile >> NewObject->m_FrameName;
+
+			if (MeshCache.count(NewObject->m_FrameName))
+			{
+				NewObject->SetMesh(MeshCache[NewObject->m_FrameName]);
+			}
+
+			if (MaterialCache.count(NewObject->m_FrameName))
+			{
+				copy(MaterialCache[NewObject->m_FrameName].begin(), MaterialCache[NewObject->m_FrameName].end(), back_inserter(NewObject->m_Materials));
+			}
 		}
-		else if (!Token.compare(TEXT("<TransformMatrix>")))
+		else if (Token == TEXT("<TransformMatrix>"))
 		{
 			InFile >> NewObject->m_TransformMatrix._11 >> NewObject->m_TransformMatrix._12 >> NewObject->m_TransformMatrix._13 >> NewObject->m_TransformMatrix._14;
 			InFile >> NewObject->m_TransformMatrix._21 >> NewObject->m_TransformMatrix._22 >> NewObject->m_TransformMatrix._23 >> NewObject->m_TransformMatrix._24;
 			InFile >> NewObject->m_TransformMatrix._31 >> NewObject->m_TransformMatrix._32 >> NewObject->m_TransformMatrix._33 >> NewObject->m_TransformMatrix._34;
 			InFile >> NewObject->m_TransformMatrix._41 >> NewObject->m_TransformMatrix._42 >> NewObject->m_TransformMatrix._43 >> NewObject->m_TransformMatrix._44;
 		}
-		else if (!Token.compare(TEXT("<Mesh>")))
+		else if (Token == TEXT("<Mesh>"))
 		{
 			InFile >> Token;
 
-			if (Token.compare(TEXT("Null")))
+			if (Token != TEXT("Null"))
 			{
-				if (MeshCache.count(NewObject->m_FrameName))
-				{
-					NewObject->SetMesh(MeshCache[NewObject->m_FrameName]);
-				}
-				else
-				{
-					shared_ptr<CMesh> Mesh{ make_shared<CMesh>() };
+				shared_ptr<CMesh> Mesh{ make_shared<CMesh>() };
 
-					Mesh->LoadMeshFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
-					NewObject->SetMesh(Mesh);
-					MeshCache.emplace(NewObject->m_FrameName, Mesh);
-				}
+				Mesh->LoadMeshFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
+				NewObject->SetMesh(Mesh);
+				MeshCache.emplace(NewObject->m_FrameName, Mesh);
 			}
 		}
-		else if (!Token.compare(TEXT("<Materials>")))
+		else if (Token == TEXT("<Materials>"))
 		{
 			UINT MaterialCount{};
 
@@ -78,28 +182,18 @@ shared_ptr<CGameObject> CGameObject::LoadObjectInfoFromFile(ID3D12Device* D3D12D
 			{
 				NewObject->m_Materials.reserve(MaterialCount);
 
-				if (MaterialCache.count(NewObject->m_FrameName))
+				for (UINT i = 0; i < MaterialCount; ++i)
 				{
-					for (UINT i = 0; i < MaterialCount; ++i)
-					{
-						NewObject->m_Materials.emplace_back(MaterialCache[NewObject->m_FrameName][i]);
-					}
-				}
-				else
-				{
-					for (UINT i = 0; i < MaterialCount; ++i)
-					{
-						shared_ptr<CMaterial> Material{ make_shared<CMaterial>() };
+					shared_ptr<CMaterial> Material{ make_shared<CMaterial>() };
 
-						Material->LoadMaterialFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
-						NewObject->m_Materials.emplace_back(Material);
-					}
-
-					MaterialCache.emplace(NewObject->m_FrameName, NewObject->m_Materials);
+					Material->LoadMaterialFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
+					NewObject->m_Materials.push_back(Material);
 				}
+
+				MaterialCache.emplace(NewObject->m_FrameName, NewObject->m_Materials);
 			}
 		}
-		else if (!Token.compare(TEXT("<ChildCount>")))
+		else if (Token == TEXT("<ChildCount>"))
 		{
 			UINT ChildCount{};
 
@@ -118,11 +212,12 @@ shared_ptr<CGameObject> CGameObject::LoadObjectInfoFromFile(ID3D12Device* D3D12D
 				}
 			}
 		}
-		else if (!Token.compare(TEXT("</Frame>")))
+		else if (Token == TEXT("</Frame>"))
 		{
 			break;
 		}
 	}
+#endif
 
 	return NewObject;
 }
@@ -176,6 +271,7 @@ void CGameObject::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CC
 			    UpdateShaderVariables(D3D12GraphicsCommandList);
 
 				UINT MaterialCount{ (UINT)m_Materials.size() };
+
 				for (UINT i = 0; i < MaterialCount; ++i)
 				{
 					if (m_Materials[i])
@@ -302,12 +398,12 @@ void CGameObject::SetMaterial(const shared_ptr<CMaterial>& Material)
 	}
 }
 
-void CGameObject::SetBoundingBox(const BoundingOrientedBox& BoundingBox)
+void CGameObject::SetBoundingBox(const BoundingBox& BoundingBox)
 {
 	m_BoundingBox = BoundingBox;
 }
 
-const BoundingOrientedBox& CGameObject::GetBoundingBox() const
+const BoundingBox& CGameObject::GetBoundingBox() const
 {
 	return m_BoundingBox;
 }
@@ -336,7 +432,7 @@ bool CGameObject::IsVisible(CCamera* Camera) const
 	{
 		if (m_Mesh)
 		{
-			BoundingOrientedBox BoundingBox{ m_Mesh->GetBoundingBox() };
+			BoundingBox BoundingBox{ m_Mesh->GetBoundingBox() };
 
 			BoundingBox.Transform(BoundingBox, XMLoadFloat4x4(&m_WorldMatrix));
 			Visible = Camera->IsInFrustum(BoundingBox);
@@ -351,7 +447,6 @@ void CGameObject::UpdateBoundingBox()
 	if (m_Mesh)
 	{
 		m_Mesh->GetBoundingBox().Transform(m_BoundingBox, XMLoadFloat4x4(&m_WorldMatrix));
-		XMStoreFloat4(&m_BoundingBox.Orientation, XMQuaternionNormalize(XMLoadFloat4(&m_BoundingBox.Orientation)));
 	}
 }
 
@@ -368,6 +463,8 @@ void CGameObject::UpdateTransform(const XMFLOAT4X4& ParentMatrix)
 	{
 		m_ChildObject->UpdateTransform(m_WorldMatrix);
 	}
+
+	UpdateBoundingBox();
 }
 
 void CGameObject::Scale(float Pitch, float Yaw, float Roll)
@@ -395,4 +492,30 @@ void CGameObject::Rotate(const XMFLOAT3& Axis, float Angle)
 	m_TransformMatrix = Matrix4x4::Multiply(RotationMatrix, m_TransformMatrix);
 
 	UpdateTransform(Matrix4x4::Identity());
+}
+
+void CGameObject::RenderBoundingBox(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera)
+{
+	if (IsAlive())
+	{
+		if (IsVisible(Camera))
+		{
+			if (m_Mesh)
+			{
+				UpdateShaderVariables(D3D12GraphicsCommandList);
+
+				m_Mesh->RenderBoundingBox(D3D12GraphicsCommandList);
+			}
+		}
+
+		if (m_SiblingObject)
+		{
+			m_SiblingObject->RenderBoundingBox(D3D12GraphicsCommandList, Camera);
+		}
+
+		if (m_ChildObject)
+		{
+			m_ChildObject->RenderBoundingBox(D3D12GraphicsCommandList, Camera);
+		}
+	}
 }
