@@ -25,7 +25,15 @@ void CSceneManager::ReserveChangeScene(const tstring& SceneName)
 	}
 }
 
-void CSceneManager::ChangeScene()
+void CSceneManager::ChangeScene(const tstring& SceneName)
+{
+	if (m_Scenes.count(SceneName))
+	{
+		m_CurrentScene = m_Scenes[SceneName];
+	}
+}
+
+void CSceneManager::ChangeToReservedScene()
 {
 	if (m_ReservedScene)
 	{

@@ -2,15 +2,14 @@
 #include "ShadowMapShader.h"
 #include "GameScene.h"
 
-CDepthWriteShader::CDepthWriteShader(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, vector<LIGHT>& Lights, vector<shared_ptr<CGameObject>>& ShadyObjects) :
+CDepthWriteShader::CDepthWriteShader(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, vector<LIGHT>& Lights, vector<shared_ptr<CGameObject>>& ShadyObjects, UINT StateCount) : CGraphicsShader(StateCount),
 	m_Lights{ Lights },
+	m_ShadyObjects{ ShadyObjects },
 	m_ProjectionMatrixToTexture{ 0.5f,  0.0f, 0.0f, 0.0f,
 	                             0.0f, -0.5f, 0.0f, 0.0f,
 	                             0.0f,  0.0f, 1.0f, 0.0f,
 	                             0.5f,  0.5f, 0.0f, 1.0f }
 {
-	m_ShadyObjects.assign(ShadyObjects.begin(), ShadyObjects.end());
-
 	m_LightCamera = make_shared<CCamera>();
 	m_LightCamera->SetViewport(0, 0, DEPTH_BUFFER_WIDTH, DEPTH_BUFFER_HEIGHT, 0.0f, 1.0f);
 	m_LightCamera->SetScissorRect(0, 0, DEPTH_BUFFER_WIDTH, DEPTH_BUFFER_HEIGHT);
@@ -25,7 +24,7 @@ CDepthWriteShader::CDepthWriteShader(ID3D12Device* D3D12Device, ID3D12GraphicsCo
 	CreateDepthStencilView(D3D12Device);
 }
 
-D3D12_INPUT_LAYOUT_DESC CDepthWriteShader::CreateInputLayout(UINT PSONum)
+D3D12_INPUT_LAYOUT_DESC CDepthWriteShader::CreateInputLayout(UINT StateNum)
 {
 	const UINT InputElementCount{ 1 };
 	D3D12_INPUT_ELEMENT_DESC* D3D12InputElementDescs{ new D3D12_INPUT_ELEMENT_DESC[InputElementCount] };
@@ -40,14 +39,14 @@ D3D12_INPUT_LAYOUT_DESC CDepthWriteShader::CreateInputLayout(UINT PSONum)
 	return D3D12InputLayoutDesc;
 }
 
-D3D12_RASTERIZER_DESC CDepthWriteShader::CreateRasterizerState(UINT PSONum)
+D3D12_RASTERIZER_DESC CDepthWriteShader::CreateRasterizerState(UINT StateNum)
 {
 	D3D12_RASTERIZER_DESC D3D12RasterizerDesc{};
 
 	D3D12RasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
 	D3D12RasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
 	D3D12RasterizerDesc.FrontCounterClockwise = false;
-	D3D12RasterizerDesc.DepthBias = 30000;
+	D3D12RasterizerDesc.DepthBias = 10000;
 	D3D12RasterizerDesc.DepthBiasClamp = 0.0f;
 	D3D12RasterizerDesc.SlopeScaledDepthBias = 1.0f;
 	D3D12RasterizerDesc.DepthClipEnable = true;
@@ -59,27 +58,27 @@ D3D12_RASTERIZER_DESC CDepthWriteShader::CreateRasterizerState(UINT PSONum)
 	return D3D12RasterizerDesc;
 }
 
-D3D12_SHADER_BYTECODE CDepthWriteShader::CreateVertexShader(ID3DBlob* D3D12ShaderBlob, UINT PSONum)
+D3D12_SHADER_BYTECODE CDepthWriteShader::CreateVertexShader(ID3DBlob* D3D12ShaderBlob, UINT StateNum)
 {
 	return CGraphicsShader::CompileShaderFromFile(L"GameSceneShader.hlsl", "VS_Position", "vs_5_1", D3D12ShaderBlob);
 }
 
-D3D12_SHADER_BYTECODE CDepthWriteShader::CreatePixelShader(ID3DBlob* D3D12ShaderBlob, UINT PSONum)
+D3D12_SHADER_BYTECODE CDepthWriteShader::CreatePixelShader(ID3DBlob* D3D12ShaderBlob, UINT StateNum)
 {
 	return CGraphicsShader::CompileShaderFromFile(L"GameSceneShader.hlsl", "PS_DepthWrite", "ps_5_1", D3D12ShaderBlob);
 }
 
-DXGI_FORMAT CDepthWriteShader::GetRTVFormat(UINT PSONum, UINT RTVNum)
+DXGI_FORMAT CDepthWriteShader::GetRTVFormat(UINT StateNum, UINT RenderTargetNum)
 {
 	return DXGI_FORMAT_R32_FLOAT;
 }
 
-DXGI_FORMAT CDepthWriteShader::GetDSVFormat(UINT PSONum)
+DXGI_FORMAT CDepthWriteShader::GetDSVFormat(UINT StateNum)
 {
 	return DXGI_FORMAT_D32_FLOAT;
 }
 
-void CDepthWriteShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera)
+void CDepthWriteShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, UINT StateNum)
 {
 	if (Camera)
 	{
@@ -87,7 +86,7 @@ void CDepthWriteShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandLi
 		Camera->UpdateShaderVariables(D3D12GraphicsCommandList);
 	}
 
-	CGraphicsShader::Render(D3D12GraphicsCommandList, Camera);
+	CGraphicsShader::Render(D3D12GraphicsCommandList, Camera, StateNum);
 
 	for (const auto& ShadyObject : m_ShadyObjects)
 	{
@@ -134,32 +133,33 @@ void CDepthWriteShader::CreateDepthStencilView(ID3D12Device* D3D12Device)
 	D3D12Device->CreateDepthStencilView(m_D3D12DepthBuffer.Get(), &D3D12DepthStencilViewDesc, m_D3D12DsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 }
 
-void CDepthWriteShader::CreateShadowMap(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
+void CDepthWriteShader::PrepareShadowMap(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
 	if (m_Lights[0].m_IsActive)
 	{
-		XMFLOAT3 Position{ m_Lights[0].m_Position };
-		XMFLOAT3 Look{ m_Lights[0].m_Direction };
-		float NearPlaneDistance{ 1.0f }, FarPlaneDistance{ m_Lights[0].m_Range };
+		const float NearPlaneDistance{ 1.0f };
+		const float FarPlaneDistance{ m_Lights[0].m_Range };
 
 		switch (m_Lights[0].m_Type)
 		{
 		case LIGHT_TYPE_POINT:
 			break;
 		case LIGHT_TYPE_SPOT:
-			m_LightCamera->GeneratePerspectiveProjectionMatrix(60.0f, (float)DEPTH_BUFFER_WIDTH / (float)DEPTH_BUFFER_HEIGHT, NearPlaneDistance, FarPlaneDistance);
+			m_LightCamera->GeneratePerspectiveProjectionMatrix(90.0f, (float)DEPTH_BUFFER_WIDTH / (float)DEPTH_BUFFER_HEIGHT, NearPlaneDistance, FarPlaneDistance);
 			break;
 		case LIGHT_TYPE_DIRECTIONAL:
 			m_LightCamera->GenerateOrthographicsProjectionMatrix((float)PLANE_WIDTH, (float)PLANE_HEIGHT, NearPlaneDistance, FarPlaneDistance);
 			break;
 		}
 
-		m_LightCamera->GenerateViewMatrix(Position, Look);
+		m_LightCamera->GenerateViewMatrix(m_Lights[0].m_Position, m_Lights[0].m_Direction);
 
 		XMMATRIX ToTexCoordMatrix{ XMMatrixTranspose(XMLoadFloat4x4(&m_LightCamera->GetViewMatrix()) * XMLoadFloat4x4(&m_LightCamera->GetProjectionMatrix()) * XMLoadFloat4x4(&m_ProjectionMatrixToTexture)) };
+		
 		XMStoreFloat4x4(&m_Lights[0].m_ToTexCoordMatrix, ToTexCoordMatrix);
 
 		ID3D12Resource* DepthTexture{ m_DepthTexture->GetResource() };
+	
 		DX::ResourceTransition(D3D12GraphicsCommandList, DepthTexture, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
 		
 		CD3DX12_CPU_DESCRIPTOR_HANDLE D3D12RtvCPUDescriptorHandle{ m_D3D12RtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart() };
@@ -177,12 +177,13 @@ void CDepthWriteShader::CreateShadowMap(ID3D12GraphicsCommandList* D3D12Graphics
 
 //=========================================================================================================================
 
-CShadowMapShader::CShadowMapShader(vector<shared_ptr<CGameObject>>& ShadyObjects)
+CShadowMapShader::CShadowMapShader(vector<shared_ptr<CGameObject>>& ShadyObjects, UINT StateCount) : CGraphicsShader(StateCount),
+	m_ShadyObjects{ ShadyObjects }
 {
-	m_ShadyObjects.assign(ShadyObjects.begin(), ShadyObjects.end());
+
 }
 
-D3D12_INPUT_LAYOUT_DESC CShadowMapShader::CreateInputLayout(UINT PSONum)
+D3D12_INPUT_LAYOUT_DESC CShadowMapShader::CreateInputLayout(UINT StateNum)
 {
 	const UINT InputElementCount{ 5 };
 	D3D12_INPUT_ELEMENT_DESC* D3D12InputElementDescs{ new D3D12_INPUT_ELEMENT_DESC[InputElementCount] };
@@ -201,26 +202,21 @@ D3D12_INPUT_LAYOUT_DESC CShadowMapShader::CreateInputLayout(UINT PSONum)
 	return D3D12InputLayoutDesc;
 }
 
-D3D12_SHADER_BYTECODE CShadowMapShader::CreateVertexShader(ID3DBlob* D3D12ShaderBlob, UINT PSONum)
+D3D12_SHADER_BYTECODE CShadowMapShader::CreateVertexShader(ID3DBlob* D3D12ShaderBlob, UINT StateNum)
 {
 	return CGraphicsShader::CompileShaderFromFile(L"GameSceneShader.hlsl", "VS_Main", "vs_5_1", D3D12ShaderBlob);
 }
 
-D3D12_SHADER_BYTECODE CShadowMapShader::CreatePixelShader(ID3DBlob* D3D12ShaderBlob, UINT PSONum)
+D3D12_SHADER_BYTECODE CShadowMapShader::CreatePixelShader(ID3DBlob* D3D12ShaderBlob, UINT StateNum)
 {
 	return CGraphicsShader::CompileShaderFromFile(L"GameSceneShader.hlsl", "PS_Main", "ps_5_1", D3D12ShaderBlob);
 }
 
-void CShadowMapShader::CreatePipelineStateObject(ID3D12Device* D3D12Device, ID3D12RootSignature* D3D12RootSignature, UINT PSONum)
+void CShadowMapShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, UINT StateNum)
 {
-	CGraphicsShader::CreatePipelineStateObject(D3D12Device, D3D12RootSignature);
-}
-
-void CShadowMapShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera)
-{
+	CGraphicsShader::Render(D3D12GraphicsCommandList, Camera, StateNum);
 	CTextureManager::GetInstance()->GetTexture(TEXT("ShadowMap"))->UpdateShaderVariable(D3D12GraphicsCommandList);
-	CGraphicsShader::Render(D3D12GraphicsCommandList, Camera);
-
+	
 	for (const auto& ShadyObject : m_ShadyObjects)
 	{
 		ShadyObject->Render(D3D12GraphicsCommandList, Camera);

@@ -7,7 +7,7 @@ CSkyBoxShader::CSkyBoxShader(ID3D12Device* D3D12Device, ID3D12GraphicsCommandLis
 
 }
 
-D3D12_INPUT_LAYOUT_DESC CSkyBoxShader::CreateInputLayout(UINT PSONum)
+D3D12_INPUT_LAYOUT_DESC CSkyBoxShader::CreateInputLayout(UINT StateNum)
 {
 	const UINT InputElementCount{ 2 };
 	D3D12_INPUT_ELEMENT_DESC* D3D12InputElementDescs{ new D3D12_INPUT_ELEMENT_DESC[InputElementCount] };
@@ -23,7 +23,7 @@ D3D12_INPUT_LAYOUT_DESC CSkyBoxShader::CreateInputLayout(UINT PSONum)
 	return D3D12InputLayoutDesc;
 }
 
-D3D12_DEPTH_STENCIL_DESC CSkyBoxShader::CreateDepthStencilState(UINT PSONum)
+D3D12_DEPTH_STENCIL_DESC CSkyBoxShader::CreateDepthStencilState(UINT StateNum)
 {
 	D3D12_DEPTH_STENCIL_DESC D3D12DepthStencilDesc{};
 
@@ -45,24 +45,32 @@ D3D12_DEPTH_STENCIL_DESC CSkyBoxShader::CreateDepthStencilState(UINT PSONum)
 	return D3D12DepthStencilDesc;
 }
 
-D3D12_SHADER_BYTECODE CSkyBoxShader::CreateVertexShader(ID3DBlob* D3D12ShaderBlob, UINT PSONum)
+D3D12_SHADER_BYTECODE CSkyBoxShader::CreateVertexShader(ID3DBlob* D3D12ShaderBlob, UINT StateNum)
 {
 	return CGraphicsShader::CompileShaderFromFile(L"GameSceneShader.hlsl", "VS_SkyBox", "vs_5_1", D3D12ShaderBlob);
 }
 
-D3D12_SHADER_BYTECODE CSkyBoxShader::CreateGeometryShader(ID3DBlob* D3D12ShaderBlob, UINT PSONum)
+D3D12_SHADER_BYTECODE CSkyBoxShader::CreateGeometryShader(ID3DBlob* D3D12ShaderBlob, UINT StateNum)
 {
 	return CGraphicsShader::CompileShaderFromFile(L"GameSceneShader.hlsl", "GS_SkyBox", "gs_5_1", D3D12ShaderBlob);
 }
 
-D3D12_SHADER_BYTECODE CSkyBoxShader::CreatePixelShader(ID3DBlob* D3D12ShaderBlob, UINT PSONum)
+D3D12_SHADER_BYTECODE CSkyBoxShader::CreatePixelShader(ID3DBlob* D3D12ShaderBlob, UINT StateNum)
 {
 	return CGraphicsShader::CompileShaderFromFile(L"GameSceneShader.hlsl", "PS_SkyBox", "ps_5_1", D3D12ShaderBlob);
 }
 
-D3D12_PRIMITIVE_TOPOLOGY_TYPE CSkyBoxShader::GetPrimitiveType(UINT PSONum)
+D3D12_PRIMITIVE_TOPOLOGY_TYPE CSkyBoxShader::GetPrimitiveType(UINT StateNum)
 {
 	return D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
+}
+
+void  CSkyBoxShader::ReleaseUploadBuffers()
+{
+	if (m_SkyBox)
+	{
+		m_SkyBox->ReleaseUploadBuffers();
+	}
 }
 
 void CSkyBoxShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera)

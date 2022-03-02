@@ -29,7 +29,7 @@ private:
 	XMFLOAT3	           m_Offset{ 0.0f, 0.0, -6.0f };
 	float		           m_TimeLag{ 0.1f };
 				           
-	BoundingFrustum        m_Frustum{};
+	BoundingFrustum        m_BoundingFrustum{};
 
 	ComPtr<ID3D12Resource> m_D3D12Camera{};
 	CB_CAMERA*			   m_MappedCamera{};
@@ -54,8 +54,8 @@ public:
 	void GeneratePerspectiveProjectionMatrix(float FOVAngleY, float AspectRatio, float NearZ, float FarZ);
 	const XMFLOAT4X4& GetProjectionMatrix() const;
 
-	void GenerateFrustum();
-	bool IsInFrustum(const BoundingBox& BoundingBox) const;
+	void GenerateBoundingFrustum();
+	bool IsInBoundingFrustum(const BoundingBox& BoundingBox) const;
 
 	const XMFLOAT3& GetRight() const;
 	const XMFLOAT3& GetUp() const;

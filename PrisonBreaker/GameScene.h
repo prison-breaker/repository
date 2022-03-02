@@ -73,6 +73,6 @@ public:
 	virtual void PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList) const;
 
-	void LoadSceneFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName);
+	void LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName);
 	void BuildLights();
 };

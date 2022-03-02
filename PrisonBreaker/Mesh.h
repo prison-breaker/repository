@@ -40,15 +40,56 @@ protected:
 
 public:
 	CMesh() = default;
-	~CMesh() = default;
+	virtual ~CMesh() = default;
 
-	void LoadMeshFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile);
+	virtual void CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
+	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
+	virtual void ReleaseShaderVariables();
 
-	void ReleaseUploadBuffers();
+	virtual void ReleaseUploadBuffers();
+
+	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, UINT SubSetIndex);
+
+	void LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile);
 
 	void SetBoundingBox(const BoundingBox& BoundingBox);
 	const BoundingBox& GetBoundingBox() const;
-
-	void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, UINT SubSetIndex);
 	void RenderBoundingBox(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
+};
+
+//=========================================================================================================================
+
+class CSkinnedMesh : public CMesh
+{
+private:
+	UINT							m_BoneCount{};
+
+	ComPtr<ID3D12Resource>	        m_D3D12BoneIndexBuffer{};
+	ComPtr<ID3D12Resource>	        m_D3D12BoneIndexUploadBuffer{};
+	D3D12_VERTEX_BUFFER_VIEW        m_D3D12BoneIndexBufferView{};
+
+	ComPtr<ID3D12Resource>	        m_D3D12BoneWeightBuffer{};
+	ComPtr<ID3D12Resource>	        m_D3D12BoneWeightUploadBuffer{};
+	D3D12_VERTEX_BUFFER_VIEW        m_D3D12BoneWeightBufferView{};
+
+	vector<XMFLOAT4X4>				m_BoneOffsetMatrixes{};
+	ComPtr<ID3D12Resource>			m_D3D12BoneOffsetMatrixes{};
+	XMFLOAT4X4*						m_MappedBoneOffsetMatrixes{};
+
+	ComPtr<ID3D12Resource>			m_D3D12BoneTransformMatrixes{};
+	XMFLOAT4X4*						m_MappedBoneTransformMatrixes{};
+
+public:
+	CSkinnedMesh() = default;
+	virtual ~CSkinnedMesh() = default;
+
+	virtual void CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
+	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
+	virtual void ReleaseShaderVariables();
+
+	virtual void ReleaseUploadBuffers();
+
+	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, UINT SubSetIndex);
+
+	void LoadSkinInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile);
 };

@@ -20,25 +20,25 @@ private:
 	XMFLOAT4X4						m_ProjectionMatrixToTexture{};
 
 public:
-	CDepthWriteShader(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, vector<LIGHT>& Lights, vector<shared_ptr<CGameObject>>& ShadyObjects);
+	CDepthWriteShader(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, vector<LIGHT>& Lights, vector<shared_ptr<CGameObject>>& ShadyObjects, UINT StateCount = 1);
 	virtual ~CDepthWriteShader() = default;
 
-	virtual D3D12_INPUT_LAYOUT_DESC CreateInputLayout(UINT PSONum = 0);
-	virtual D3D12_RASTERIZER_DESC CreateRasterizerState(UINT PSONum = 0);
+	virtual D3D12_INPUT_LAYOUT_DESC CreateInputLayout(UINT StateNum = 0);
+	virtual D3D12_RASTERIZER_DESC CreateRasterizerState(UINT StateNum = 0);
 
-	virtual D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob* D3D12ShaderBlob, UINT PSONum = 0);
-	virtual D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob* D3D12ShaderBlob, UINT PSONum = 0);
+	virtual D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob* D3D12ShaderBlob, UINT StateNum = 0);
+	virtual D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob* D3D12ShaderBlob, UINT StateNum = 0);
 
-	virtual DXGI_FORMAT GetRTVFormat(UINT PSONum, UINT RTVNum = 0);
-	virtual DXGI_FORMAT GetDSVFormat(UINT PSONum = 0);
+	virtual DXGI_FORMAT GetRTVFormat(UINT StateNum = 0, UINT RenderTargetNum = 0);
+	virtual DXGI_FORMAT GetDSVFormat(UINT StateNum = 0);
 
-	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera);
+	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, UINT StateNum = 0);
 
 	void CreateRtvAndDsvDescriptorHeaps(ID3D12Device* D3D12Device);
 	void CreateRenderTargetViews(ID3D12Device* D3D12Device);
 	void CreateDepthStencilView(ID3D12Device* D3D12Device);
 
-	void CreateShadowMap(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
+	void PrepareShadowMap(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 };
 
 //=========================================================================================================================
@@ -49,15 +49,13 @@ private:
 	vector<shared_ptr<CGameObject>> m_ShadyObjects{};
 
 public:
-	CShadowMapShader(vector<shared_ptr<CGameObject>>& ShadyObjects);
+	CShadowMapShader(vector<shared_ptr<CGameObject>>& ShadyObjects, UINT StateCount = 1);
 	virtual ~CShadowMapShader() = default;
 
-	virtual D3D12_INPUT_LAYOUT_DESC CreateInputLayout(UINT PSONum = 0);
+	virtual D3D12_INPUT_LAYOUT_DESC CreateInputLayout(UINT StateNum = 0);
 
-	virtual D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob* D3D12ShaderBlob, UINT PSONum = 0);
-	virtual D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob* D3D12ShaderBlob, UINT PSONum = 0);
+	virtual D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob* D3D12ShaderBlob, UINT StateNum = 0);
+	virtual D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob* D3D12ShaderBlob, UINT StateNum = 0);
 
-	virtual void CreatePipelineStateObject(ID3D12Device* D3D12Device, ID3D12RootSignature* D3D12RootSignature, UINT PSONum = 0);
-
-	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera);
+	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, UINT StateNum = 0);
 };

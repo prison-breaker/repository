@@ -54,7 +54,7 @@ public:
 
 	static CFramework* GetInstance();
 
-	void UpdateTitle();
+	void UpdateWindowTitle();
 	void SetActive(bool IsActive);
 
 	void OnCreate(HINSTANCE hInstance, HWND hWnd);

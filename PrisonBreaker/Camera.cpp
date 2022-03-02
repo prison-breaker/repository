@@ -11,13 +11,8 @@ void CCamera::CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12GraphicsCom
 
 void CCamera::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
-	XMFLOAT4X4 ViewMatrix{};
-	XMFLOAT4X4 ProjectionMatrix{};
-
-	XMStoreFloat4x4(&ViewMatrix, XMMatrixTranspose(XMLoadFloat4x4(&m_ViewMatrix)));
-	XMStoreFloat4x4(&ProjectionMatrix, XMMatrixTranspose(XMLoadFloat4x4(&m_ProjectionMatrix)));
-	memcpy(&m_MappedCamera->m_ViewMatrix, &ViewMatrix, sizeof(XMFLOAT4X4));
-	memcpy(&m_MappedCamera->m_ProjectionMatrix, &ProjectionMatrix, sizeof(XMFLOAT4X4));
+	XMStoreFloat4x4(&m_MappedCamera->m_ViewMatrix, XMMatrixTranspose(XMLoadFloat4x4(&m_ViewMatrix)));
+	XMStoreFloat4x4(&m_MappedCamera->m_ProjectionMatrix, XMMatrixTranspose(XMLoadFloat4x4(&m_ProjectionMatrix)));
 	memcpy(&m_MappedCamera->m_Position, &m_Position, sizeof(XMFLOAT3));
 
 	D3D12GraphicsCommandList->SetGraphicsRootConstantBufferView(ROOT_PARAMETER_TYPE_CAMERA, m_D3D12Camera->GetGPUVirtualAddress());
@@ -69,7 +64,7 @@ void CCamera::RegenerateViewMatrix()
 	m_Up = Vector3::CrossProduct(m_Look, m_Right, false);
 	m_ViewMatrix = Matrix4x4::LookToLH(m_Position, m_Look, WorldUp);
 
-	GenerateFrustum();
+	GenerateBoundingFrustum();
 }
 
 const XMFLOAT4X4& CCamera::GetViewMatrix() const
@@ -92,21 +87,21 @@ const XMFLOAT4X4& CCamera::GetProjectionMatrix() const
 	return m_ProjectionMatrix;
 }
 
-void CCamera::GenerateFrustum()
+void CCamera::GenerateBoundingFrustum()
 {
 	// 원근 투영 변환 행렬에서 절두체를 생성한다(절두체는 카메라 좌표계로 표현된다).
-	m_Frustum.CreateFromMatrix(m_Frustum, XMLoadFloat4x4(&m_ProjectionMatrix));
+	m_BoundingFrustum.CreateFromMatrix(m_BoundingFrustum, XMLoadFloat4x4(&m_ProjectionMatrix));
 
 	// 카메라 변환 행렬의 역행렬을 구한다.
 	XMMATRIX InverseViewMatrix{ XMMatrixInverse(nullptr, XMLoadFloat4x4(&m_ViewMatrix)) };
 
 	// 절두체를 카메라 변환 행렬의 역행렬로 변환한다(이제 절두체는 월드 좌표계로 표현된다).
-	m_Frustum.Transform(m_Frustum, InverseViewMatrix);
+	m_BoundingFrustum.Transform(m_BoundingFrustum, InverseViewMatrix);
 }
 
-bool CCamera::IsInFrustum(const BoundingBox& BoundingBox) const
+bool CCamera::IsInBoundingFrustum(const BoundingBox& BoundingBox) const
 {
-	return m_Frustum.Intersects(BoundingBox);
+	return m_BoundingFrustum.Intersects(BoundingBox);
 }
 
 const XMFLOAT3& CCamera::GetRight() const

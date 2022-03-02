@@ -18,7 +18,8 @@ public:
 
 	void RegisterScene(const tstring& SceneName, const shared_ptr<CScene>& Scene);
 	void ReserveChangeScene(const tstring& SceneName);
-	void ChangeScene();
+	void ChangeScene(const tstring& SceneName);
+	void ChangeToReservedScene();
 
 	void ProcessMouseMessage(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam);
 	void ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam);

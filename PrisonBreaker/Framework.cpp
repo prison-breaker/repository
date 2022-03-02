@@ -8,7 +8,7 @@ CFramework::CFramework()
 	_tcscpy_s(m_Title, TEXT("PrisonBreaker ("));
 }
 
-void CFramework::UpdateTitle()
+void CFramework::UpdateWindowTitle()
 {
 	m_Timer->GetFrameRate(m_Title + 15, 48);
 	SetWindowText(m_hWnd, m_Title);
@@ -71,8 +71,7 @@ void CFramework::BuildObjects()
 
 	GameScene->OnCreate(m_D3D12Device.Get(), m_D3D12GraphicsCommandList.Get());
 	CSceneManager::GetInstance()->RegisterScene(TEXT("GameScene"), GameScene);
-	CSceneManager::GetInstance()->ReserveChangeScene(TEXT("GameScene"));
-	CSceneManager::GetInstance()->ChangeScene();
+	CSceneManager::GetInstance()->ChangeScene(TEXT("GameScene"));
 
 	DX::ThrowIfFailed(m_D3D12GraphicsCommandList->Close());
 
@@ -436,5 +435,5 @@ void CFramework::FrameAdvance()
 	DX::ThrowIfFailed(m_DXGISwapChain->Present(1, 0));
 
 	MoveToNextFrame();
-	UpdateTitle();
+	UpdateWindowTitle();
 }

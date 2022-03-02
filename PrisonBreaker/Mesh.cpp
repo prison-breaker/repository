@@ -1,11 +1,87 @@
 #include "stdafx.h"
 #include "Mesh.h"
 
-void CMesh::LoadMeshFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile)
+void CMesh::CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
+{
+
+}
+
+void CMesh::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
+{
+
+}
+
+void CMesh::ReleaseShaderVariables()
+{
+
+}
+
+void CMesh::ReleaseUploadBuffers()
+{
+	if (m_D3D12PositionUploadBuffer)
+	{
+		m_D3D12PositionUploadBuffer.ReleaseAndGetAddressOf();
+	}
+
+	if (m_D3D12NormalUploadBuffer)
+	{
+		m_D3D12NormalUploadBuffer.ReleaseAndGetAddressOf();
+	}
+
+	if (m_D3D12TangentUploadBuffer)
+	{
+		m_D3D12TangentUploadBuffer.ReleaseAndGetAddressOf();
+	}
+
+	if (m_D3D12BiTangentUploadBuffer)
+	{
+		m_D3D12BiTangentUploadBuffer.ReleaseAndGetAddressOf();
+	}
+
+	if (m_D3D12TexCoordUploadBuffer)
+	{
+		m_D3D12TexCoordUploadBuffer.ReleaseAndGetAddressOf();
+	}
+
+	if (!m_D3D12IndexUploadBuffers.empty())
+	{
+		for (auto& UploadBuffer : m_D3D12IndexUploadBuffers)
+		{
+			if (UploadBuffer)
+			{
+				UploadBuffer.ReleaseAndGetAddressOf();
+			}
+		}
+
+		m_D3D12IndexUploadBuffers.shrink_to_fit();
+	}
+}
+
+void CMesh::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, UINT SubSetIndex)
+{
+	D3D12_VERTEX_BUFFER_VIEW VertexBufferViews[] = { m_D3D12PositionBufferView, m_D3D12NormalBufferView, m_D3D12TangentBufferView, m_D3D12BiTangentBufferView, m_D3D12TexCoordBufferView };
+
+	D3D12GraphicsCommandList->IASetVertexBuffers(0, _countof(VertexBufferViews), VertexBufferViews);
+	D3D12GraphicsCommandList->IASetPrimitiveTopology(m_D3D12PrimitiveTopology);
+
+	UINT BufferSize{ (UINT)m_D3D12IndexBuffers.size() };
+
+	if (BufferSize > 0 && SubSetIndex < BufferSize)
+	{
+		D3D12GraphicsCommandList->IASetIndexBuffer(&m_D3D12IndexBufferViews[SubSetIndex]);
+		D3D12GraphicsCommandList->DrawIndexedInstanced(m_IndexCounts[SubSetIndex], 1, 0, 0, 0);
+	}
+	else
+	{
+		D3D12GraphicsCommandList->DrawInstanced(m_VertexCount, 1, 0, 0);
+	}
+}
+
+void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile)
 {
 	tstring Token{};
 
-#ifdef BINARY_MODE
+#ifdef READ_BINARY_FILE
 	while (true)
 	{
 		File::ReadStringFromFile(InFile, Token);
@@ -365,47 +441,6 @@ void CMesh::LoadMeshFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandLis
 #endif
 }
 
-void CMesh::ReleaseUploadBuffers()
-{
-	if (m_D3D12PositionUploadBuffer)
-	{
-		m_D3D12PositionUploadBuffer.ReleaseAndGetAddressOf();
-	}
-
-	if (m_D3D12NormalUploadBuffer)
-	{
-		m_D3D12NormalUploadBuffer.ReleaseAndGetAddressOf();
-	}
-
-	if (m_D3D12TangentUploadBuffer)
-	{
-		m_D3D12TangentUploadBuffer.ReleaseAndGetAddressOf();
-	}
-
-	if (m_D3D12BiTangentUploadBuffer)
-	{
-		m_D3D12BiTangentUploadBuffer.ReleaseAndGetAddressOf();
-	}
-
-	if (m_D3D12TexCoordUploadBuffer)
-	{
-		m_D3D12TexCoordUploadBuffer.ReleaseAndGetAddressOf();
-	}
-
-	if (!m_D3D12IndexUploadBuffers.empty())
-	{
-		for (auto& UploadBuffer : m_D3D12IndexUploadBuffers)
-		{
-			if (UploadBuffer)
-			{
-				UploadBuffer.ReleaseAndGetAddressOf();
-			}
-		}
-
-		m_D3D12IndexUploadBuffers.shrink_to_fit();
-	}
-}
-
 void CMesh::SetBoundingBox(const BoundingBox& BoundingBox)
 {
 	m_BoundingBox = BoundingBox;
@@ -416,9 +451,51 @@ const BoundingBox& CMesh::GetBoundingBox() const
 	return m_BoundingBox;
 }
 
-void CMesh::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, UINT SubSetIndex)
+void CMesh::RenderBoundingBox(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
-	D3D12_VERTEX_BUFFER_VIEW VertexBufferViews[] = { m_D3D12PositionBufferView, m_D3D12NormalBufferView, m_D3D12TangentBufferView, m_D3D12BiTangentBufferView, m_D3D12TexCoordBufferView };
+	D3D12_VERTEX_BUFFER_VIEW VertexBufferViews[] = { m_D3D12BoundingBoxPositionBufferView };
+
+	D3D12GraphicsCommandList->IASetVertexBuffers(0, _countof(VertexBufferViews), VertexBufferViews);
+	D3D12GraphicsCommandList->IASetPrimitiveTopology(m_D3D12PrimitiveTopology);
+	D3D12GraphicsCommandList->IASetIndexBuffer(&m_D3D12IndexBufferViews.back());
+	D3D12GraphicsCommandList->DrawIndexedInstanced(m_IndexCounts.back(), 1, 0, 0, 0);
+}
+
+//=========================================================================================================================
+
+void CSkinnedMesh::CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
+{
+
+}
+
+void CSkinnedMesh::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
+{
+
+}
+
+void CSkinnedMesh::ReleaseShaderVariables()
+{
+
+}
+
+void CSkinnedMesh::ReleaseUploadBuffers()
+{
+	CMesh::ReleaseUploadBuffers();
+
+	if (m_D3D12BoneIndexUploadBuffer)
+	{
+		m_D3D12BoneIndexUploadBuffer.ReleaseAndGetAddressOf();
+	}
+
+	if (m_D3D12BoneWeightUploadBuffer)
+	{
+		m_D3D12BoneWeightUploadBuffer.ReleaseAndGetAddressOf();
+	}
+}
+
+void CSkinnedMesh::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, UINT SubSetIndex)
+{
+	D3D12_VERTEX_BUFFER_VIEW VertexBufferViews[] = { m_D3D12PositionBufferView, m_D3D12NormalBufferView, m_D3D12TangentBufferView, m_D3D12BiTangentBufferView, m_D3D12TexCoordBufferView, m_D3D12BoneIndexBufferView, m_D3D12BoneWeightBufferView };
 
 	D3D12GraphicsCommandList->IASetVertexBuffers(0, _countof(VertexBufferViews), VertexBufferViews);
 	D3D12GraphicsCommandList->IASetPrimitiveTopology(m_D3D12PrimitiveTopology);
@@ -436,12 +513,7 @@ void CMesh::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, UINT Sub
 	}
 }
 
-void CMesh::RenderBoundingBox(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
+void CSkinnedMesh::LoadSkinInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile)
 {
-	D3D12_VERTEX_BUFFER_VIEW VertexBufferViews[] = { m_D3D12BoundingBoxPositionBufferView };
 
-	D3D12GraphicsCommandList->IASetVertexBuffers(0, _countof(VertexBufferViews), VertexBufferViews);
-	D3D12GraphicsCommandList->IASetPrimitiveTopology(m_D3D12PrimitiveTopology);
-	D3D12GraphicsCommandList->IASetIndexBuffer(&m_D3D12IndexBufferViews.back());
-	D3D12GraphicsCommandList->DrawIndexedInstanced(m_IndexCounts.back(), 1, 0, 0, 0);
 }

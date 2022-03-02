@@ -1,7 +1,7 @@
 #pragma once
 
 #define DEBUG_MODE
-#define BINARY_MODE
+#define READ_BINARY_FILE
 
 #define WIN32_LEAN_AND_MEAN
 
@@ -15,8 +15,8 @@
 #define	CLIENT_HEIGHT		      1080
 #define DEPTH_BUFFER_WIDTH	      2048
 #define DEPTH_BUFFER_HEIGHT       2048
-#define PLANE_WIDTH			       500
-#define PLANE_HEIGHT		       500
+#define PLANE_WIDTH			       400
+#define PLANE_HEIGHT		       400
 
 #define TEXTURE_MASK_ALBEDO_MAP   0x01
 #define TEXTURE_MASK_METALLIC_MAP 0x02

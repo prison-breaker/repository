@@ -57,7 +57,7 @@ void CPlayer::Rotate(float Pitch, float Yaw, float Roll, float ElapsedTime)
 
 	if (!Math::IsZero(Yaw))
 	{
-		XMFLOAT4X4 RotationMatrix = Matrix4x4::RotationAxis(GetUp(), Yaw);
+		XMFLOAT4X4 RotationMatrix{ Matrix4x4::RotationAxis(GetUp(), Yaw) };
 
 		SetRight(Vector3::TransformNormal(GetRight(), RotationMatrix));
 		SetLook(Vector3::TransformNormal(GetLook(), RotationMatrix));
@@ -65,7 +65,7 @@ void CPlayer::Rotate(float Pitch, float Yaw, float Roll, float ElapsedTime)
 
 	if (!Math::IsZero(Roll))
 	{
-		XMFLOAT4X4 RotationMatrix = Matrix4x4::RotationAxis(GetLook(), Roll);
+		XMFLOAT4X4 RotationMatrix{ Matrix4x4::RotationAxis(GetLook(), Roll) };
 
 		SetRight(Vector3::TransformNormal(GetRight(), RotationMatrix));
 		SetUp(Vector3::TransformNormal(GetUp(), RotationMatrix));

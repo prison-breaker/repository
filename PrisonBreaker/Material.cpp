@@ -6,7 +6,7 @@ void CMaterial::LoadMaterialFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCo
 	tstring Token{};
 	shared_ptr<CTexture> Texture{};
 
-#ifdef BINARY_MODE
+#ifdef READ_BINARY_FILE
 	while (true)
 	{
 		File::ReadStringFromFile(InFile, Token);
