@@ -70,6 +70,12 @@
     <Filter Include="소스 파일\Material\Texture">
       <UniqueIdentifier>{70a69a67-d819-49b8-be8f-685de605652d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\Animation">
+      <UniqueIdentifier>{2084b59f-feb2-4849-87a5-e09b637e7065}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Animation">
+      <UniqueIdentifier>{cc20a2b1-c2d2-45ff-8ac7-b3ffd1b57b3e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -98,9 +104,6 @@
     </ClCompile>
     <ClCompile Include="GameObject.cpp">
       <Filter>소스 파일\Object</Filter>
-    </ClCompile>
-    <ClCompile Include="Mesh.cpp">
-      <Filter>소스 파일\Mesh</Filter>
     </ClCompile>
     <ClCompile Include="Player.cpp">
       <Filter>소스 파일\Object</Filter>
@@ -137,6 +140,15 @@
     </ClCompile>
     <ClCompile Include="DebugShader.cpp">
       <Filter>소스 파일\Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimationController.cpp">
+      <Filter>소스 파일\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>소스 파일\Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="ShaderManager.cpp">
+      <Filter>소스 파일\Manager</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -205,6 +217,12 @@
     </ClInclude>
     <ClInclude Include="DebugShader.h">
       <Filter>헤더 파일\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimationController.h">
+      <Filter>헤더 파일\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderManager.h">
+      <Filter>헤더 파일\Manager</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

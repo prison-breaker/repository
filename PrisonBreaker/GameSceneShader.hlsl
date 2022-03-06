@@ -94,29 +94,32 @@ float Get3x3ShadowFactor(float2 ShadowTexCoord, float Depth)
 float4 DirectionalLight(int Index, float3 Normal, float3 ToCamera)
 {
 	float3 ToLight = -Lights[Index].m_Direction;
-	float AlbedoFactor = max(0.1f, dot(ToLight, Normal));
+	float AlbedoFactor = dot(ToLight, Normal);
 
 	return Lights[Index].m_Color * AlbedoFactor;
 }
 
 float4 SpotLight(int Index, float3 Position, float3 Normal, float3 ToCamera)
 {
-	float3 ToLight = normalize(Lights[Index].m_Position - Position);
-	float Distance = length(ToLight);
-	float AlbedoFactor = max(0.1f, dot(ToLight, Normal));
-
-	if (Distance <= Lights[Index].m_Range)
+	if (((int)Lights[Index].m_Position.z ^ (int)Position.z) >= 0)
 	{
-		//ToLight /= Distance;
+		float3 ToLight = normalize(Lights[Index].m_Position - Position);
+		float Distance = length(ToLight);
+		float AlbedoFactor = dot(ToLight, Normal);
 
-		//float Alpha = max(dot(-ToLight, Lights[Index].m_Direction), 0.0f);
-		//float SpotFactor = pow(max((Alpha - Lights[Index].m_Phi) / (Lights[Index].m_Theta - Lights[Index].m_Phi), 0.0f), Lights[Index].m_Falloff);
-		float AttenuationFactor = 1.0f / dot(Lights[Index].m_Attenuation, float3(1.0f, Distance, Distance * Distance));
+		if (Distance <= Lights[Index].m_Range)
+		{
+			//ToLight /= Distance;
 
-		return Lights[Index].m_Color * AlbedoFactor * AttenuationFactor;
+			//float Alpha = max(dot(-ToLight, Lights[Index].m_Direction), 0.0f);
+			//float SpotFactor = pow(max((Alpha - Lights[Index].m_Phi) / (Lights[Index].m_Theta - Lights[Index].m_Phi), 0.0f), Lights[Index].m_Falloff);
+			float AttenuationFactor = 1.0f / dot(Lights[Index].m_Attenuation, float3(1.0f, Distance, Distance * Distance));
+
+			return Lights[Index].m_Color * AlbedoFactor * AttenuationFactor;
+		}
 	}
 
-	return float4(0.0f, 0.0f, 0.0f, 0.0f);
+	return float4(0.1f, 0.1f, 0.1f, 0.1f);
 }
 
 float4 Lighting(float3 Position, float3 Normal, float4 ShadowTexCoord)
@@ -200,10 +203,10 @@ float4 PS_Main(VS_OUTPUT Input) : SV_TARGET
 		Color += AlbedoMapTexture.Sample(Sampler, Input.m_TexCoord) * AlbedoColor;
 	}
 
-	if (TextureMask & TEXTURE_MASK_METALLIC_MAP)
-	{
-		//Color += MetallicMapTexture.Sample(Sampler, Input.m_TexCoord);
-	}
+	//if (TextureMask & TEXTURE_MASK_METALLIC_MAP)
+	//{
+	//	Color += MetallicMapTexture.Sample(Sampler, Input.m_TexCoord);
+	//}
 
 	float3 NormalW = float3(0.0f, 0.0f, 0.0f);
 

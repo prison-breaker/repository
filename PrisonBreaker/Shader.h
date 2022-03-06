@@ -21,7 +21,7 @@ public:
 class CGraphicsShader : public CShader
 {
 public:
-	CGraphicsShader(UINT StateCount = 1);
+	CGraphicsShader() = default;
 	virtual ~CGraphicsShader() = default;
 
 	virtual D3D12_INPUT_LAYOUT_DESC CreateInputLayout(UINT StateNum = 0);
@@ -41,10 +41,9 @@ public:
 	virtual DXGI_FORMAT GetDSVFormat(UINT StateNum = 0);
 
 	virtual void CreatePipelineState(ID3D12Device* D3D12Device, ID3D12RootSignature* D3D12RootSignature, UINT StateNum = 0);
-	
-	virtual void ReleaseUploadBuffers();
 
 	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, UINT StateNum = 0);
+	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, UINT StateNum = 0);
 };
 
 //=========================================================================================================================

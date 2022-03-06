@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Material.h"
+#include "Shader.h"
 
 void CMaterial::LoadMaterialFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile)
 {
@@ -86,7 +87,7 @@ void CMaterial::LoadMaterialFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCo
 	{
 		if (Token == TEXT("<Material>"))
 		{
-			continue;
+			SetShader(CShaderManager::GetInstance()->GetShader(TEXT("ShadowMapShader")));
 		}
 		else if (Token == TEXT("<AlbedoColor>"))
 		{
@@ -157,8 +158,13 @@ void CMaterial::LoadMaterialFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCo
 #endif
 }
 
-void CMaterial::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
+void CMaterial::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera)
 {
+	if (m_Shader)
+	{
+		static_pointer_cast<CGraphicsShader>(m_Shader)->Render(D3D12GraphicsCommandList, Camera);
+	}
+
 	D3D12GraphicsCommandList->SetGraphicsRoot32BitConstants(ROOT_PARAMETER_TYPE_OBJECT, 4, &m_AlbedoColor, 16);
 	D3D12GraphicsCommandList->SetGraphicsRoot32BitConstants(ROOT_PARAMETER_TYPE_OBJECT, 1, &m_TextureMask, 20);
 
@@ -174,6 +180,19 @@ void CMaterial::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCo
 const XMFLOAT4& CMaterial::GetAlbedoColor() const
 {
 	return m_AlbedoColor;
+}
+
+void CMaterial::SetShader(const shared_ptr<CShader>& Shader)
+{
+	if (Shader)
+	{
+		m_Shader = Shader;
+	}
+}
+
+const shared_ptr<CShader>& CMaterial::GetShader() const
+{
+	return m_Shader;
 }
 
 void CMaterial::RegisterTexture(const shared_ptr<CTexture>& Texture)

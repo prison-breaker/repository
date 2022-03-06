@@ -1,12 +1,6 @@
 #include "stdafx.h"
 #include "SkyBoxShader.h"
 
-CSkyBoxShader::CSkyBoxShader(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList) :
-	m_SkyBox{ make_shared<CSkyBox>(D3D12Device, D3D12GraphicsCommandList) }
-{
-
-}
-
 D3D12_INPUT_LAYOUT_DESC CSkyBoxShader::CreateInputLayout(UINT StateNum)
 {
 	const UINT InputElementCount{ 2 };
@@ -65,20 +59,13 @@ D3D12_PRIMITIVE_TOPOLOGY_TYPE CSkyBoxShader::GetPrimitiveType(UINT StateNum)
 	return D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
 }
 
-void  CSkyBoxShader::ReleaseUploadBuffers()
+void CSkyBoxShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, UINT StateNum)
 {
-	if (m_SkyBox)
+	if (CShaderManager::GetInstance()->SetShader(TEXT("SkyBoxShader")))
 	{
-		m_SkyBox->ReleaseUploadBuffers();
-	}
-}
-
-void CSkyBoxShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera)
-{
-	CGraphicsShader::Render(D3D12GraphicsCommandList, Camera);
-
-	if (m_SkyBox)
-	{
-		m_SkyBox->Render(D3D12GraphicsCommandList, Camera);
+		if (m_D3D12PipelineStates[StateNum])
+		{
+			D3D12GraphicsCommandList->SetPipelineState(m_D3D12PipelineStates[StateNum].Get());
+		}
 	}
 }

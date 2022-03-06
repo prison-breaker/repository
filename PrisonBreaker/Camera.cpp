@@ -25,10 +25,10 @@ void CCamera::ReleaseShaderVariables()
 
 void CCamera::SetViewport(int TopLeftX, int TopLeftY, UINT Width, UINT Height, float MinDepth, float MaxDepth)
 {
-	m_D3D12Viewport.TopLeftX = (float)TopLeftX;
-	m_D3D12Viewport.TopLeftY = (float)TopLeftY;
-	m_D3D12Viewport.Width = (float)Width;
-	m_D3D12Viewport.Height = (float)Height;
+	m_D3D12Viewport.TopLeftX = static_cast<float>(TopLeftX);
+	m_D3D12Viewport.TopLeftY = static_cast<float>(TopLeftY);
+	m_D3D12Viewport.Width = static_cast<float>(Width);
+	m_D3D12Viewport.Height = static_cast<float>(Height);
 	m_D3D12Viewport.MinDepth = MinDepth;
 	m_D3D12Viewport.MaxDepth = MaxDepth;
 }

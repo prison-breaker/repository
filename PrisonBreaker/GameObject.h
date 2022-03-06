@@ -3,29 +3,46 @@
 #include "Material.h"
 #include "Camera.h"
 
+class CGameObject;
+class CAnimationClip;
+class CAnimationController;
+
+struct LOADED_MODEL_INFO
+{
+	shared_ptr<CGameObject>			        m_Model{};
+									        
+	vector<shared_ptr<CAnimationClip>>      m_AnimationClips{};
+
+	vector<vector<shared_ptr<CGameObject>>> m_BoneFrameCaches{};
+	vector<shared_ptr<CSkinnedMesh>>	    m_SkinnedMeshCaches{};
+};
+
 class CGameObject
 {
 protected:
-	bool				          m_IsAlive{};
-							      
-	tstring					      m_FrameName{};
-							      
-	XMFLOAT4X4		              m_WorldMatrix{ Matrix4x4::Identity() };
-	XMFLOAT4X4				      m_TransformMatrix{ Matrix4x4::Identity() };
-							      
-	shared_ptr<CMesh>	          m_Mesh{};
-	vector<shared_ptr<CMaterial>> m_Materials{};
-	BoundingBox					  m_BoundingBox{};
+	bool				             m_IsActive{};
+							         
+	tstring					         m_FrameName{};
+							         
+	XMFLOAT4X4		                 m_WorldMatrix{ Matrix4x4::Identity() };
+	XMFLOAT4X4				         m_TransformMatrix{ Matrix4x4::Identity() };
+							         
+	shared_ptr<CMesh>	             m_Mesh{};
+	vector<shared_ptr<CMaterial>>    m_Materials{};
+	shared_ptr<BoundingBox>			 m_BoundingBox{};
 
-	shared_ptr<CGameObject>       m_SiblingObject{};
-	shared_ptr<CGameObject>       m_ChildObject{};
+	//shared_ptr<CAnimationController> m_AnimationController{};
+
+	shared_ptr<CGameObject>          m_SiblingObject{};
+	shared_ptr<CGameObject>          m_ChildObject{};
 
 public:
 	CGameObject() = default;
 	virtual ~CGameObject() = default;
 
-	static shared_ptr<CGameObject> LoadObjectFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName);
+	static shared_ptr<LOADED_MODEL_INFO> LoadObjectFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName);
 	static shared_ptr<CGameObject> LoadObjectInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile, unordered_map<tstring, shared_ptr<CMesh>>& MeshCaches, unordered_map<tstring, vector<shared_ptr<CMaterial>>>& MaterialCaches);
+	static void LoadAnimationInfoFromFile(tifstream& InFile, const shared_ptr<LOADED_MODEL_INFO>& ModelInfo);
 
 	virtual void CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
@@ -38,10 +55,9 @@ public:
 	virtual void Animate(float ElapsedTime);
 	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera);
 
-	bool IsAlive() const;
-	void SetAlive(bool IsAlive);
+	bool IsActive() const;
+	void SetActive(bool IsActive);
 
-	void SetWorldMatrix(const XMFLOAT4X4 WorldMatrix);
 	const XMFLOAT4X4& GetWorldMatrix() const;
 
 	void SetTransformMatrix(const XMFLOAT4X4& TransformMatrix);
@@ -62,8 +78,8 @@ public:
 	void SetMesh(const shared_ptr<CMesh>& Mesh);
 	void SetMaterial(const shared_ptr<CMaterial>& Material);
 
-	void SetBoundingBox(const BoundingBox& BoundingBox);
-	const BoundingBox& GetBoundingBox() const;
+	void SetBoundingBox(const shared_ptr<BoundingBox>& BoundingBox);
+	shared_ptr<BoundingBox> GetBoundingBox();
 
 	void SetChild(const shared_ptr<CGameObject>& ChildObject);
 

@@ -44,3 +44,27 @@ D3D12_SHADER_BYTECODE CDebugShader::CreatePixelShader(ID3DBlob* D3D12ShaderBlob,
 {
 	return CGraphicsShader::CompileShaderFromFile(L"GameSceneShader.hlsl", "PS_BoundingBox", "ps_5_1", D3D12ShaderBlob);
 }
+
+void CDebugShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, UINT StateNum)
+{
+	if (CShaderManager::GetInstance()->SetGlobalShader("DebugShader"))
+	{
+		if (m_D3D12PipelineStates[StateNum])
+		{
+			D3D12GraphicsCommandList->SetPipelineState(m_D3D12PipelineStates[StateNum].Get());
+		}
+	}
+
+	for (UINT i = OBJECT_TYPE_PLAYER; i <= OBJECT_TYPE_STRUCTURE; ++i)
+	{
+		for (const auto& GameObject : GameObjects[i])
+		{
+			if (GameObject)
+			{
+				GameObject->RenderBoundingBox(D3D12GraphicsCommandList, Camera);
+			}
+		}
+	}
+
+	CShaderManager::GetInstance()->UnSetGlobalShader();
+}

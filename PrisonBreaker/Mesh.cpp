@@ -64,7 +64,7 @@ void CMesh::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, UINT Sub
 	D3D12GraphicsCommandList->IASetVertexBuffers(0, _countof(VertexBufferViews), VertexBufferViews);
 	D3D12GraphicsCommandList->IASetPrimitiveTopology(m_D3D12PrimitiveTopology);
 
-	UINT BufferSize{ (UINT)m_D3D12IndexBuffers.size() };
+	UINT BufferSize{ static_cast<UINT>(m_D3D12IndexBuffers.size()) };
 
 	if (BufferSize > 0 && SubSetIndex < BufferSize)
 	{
@@ -237,6 +237,8 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 		}
 	}
 #else
+	InFile >> m_MeshName;
+
 	while (InFile >> Token)
 	{
 		if (Token == TEXT("<Positions>"))
@@ -254,110 +256,92 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 					InFile >> Positions[i].x >> Positions[i].y >> Positions[i].z;
 				}
 
-				UINT Stride{ sizeof(XMFLOAT3) };
-
-				m_D3D12PositionBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, Positions.data(), Stride * m_VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12PositionUploadBuffer.GetAddressOf());
+				m_D3D12PositionBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, Positions.data(), sizeof(XMFLOAT3) * m_VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12PositionUploadBuffer.GetAddressOf());
 				m_D3D12PositionBufferView.BufferLocation = m_D3D12PositionBuffer->GetGPUVirtualAddress();
-				m_D3D12PositionBufferView.StrideInBytes = Stride;
-				m_D3D12PositionBufferView.SizeInBytes = Stride * m_VertexCount;
+				m_D3D12PositionBufferView.StrideInBytes = sizeof(XMFLOAT3);
+				m_D3D12PositionBufferView.SizeInBytes = sizeof(XMFLOAT3) * m_VertexCount;
 			}
 		}
 		else if (Token == TEXT("<Normals>"))
 		{
-			UINT VertexCount{};
+			InFile >> m_VertexCount;
 
-			InFile >> VertexCount;
-
-			if (VertexCount > 0)
+			if (m_VertexCount > 0)
 			{
-				vector<XMFLOAT3> Normals{ VertexCount };
+				vector<XMFLOAT3> Normals{ m_VertexCount };
 
-				for (UINT i = 0; i < VertexCount; ++i)
+				for (UINT i = 0; i < m_VertexCount; ++i)
 				{
 					InFile >> Normals[i].x >> Normals[i].y >> Normals[i].z;
 				}
 
-				UINT Stride{ sizeof(XMFLOAT3) };
-
-				m_D3D12NormalBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, Normals.data(), Stride * VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12NormalUploadBuffer.GetAddressOf());
+				m_D3D12NormalBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, Normals.data(), sizeof(XMFLOAT3) * m_VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12NormalUploadBuffer.GetAddressOf());
 				m_D3D12NormalBufferView.BufferLocation = m_D3D12NormalBuffer->GetGPUVirtualAddress();
-				m_D3D12NormalBufferView.StrideInBytes = Stride;
-				m_D3D12NormalBufferView.SizeInBytes = Stride * VertexCount;
+				m_D3D12NormalBufferView.StrideInBytes = sizeof(XMFLOAT3);
+				m_D3D12NormalBufferView.SizeInBytes = sizeof(XMFLOAT3) * m_VertexCount;
 			}
 		}
 		else if (Token == TEXT("<Tangents>"))
 		{
-			UINT VertexCount{};
+			InFile >> m_VertexCount;
 
-			InFile >> VertexCount;
-
-			if (VertexCount > 0)
+			if (m_VertexCount > 0)
 			{
-				vector<XMFLOAT3> Tangents{ VertexCount };
+				vector<XMFLOAT3> Tangents{ m_VertexCount };
 
-				for (UINT i = 0; i < VertexCount; ++i)
+				for (UINT i = 0; i < m_VertexCount; ++i)
 				{
 					InFile >> Tangents[i].x >> Tangents[i].y >> Tangents[i].z;
 				}
 
-				UINT Stride{ sizeof(XMFLOAT3) };
-
-				m_D3D12TangentBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, Tangents.data(), Stride * VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12TangentUploadBuffer.GetAddressOf());
+				m_D3D12TangentBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, Tangents.data(), sizeof(XMFLOAT3) * m_VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12TangentUploadBuffer.GetAddressOf());
 				m_D3D12TangentBufferView.BufferLocation = m_D3D12TangentBuffer->GetGPUVirtualAddress();
-				m_D3D12TangentBufferView.StrideInBytes = Stride;
-				m_D3D12TangentBufferView.SizeInBytes = Stride * VertexCount;
+				m_D3D12TangentBufferView.StrideInBytes = sizeof(XMFLOAT3);
+				m_D3D12TangentBufferView.SizeInBytes = sizeof(XMFLOAT3) * m_VertexCount;
 			}
 		}
 		else if (Token == TEXT("<BiTangents>"))
 		{
-			UINT VertexCount{};
+			InFile >> m_VertexCount;
 
-			InFile >> VertexCount;
-
-			if (VertexCount > 0)
+			if (m_VertexCount > 0)
 			{
-				vector<XMFLOAT3> BiTangents{ VertexCount };
+				vector<XMFLOAT3> BiTangents{ m_VertexCount };
 
-				for (UINT i = 0; i < VertexCount; ++i)
+				for (UINT i = 0; i < m_VertexCount; ++i)
 				{
 					InFile >> BiTangents[i].x >> BiTangents[i].y >> BiTangents[i].z;
 				}
 
-				UINT Stride{ sizeof(XMFLOAT3) };
-
-				m_D3D12BiTangentBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, BiTangents.data(), Stride * VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12BiTangentUploadBuffer.GetAddressOf());
+				m_D3D12BiTangentBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, BiTangents.data(), sizeof(XMFLOAT3) * m_VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12BiTangentUploadBuffer.GetAddressOf());
 				m_D3D12BiTangentBufferView.BufferLocation = m_D3D12BiTangentBuffer->GetGPUVirtualAddress();
-				m_D3D12BiTangentBufferView.StrideInBytes = Stride;
-				m_D3D12BiTangentBufferView.SizeInBytes = Stride * VertexCount;
+				m_D3D12BiTangentBufferView.StrideInBytes = sizeof(XMFLOAT3);
+				m_D3D12BiTangentBufferView.SizeInBytes = sizeof(XMFLOAT3) * m_VertexCount;
 			}
 		}
 		else if (Token == TEXT("<TexCoords>"))
 		{
-			UINT VertexCount{};
+			InFile >> m_VertexCount;
 
-			InFile >> VertexCount;
-
-			if (VertexCount > 0)
+			if (m_VertexCount > 0)
 			{
-				vector<XMFLOAT2> TexCoords{ VertexCount };
+				vector<XMFLOAT2> TexCoords{ m_VertexCount };
 
-				for (UINT i = 0; i < VertexCount; ++i)
+				for (UINT i = 0; i < m_VertexCount; ++i)
 				{
 					InFile >> TexCoords[i].x >> TexCoords[i].y;
 				}
 
-				UINT Stride{ sizeof(XMFLOAT2) };
-
-				m_D3D12TexCoordBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, TexCoords.data(), Stride * VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12TexCoordUploadBuffer.GetAddressOf());
+				m_D3D12TexCoordBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, TexCoords.data(), sizeof(XMFLOAT2) * m_VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12TexCoordUploadBuffer.GetAddressOf());
 				m_D3D12TexCoordBufferView.BufferLocation = m_D3D12TexCoordBuffer->GetGPUVirtualAddress();
-				m_D3D12TexCoordBufferView.StrideInBytes = Stride;
-				m_D3D12TexCoordBufferView.SizeInBytes = Stride * VertexCount;
+				m_D3D12TexCoordBufferView.StrideInBytes = sizeof(XMFLOAT2);
+				m_D3D12TexCoordBufferView.SizeInBytes = sizeof(XMFLOAT2) * m_VertexCount;
 			}
 		}
 		else if (Token == TEXT("<SubMeshes>"))
 		{
 			UINT SubMeshCount{};
-
+				
 			InFile >> SubMeshCount;
 
 			if (SubMeshCount > 0)
@@ -383,12 +367,10 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 							InFile >> Indices[j];
 						}
 
-						UINT Stride{ sizeof(UINT) };
-
-						m_D3D12IndexBuffers[i] = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, Indices.data(), Stride * m_IndexCounts[i], D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_INDEX_BUFFER, m_D3D12IndexUploadBuffers[i].GetAddressOf());
+						m_D3D12IndexBuffers[i] = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, Indices.data(), sizeof(UINT) * m_IndexCounts[i], D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_INDEX_BUFFER, m_D3D12IndexUploadBuffers[i].GetAddressOf());
 						m_D3D12IndexBufferViews[i].BufferLocation = m_D3D12IndexBuffers[i]->GetGPUVirtualAddress();
 						m_D3D12IndexBufferViews[i].Format = DXGI_FORMAT_R32_UINT;
-						m_D3D12IndexBufferViews[i].SizeInBytes = Stride * m_IndexCounts[i];
+						m_D3D12IndexBufferViews[i].SizeInBytes = sizeof(UINT) * m_IndexCounts[i];
 					}
 				}
 			}
@@ -415,23 +397,19 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 				{ Center.x + Extents.x, Center.y - Extents.y, Center.z - Extents.z }
 			};
 
-			UINT Stride{ sizeof(XMFLOAT3) };
-
-			m_D3D12BoundingBoxPositionBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, Positions, Stride * VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12BoundingBoxPositionUploadBuffer.GetAddressOf());
+			m_D3D12BoundingBoxPositionBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, Positions, sizeof(XMFLOAT3) * VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12BoundingBoxPositionUploadBuffer.GetAddressOf());
 			m_D3D12BoundingBoxPositionBufferView.BufferLocation = m_D3D12BoundingBoxPositionBuffer->GetGPUVirtualAddress();
-			m_D3D12BoundingBoxPositionBufferView.StrideInBytes = Stride;
-			m_D3D12BoundingBoxPositionBufferView.SizeInBytes = Stride * VertexCount;
+			m_D3D12BoundingBoxPositionBufferView.StrideInBytes = sizeof(XMFLOAT3);
+			m_D3D12BoundingBoxPositionBufferView.SizeInBytes = sizeof(XMFLOAT3) * VertexCount;
 
 			const UINT IndexCount{ 36 };
 			UINT Indices[IndexCount]{ 0, 1, 2, 1, 3, 2, 4, 6, 5, 5, 6, 7, 0, 4, 1, 1, 4, 5, 2, 3, 6, 3, 7, 6, 0, 2, 6, 0, 6, 4, 1, 5, 7, 1, 7, 3 };
 
-			Stride = sizeof(UINT);
-
 			m_IndexCounts.back() = IndexCount;
-			m_D3D12IndexBuffers.back() = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, Indices, Stride * IndexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_INDEX_BUFFER, m_D3D12IndexUploadBuffers.back().GetAddressOf());
+			m_D3D12IndexBuffers.back() = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, Indices, sizeof(UINT) * IndexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_INDEX_BUFFER, m_D3D12IndexUploadBuffers.back().GetAddressOf());
 			m_D3D12IndexBufferViews.back().BufferLocation = m_D3D12IndexBuffers.back()->GetGPUVirtualAddress();
 			m_D3D12IndexBufferViews.back().Format = DXGI_FORMAT_R32_UINT;
-			m_D3D12IndexBufferViews.back().SizeInBytes = Stride * IndexCount;
+			m_D3D12IndexBufferViews.back().SizeInBytes = sizeof(UINT) * IndexCount;
 		}
 		else if (Token == TEXT("</Mesh>"))
 		{
@@ -500,7 +478,7 @@ void CSkinnedMesh::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, U
 	D3D12GraphicsCommandList->IASetVertexBuffers(0, _countof(VertexBufferViews), VertexBufferViews);
 	D3D12GraphicsCommandList->IASetPrimitiveTopology(m_D3D12PrimitiveTopology);
 
-	UINT BufferSize{ (UINT)m_D3D12IndexBuffers.size() };
+	UINT BufferSize{ static_cast<UINT>(m_D3D12IndexBuffers.size()) };
 
 	if (BufferSize > 0 && SubSetIndex < BufferSize)
 	{
@@ -515,5 +493,85 @@ void CSkinnedMesh::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, U
 
 void CSkinnedMesh::LoadSkinInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile)
 {
+	tstring Token{};
 
+#ifdef READ_BINARY_FILE
+#else
+	while (InFile >> Token)
+	{
+		if (Token == TEXT("<BoneOffsetMatrixes>"))
+		{
+			InFile >> m_BoneCount;
+
+			if (m_BoneCount > 0)
+			{
+				m_BoneOffsetMatrixes.reserve(m_BoneCount);
+
+				XMFLOAT4X4 BoneOffsetMatrix{};
+
+				for (UINT i = 0; i < m_BoneCount; ++i)
+				{
+					InFile >> BoneOffsetMatrix._11 >> BoneOffsetMatrix._12 >> BoneOffsetMatrix._13 >> BoneOffsetMatrix._14;
+					InFile >> BoneOffsetMatrix._21 >> BoneOffsetMatrix._22 >> BoneOffsetMatrix._23 >> BoneOffsetMatrix._24;
+					InFile >> BoneOffsetMatrix._31 >> BoneOffsetMatrix._32 >> BoneOffsetMatrix._33 >> BoneOffsetMatrix._34;
+					InFile >> BoneOffsetMatrix._41 >> BoneOffsetMatrix._42 >> BoneOffsetMatrix._43 >> BoneOffsetMatrix._44;
+
+					m_BoneOffsetMatrixes.push_back(BoneOffsetMatrix);
+				}
+
+				UINT Byte{ (((sizeof(XMFLOAT4X4) * MAX_BONES) + 255) & ~255) };
+
+				m_D3D12BoneOffsetMatrixes = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, nullptr, Byte, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, nullptr);
+				m_D3D12BoneOffsetMatrixes->Map(0, nullptr, (void**)&m_MappedBoneOffsetMatrixes);
+
+				for (UINT i = 0; i < m_BoneCount; ++i)
+				{
+					XMStoreFloat4x4(&m_MappedBoneOffsetMatrixes[i], XMMatrixTranspose(XMLoadFloat4x4(&m_BoneOffsetMatrixes[i])));
+				}
+			}
+		}
+		else if (Token == TEXT("<BoneIndices>"))
+		{
+			InFile >> m_VertexCount;
+
+			if (m_VertexCount > 0)
+			{
+				vector<XMUINT4> BoneIndices{ m_VertexCount };
+
+				for (UINT i = 0; i < m_VertexCount; ++i)
+				{
+					InFile >> BoneIndices[i].x >> BoneIndices[i].y >> BoneIndices[i].z >> BoneIndices[i].w;
+				}
+
+				m_D3D12BoneIndexBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, BoneIndices.data(), sizeof(XMUINT4) * m_VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12BoneIndexUploadBuffer.GetAddressOf());
+				m_D3D12BoneIndexBufferView.BufferLocation = m_D3D12BoneIndexBuffer->GetGPUVirtualAddress();
+				m_D3D12BoneIndexBufferView.StrideInBytes = sizeof(XMUINT4);
+				m_D3D12BoneIndexBufferView.SizeInBytes = sizeof(XMUINT4) * m_VertexCount;
+			}
+		}
+		else if (Token == TEXT("<BoneWeights>"))
+		{
+			InFile >> m_VertexCount;
+
+			if (m_VertexCount > 0)
+			{
+				vector<XMFLOAT4> BoneWeights{ m_VertexCount };
+
+				for (UINT i = 0; i < m_VertexCount; ++i)
+				{
+					InFile >> BoneWeights[i].x >> BoneWeights[i].y >> BoneWeights[i].z >> BoneWeights[i].w;
+				}
+
+				m_D3D12BoneWeightBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, BoneWeights.data(), sizeof(XMFLOAT4) * m_VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12BoneWeightUploadBuffer.GetAddressOf());
+				m_D3D12BoneWeightBufferView.BufferLocation = m_D3D12BoneWeightBuffer->GetGPUVirtualAddress();
+				m_D3D12BoneWeightBufferView.StrideInBytes = sizeof(XMFLOAT4);
+				m_D3D12BoneWeightBufferView.SizeInBytes = sizeof(XMFLOAT4) * m_VertexCount;
+			}
+		}
+		else if (Token == TEXT("</SkinInfo>"))
+		{
+			break;
+		}
+	}
+#endif
 }

@@ -34,18 +34,12 @@ struct CB_LIGHT
 class CGameScene : public CScene
 {
 private:
-	vector<LIGHT>						m_Lights{};
-	ComPtr<ID3D12Resource>				m_D3D12Lights{};
-	CB_LIGHT*							m_MappedLights{};
+	vector<vector<shared_ptr<CGameObject>>> m_GameObjects{};
+	shared_ptr<CSkyBox>						m_SkyBox{};
 
-	shared_ptr<CPlayer>				    m_Player{};
-	vector<shared_ptr<CGameObject>>     m_Guards{};
-	shared_ptr<CGameObject>				m_Ground{};
-	vector<shared_ptr<CGameObject>>		m_Structures{};
-
-	shared_ptr<CDepthWriteShader>		m_DepthWriteShader{};
-	vector<shared_ptr<CGraphicsShader>> m_Shaders{};
-	shared_ptr<CDebugShader>			m_DebugShader{};
+	vector<LIGHT>						    m_Lights{};
+	ComPtr<ID3D12Resource>				    m_D3D12Lights{};
+	CB_LIGHT*							    m_MappedLights{};
 
 public:
 	CGameScene() = default;

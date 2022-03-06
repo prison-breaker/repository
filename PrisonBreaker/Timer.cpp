@@ -20,6 +20,7 @@ void CTimer::Stop()
 void CTimer::Reset()
 {
 	m_IsStopped = false;
+
 	QueryPerformanceCounter(&m_LastPerformanceCounter);
 }
 
@@ -28,19 +29,21 @@ void CTimer::Tick(float LockFPS)
 	if (m_IsStopped)
 	{
 		m_ElapsedTime = 0.0f;
+
 		return;
 	}
 
 	QueryPerformanceCounter(&m_CurrentPerformanceCounter);
 
-	float ElapsedTime{ (float)(m_CurrentPerformanceCounter.QuadPart - m_LastPerformanceCounter.QuadPart) / m_PerformanceFrequency.QuadPart };
+	float ElapsedTime{ static_cast<float>(m_CurrentPerformanceCounter.QuadPart - m_LastPerformanceCounter.QuadPart) / m_PerformanceFrequency.QuadPart };
 
 	if (LockFPS > 0.0f)
 	{
 		while (ElapsedTime < 1.0f / LockFPS)
 		{
 			QueryPerformanceCounter(&m_CurrentPerformanceCounter);
-			ElapsedTime = (float)(m_CurrentPerformanceCounter.QuadPart - m_LastPerformanceCounter.QuadPart) / m_PerformanceFrequency.QuadPart;
+
+			ElapsedTime = static_cast<float>(m_CurrentPerformanceCounter.QuadPart - m_LastPerformanceCounter.QuadPart) / m_PerformanceFrequency.QuadPart;
 		}
 	}
 

@@ -2,6 +2,8 @@
 #include "BilboardMesh.h"
 #include "Camera.h"
 
+class CMaterial;
+
 class CBilboardObject
 {
 protected:

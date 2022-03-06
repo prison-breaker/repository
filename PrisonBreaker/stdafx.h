@@ -1,7 +1,7 @@
 #pragma once
 
 #define DEBUG_MODE
-#define READ_BINARY_FILE
+//#define READ_BINARY_FILE
 
 #define WIN32_LEAN_AND_MEAN
 
@@ -10,6 +10,7 @@
 #define MAX_TITLE_LENGTH	        64
 #define MAX_LIGHTS                   1
 #define MAX_BOUNDINGBOX_INDICES		36
+#define MAX_BONES				   100
 
 #define CLIENT_WIDTH		      1920
 #define	CLIENT_HEIGHT		      1080
@@ -25,7 +26,7 @@
 
 enum OBJECT_TYPE
 {
-	OBJECT_TYPE_PLAYER = 1,
+	OBJECT_TYPE_PLAYER,
 	OBJECT_TYPE_NPC,
 	OBJECT_TYPE_TERRAIN,
 	OBJECT_TYPE_STRUCTURE
@@ -117,6 +118,7 @@ typedef basic_ostringstream<TCHAR> tostringstream;
 // Managers
 #include "SceneManager.h"
 #include "TextureManager.h"
+#include "ShaderManager.h"
 
 namespace DX
 {

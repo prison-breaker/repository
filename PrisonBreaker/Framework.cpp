@@ -99,7 +99,7 @@ void CFramework::CreateDevice()
 #ifdef DEBUG_MODE
 	ComPtr<ID3D12Debug> D3D12DebugController{};
 
-	DX::ThrowIfFailed(D3D12GetDebugInterface(__uuidof(ID3D12Debug), (void**)D3D12DebugController.GetAddressOf()));
+	DX::ThrowIfFailed(D3D12GetDebugInterface(__uuidof(ID3D12Debug), reinterpret_cast<void**>(D3D12DebugController.GetAddressOf())));
 
 	if (D3D12DebugController)
 	{
@@ -109,7 +109,7 @@ void CFramework::CreateDevice()
 	FlagCount |= DXGI_CREATE_FACTORY_DEBUG;
 #endif
 
-	DX::ThrowIfFailed(CreateDXGIFactory2(FlagCount, __uuidof(IDXGIFactory4), (void**)m_DXGIFactory.GetAddressOf()));
+	DX::ThrowIfFailed(CreateDXGIFactory2(FlagCount, __uuidof(IDXGIFactory4), reinterpret_cast<void**>(m_DXGIFactory.GetAddressOf())));
 
 	ComPtr<IDXGIAdapter1> DXGIAdapter{};
 
@@ -125,7 +125,7 @@ void CFramework::CreateDevice()
 			continue;
 		}
 
-		Result = D3D12CreateDevice(DXGIAdapter.Get(), D3D_FEATURE_LEVEL_12_0, _uuidof(ID3D12Device), (void**)m_D3D12Device.GetAddressOf());
+		Result = D3D12CreateDevice(DXGIAdapter.Get(), D3D_FEATURE_LEVEL_12_0, _uuidof(ID3D12Device), reinterpret_cast<void**>(m_D3D12Device.GetAddressOf()));
 
 		if (SUCCEEDED(Result))
 		{
@@ -140,8 +140,8 @@ void CFramework::CreateDevice()
 	// 모든 하드웨어 어댑터 대하여 특성 레벨 12.0을 지원하는 하드웨어 디바이스를 생성한다.
 	if (!DXGIAdapter)
 	{
-		DX::ThrowIfFailed(m_DXGIFactory->EnumWarpAdapter(_uuidof(IDXGIAdapter1), (void**)DXGIAdapter.GetAddressOf()));
-		DX::ThrowIfFailed(D3D12CreateDevice(DXGIAdapter.Get(), D3D_FEATURE_LEVEL_12_0, _uuidof(ID3D12Device), (void**)m_D3D12Device.GetAddressOf()));
+		DX::ThrowIfFailed(m_DXGIFactory->EnumWarpAdapter(_uuidof(IDXGIAdapter1), reinterpret_cast<void**>(DXGIAdapter.GetAddressOf())));
+		DX::ThrowIfFailed(D3D12CreateDevice(DXGIAdapter.Get(), D3D_FEATURE_LEVEL_12_0, _uuidof(ID3D12Device), reinterpret_cast<void**>(m_D3D12Device.GetAddressOf())));
 	}
 
 	// 특성 레벨 12.0을 지원하는 하드웨어 디바이스를 생성할 수 없으면 WARP 디바이스를 생성한다.
@@ -162,7 +162,7 @@ void CFramework::CreateDevice()
 	m_Msaa4xEnable = (m_Msaa4xQualityLevels > 1) ? true : false;
 
 	// 펜스를 생성하고 펜스 값을 0으로 설정한다.
-	DX::ThrowIfFailed(m_D3D12Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, __uuidof(ID3D12Fence), (void**)m_D3D12Fence.GetAddressOf()));
+	DX::ThrowIfFailed(m_D3D12Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, __uuidof(ID3D12Fence), reinterpret_cast<void**>(m_D3D12Fence.GetAddressOf())));
 
 	// 펜스와 동기화를 위한 이벤트 객체를 생성한다.(이벤트 객체의 초기값은 FALSE이다.)
 	// 이벤트가 실행되면(Signal) 이벤트의 값을 자동적으로 FALSE가 되도록 생성한다.
@@ -176,9 +176,9 @@ void CFramework::CreateCommandQueueAndList()
 	D3D12CommandQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
 	D3D12CommandQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 
-	DX::ThrowIfFailed(m_D3D12Device->CreateCommandQueue(&D3D12CommandQueueDesc, _uuidof(ID3D12CommandQueue), (void**)m_D3D12CommandQueue.GetAddressOf()));
-	DX::ThrowIfFailed(m_D3D12Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, __uuidof(ID3D12CommandAllocator), (void**)m_D3D12CommandAllocator.GetAddressOf()));
-	DX::ThrowIfFailed(m_D3D12Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_D3D12CommandAllocator.Get(), nullptr, __uuidof(ID3D12GraphicsCommandList), (void**)m_D3D12GraphicsCommandList.GetAddressOf()));
+	DX::ThrowIfFailed(m_D3D12Device->CreateCommandQueue(&D3D12CommandQueueDesc, _uuidof(ID3D12CommandQueue), reinterpret_cast<void**>(m_D3D12CommandQueue.GetAddressOf())));
+	DX::ThrowIfFailed(m_D3D12Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, __uuidof(ID3D12CommandAllocator), reinterpret_cast<void**>(m_D3D12CommandAllocator.GetAddressOf())));
+	DX::ThrowIfFailed(m_D3D12Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_D3D12CommandAllocator.Get(), nullptr, __uuidof(ID3D12GraphicsCommandList), reinterpret_cast<void**>(m_D3D12GraphicsCommandList.GetAddressOf())));
 
 	// 명령 리스트는 생성되면 열린(Open) 상태이므로 닫힌(Closed) 상태로 만든다.
 	DX::ThrowIfFailed(m_D3D12GraphicsCommandList->Close());
@@ -221,7 +221,7 @@ void CFramework::CreateRtvAndDsvDescriptorHeaps()
 	D3D12DescriptorHeapDesc.NodeMask = 0;
 
 	// 렌더 타겟 서술자 힙(서술자의 개수는 스왑체인 버퍼의 개수)을 생성한다.
-	DX::ThrowIfFailed(m_D3D12Device->CreateDescriptorHeap(&D3D12DescriptorHeapDesc, __uuidof(ID3D12DescriptorHeap), (void**)m_D3D12RtvDescriptorHeap.GetAddressOf()));
+	DX::ThrowIfFailed(m_D3D12Device->CreateDescriptorHeap(&D3D12DescriptorHeapDesc, __uuidof(ID3D12DescriptorHeap), reinterpret_cast<void**>(m_D3D12RtvDescriptorHeap.GetAddressOf())));
 
 	// 렌더 타겟 서술자 힙의 원소의 크기를 저장한다.
 	m_RtvDescriptorIncrementSize = m_D3D12Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
@@ -230,7 +230,7 @@ void CFramework::CreateRtvAndDsvDescriptorHeaps()
 	D3D12DescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
 	D3D12DescriptorHeapDesc.NumDescriptors = 1;
 
-	DX::ThrowIfFailed(m_D3D12Device->CreateDescriptorHeap(&D3D12DescriptorHeapDesc, __uuidof(ID3D12DescriptorHeap), (void**)m_D3D12DsvDescriptorHeap.GetAddressOf()));
+	DX::ThrowIfFailed(m_D3D12Device->CreateDescriptorHeap(&D3D12DescriptorHeapDesc, __uuidof(ID3D12DescriptorHeap), reinterpret_cast<void**>(m_D3D12DsvDescriptorHeap.GetAddressOf())));
 
 	// 깊이-스텐실 서술자 힙의 원소의 크기를 저장한다.
 	m_DsvDescriptorIncrementSize = m_D3D12Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
@@ -242,7 +242,7 @@ void CFramework::CreateRenderTargetViews()
 
 	for (UINT i = 0; i < m_SwapChainBufferCount; ++i)
 	{
-		DX::ThrowIfFailed(m_DXGISwapChain->GetBuffer(i, __uuidof(ID3D12Resource), (void**)m_D3D12RenderTargetBuffers[i].GetAddressOf()));
+		DX::ThrowIfFailed(m_DXGISwapChain->GetBuffer(i, __uuidof(ID3D12Resource), reinterpret_cast<void**>(m_D3D12RenderTargetBuffers[i].GetAddressOf())));
 		m_D3D12Device->CreateRenderTargetView(m_D3D12RenderTargetBuffers[i].Get(), nullptr, D3D12RtvCPUDescriptorHandle);
 
 		D3D12RtvCPUDescriptorHandle.ptr += m_RtvDescriptorIncrementSize;
@@ -258,7 +258,7 @@ void CFramework::CreateDepthStencilView()
 
 	// 깊이-스텐실 버퍼를 생성한다.
 	DX::ThrowIfFailed(m_D3D12Device->CreateCommittedResource(&D3D312HeapProperties, D3D12_HEAP_FLAG_NONE, &D3D12ResourceDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE,
-		&D3D12ClearValue, __uuidof(ID3D12Resource), (void**)m_D3D12DepthStencilBuffer.GetAddressOf()));
+		&D3D12ClearValue, __uuidof(ID3D12Resource), reinterpret_cast<void**>(m_D3D12DepthStencilBuffer.GetAddressOf())));
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE D3D12DsvCPUDescriptorHandle{ m_D3D12DsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart() };
 
@@ -271,7 +271,7 @@ void CFramework::CreateShaderVariables()
 	UINT Bytes{ (sizeof(CB_FRAMEWORKINFO) + 255) & ~255 };
 
 	m_D3D12FrameworkInfo = DX::CreateBufferResource(m_D3D12Device.Get(), m_D3D12GraphicsCommandList.Get(), nullptr, Bytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, nullptr);
-	DX::ThrowIfFailed(m_D3D12FrameworkInfo->Map(0, nullptr, (void**)&m_MappedFrameworkInfo));
+	DX::ThrowIfFailed(m_D3D12FrameworkInfo->Map(0, nullptr, reinterpret_cast<void**>(&m_MappedFrameworkInfo)));
 }
 
 void CFramework::UpdateShaderVariables()

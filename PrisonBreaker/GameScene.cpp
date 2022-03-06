@@ -16,16 +16,37 @@ void CGameScene::OnDestroy()
 	
 void CGameScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
+	// 렌더링에 필요한 셰이더 객체(PSO)를 생성한다.
+	shared_ptr<CGraphicsShader> Shader{ make_shared<CDepthWriteShader>(D3D12Device, D3D12GraphicsCommandList) };
+
+	Shader->CreatePipelineState(D3D12Device, m_D3D12RootSignature.Get());
+	CShaderManager::GetInstance()->RegisterShader(TEXT("DepthWriteShader"), Shader);
+
+	Shader = make_shared<CShadowMapShader>();
+	Shader->CreatePipelineState(D3D12Device, m_D3D12RootSignature.Get());
+	CShaderManager::GetInstance()->RegisterShader(TEXT("ShadowMapShader"), Shader);
+
+	Shader = make_shared<CSkyBoxShader>();
+	Shader->CreatePipelineState(D3D12Device, m_D3D12RootSignature.Get());
+	CShaderManager::GetInstance()->RegisterShader(TEXT("SkyBoxShader"), Shader);
+
+	Shader = make_shared<CDebugShader>();
+	Shader->CreatePipelineState(D3D12Device, m_D3D12RootSignature.Get());
+	CShaderManager::GetInstance()->RegisterShader(TEXT("DebugShader"), Shader);
+
 	// 카메라 객체를 생성한다.
 	shared_ptr<CCamera> Camera{ make_shared<CCamera>() };
 
 	Camera->CreateShaderVariables(D3D12Device, D3D12GraphicsCommandList);
-	Camera->GeneratePerspectiveProjectionMatrix(90.0f, (float)CLIENT_WIDTH / (float)CLIENT_HEIGHT, 1.0f, 500.0f);
+	Camera->GeneratePerspectiveProjectionMatrix(90.0f, static_cast<float>(CLIENT_WIDTH) / static_cast<float>(CLIENT_HEIGHT), 1.0f, 500.0f);
 	Camera->GenerateViewMatrix(XMFLOAT3(0.0f, 5.0f, -150.0f), XMFLOAT3(0.0f, 0.0f, 1.0f));
 
+	// 객체 타입 수만큼 벡터의 크기를 재할당한다.
+	m_GameObjects.resize(OBJECT_TYPE_STRUCTURE + 1);
+
 	// 플레이어 객체를 생성한다.
-	m_Player = make_shared<CPlayer>();
-	m_Player->SetCamera(Camera);
+	m_GameObjects[OBJECT_TYPE_PLAYER].push_back(make_shared<CPlayer>());
+	static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER].back())->SetCamera(Camera);
 
 	// 파일로부터 씬 객체들을 생성하고 배치한다.
 #ifdef READ_BINARY_FILE
@@ -34,32 +55,10 @@ void CGameScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandLi
 	LoadSceneInfoFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Model/GameScene.txt"));
 #endif
 
-	// 그림자의 영향을 받는 객체들을 하나의 벡터에 저장한다.
-	vector<shared_ptr<CGameObject>> ShadyObjects{};
+	// 스카이박스 객체를 생성한다.
+	m_SkyBox = make_shared<CSkyBox>(D3D12Device, D3D12GraphicsCommandList);
 
-	ShadyObjects.reserve(m_Guards.size() + m_Structures.size() + 2);
-	ShadyObjects.push_back(m_Player);
-	ShadyObjects.push_back(m_Ground);
-	copy(m_Guards.begin(), m_Guards.end(), back_inserter(ShadyObjects));
-	copy(m_Structures.begin(), m_Structures.end(), back_inserter(ShadyObjects));
-
-	// 각 객체들을 렌더링하기 위한 쉐이더를 생성한다.
-	m_DepthWriteShader = make_shared<CDepthWriteShader>(D3D12Device, D3D12GraphicsCommandList, m_Lights, ShadyObjects);
-	m_DepthWriteShader->CreatePipelineState(D3D12Device, m_D3D12RootSignature.Get());
-
-	m_DebugShader = make_shared<CDebugShader>();
-	m_DebugShader->CreatePipelineState(D3D12Device, m_D3D12RootSignature.Get());
-
-	shared_ptr<CShadowMapShader> ShadowMapShader{ make_shared<CShadowMapShader>(ShadyObjects) };
-
-	ShadowMapShader->CreatePipelineState(D3D12Device, m_D3D12RootSignature.Get());
-	m_Shaders.push_back(ShadowMapShader);
-
-	shared_ptr<CSkyBoxShader> SkyBoxShader{ make_shared<CSkyBoxShader>(D3D12Device, D3D12GraphicsCommandList) };
-
-	SkyBoxShader->CreatePipelineState(D3D12Device, m_D3D12RootSignature.Get());
-	m_Shaders.push_back(SkyBoxShader);
-
+	// 모든 텍스처를 저장하는 힙과 각 텍스처의 SRV 리소스를 생성한다.
 	CTextureManager::GetInstance()->CreateCbvSrvUavDescriptorHeaps(D3D12Device);
 	CTextureManager::GetInstance()->CreateShaderResourceViews(D3D12Device);
 
@@ -106,7 +105,7 @@ void CGameScene::CreateRootSignature(ID3D12Device* D3D12Device)
 	ComPtr<ID3DBlob> D3D12SignatureBlob{}, D3D12ErrorBlob{};
 
 	DX::ThrowIfFailed(D3D12SerializeRootSignature(&D3D12RootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, D3D12SignatureBlob.GetAddressOf(), D3D12ErrorBlob.GetAddressOf()));
-	DX::ThrowIfFailed(D3D12Device->CreateRootSignature(0, D3D12SignatureBlob->GetBufferPointer(), D3D12SignatureBlob->GetBufferSize(), __uuidof(ID3D12RootSignature), (void**)m_D3D12RootSignature.GetAddressOf()));
+	DX::ThrowIfFailed(D3D12Device->CreateRootSignature(0, D3D12SignatureBlob->GetBufferPointer(), D3D12SignatureBlob->GetBufferSize(), __uuidof(ID3D12RootSignature), reinterpret_cast<void**>(m_D3D12RootSignature.GetAddressOf())));
 }
 
 void CGameScene::CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
@@ -114,7 +113,7 @@ void CGameScene::CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12Graphics
 	UINT Bytes{ (sizeof(CB_LIGHT) + 255) & ~255 };
 
 	m_D3D12Lights = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, nullptr, Bytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, nullptr);
-	DX::ThrowIfFailed(m_D3D12Lights->Map(0, nullptr, (void**)&m_MappedLights));
+	DX::ThrowIfFailed(m_D3D12Lights->Map(0, nullptr, reinterpret_cast<void**>(&m_MappedLights)));
 }
 
 void CGameScene::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
@@ -133,40 +132,23 @@ void CGameScene::ReleaseShaderVariables()
 	
 void CGameScene::ReleaseUploadBuffers()
 {
-	if (m_Player)
+	for (UINT i = OBJECT_TYPE_PLAYER; i <= OBJECT_TYPE_STRUCTURE; ++i)
 	{
-		m_Player->ReleaseUploadBuffers();
-	}
-
-	for (const auto& Guard : m_Guards)
-	{
-		if (Guard)
+		for (const auto& GameObject : m_GameObjects[i])
 		{
-			Guard->ReleaseUploadBuffers();
+			if (GameObject)
+			{
+				GameObject->ReleaseUploadBuffers();
+			}
 		}
 	}
 
-	if (m_Ground)
+	if (m_SkyBox)
 	{
-		m_Ground->ReleaseUploadBuffers();
-	}
-
-	for (const auto& Structure : m_Structures)
-	{
-		if (Structure)
-		{
-			Structure->ReleaseShaderVariables();
-		}
-	}
-
-	for (const auto& Shader : m_Shaders)
-	{
-		if (Shader)
-		{
-			Shader->ReleaseUploadBuffers();
-		}
+		m_SkyBox->ReleaseUploadBuffers();
 	}
 }
+
 
 void CGameScene::ProcessMouseMessage(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
@@ -214,52 +196,23 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	SetCursorPos(OldCursorPos.x, OldCursorPos.y);
 
 	XMFLOAT2 Delta{ 10.0f * ElapsedTime * (NewCursorPos.x - OldCursorPos.x), 10.0f * ElapsedTime * (NewCursorPos.y - OldCursorPos.y) };
+	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][0]) };
 
 	// 1인칭 모드
-	//m_Player->GetCamera()->Rotate(Delta.y, Delta.x, 0.0f);
+	//Player->GetCamera()->Rotate(Delta.y, Delta.x, 0.0f);
 
-	//if (GetAsyncKeyState('W') & 0x8000)
-	//{
-	//	m_Player->GetCamera()->Move(Vector3::ScalarProduct(10.0f * ElapsedTime, m_Player->GetCamera()->GetLook(), false));
-	//}
-
-	//if (GetAsyncKeyState('S') & 0x8000)
-	//{
-	//	m_Player->GetCamera()->Move(Vector3::ScalarProduct(-10.0f * ElapsedTime, m_Player->GetCamera()->GetLook(), false));
-	//}
-
-	//if (GetAsyncKeyState('A') & 0x8000)
-	//{
-	//	m_Player->GetCamera()->Move(Vector3::ScalarProduct(-10.0f * ElapsedTime, m_Player->GetCamera()->GetRight(), false));
-	//}
-
-	//if (GetAsyncKeyState('D') & 0x8000)
-	//{
-	//	m_Player->GetCamera()->Move(Vector3::ScalarProduct(10.0f * ElapsedTime, m_Player->GetCamera()->GetRight(), false));
-	//}
+	//if (GetAsyncKeyState('W') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(10.0f * ElapsedTime, Player->GetCamera()->GetLook(), false));
+	//if (GetAsyncKeyState('S') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(-10.0f * ElapsedTime, Player->GetCamera()->GetLook(), false));
+	//if (GetAsyncKeyState('A') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(-10.0f * ElapsedTime, Player->GetCamera()->GetRight(), false));
+	//if (GetAsyncKeyState('D') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(10.0f * ElapsedTime, Player->GetCamera()->GetRight(), false));
 
 	// 3인칭 모드
-	m_Player->Rotate(Delta.y, Delta.x, 0.0f, ElapsedTime);
+	Player->Rotate(Delta.y, Delta.x, 0.0f, ElapsedTime);
 
-	if (GetAsyncKeyState('W') & 0x8000)
-	{
-		m_Player->Move(m_Player->GetLook(), 5.0f * ElapsedTime);
-	}
-
-	if (GetAsyncKeyState('S') & 0x8000)
-	{
-		m_Player->Move(m_Player->GetLook(), -5.0f * ElapsedTime);
-	}
-
-	if (GetAsyncKeyState('A') & 0x8000)
-	{
-		m_Player->Move(m_Player->GetRight(), -5.0f * ElapsedTime);
-	}
-
-	if (GetAsyncKeyState('D') & 0x8000)
-	{
-		m_Player->Move(m_Player->GetRight(), 5.0f * ElapsedTime);
-	}
+	if (GetAsyncKeyState('W') & 0x8000) Player->Move(Player->GetLook(), 5.0f * ElapsedTime);
+	if (GetAsyncKeyState('S') & 0x8000) Player->Move(Player->GetLook(), -5.0f * ElapsedTime);
+	if (GetAsyncKeyState('A') & 0x8000) Player->Move(Player->GetRight(), -5.0f * ElapsedTime);
+	if (GetAsyncKeyState('D') & 0x8000) Player->Move(Player->GetRight(), 5.0f * ElapsedTime);
 }
 
 void CGameScene::Animate(float ElapsedTime)
@@ -275,43 +228,37 @@ void CGameScene::PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 	}
 
 	CTextureManager::GetInstance()->SetDescriptorHeap(D3D12GraphicsCommandList);
-
-	if (m_DepthWriteShader)
-	{
-		m_DepthWriteShader->PrepareShadowMap(D3D12GraphicsCommandList);
-	}
+	static_pointer_cast<CDepthWriteShader>(CShaderManager::GetInstance()->GetShader(TEXT("DepthWriteShader")))->PrepareShadowMap(D3D12GraphicsCommandList, m_Lights, m_GameObjects);
 
 	UpdateShaderVariables(D3D12GraphicsCommandList);
 }
 
 void CGameScene::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList) const
 {
-	m_Player->GetCamera()->RSSetViewportsAndScissorRects(D3D12GraphicsCommandList);
-	m_Player->GetCamera()->UpdateShaderVariables(D3D12GraphicsCommandList);
+	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER].back()) };
 
-	for (const auto& Shader : m_Shaders)
+	Player->GetCamera()->RSSetViewportsAndScissorRects(D3D12GraphicsCommandList);
+	Player->GetCamera()->UpdateShaderVariables(D3D12GraphicsCommandList);
+
+	CTextureManager::GetInstance()->GetTexture(TEXT("ShadowMap"))->UpdateShaderVariable(D3D12GraphicsCommandList);
+
+	for (UINT i = OBJECT_TYPE_PLAYER; i <= OBJECT_TYPE_STRUCTURE; ++i)
 	{
-		if (Shader)
+		for (const auto& GameObject : m_GameObjects[i])
 		{
-			Shader->Render(D3D12GraphicsCommandList, m_Player->GetCamera());
+			if (GameObject)
+			{
+				GameObject->Render(D3D12GraphicsCommandList, Player->GetCamera());
+			}
 		}
 	}
 
-	if (m_DebugShader)
+	if (m_SkyBox)
 	{
-		m_DebugShader->Render(D3D12GraphicsCommandList, m_Player->GetCamera());
-		m_Player->RenderBoundingBox(D3D12GraphicsCommandList, m_Player->GetCamera());
-
-		for (const auto& Guards : m_Guards)
-		{
-			Guards->RenderBoundingBox(D3D12GraphicsCommandList, m_Player->GetCamera());
-		}
-
-		for (const auto& Structure : m_Structures)
-		{
-			Structure->RenderBoundingBox(D3D12GraphicsCommandList, m_Player->GetCamera());
-		}
+		m_SkyBox->Render(D3D12GraphicsCommandList, Player->GetCamera());
 	}
+
+	static_pointer_cast<CDebugShader>(CShaderManager::GetInstance()->GetShader(TEXT("DebugShader")))->Render(D3D12GraphicsCommandList, Player->GetCamera(), m_GameObjects);
 }
 
 void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName)
@@ -319,7 +266,7 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 	tstring Token{};
 
 	shared_ptr<CGameObject> Object{};
-	shared_ptr<CGameObject> Model{};
+	shared_ptr<LOADED_MODEL_INFO> ModelInfo{};
 	UINT ObjectType{};
 
 #ifdef READ_BINARY_FILE
@@ -348,27 +295,27 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 			switch (ObjectType)
 			{
 			case OBJECT_TYPE_PLAYER:
-				m_Player->SetAlive(true);
+				m_Player->SetActive(true);
 				m_Player->SetChild(Model);
 				m_Player->SetTransformMatrix(TransformMatrix);
 				m_Player->SetPosition(XMFLOAT3(50.0f, 0.0f, -50.0f));
 				break;
 			case OBJECT_TYPE_NPC:
 				Object = make_shared<CGameObject>();
-				Object->SetAlive(true);
+				Object->SetActive(true);
 				Object->SetChild(Model);
 				Object->SetTransformMatrix(TransformMatrix);
 				m_Guards.push_back(Object);
 				break;
 			case OBJECT_TYPE_TERRAIN:
 				m_Ground = make_shared<CGameObject>();
-				m_Ground->SetAlive(true);
+				m_Ground->SetActive(true);
 				m_Ground->SetChild(Model);
 				m_Ground->SetTransformMatrix(TransformMatrix);
 				break;
 			case OBJECT_TYPE_STRUCTURE:
 				Object = make_shared<CGameObject>();
-				Object->SetAlive(true);
+				Object->SetActive(true);
 				Object->SetChild(Model);
 				Object->SetTransformMatrix(TransformMatrix);
 				m_Structures.push_back(Object);
@@ -388,8 +335,7 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 		if (Token == TEXT("<Name>"))
 		{
 			InFile >> Token;
-
-			Model = CGameObject::LoadObjectFromFile(D3D12Device, D3D12GraphicsCommandList, Token);
+			ModelInfo = CGameObject::LoadObjectFromFile(D3D12Device, D3D12GraphicsCommandList, Token);
 		}
 		else if (Token == TEXT("<Type>"))
 		{
@@ -407,29 +353,17 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 			switch (ObjectType)
 			{
 			case OBJECT_TYPE_PLAYER:
-				m_Player->SetAlive(true);
-				m_Player->SetChild(Model);
-				m_Player->SetTransformMatrix(TransformMatrix);
+				m_GameObjects[ObjectType].back()->SetActive(true);
+				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
+				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
 				break;
 			case OBJECT_TYPE_NPC:
-				Object = make_shared<CGameObject>();
-				Object->SetAlive(true);
-				Object->SetChild(Model);
-				Object->SetTransformMatrix(TransformMatrix);
-				m_Guards.push_back(Object);
-				break;
 			case OBJECT_TYPE_TERRAIN:
-				m_Ground = make_shared<CGameObject>();
-				m_Ground->SetAlive(true);
-				m_Ground->SetChild(Model);
-				m_Ground->SetTransformMatrix(TransformMatrix);
-				break;
 			case OBJECT_TYPE_STRUCTURE:
-				Object = make_shared<CGameObject>();
-				Object->SetAlive(true);
-				Object->SetChild(Model);
-				Object->SetTransformMatrix(TransformMatrix);
-				m_Structures.push_back(Object);
+				m_GameObjects[ObjectType].push_back(make_shared<CGameObject>());
+				m_GameObjects[ObjectType].back()->SetActive(true);
+				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
+				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
 				break;
 			}
 		}

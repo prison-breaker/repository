@@ -1,5 +1,6 @@
 #pragma once
-#include "Material.h"
+
+class CTexture;
 
 class CTextureManager
 {

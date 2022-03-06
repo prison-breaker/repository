@@ -14,18 +14,16 @@ namespace DX
 		}
 	}
 
-	ComPtr<ID3D12Resource> CreateTextureResource(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList,
-		void* Data, const UINT64& Bytes, D3D12_HEAP_TYPE D3D12HeapType, D3D12_RESOURCE_STATES D3D12ResourceStates, ID3D12Resource** D3D12UploadBuffer,
-		const UINT64& Width, UINT Height, UINT16 DepthOrArraySize, UINT16 MipLevels, D3D12_RESOURCE_DIMENSION D3D12ResourceDimension, D3D12_RESOURCE_FLAGS D3D12ResourceFlags, DXGI_FORMAT DXGIFormat)
+	ComPtr<ID3D12Resource> CreateTextureResource(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, void* Data, const UINT64& Bytes, D3D12_HEAP_TYPE D3D12HeapType, D3D12_RESOURCE_STATES D3D12ResourceStates, ID3D12Resource** D3D12UploadBuffer, const UINT64& Width, UINT Height, UINT16 DepthOrArraySize, UINT16 MipLevels, D3D12_RESOURCE_DIMENSION D3D12ResourceDimension, D3D12_RESOURCE_FLAGS D3D12ResourceFlags, DXGI_FORMAT DXGIFormat)
 	{
 		CD3DX12_HEAP_PROPERTIES D3D12HeapProperties{ D3D12HeapType };
 		CD3DX12_RESOURCE_DESC D3D12ResourceDesc{
 			D3D12ResourceDimension,
-			(D3D12ResourceDimension == D3D12_RESOURCE_DIMENSION_BUFFER) ? (UINT64)D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT : 0,
+			(D3D12ResourceDimension == D3D12_RESOURCE_DIMENSION_BUFFER) ? static_cast<UINT64>(D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT) : 0,
 			(D3D12ResourceDimension == D3D12_RESOURCE_DIMENSION_BUFFER) ? Bytes : Width,
-			(D3D12ResourceDimension == D3D12_RESOURCE_DIMENSION_BUFFER) ? (UINT16)1 : Height,
-			(D3D12ResourceDimension == D3D12_RESOURCE_DIMENSION_BUFFER) ? (UINT16)1 : DepthOrArraySize,
-			(D3D12ResourceDimension == D3D12_RESOURCE_DIMENSION_BUFFER) ? (UINT16)1 : MipLevels,
+			(D3D12ResourceDimension == D3D12_RESOURCE_DIMENSION_BUFFER) ? static_cast<UINT16>(1) : Height,
+			(D3D12ResourceDimension == D3D12_RESOURCE_DIMENSION_BUFFER) ? static_cast<UINT16>(1) : DepthOrArraySize,
+			(D3D12ResourceDimension == D3D12_RESOURCE_DIMENSION_BUFFER) ? static_cast<UINT16>(1) : MipLevels,
 			(D3D12ResourceDimension == D3D12_RESOURCE_DIMENSION_BUFFER) ? DXGI_FORMAT_UNKNOWN : DXGIFormat,
 			1,
 			0,
@@ -42,8 +40,7 @@ namespace DX
 		{
 			D3D12_RESOURCE_STATES D3D12ResourceInitialStates{ (D3D12UploadBuffer && Data) ? D3D12_RESOURCE_STATE_COPY_DEST : D3D12ResourceStates };
 
-			DX::ThrowIfFailed(D3D12Device->CreateCommittedResource(&D3D12HeapProperties, D3D12_HEAP_FLAG_NONE, &D3D12ResourceDesc, D3D12ResourceInitialStates, nullptr,
-				__uuidof(ID3D12Resource), (void**)D3D12Buffer.GetAddressOf()));
+			DX::ThrowIfFailed(D3D12Device->CreateCommittedResource(&D3D12HeapProperties, D3D12_HEAP_FLAG_NONE, &D3D12ResourceDesc, D3D12ResourceInitialStates, nullptr, __uuidof(ID3D12Resource), reinterpret_cast<void**>(D3D12Buffer.GetAddressOf())));
 
 			if (D3D12UploadBuffer && Data)
 			{
@@ -62,11 +59,10 @@ namespace DX
 				D3D12ResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 				D3D12ResourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
-				DX::ThrowIfFailed(D3D12Device->CreateCommittedResource(&D3D12HeapProperties, D3D12_HEAP_FLAG_NONE, &D3D12ResourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-					__uuidof(ID3D12Resource), (void**)D3D12UploadBuffer));
+				DX::ThrowIfFailed(D3D12Device->CreateCommittedResource(&D3D12HeapProperties, D3D12_HEAP_FLAG_NONE, &D3D12ResourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, __uuidof(ID3D12Resource), reinterpret_cast<void**>(D3D12UploadBuffer)));
 
 				// 업로드 버퍼를 매핑하여 데이터를 복사한다.
-				DX::ThrowIfFailed((*D3D12UploadBuffer)->Map(0, &D3D12ReadRange, (void**)&DataBuffer));
+				DX::ThrowIfFailed((*D3D12UploadBuffer)->Map(0, &D3D12ReadRange, reinterpret_cast<void**>(&DataBuffer)));
 				memcpy(DataBuffer, Data, Bytes);
 				(*D3D12UploadBuffer)->Unmap(0, nullptr);
 
@@ -85,12 +81,11 @@ namespace DX
 		{
 			D3D12ResourceStates |= D3D12_RESOURCE_STATE_GENERIC_READ;
 
-			DX::ThrowIfFailed(D3D12Device->CreateCommittedResource(&D3D12HeapProperties, D3D12_HEAP_FLAG_NONE, &D3D12ResourceDesc, D3D12ResourceStates, nullptr,
-				__uuidof(ID3D12Resource), (void**)D3D12Buffer.GetAddressOf()));
+			DX::ThrowIfFailed(D3D12Device->CreateCommittedResource(&D3D12HeapProperties, D3D12_HEAP_FLAG_NONE, &D3D12ResourceDesc, D3D12ResourceStates, nullptr, __uuidof(ID3D12Resource), reinterpret_cast<void**>(D3D12Buffer.GetAddressOf())));
 
 			if (Data)
 			{
-				DX::ThrowIfFailed(D3D12Buffer->Map(0, &D3D12ReadRange, (void**)&DataBuffer));
+				DX::ThrowIfFailed(D3D12Buffer->Map(0, &D3D12ReadRange, reinterpret_cast<void**>(&DataBuffer)));
 				memcpy(DataBuffer, Data, Bytes);
 				D3D12Buffer->Unmap(0, nullptr);
 			}
@@ -100,12 +95,11 @@ namespace DX
 		{
 			D3D12ResourceStates |= D3D12_RESOURCE_STATE_COPY_DEST;
 
-			DX::ThrowIfFailed(D3D12Device->CreateCommittedResource(&D3D12HeapProperties, D3D12_HEAP_FLAG_NONE, &D3D12ResourceDesc, D3D12ResourceStates, nullptr,
-				__uuidof(ID3D12Resource), (void**)D3D12Buffer.GetAddressOf()));
+			DX::ThrowIfFailed(D3D12Device->CreateCommittedResource(&D3D12HeapProperties, D3D12_HEAP_FLAG_NONE, &D3D12ResourceDesc, D3D12ResourceStates, nullptr, __uuidof(ID3D12Resource), reinterpret_cast<void**>(D3D12Buffer.GetAddressOf())));
 
 			if (Data)
 			{
-				DX::ThrowIfFailed(D3D12Buffer->Map(0, &D3D12ReadRange, (void**)&DataBuffer));
+				DX::ThrowIfFailed(D3D12Buffer->Map(0, &D3D12ReadRange, reinterpret_cast<void**>(&DataBuffer)));
 				memcpy(DataBuffer, Data, Bytes);
 				D3D12Buffer->Unmap(0, nullptr);
 			}
@@ -116,26 +110,23 @@ namespace DX
 		return D3D12Buffer;
 	}
 
-	ComPtr<ID3D12Resource> CreateBufferResource(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList,
-		void* Data, const UINT64& Bytes, D3D12_HEAP_TYPE D3D12HeapType, D3D12_RESOURCE_STATES D3D12ResourceStates, ID3D12Resource** D3D12UploadBuffer)
+	ComPtr<ID3D12Resource> CreateBufferResource(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, void* Data, const UINT64& Bytes, D3D12_HEAP_TYPE D3D12HeapType, D3D12_RESOURCE_STATES D3D12ResourceStates, ID3D12Resource** D3D12UploadBuffer)
 	{
-		return CreateTextureResource(D3D12Device, D3D12GraphicsCommandList, Data, Bytes, D3D12HeapType, D3D12ResourceStates, D3D12UploadBuffer,  Bytes, 1, 1, 1, D3D12_RESOURCE_DIMENSION_BUFFER, D3D12_RESOURCE_FLAG_NONE, DXGI_FORMAT_UNKNOWN);
+		return CreateTextureResource(D3D12Device, D3D12GraphicsCommandList, Data, Bytes, D3D12HeapType, D3D12ResourceStates, D3D12UploadBuffer, Bytes, 1, 1, 1, D3D12_RESOURCE_DIMENSION_BUFFER, D3D12_RESOURCE_FLAG_NONE, DXGI_FORMAT_UNKNOWN);
 	}
 
-	ComPtr<ID3D12Resource> CreateTexture2DResource(ID3D12Device* D3D12Device, const UINT64& Width, UINT Height, UINT16 DepthOrArraySize, UINT16 MipLevels,
-		D3D12_RESOURCE_STATES D3D12ResourceStates, D3D12_RESOURCE_FLAGS D3D12ResourceFlags, DXGI_FORMAT DXGIFormat, const D3D12_CLEAR_VALUE& ClearValue)
+	ComPtr<ID3D12Resource> CreateTexture2DResource(ID3D12Device* D3D12Device, const UINT64& Width, UINT Height, UINT16 DepthOrArraySize, UINT16 MipLevels, D3D12_RESOURCE_STATES D3D12ResourceStates, D3D12_RESOURCE_FLAGS D3D12ResourceFlags, DXGI_FORMAT DXGIFormat, const D3D12_CLEAR_VALUE& ClearValue)
 	{
 		ComPtr<ID3D12Resource> Texture{};
 		CD3DX12_HEAP_PROPERTIES D3D12HeapProperties{ D3D12_HEAP_TYPE_DEFAULT };
 		CD3DX12_RESOURCE_DESC D3D12ResourceDesc{ D3D12_RESOURCE_DIMENSION_TEXTURE2D, 0, Width, Height, DepthOrArraySize, MipLevels, DXGIFormat, 1, 0, D3D12_TEXTURE_LAYOUT_UNKNOWN, D3D12ResourceFlags };
 
-		DX::ThrowIfFailed(D3D12Device->CreateCommittedResource(&D3D12HeapProperties, D3D12_HEAP_FLAG_NONE, &D3D12ResourceDesc, D3D12ResourceStates, &ClearValue, __uuidof(ID3D12Resource), (void**)Texture.GetAddressOf()));
+		DX::ThrowIfFailed(D3D12Device->CreateCommittedResource(&D3D12HeapProperties, D3D12_HEAP_FLAG_NONE, &D3D12ResourceDesc, D3D12ResourceStates, &ClearValue, __uuidof(ID3D12Resource), reinterpret_cast<void**>(Texture.GetAddressOf())));
 
 		return Texture;
 	}
 
-	ComPtr<ID3D12Resource> CreateTextureResourceFromDDSFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList,
-		const tstring& FileName, D3D12_RESOURCE_STATES D3D12ResourceStates, ID3D12Resource** D3D12UploadBuffer)
+	ComPtr<ID3D12Resource> CreateTextureResourceFromDDSFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName, D3D12_RESOURCE_STATES D3D12ResourceStates, ID3D12Resource** D3D12UploadBuffer)
 	{
 		ComPtr<ID3D12Resource> D3D12Texture{};
 		vector<D3D12_SUBRESOURCE_DATA> Subresources{};
@@ -143,15 +134,14 @@ namespace DX
 		DDS_ALPHA_MODE DDSAlphaMode{ DDS_ALPHA_MODE_UNKNOWN };
 		bool IsCubeMap{};
 
-		DX::ThrowIfFailed(DirectX::LoadDDSTextureFromFileEx(D3D12Device, wstring{ FileName.begin(), FileName.end() }.c_str(), 0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_DEFAULT, D3D12Texture.GetAddressOf(),
-			DDSData, Subresources, &DDSAlphaMode, &IsCubeMap));
+		DX::ThrowIfFailed(DirectX::LoadDDSTextureFromFileEx(D3D12Device, wstring{ FileName.begin(), FileName.end() }.c_str(), 0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_DEFAULT, D3D12Texture.GetAddressOf(), DDSData, Subresources, &DDSAlphaMode, &IsCubeMap));
 
-		UINT64 Bytes{ GetRequiredIntermediateSize(D3D12Texture.Get(), 0, (UINT)Subresources.size()) };
+		UINT64 Bytes{ GetRequiredIntermediateSize(D3D12Texture.Get(), 0, static_cast<UINT>(Subresources.size())) };
 		CD3DX12_HEAP_PROPERTIES D3D12HeapPropertiesDesc{ D3D12_HEAP_TYPE_UPLOAD, 1, 1 };
 		CD3DX12_RESOURCE_DESC D3D12ResourceDesc{ D3D12_RESOURCE_DIMENSION_BUFFER, 0, Bytes, 1, 1, 1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE };
 
-		DX::ThrowIfFailed(D3D12Device->CreateCommittedResource(&D3D12HeapPropertiesDesc, D3D12_HEAP_FLAG_NONE, &D3D12ResourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, __uuidof(ID3D12Resource), (void**)D3D12UploadBuffer));
-		UpdateSubresources(D3D12GraphicsCommandList, D3D12Texture.Get(), *D3D12UploadBuffer, 0, 0, (UINT)Subresources.size(), Subresources.data());
+		DX::ThrowIfFailed(D3D12Device->CreateCommittedResource(&D3D12HeapPropertiesDesc, D3D12_HEAP_FLAG_NONE, &D3D12ResourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, __uuidof(ID3D12Resource), reinterpret_cast<void**>(D3D12UploadBuffer)));
+		UpdateSubresources(D3D12GraphicsCommandList, D3D12Texture.Get(), *D3D12UploadBuffer, 0, 0, static_cast<UINT>(Subresources.size()), Subresources.data());
 
 		CD3DX12_RESOURCE_BARRIER D3D12ResourceBarrier{};
 
@@ -185,7 +175,7 @@ namespace File
 	void ReadStringFromFile(tifstream& InFile, tstring& Token)
 	{
 		UINT Length{};
-		
+
 		InFile.read(reinterpret_cast<TCHAR*>(&Length), sizeof(BYTE));
 		Token.resize(Length);
 		InFile.read(reinterpret_cast<TCHAR*>(&Token[0]), sizeof(BYTE) * Length);
@@ -196,7 +186,7 @@ namespace Random
 {
 	float Random(float Min, float Max)
 	{
-		return Min + (Max - Min) * ((float)rand() / (RAND_MAX));
+		return Min + (Max - Min) * (static_cast<float>(rand()) / (RAND_MAX));
 	}
 }
 

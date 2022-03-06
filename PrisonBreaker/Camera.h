@@ -2,37 +2,37 @@
 
 struct CB_CAMERA
 {
-	XMFLOAT4X4		       m_ViewMatrix{};
-	XMFLOAT4X4		       m_ProjectionMatrix{};
-					       
-	XMFLOAT3		       m_Position{};
+	XMFLOAT4X4 m_ViewMatrix{};
+	XMFLOAT4X4 m_ProjectionMatrix{};
+			 
+	XMFLOAT3   m_Position{};
 };
 
 class CCamera
 {
 private:
-	D3D12_VIEWPORT         m_D3D12Viewport{ 0, 0, CLIENT_WIDTH, CLIENT_HEIGHT, 0.0f, 1.0f };
-	D3D12_RECT	           m_D3D12ScissorRect{ 0, 0, CLIENT_WIDTH, CLIENT_HEIGHT };
-				           
-	XMFLOAT4X4	           m_ViewMatrix{ Matrix4x4::Identity() };
-	XMFLOAT4X4	           m_ProjectionMatrix{ Matrix4x4::Identity() };
-				              
-	XMFLOAT3	           m_Right{ 1.0f, 0.0f, 0.0f };
-	XMFLOAT3	           m_Up{ 0.0f, 1.0f, 0.0f };
-	XMFLOAT3	           m_Look{ 0.0f, 0.0f, 1.0f };
-	XMFLOAT3	           m_Position{};
-				              
-	float		           m_Pitch{};
-	float		           m_Roll{};
-	float		           m_Yaw{};
-				           
-	XMFLOAT3	           m_Offset{ 0.0f, 0.0, -6.0f };
-	float		           m_TimeLag{ 0.1f };
-				           
-	BoundingFrustum        m_BoundingFrustum{};
+	D3D12_VIEWPORT              m_D3D12Viewport{ 0, 0, CLIENT_WIDTH, CLIENT_HEIGHT, 0.0f, 1.0f };
+	D3D12_RECT	                m_D3D12ScissorRect{ 0, 0, CLIENT_WIDTH, CLIENT_HEIGHT };
+				                
+	XMFLOAT4X4	                m_ViewMatrix{ Matrix4x4::Identity() };
+	XMFLOAT4X4	                m_ProjectionMatrix{ Matrix4x4::Identity() };
+				                   
+	XMFLOAT3	                m_Right{ 1.0f, 0.0f, 0.0f };
+	XMFLOAT3	                m_Up{ 0.0f, 1.0f, 0.0f };
+	XMFLOAT3	                m_Look{ 0.0f, 0.0f, 1.0f };
+	XMFLOAT3	                m_Position{};
+				                   
+	float		                m_Pitch{};
+	float		                m_Roll{};
+	float		                m_Yaw{};
+				                
+	XMFLOAT3	                m_Offset{ 0.0f, 0.0, -6.0f };
+	float		                m_TimeLag{ 0.1f };
+	
+	BoundingFrustum             m_BoundingFrustum{};
 
-	ComPtr<ID3D12Resource> m_D3D12Camera{};
-	CB_CAMERA*			   m_MappedCamera{};
+	ComPtr<ID3D12Resource>      m_D3D12Camera{};
+	CB_CAMERA*			        m_MappedCamera{};
 
 public:
 	CCamera() = default;

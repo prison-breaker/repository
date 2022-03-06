@@ -3,6 +3,8 @@
 class CMesh
 {
 protected:
+	tstring						    m_MeshName{};
+
 	D3D12_PRIMITIVE_TOPOLOGY        m_D3D12PrimitiveTopology{ D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST };
 							        
 	UINT					        m_VertexCount{};

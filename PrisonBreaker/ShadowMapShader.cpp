@@ -2,9 +2,7 @@
 #include "ShadowMapShader.h"
 #include "GameScene.h"
 
-CDepthWriteShader::CDepthWriteShader(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, vector<LIGHT>& Lights, vector<shared_ptr<CGameObject>>& ShadyObjects, UINT StateCount) : CGraphicsShader(StateCount),
-	m_Lights{ Lights },
-	m_ShadyObjects{ ShadyObjects },
+CDepthWriteShader::CDepthWriteShader(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList) :
 	m_ProjectionMatrixToTexture{ 0.5f,  0.0f, 0.0f, 0.0f,
 	                             0.0f, -0.5f, 0.0f, 0.0f,
 	                             0.0f,  0.0f, 1.0f, 0.0f,
@@ -78,7 +76,7 @@ DXGI_FORMAT CDepthWriteShader::GetDSVFormat(UINT StateNum)
 	return DXGI_FORMAT_D32_FLOAT;
 }
 
-void CDepthWriteShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, UINT StateNum)
+void CDepthWriteShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, UINT StateNum)
 {
 	if (Camera)
 	{
@@ -86,13 +84,27 @@ void CDepthWriteShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandLi
 		Camera->UpdateShaderVariables(D3D12GraphicsCommandList);
 	}
 
-	CGraphicsShader::Render(D3D12GraphicsCommandList, Camera, StateNum);
-
-	for (const auto& ShadyObject : m_ShadyObjects)
+	if (CShaderManager::GetInstance()->SetGlobalShader(TEXT("DepthWriteShader")))
 	{
-		 ShadyObject->UpdateTransform(Matrix4x4::Identity());
-		 ShadyObject->Render(D3D12GraphicsCommandList, Camera);
+		if (m_D3D12PipelineStates[StateNum])
+		{
+			D3D12GraphicsCommandList->SetPipelineState(m_D3D12PipelineStates[StateNum].Get());
+		}
 	}
+
+	for (UINT i = OBJECT_TYPE_PLAYER; i <= OBJECT_TYPE_STRUCTURE; ++i)
+	{
+		for (const auto& GameObject : GameObjects[i])
+		{
+			if (GameObject)
+			{
+				GameObject->UpdateTransform(Matrix4x4::Identity());
+				GameObject->Render(D3D12GraphicsCommandList, Camera);
+			}
+		}
+	}
+
+	CShaderManager::GetInstance()->UnSetGlobalShader();
 }
 
 void CDepthWriteShader::CreateRtvAndDsvDescriptorHeaps(ID3D12Device* D3D12Device)
@@ -103,10 +115,10 @@ void CDepthWriteShader::CreateRtvAndDsvDescriptorHeaps(ID3D12Device* D3D12Device
 	D3D12DescriptorHeapDesc.NumDescriptors = 1;
 	D3D12DescriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	D3D12DescriptorHeapDesc.NodeMask = 0;
-	DX::ThrowIfFailed(D3D12Device->CreateDescriptorHeap(&D3D12DescriptorHeapDesc, __uuidof(ID3D12DescriptorHeap), (void**)m_D3D12RtvDescriptorHeap.GetAddressOf()));
+	DX::ThrowIfFailed(D3D12Device->CreateDescriptorHeap(&D3D12DescriptorHeapDesc, __uuidof(ID3D12DescriptorHeap), reinterpret_cast<void**>(m_D3D12RtvDescriptorHeap.GetAddressOf())));
 
 	D3D12DescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-	DX::ThrowIfFailed(D3D12Device->CreateDescriptorHeap(&D3D12DescriptorHeapDesc, __uuidof(ID3D12DescriptorHeap), (void**)m_D3D12DsvDescriptorHeap.GetAddressOf()));
+	DX::ThrowIfFailed(D3D12Device->CreateDescriptorHeap(&D3D12DescriptorHeapDesc, __uuidof(ID3D12DescriptorHeap), reinterpret_cast<void**>(m_D3D12DsvDescriptorHeap.GetAddressOf())));
 }
 
 void CDepthWriteShader::CreateRenderTargetViews(ID3D12Device* D3D12Device)
@@ -133,30 +145,30 @@ void CDepthWriteShader::CreateDepthStencilView(ID3D12Device* D3D12Device)
 	D3D12Device->CreateDepthStencilView(m_D3D12DepthBuffer.Get(), &D3D12DepthStencilViewDesc, m_D3D12DsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 }
 
-void CDepthWriteShader::PrepareShadowMap(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
+void CDepthWriteShader::PrepareShadowMap(ID3D12GraphicsCommandList* D3D12GraphicsCommandList,vector<LIGHT>& Lights, const vector<vector<shared_ptr<CGameObject>>>& GameObjects)
 {
-	if (m_Lights[0].m_IsActive)
+	if (Lights[0].m_IsActive)
 	{
 		const float NearPlaneDistance{ 1.0f };
-		const float FarPlaneDistance{ m_Lights[0].m_Range };
+		const float FarPlaneDistance{ Lights[0].m_Range };
 
-		switch (m_Lights[0].m_Type)
+		switch (Lights[0].m_Type)
 		{
 		case LIGHT_TYPE_POINT:
 			break;
 		case LIGHT_TYPE_SPOT:
-			m_LightCamera->GeneratePerspectiveProjectionMatrix(90.0f, (float)DEPTH_BUFFER_WIDTH / (float)DEPTH_BUFFER_HEIGHT, NearPlaneDistance, FarPlaneDistance);
+			m_LightCamera->GeneratePerspectiveProjectionMatrix(90.0f, static_cast<float>(DEPTH_BUFFER_WIDTH) / static_cast<float>(DEPTH_BUFFER_HEIGHT), NearPlaneDistance, FarPlaneDistance);
 			break;
 		case LIGHT_TYPE_DIRECTIONAL:
-			m_LightCamera->GenerateOrthographicsProjectionMatrix((float)PLANE_WIDTH, (float)PLANE_HEIGHT, NearPlaneDistance, FarPlaneDistance);
+			m_LightCamera->GenerateOrthographicsProjectionMatrix(static_cast<float>(PLANE_WIDTH), static_cast<float>(PLANE_HEIGHT), NearPlaneDistance, FarPlaneDistance);
 			break;
 		}
 
-		m_LightCamera->GenerateViewMatrix(m_Lights[0].m_Position, m_Lights[0].m_Direction);
+		m_LightCamera->GenerateViewMatrix(Lights[0].m_Position, Lights[0].m_Direction);
 
 		XMMATRIX ToTexCoordMatrix{ XMMatrixTranspose(XMLoadFloat4x4(&m_LightCamera->GetViewMatrix()) * XMLoadFloat4x4(&m_LightCamera->GetProjectionMatrix()) * XMLoadFloat4x4(&m_ProjectionMatrixToTexture)) };
 		
-		XMStoreFloat4x4(&m_Lights[0].m_ToTexCoordMatrix, ToTexCoordMatrix);
+		XMStoreFloat4x4(&Lights[0].m_ToTexCoordMatrix, ToTexCoordMatrix);
 
 		ID3D12Resource* DepthTexture{ m_DepthTexture->GetResource() };
 	
@@ -169,19 +181,13 @@ void CDepthWriteShader::PrepareShadowMap(ID3D12GraphicsCommandList* D3D12Graphic
 		D3D12GraphicsCommandList->ClearDepthStencilView(D3D12DsvCPUDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 		D3D12GraphicsCommandList->OMSetRenderTargets(1, &D3D12RtvCPUDescriptorHandle, TRUE, &D3D12DsvCPUDescriptorHandle);
 
-		Render(D3D12GraphicsCommandList, m_LightCamera.get());
+		Render(D3D12GraphicsCommandList, m_LightCamera.get(), GameObjects);
 
 		DX::ResourceTransition(D3D12GraphicsCommandList, DepthTexture, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COMMON);
 	}
 }
 
 //=========================================================================================================================
-
-CShadowMapShader::CShadowMapShader(vector<shared_ptr<CGameObject>>& ShadyObjects, UINT StateCount) : CGraphicsShader(StateCount),
-	m_ShadyObjects{ ShadyObjects }
-{
-
-}
 
 D3D12_INPUT_LAYOUT_DESC CShadowMapShader::CreateInputLayout(UINT StateNum)
 {
@@ -214,11 +220,11 @@ D3D12_SHADER_BYTECODE CShadowMapShader::CreatePixelShader(ID3DBlob* D3D12ShaderB
 
 void CShadowMapShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, UINT StateNum)
 {
-	CGraphicsShader::Render(D3D12GraphicsCommandList, Camera, StateNum);
-	CTextureManager::GetInstance()->GetTexture(TEXT("ShadowMap"))->UpdateShaderVariable(D3D12GraphicsCommandList);
-	
-	for (const auto& ShadyObject : m_ShadyObjects)
+	if (CShaderManager::GetInstance()->SetShader(TEXT("ShadowMapShader")))
 	{
-		ShadyObject->Render(D3D12GraphicsCommandList, Camera);
+		if (m_D3D12PipelineStates[StateNum])
+		{
+			D3D12GraphicsCommandList->SetPipelineState(m_D3D12PipelineStates[StateNum].Get());
+		}
 	}
 }

@@ -30,11 +30,6 @@ D3D12_SHADER_BYTECODE CShader::CompileShaderFromFile(LPCWSTR FileName, LPCSTR Sh
 
 //=========================================================================================================================
 
-CGraphicsShader::CGraphicsShader(UINT StateCount)
-{
-	m_D3D12PipelineStates.reserve(StateCount);
-}
-
 D3D12_INPUT_LAYOUT_DESC CGraphicsShader::CreateInputLayout(UINT StateNum)
 {
 	D3D12_INPUT_LAYOUT_DESC D3D12InputLayoutDesc{};
@@ -185,7 +180,7 @@ void CGraphicsShader::CreatePipelineState(ID3D12Device* D3D12Device, ID3D12RootS
 	D3D12GraphicsPipelineState.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
 
 	m_D3D12PipelineStates.emplace_back();
-	DX::ThrowIfFailed(D3D12Device->CreateGraphicsPipelineState(&D3D12GraphicsPipelineState, __uuidof(ID3D12PipelineState), (void**)m_D3D12PipelineStates.back().GetAddressOf()));
+	DX::ThrowIfFailed(D3D12Device->CreateGraphicsPipelineState(&D3D12GraphicsPipelineState, __uuidof(ID3D12PipelineState), reinterpret_cast<void**>(m_D3D12PipelineStates.back().GetAddressOf())));
 
 	if (D3D12GraphicsPipelineState.InputLayout.pInputElementDescs)
 	{
@@ -193,17 +188,14 @@ void CGraphicsShader::CreatePipelineState(ID3D12Device* D3D12Device, ID3D12RootS
 	}
 }
 
-void CGraphicsShader::ReleaseUploadBuffers()
+void CGraphicsShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, UINT StateNum)
 {
 
 }
 
-void CGraphicsShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, UINT StateNum)
+void CGraphicsShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, UINT StateNum)
 {
-	if (m_D3D12PipelineStates[StateNum])
-	{
-		D3D12GraphicsCommandList->SetPipelineState(m_D3D12PipelineStates[StateNum].Get());
-	}
+
 }
 
 //=========================================================================================================================
@@ -229,7 +221,7 @@ void CComputeShader::CreatePipelineStates(ID3D12Device* D3D12Device, ID3D12RootS
 
 	m_ThreadGroups = ThreadGroups;
 	m_D3D12PipelineStates.emplace_back();
-	DX::ThrowIfFailed(D3D12Device->CreateComputePipelineState(&D3D12ComputePipelineStateDesc, __uuidof(ID3D12PipelineState), (void**)(--m_D3D12PipelineStates.end())->GetAddressOf()));
+	DX::ThrowIfFailed(D3D12Device->CreateComputePipelineState(&D3D12ComputePipelineStateDesc, __uuidof(ID3D12PipelineState), reinterpret_cast<void**>(m_D3D12PipelineStates.back().GetAddressOf())));
 }
 
 void CComputeShader::Dispatch(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
