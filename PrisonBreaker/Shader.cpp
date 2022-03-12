@@ -22,7 +22,7 @@ D3D12_SHADER_BYTECODE CShader::CompileShaderFromFile(LPCWSTR FileName, LPCSTR Sh
 	}
 	else if (D3D12ErrorBlob)
 	{
-		OutputDebugString(TEXT("쉐이더를 컴파일하지 못했습니다."));
+		OutputDebugString(TEXT("쉐이더를 컴파일하지 못했습니다.\n"));
 	}
 
 	return D3D12ShaderBytecode;
@@ -174,7 +174,7 @@ void CGraphicsShader::CreatePipelineState(ID3D12Device* D3D12Device, ID3D12RootS
 	D3D12GraphicsPipelineState.SampleMask = UINT_MAX;
 	D3D12GraphicsPipelineState.PrimitiveTopologyType = GetPrimitiveType(StateNum);
 	D3D12GraphicsPipelineState.NumRenderTargets = 1;
-	D3D12GraphicsPipelineState.RTVFormats[0] = GetRTVFormat(StateNum);
+	D3D12GraphicsPipelineState.RTVFormats[0] = GetRTVFormat(StateNum, 0);
 	D3D12GraphicsPipelineState.DSVFormat = GetDSVFormat(StateNum);
 	D3D12GraphicsPipelineState.SampleDesc.Count = 1;
 	D3D12GraphicsPipelineState.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
@@ -188,7 +188,7 @@ void CGraphicsShader::CreatePipelineState(ID3D12Device* D3D12Device, ID3D12RootS
 	}
 }
 
-void CGraphicsShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, UINT StateNum)
+void CGraphicsShader::SetPipelineState(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, UINT StateNum)
 {
 
 }
@@ -200,21 +200,21 @@ void CGraphicsShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList
 
 //=========================================================================================================================
 
-D3D12_SHADER_BYTECODE CComputeShader::CreateComputeShader(ID3DBlob* D3D12ShaderBlob)
+D3D12_SHADER_BYTECODE CComputeShader::CreateComputeShader(ID3DBlob* D3D12ShaderBlob, UINT StateNum)
 {
 	D3D12_SHADER_BYTECODE D3D12ShaderByteCode{};
 
 	return D3D12ShaderByteCode;
 }
 
-void CComputeShader::CreatePipelineStates(ID3D12Device* D3D12Device, ID3D12RootSignature* D3D12RootSignature, const XMUINT3& ThreadGroups)
+void CComputeShader::CreatePipelineStates(ID3D12Device* D3D12Device, ID3D12RootSignature* D3D12RootSignature, const XMUINT3& ThreadGroups, UINT StateNum)
 {
 	D3D12_CACHED_PIPELINE_STATE D3D12CachedPipelineState{};
 	D3D12_COMPUTE_PIPELINE_STATE_DESC D3D12ComputePipelineStateDesc{};
 	ComPtr<ID3DBlob> D3D12ComputeShaderBlob{};
 
 	D3D12ComputePipelineStateDesc.pRootSignature = D3D12RootSignature;
-	D3D12ComputePipelineStateDesc.CS = CreateComputeShader(D3D12ComputeShaderBlob.Get());
+	D3D12ComputePipelineStateDesc.CS = CreateComputeShader(D3D12ComputeShaderBlob.Get(), StateNum);
 	D3D12ComputePipelineStateDesc.NodeMask = 0;
 	D3D12ComputePipelineStateDesc.CachedPSO = D3D12CachedPipelineState;
 	D3D12ComputePipelineStateDesc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
@@ -224,20 +224,20 @@ void CComputeShader::CreatePipelineStates(ID3D12Device* D3D12Device, ID3D12RootS
 	DX::ThrowIfFailed(D3D12Device->CreateComputePipelineState(&D3D12ComputePipelineStateDesc, __uuidof(ID3D12PipelineState), reinterpret_cast<void**>(m_D3D12PipelineStates.back().GetAddressOf())));
 }
 
-void CComputeShader::Dispatch(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
+void CComputeShader::Dispatch(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, UINT StateNum)
 {
-	if (m_D3D12PipelineStates[0])
+	if (m_D3D12PipelineStates[StateNum])
 	{
-		D3D12GraphicsCommandList->SetPipelineState(m_D3D12PipelineStates[0].Get());
+		D3D12GraphicsCommandList->SetPipelineState(m_D3D12PipelineStates[StateNum].Get());
 		D3D12GraphicsCommandList->Dispatch(m_ThreadGroups.x, m_ThreadGroups.y, m_ThreadGroups.z);
 	}
 }
 
-void CComputeShader::Dispatch(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const XMUINT3& ThreadGroups)
+void CComputeShader::Dispatch(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const XMUINT3& ThreadGroups, UINT StateNum)
 {
-	if (m_D3D12PipelineStates[0])
+	if (m_D3D12PipelineStates[StateNum])
 	{
-		D3D12GraphicsCommandList->SetPipelineState(m_D3D12PipelineStates[0].Get());
+		D3D12GraphicsCommandList->SetPipelineState(m_D3D12PipelineStates[StateNum].Get());
 		D3D12GraphicsCommandList->Dispatch(ThreadGroups.x, ThreadGroups.y, ThreadGroups.z);
 	}
 }

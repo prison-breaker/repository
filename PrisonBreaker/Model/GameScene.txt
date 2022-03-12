@@ -2,17 +2,17 @@
 	<GameObject>
 		<Name> Model/prisoner_4.txt
 		<Type> 0
-		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 -66 1.202297 -142 1 
+		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 -66.29 1.202297 -121.52 1 
 	</GameObject>
 	<GameObject>
 		<Name> Model/guards_3.txt
 		<Type> 1
-		<TransformMatrix> -1.192093E-07 0 1 0 0 1 0 0 -1 0 -1.192093E-07 0 95 1.202297 -156 1 
+		<TransformMatrix> -1.192093E-07 0 1 0 0 1 0 0 -1 0 -1.192093E-07 0 94.27 1.202297 -135.51 1 
 	</GameObject>
 	<GameObject>
 		<Name> Model/guards_6.txt
 		<Type> 1
-		<TransformMatrix> -1.192093E-07 0 1 0 0 1 0 0 -1 0 -1.192093E-07 0 95 1.202297 -164 1 
+		<TransformMatrix> -1.192093E-07 0 1 0 0 1 0 0 -1 0 -1.192093E-07 0 94.27 1.202297 -143.51 1 
 	</GameObject>
 	<GameObject>
 		<Name> Model/ground.txt
@@ -22,11 +22,16 @@
 	<GameObject>
 		<Name> Model/building.txt
 		<Type> 3
-		<TransformMatrix> -1.192093E-07 0 -1 0 0 1 0 0 1 0 -1.192093E-07 0 90 1.2 -160 1 
+		<TransformMatrix> -1.192093E-07 0 -1 0 0 1 0 0 1 0 -1.192093E-07 0 90 1.2 -140 1 
 	</GameObject>
 	<GameObject>
 		<Name> Model/cell.txt
 		<Type> 3
-		<TransformMatrix> -1.192093E-07 0 -1 0 0 1 0 0 1 0 -1.192093E-07 0 90 1.2 -160 1 
+		<TransformMatrix> -1.192093E-07 0 -1 0 0 1 0 0 1 0 -1.192093E-07 0 90 1.2 -140 1 
+	</GameObject>
+	<GameObject>
+		<Name> Model/containers.txt
+		<Type> 3
+		<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 
 	</GameObject>
 </GameScene>

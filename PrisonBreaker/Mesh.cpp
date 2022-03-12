@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Mesh.h"
+#include "GameObject.h"
 
 void CMesh::CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
@@ -419,6 +420,11 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 #endif
 }
 
+const tstring& CMesh::GetName() const
+{
+	return m_MeshName;
+}
+
 void CMesh::SetBoundingBox(const BoundingBox& BoundingBox)
 {
 	m_BoundingBox = BoundingBox;
@@ -448,7 +454,22 @@ void CSkinnedMesh::CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12Graphi
 
 void CSkinnedMesh::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
+	if (m_D3D12BoneOffsetMatrixes)
+	{
+		D3D12GraphicsCommandList->SetGraphicsRootConstantBufferView(ROOT_PARAMETER_TYPE_BONE_OFFSET, m_D3D12BoneOffsetMatrixes->GetGPUVirtualAddress());
+	}
 
+	if (m_D3D12BoneTransformMatrixes)
+	{
+		UINT BoneFrameCount{ static_cast<UINT>(m_BoneFrameCaches.size()) };
+
+		for (UINT i = 0; i < BoneFrameCount; ++i)
+		{
+			XMStoreFloat4x4(&m_MappedBoneTransformMatrixes[i], XMMatrixTranspose(XMLoadFloat4x4(&m_BoneFrameCaches[i]->GetWorldMatrix())));
+		}
+
+		D3D12GraphicsCommandList->SetGraphicsRootConstantBufferView(ROOT_PARAMETER_TYPE_BONE_TRANSFORM, m_D3D12BoneTransformMatrixes->GetGPUVirtualAddress());
+	}
 }
 
 void CSkinnedMesh::ReleaseShaderVariables()
@@ -473,6 +494,8 @@ void CSkinnedMesh::ReleaseUploadBuffers()
 
 void CSkinnedMesh::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, UINT SubSetIndex)
 {
+	UpdateShaderVariables(D3D12GraphicsCommandList);
+
 	D3D12_VERTEX_BUFFER_VIEW VertexBufferViews[] = { m_D3D12PositionBufferView, m_D3D12NormalBufferView, m_D3D12TangentBufferView, m_D3D12BiTangentBufferView, m_D3D12TexCoordBufferView, m_D3D12BoneIndexBufferView, m_D3D12BoneWeightBufferView };
 
 	D3D12GraphicsCommandList->IASetVertexBuffers(0, _countof(VertexBufferViews), VertexBufferViews);
@@ -507,10 +530,10 @@ void CSkinnedMesh::LoadSkinInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphic
 			{
 				m_BoneOffsetMatrixes.reserve(m_BoneCount);
 
-				XMFLOAT4X4 BoneOffsetMatrix{};
-
 				for (UINT i = 0; i < m_BoneCount; ++i)
 				{
+					XMFLOAT4X4 BoneOffsetMatrix{};
+
 					InFile >> BoneOffsetMatrix._11 >> BoneOffsetMatrix._12 >> BoneOffsetMatrix._13 >> BoneOffsetMatrix._14;
 					InFile >> BoneOffsetMatrix._21 >> BoneOffsetMatrix._22 >> BoneOffsetMatrix._23 >> BoneOffsetMatrix._24;
 					InFile >> BoneOffsetMatrix._31 >> BoneOffsetMatrix._32 >> BoneOffsetMatrix._33 >> BoneOffsetMatrix._34;
@@ -519,10 +542,10 @@ void CSkinnedMesh::LoadSkinInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphic
 					m_BoneOffsetMatrixes.push_back(BoneOffsetMatrix);
 				}
 
-				UINT Byte{ (((sizeof(XMFLOAT4X4) * MAX_BONES) + 255) & ~255) };
+				UINT Byte{ ((sizeof(XMFLOAT4X4) * MAX_BONES) + 255) & ~255 };
 
 				m_D3D12BoneOffsetMatrixes = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, nullptr, Byte, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, nullptr);
-				m_D3D12BoneOffsetMatrixes->Map(0, nullptr, (void**)&m_MappedBoneOffsetMatrixes);
+				m_D3D12BoneOffsetMatrixes->Map(0, nullptr, reinterpret_cast<void**>(&m_MappedBoneOffsetMatrixes));
 
 				for (UINT i = 0; i < m_BoneCount; ++i)
 				{
@@ -574,4 +597,22 @@ void CSkinnedMesh::LoadSkinInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphic
 		}
 	}
 #endif
+}
+
+void CSkinnedMesh::SetBoneFrameCaches(const vector<shared_ptr<CGameObject>>& BoneFrames)
+{
+	m_BoneFrameCaches.assign(BoneFrames.begin(), BoneFrames.end());
+}
+
+void CSkinnedMesh::SetBoneTransformInfo(const ComPtr<ID3D12Resource>& D3D12BoneTransformMatrixes, XMFLOAT4X4* MappedBoneTransformMatrixes)
+{
+	if (D3D12BoneTransformMatrixes)
+	{
+		m_D3D12BoneTransformMatrixes = D3D12BoneTransformMatrixes;
+	}
+
+	if (MappedBoneTransformMatrixes)
+	{
+		m_MappedBoneTransformMatrixes = MappedBoneTransformMatrixes;
+	}
 }

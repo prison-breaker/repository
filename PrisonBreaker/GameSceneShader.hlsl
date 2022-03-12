@@ -1,17 +1,20 @@
-#define MAX_LIGHTS		          1
-#define LIGHT_TYPE_POINT		  1
-#define LIGHT_TYPE_SPOT		      2
-#define LIGHT_TYPE_DIRECTIONAL	  3
-							      
-#define DEPTH_BUFFER_WIDTH	      2048
-#define DEPTH_BUFFER_HEIGHT	      2048
-#define DELTA_X                   (1.0f / DEPTH_BUFFER_WIDTH)
-#define DELTA_Y                   (1.0f / DEPTH_BUFFER_HEIGHT)
+#define MAX_LIGHTS		             1
+#define LIGHT_TYPE_POINT		     1
+#define LIGHT_TYPE_SPOT		         2
+#define LIGHT_TYPE_DIRECTIONAL	     3
 
-#define TEXTURE_MASK_ALBEDO_MAP	  0x01
-#define TEXTURE_MASK_METALLIC_MAP 0x02
-#define TEXTURE_MASK_NORMAL_MAP   0x04
-#define TEXTURE_MASK_SHADOW_MAP   0x08
+#define MAX_BONES				     100
+#define MAX_BONE_INFLUENCE_TO_VERTEX 4
+							      
+#define DEPTH_BUFFER_WIDTH	         2048
+#define DEPTH_BUFFER_HEIGHT	         2048
+#define DELTA_X                      (1.0f / DEPTH_BUFFER_WIDTH)
+#define DELTA_Y                      (1.0f / DEPTH_BUFFER_HEIGHT)
+								     
+#define TEXTURE_MASK_ALBEDO_MAP	     0x01
+#define TEXTURE_MASK_METALLIC_MAP    0x02
+#define TEXTURE_MASK_NORMAL_MAP      0x04
+#define TEXTURE_MASK_SHADOW_MAP      0x08
 
 struct LIGHT
 {
@@ -63,6 +66,16 @@ cbuffer CB_OBJECT : register(b3)
 	float4 AlbedoColor : packoffset(c4);
 	uint   TextureMask : packoffset(c5);
 };
+
+cbuffer CB_BONE_OFFSET : register(b4)
+{
+	matrix BoneOffsetMatrix[MAX_BONES];
+}
+
+cbuffer CB_BONE_TRANSFORM : register(b5)
+{
+	matrix BoneTransformMatrix[MAX_BONES];
+}
 
 Texture2D AlbedoMapTexture		  : register(t0);
 Texture2D MetallicMapTexture	  : register(t1);
@@ -151,7 +164,7 @@ float4 Lighting(float3 Position, float3 Normal, float4 ShadowTexCoord)
 	return Color;
 }
 
-// ====================================== BASIC SHADER ======================================
+// ====================================== STANDARD SHADER ======================================
 
 struct VS_INPUT
 {
@@ -224,6 +237,46 @@ float4 PS_Main(VS_OUTPUT Input) : SV_TARGET
 	float4 Illumination = Lighting(Input.m_PositionW, NormalW, Input.m_ShadowTexCoord);
 
 	return lerp(Color, Illumination, 0.45f);
+}
+
+// ====================================== STANDARD SKINNING SHADER ======================================
+
+struct VS_INPUT_SKINNING
+{
+	float3 m_Position    : POSITION;
+	float3 m_Normal      : NORMAL;
+	float3 m_Tangent     : TANGENT;
+	float3 m_BiTangent   : BITANGENT;
+	float2 m_TexCoord    : TEXCOORD;
+	uint4 m_BoneIndices  : BONEINDEX;
+	float4 m_BoneWeights : BONEWEIGHT;
+};
+
+VS_OUTPUT VS_Main_Skinning(VS_INPUT_SKINNING Input)
+{
+	VS_OUTPUT Output = (VS_OUTPUT)0;
+	float4x4 SkinnedWorldMatrix = (float4x4)0.0f;
+
+	for (int i = 0; i < MAX_BONE_INFLUENCE_TO_VERTEX; ++i)
+	{
+		SkinnedWorldMatrix += Input.m_BoneWeights[i] * mul(BoneOffsetMatrix[Input.m_BoneIndices[i]], BoneTransformMatrix[Input.m_BoneIndices[i]]);
+	}
+
+	float4 PositionW = mul(float4(Input.m_Position, 1.0f), SkinnedWorldMatrix);
+
+	Output.m_PositionW = PositionW.xyz;
+	Output.m_Position = mul(mul(PositionW, ViewMatrix), ProjectionMatrix);
+	Output.m_NormalW = mul(Input.m_Normal, (float3x3)SkinnedWorldMatrix);
+	Output.m_TangentW = mul(Input.m_Tangent, (float3x3)SkinnedWorldMatrix);
+	Output.m_BiTangentW = mul(Input.m_BiTangent, (float3x3)SkinnedWorldMatrix);
+	Output.m_TexCoord = Input.m_TexCoord;
+
+	if (Lights[0].m_IsActive)
+	{
+		Output.m_ShadowTexCoord = mul(PositionW, Lights[0].m_ToTexCoordMatrix);
+	}
+
+	return Output;
 }
 
 // ====================================== SKYBOX SHADER ======================================
@@ -313,7 +366,7 @@ float4 PS_SkyBox(GS_OUTPUT_SKYBOX Input) : SV_TARGET
 	return AlbedoMapTexture.Sample(Sampler, Input.m_TexCoord);
 }
 
-// ====================================== DEPTH WRITE SHADER ======================================
+// ====================================== STANDARD DEPTH WRITE SHADER ======================================
 
 struct PS_OUTPUT_DEPTH
 {
@@ -333,6 +386,28 @@ PS_OUTPUT_DEPTH PS_DepthWrite(float4 Input : SV_POSITION)
 	Output.m_Position = Output.m_Depth = Input.z;
 
 	return Output;
+}
+
+// ====================================== SKINNING DEPTH WRITE SHADER ======================================
+
+struct VS_INPUT_DEPTH_SKINNING
+{
+	float3 m_Position    : POSITION;
+	uint4 m_BoneIndices  : BONEINDEX;
+	float4 m_BoneWeights : BONEWEIGHT;
+};
+
+float4 VS_Position_Skinning(VS_INPUT_DEPTH_SKINNING Input) : SV_POSITION
+{
+	VS_OUTPUT Output = (VS_OUTPUT)0;
+	float4x4 SkinnedWorldMatrix = (float4x4)0.0f;
+
+	for (int i = 0; i < MAX_BONE_INFLUENCE_TO_VERTEX; ++i)
+	{
+		SkinnedWorldMatrix += Input.m_BoneWeights[i] * mul(BoneOffsetMatrix[Input.m_BoneIndices[i]], BoneTransformMatrix[Input.m_BoneIndices[i]]);
+	}
+
+	return mul(mul(mul(float4(Input.m_Position, 1.0f), SkinnedWorldMatrix), ViewMatrix), ProjectionMatrix);
 }
 
 // ====================================== BOUNDINGBOX SHADER ======================================

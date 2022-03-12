@@ -59,9 +59,9 @@ D3D12_PRIMITIVE_TOPOLOGY_TYPE CSkyBoxShader::GetPrimitiveType(UINT StateNum)
 	return D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
 }
 
-void CSkyBoxShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, UINT StateNum)
+void CSkyBoxShader::SetPipelineState(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, UINT StateNum)
 {
-	if (CShaderManager::GetInstance()->SetShader(TEXT("SkyBoxShader")))
+	if (CShaderManager::GetInstance()->SetPipelineState(TEXT("SkyBoxShader"), StateNum))
 	{
 		if (m_D3D12PipelineStates[StateNum])
 		{

@@ -13,11 +13,11 @@ struct LOADED_MODEL_INFO
 									        
 	vector<shared_ptr<CAnimationClip>>      m_AnimationClips{};
 
-	vector<vector<shared_ptr<CGameObject>>> m_BoneFrameCaches{};
+	vector<vector<shared_ptr<CGameObject>>> m_BoneFrameCaches{}; // [SkinnedMesh][Bone]
 	vector<shared_ptr<CSkinnedMesh>>	    m_SkinnedMeshCaches{};
 };
 
-class CGameObject
+class CGameObject : public enable_shared_from_this<CGameObject>
 {
 protected:
 	bool				             m_IsActive{};
@@ -31,7 +31,7 @@ protected:
 	vector<shared_ptr<CMaterial>>    m_Materials{};
 	shared_ptr<BoundingBox>			 m_BoundingBox{};
 
-	//shared_ptr<CAnimationController> m_AnimationController{};
+	shared_ptr<CAnimationController> m_AnimationController{};
 
 	shared_ptr<CGameObject>          m_SiblingObject{};
 	shared_ptr<CGameObject>          m_ChildObject{};
@@ -53,7 +53,10 @@ public:
 	virtual void Move(const XMFLOAT3& Direction, float Distance);
 
 	virtual void Animate(float ElapsedTime);
-	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera);
+	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType);
+
+	shared_ptr<CGameObject> FindFrame(const tstring& FrameName);
+	shared_ptr<CSkinnedMesh> FindSkinnedMesh(const tstring& SkinnedMeshName);
 
 	bool IsActive() const;
 	void SetActive(bool IsActive);
@@ -82,6 +85,9 @@ public:
 	shared_ptr<BoundingBox> GetBoundingBox();
 
 	void SetChild(const shared_ptr<CGameObject>& ChildObject);
+
+	void SetAnimationController(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const shared_ptr<LOADED_MODEL_INFO>& ModelInfo);
+	void SetAnimationClip(UINT ClipNum);
 
 	bool IsVisible(CCamera* Camera) const;
 

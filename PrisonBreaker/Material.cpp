@@ -2,7 +2,7 @@
 #include "Material.h"
 #include "Shader.h"
 
-void CMaterial::LoadMaterialFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile)
+void CMaterial::LoadMaterialFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile, bool IsSkinnedMesh)
 {
 	tstring Token{};
 	shared_ptr<CTexture> Texture{};
@@ -87,7 +87,10 @@ void CMaterial::LoadMaterialFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCo
 	{
 		if (Token == TEXT("<Material>"))
 		{
-			SetShader(CShaderManager::GetInstance()->GetShader(TEXT("ShadowMapShader")));
+			RegisterShader(CShaderManager::GetInstance()->GetShader("ShadowMapShader"));
+			RegisterShader(CShaderManager::GetInstance()->GetShader("DepthWriteShader"));
+
+			m_StateNum = (IsSkinnedMesh) ? SHADER_TYPE_WITH_SKINNING : SHADER_TYPE_STANDARD;
 		}
 		else if (Token == TEXT("<AlbedoColor>"))
 		{
@@ -158,13 +161,8 @@ void CMaterial::LoadMaterialFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCo
 #endif
 }
 
-void CMaterial::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera)
+void CMaterial::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
-	if (m_Shader)
-	{
-		static_pointer_cast<CGraphicsShader>(m_Shader)->Render(D3D12GraphicsCommandList, Camera);
-	}
-
 	D3D12GraphicsCommandList->SetGraphicsRoot32BitConstants(ROOT_PARAMETER_TYPE_OBJECT, 4, &m_AlbedoColor, 16);
 	D3D12GraphicsCommandList->SetGraphicsRoot32BitConstants(ROOT_PARAMETER_TYPE_OBJECT, 1, &m_TextureMask, 20);
 
@@ -177,28 +175,42 @@ void CMaterial::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCo
 	}
 }
 
-const XMFLOAT4& CMaterial::GetAlbedoColor() const
-{
-	return m_AlbedoColor;
-}
-
-void CMaterial::SetShader(const shared_ptr<CShader>& Shader)
-{
-	if (Shader)
-	{
-		m_Shader = Shader;
-	}
-}
-
-const shared_ptr<CShader>& CMaterial::GetShader() const
-{
-	return m_Shader;
-}
-
 void CMaterial::RegisterTexture(const shared_ptr<CTexture>& Texture)
 {
 	if (Texture)
 	{
 		m_Textures.push_back(Texture);
+	}
+}
+
+void CMaterial::RegisterShader(const shared_ptr<CShader>& Shader)
+{
+	if (Shader)
+	{
+		m_Shaders.push_back(Shader);
+	}
+}
+
+void CMaterial::SetStateNum(SHADER_TYPE ShaderType)
+{
+	switch (ShaderType)
+	{
+	case SHADER_TYPE_STANDARD:
+		m_StateNum = 0;
+		break;
+	case SHADER_TYPE_WITH_SKINNING:
+		m_StateNum = 1;
+		break;
+	}
+}
+
+void CMaterial::SetPipelineState(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, RENDER_TYPE RenderType)
+{
+	switch (RenderType)
+	{
+	case RENDER_TYPE_STANDARD:
+	case RENDER_TYPE_DEPTH_WRITE:
+		static_pointer_cast<CGraphicsShader>(m_Shaders[RenderType])->SetPipelineState(D3D12GraphicsCommandList, m_StateNum);
+		break;
 	}
 }

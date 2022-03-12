@@ -24,10 +24,24 @@ CDepthWriteShader::CDepthWriteShader(ID3D12Device* D3D12Device, ID3D12GraphicsCo
 
 D3D12_INPUT_LAYOUT_DESC CDepthWriteShader::CreateInputLayout(UINT StateNum)
 {
-	const UINT InputElementCount{ 1 };
-	D3D12_INPUT_ELEMENT_DESC* D3D12InputElementDescs{ new D3D12_INPUT_ELEMENT_DESC[InputElementCount] };
+	UINT InputElementCount{};
+	D3D12_INPUT_ELEMENT_DESC* D3D12InputElementDescs{};
 
-	D3D12InputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	switch (StateNum)
+	{
+	case 0:
+		InputElementCount = 1;
+		D3D12InputElementDescs = new D3D12_INPUT_ELEMENT_DESC[InputElementCount];
+		D3D12InputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+		break;
+	case 1:
+		InputElementCount = 3;
+		D3D12InputElementDescs = new D3D12_INPUT_ELEMENT_DESC[InputElementCount];
+		D3D12InputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+		D3D12InputElementDescs[1] = { "BONEINDEX", 0, DXGI_FORMAT_R32G32B32A32_UINT, 5, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+		D3D12InputElementDescs[2] = { "BONEWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 6, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+		break;
+	}
 
 	D3D12_INPUT_LAYOUT_DESC D3D12InputLayoutDesc{};
 
@@ -58,7 +72,15 @@ D3D12_RASTERIZER_DESC CDepthWriteShader::CreateRasterizerState(UINT StateNum)
 
 D3D12_SHADER_BYTECODE CDepthWriteShader::CreateVertexShader(ID3DBlob* D3D12ShaderBlob, UINT StateNum)
 {
-	return CGraphicsShader::CompileShaderFromFile(L"GameSceneShader.hlsl", "VS_Position", "vs_5_1", D3D12ShaderBlob);
+	switch (StateNum)
+	{
+	case 0:
+		return CGraphicsShader::CompileShaderFromFile(L"GameSceneShader.hlsl", "VS_Position", "vs_5_1", D3D12ShaderBlob);
+	case 1:
+		return CGraphicsShader::CompileShaderFromFile(L"GameSceneShader.hlsl", "VS_Position_Skinning", "vs_5_1", D3D12ShaderBlob);
+	}
+
+	return CGraphicsShader::CreateVertexShader(D3D12ShaderBlob, StateNum);
 }
 
 D3D12_SHADER_BYTECODE CDepthWriteShader::CreatePixelShader(ID3DBlob* D3D12ShaderBlob, UINT StateNum)
@@ -76,35 +98,24 @@ DXGI_FORMAT CDepthWriteShader::GetDSVFormat(UINT StateNum)
 	return DXGI_FORMAT_D32_FLOAT;
 }
 
-void CDepthWriteShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, UINT StateNum)
+void CDepthWriteShader::CreatePipelineState(ID3D12Device* D3D12Device, ID3D12RootSignature* D3D12RootSignature, UINT StateNum)
 {
-	if (Camera)
+	// 0: No Skinning, 1: Use Skinning
+	for (UINT i = 0; i < StateNum; ++i)
 	{
-		Camera->RSSetViewportsAndScissorRects(D3D12GraphicsCommandList);
-		Camera->UpdateShaderVariables(D3D12GraphicsCommandList);
+		CGraphicsShader::CreatePipelineState(D3D12Device, D3D12RootSignature, i);
 	}
+}
 
-	if (CShaderManager::GetInstance()->SetGlobalShader(TEXT("DepthWriteShader")))
+void CDepthWriteShader::SetPipelineState(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, UINT StateNum)
+{
+	if (CShaderManager::GetInstance()->SetPipelineState(TEXT("DepthWriteShader"), StateNum))
 	{
 		if (m_D3D12PipelineStates[StateNum])
 		{
 			D3D12GraphicsCommandList->SetPipelineState(m_D3D12PipelineStates[StateNum].Get());
 		}
 	}
-
-	for (UINT i = OBJECT_TYPE_PLAYER; i <= OBJECT_TYPE_STRUCTURE; ++i)
-	{
-		for (const auto& GameObject : GameObjects[i])
-		{
-			if (GameObject)
-			{
-				GameObject->UpdateTransform(Matrix4x4::Identity());
-				GameObject->Render(D3D12GraphicsCommandList, Camera);
-			}
-		}
-	}
-
-	CShaderManager::GetInstance()->UnSetGlobalShader();
 }
 
 void CDepthWriteShader::CreateRtvAndDsvDescriptorHeaps(ID3D12Device* D3D12Device)
@@ -145,7 +156,7 @@ void CDepthWriteShader::CreateDepthStencilView(ID3D12Device* D3D12Device)
 	D3D12Device->CreateDepthStencilView(m_D3D12DepthBuffer.Get(), &D3D12DepthStencilViewDesc, m_D3D12DsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 }
 
-void CDepthWriteShader::PrepareShadowMap(ID3D12GraphicsCommandList* D3D12GraphicsCommandList,vector<LIGHT>& Lights, const vector<vector<shared_ptr<CGameObject>>>& GameObjects)
+void CDepthWriteShader::PrepareShadowMap(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, vector<LIGHT>& Lights, const vector<vector<shared_ptr<CGameObject>>>& GameObjects)
 {
 	if (Lights[0].m_IsActive)
 	{
@@ -167,13 +178,13 @@ void CDepthWriteShader::PrepareShadowMap(ID3D12GraphicsCommandList* D3D12Graphic
 		m_LightCamera->GenerateViewMatrix(Lights[0].m_Position, Lights[0].m_Direction);
 
 		XMMATRIX ToTexCoordMatrix{ XMMatrixTranspose(XMLoadFloat4x4(&m_LightCamera->GetViewMatrix()) * XMLoadFloat4x4(&m_LightCamera->GetProjectionMatrix()) * XMLoadFloat4x4(&m_ProjectionMatrixToTexture)) };
-		
+
 		XMStoreFloat4x4(&Lights[0].m_ToTexCoordMatrix, ToTexCoordMatrix);
 
 		ID3D12Resource* DepthTexture{ m_DepthTexture->GetResource() };
-	
+
 		DX::ResourceTransition(D3D12GraphicsCommandList, DepthTexture, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
-		
+
 		CD3DX12_CPU_DESCRIPTOR_HANDLE D3D12RtvCPUDescriptorHandle{ m_D3D12RtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart() };
 		CD3DX12_CPU_DESCRIPTOR_HANDLE D3D12DsvCPUDescriptorHandle{ m_D3D12DsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart() };
 
@@ -181,7 +192,20 @@ void CDepthWriteShader::PrepareShadowMap(ID3D12GraphicsCommandList* D3D12Graphic
 		D3D12GraphicsCommandList->ClearDepthStencilView(D3D12DsvCPUDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 		D3D12GraphicsCommandList->OMSetRenderTargets(1, &D3D12RtvCPUDescriptorHandle, TRUE, &D3D12DsvCPUDescriptorHandle);
 
-		Render(D3D12GraphicsCommandList, m_LightCamera.get(), GameObjects);
+		m_LightCamera->RSSetViewportsAndScissorRects(D3D12GraphicsCommandList);
+		m_LightCamera->UpdateShaderVariables(D3D12GraphicsCommandList);
+
+		for (UINT i = OBJECT_TYPE_PLAYER; i <= OBJECT_TYPE_STRUCTURE; ++i)
+		{
+			for (const auto& GameObject : GameObjects[i])
+			{
+				if (GameObject)
+				{
+					GameObject->UpdateTransform(Matrix4x4::Identity());
+					GameObject->Render(D3D12GraphicsCommandList, m_LightCamera.get(), RENDER_TYPE_DEPTH_WRITE);
+				}
+			}
+		}
 
 		DX::ResourceTransition(D3D12GraphicsCommandList, DepthTexture, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COMMON);
 	}
@@ -191,14 +215,32 @@ void CDepthWriteShader::PrepareShadowMap(ID3D12GraphicsCommandList* D3D12Graphic
 
 D3D12_INPUT_LAYOUT_DESC CShadowMapShader::CreateInputLayout(UINT StateNum)
 {
-	const UINT InputElementCount{ 5 };
-	D3D12_INPUT_ELEMENT_DESC* D3D12InputElementDescs{ new D3D12_INPUT_ELEMENT_DESC[InputElementCount] };
+	UINT InputElementCount{};
+	D3D12_INPUT_ELEMENT_DESC* D3D12InputElementDescs{};
 
-	D3D12InputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	D3D12InputElementDescs[1] = { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	D3D12InputElementDescs[2] = { "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 2, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	D3D12InputElementDescs[3] = { "BITANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 3, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	D3D12InputElementDescs[4] = { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 4, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	switch (StateNum)
+	{ 
+	case 0:
+		InputElementCount = 5;
+		D3D12InputElementDescs = new D3D12_INPUT_ELEMENT_DESC[InputElementCount];
+		D3D12InputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+		D3D12InputElementDescs[1] = { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+		D3D12InputElementDescs[2] = { "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 2, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+		D3D12InputElementDescs[3] = { "BITANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 3, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+		D3D12InputElementDescs[4] = { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 4, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+		break;
+	case 1:
+		InputElementCount = 7;
+		D3D12InputElementDescs = new D3D12_INPUT_ELEMENT_DESC[InputElementCount];
+		D3D12InputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+		D3D12InputElementDescs[1] = { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+		D3D12InputElementDescs[2] = { "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 2, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+		D3D12InputElementDescs[3] = { "BITANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 3, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+		D3D12InputElementDescs[4] = { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 4, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+		D3D12InputElementDescs[5] = { "BONEINDEX", 0, DXGI_FORMAT_R32G32B32A32_UINT, 5, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+		D3D12InputElementDescs[6] = { "BONEWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 6, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+		break;
+	}
 
 	D3D12_INPUT_LAYOUT_DESC D3D12InputLayoutDesc{};
 
@@ -210,7 +252,15 @@ D3D12_INPUT_LAYOUT_DESC CShadowMapShader::CreateInputLayout(UINT StateNum)
 
 D3D12_SHADER_BYTECODE CShadowMapShader::CreateVertexShader(ID3DBlob* D3D12ShaderBlob, UINT StateNum)
 {
-	return CGraphicsShader::CompileShaderFromFile(L"GameSceneShader.hlsl", "VS_Main", "vs_5_1", D3D12ShaderBlob);
+	switch (StateNum)
+	{
+	case 0: 
+		return CGraphicsShader::CompileShaderFromFile(L"GameSceneShader.hlsl", "VS_Main", "vs_5_1", D3D12ShaderBlob);
+	case 1:
+		return CGraphicsShader::CompileShaderFromFile(L"GameSceneShader.hlsl", "VS_Main_Skinning", "vs_5_1", D3D12ShaderBlob);
+	}
+
+	return CGraphicsShader::CreateVertexShader(D3D12ShaderBlob, StateNum);
 }
 
 D3D12_SHADER_BYTECODE CShadowMapShader::CreatePixelShader(ID3DBlob* D3D12ShaderBlob, UINT StateNum)
@@ -218,9 +268,18 @@ D3D12_SHADER_BYTECODE CShadowMapShader::CreatePixelShader(ID3DBlob* D3D12ShaderB
 	return CGraphicsShader::CompileShaderFromFile(L"GameSceneShader.hlsl", "PS_Main", "ps_5_1", D3D12ShaderBlob);
 }
 
-void CShadowMapShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, UINT StateNum)
+void CShadowMapShader::CreatePipelineState(ID3D12Device* D3D12Device, ID3D12RootSignature* D3D12RootSignature, UINT StateNum)
 {
-	if (CShaderManager::GetInstance()->SetShader(TEXT("ShadowMapShader")))
+	// 0: No Skinning, 1: Use Skinning
+	for (UINT i = 0; i < StateNum; ++i)
+	{
+		CGraphicsShader::CreatePipelineState(D3D12Device, D3D12RootSignature, i);
+	}
+}
+
+void CShadowMapShader::SetPipelineState(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, UINT StateNum)
+{
+	if (CShaderManager::GetInstance()->SetPipelineState(TEXT("ShadowMapShader"), StateNum))
 	{
 		if (m_D3D12PipelineStates[StateNum])
 		{

@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "BilboardObject.h"
 
-void CBilboardObject::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera)
+void CBilboardObject::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType)
 {
 
 }

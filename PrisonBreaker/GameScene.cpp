@@ -19,19 +19,19 @@ void CGameScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandLi
 	// 렌더링에 필요한 셰이더 객체(PSO)를 생성한다.
 	shared_ptr<CGraphicsShader> Shader{ make_shared<CDepthWriteShader>(D3D12Device, D3D12GraphicsCommandList) };
 
-	Shader->CreatePipelineState(D3D12Device, m_D3D12RootSignature.Get());
+	Shader->CreatePipelineState(D3D12Device, m_D3D12RootSignature.Get(), 2);
 	CShaderManager::GetInstance()->RegisterShader(TEXT("DepthWriteShader"), Shader);
 
 	Shader = make_shared<CShadowMapShader>();
-	Shader->CreatePipelineState(D3D12Device, m_D3D12RootSignature.Get());
+	Shader->CreatePipelineState(D3D12Device, m_D3D12RootSignature.Get(), 2);
 	CShaderManager::GetInstance()->RegisterShader(TEXT("ShadowMapShader"), Shader);
 
 	Shader = make_shared<CSkyBoxShader>();
-	Shader->CreatePipelineState(D3D12Device, m_D3D12RootSignature.Get());
+	Shader->CreatePipelineState(D3D12Device, m_D3D12RootSignature.Get(), 0);
 	CShaderManager::GetInstance()->RegisterShader(TEXT("SkyBoxShader"), Shader);
 
 	Shader = make_shared<CDebugShader>();
-	Shader->CreatePipelineState(D3D12Device, m_D3D12RootSignature.Get());
+	Shader->CreatePipelineState(D3D12Device, m_D3D12RootSignature.Get(), 0);
 	CShaderManager::GetInstance()->RegisterShader(TEXT("DebugShader"), Shader);
 
 	// 카메라 객체를 생성한다.
@@ -79,12 +79,14 @@ void CGameScene::CreateRootSignature(ID3D12Device* D3D12Device)
 	D3D12DescriptorRanges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2);
 	D3D12DescriptorRanges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3);
 
-	CD3DX12_ROOT_PARAMETER D3D12RootParameters[8]{};
+	CD3DX12_ROOT_PARAMETER D3D12RootParameters[10]{};
 
 	D3D12RootParameters[ROOT_PARAMETER_TYPE_FRAMEWORK_INFO].InitAsConstantBufferView(0);					   // 프레임워크 정보(b0)
 	D3D12RootParameters[ROOT_PARAMETER_TYPE_CAMERA].InitAsConstantBufferView(1);							   // 카메라 정보(b1)
 	D3D12RootParameters[ROOT_PARAMETER_TYPE_LIGHT].InitAsConstantBufferView(2);							       // 조명 정보(b2)
 	D3D12RootParameters[ROOT_PARAMETER_TYPE_OBJECT].InitAsConstants(21, 3);								       // 오브젝트 정보(b3)
+	D3D12RootParameters[ROOT_PARAMETER_TYPE_BONE_OFFSET].InitAsConstantBufferView(4);						   // 조명 정보(b4)
+	D3D12RootParameters[ROOT_PARAMETER_TYPE_BONE_TRANSFORM].InitAsConstantBufferView(5);					   // 조명 정보(b5)
 	D3D12RootParameters[ROOT_PARAMETER_TYPE_ALBEDO_MAP].InitAsDescriptorTable(1, &D3D12DescriptorRanges[0]);   // 텍스처 정보(AlbedoMap : t0)
 	D3D12RootParameters[ROOT_PARAMETER_TYPE_METALLIC_MAP].InitAsDescriptorTable(1, &D3D12DescriptorRanges[1]); // 텍스처 정보(MetallicMap : t1)
 	D3D12RootParameters[ROOT_PARAMETER_TYPE_NORMAL_MAP].InitAsDescriptorTable(1, &D3D12DescriptorRanges[2]);   // 텍스처 정보(NormalMap : t2)
@@ -149,7 +151,6 @@ void CGameScene::ReleaseUploadBuffers()
 	}
 }
 
-
 void CGameScene::ProcessMouseMessage(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
 
@@ -209,15 +210,41 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	// 3인칭 모드
 	Player->Rotate(Delta.y, Delta.x, 0.0f, ElapsedTime);
 
-	if (GetAsyncKeyState('W') & 0x8000) Player->Move(Player->GetLook(), 5.0f * ElapsedTime);
-	if (GetAsyncKeyState('S') & 0x8000) Player->Move(Player->GetLook(), -5.0f * ElapsedTime);
-	if (GetAsyncKeyState('A') & 0x8000) Player->Move(Player->GetRight(), -5.0f * ElapsedTime);
-	if (GetAsyncKeyState('D') & 0x8000) Player->Move(Player->GetRight(), 5.0f * ElapsedTime);
+	if ((GetAsyncKeyState(VK_SHIFT) & 0x8000) && (GetAsyncKeyState('W') & 0x8000))
+	{
+		// Running
+		Player->Move(Player->GetLook(), 12.0f * ElapsedTime);
+		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(2);
+	}
+	else if (GetAsyncKeyState('W') & 0x8000)
+	{
+		// Crouched Walk
+		Player->Move(Player->GetLook(), 7.0f * ElapsedTime);
+		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(1);
+	}
+	else
+	{
+		// IDLE
+		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(0);
+	}
+
+	//if (GetAsyncKeyState('S') & 0x8000) Player->Move(Player->GetLook(), -10.0f * ElapsedTime)
+	//if (GetAsyncKeyState('A') & 0x8000) Player->Move(Player->GetRight(), -10.0f * ElapsedTime);
+	//if (GetAsyncKeyState('D') & 0x8000) Player->Move(Player->GetRight(), 10.0f * ElapsedTime);
 }
 
 void CGameScene::Animate(float ElapsedTime)
 {
-
+	for (UINT i = OBJECT_TYPE_PLAYER; i <= OBJECT_TYPE_STRUCTURE; ++i)
+	{
+		for (const auto& GameObject : m_GameObjects[i])
+		{
+			if (GameObject)
+			{
+				GameObject->Animate(ElapsedTime);
+			}
+		}
+	}
 }
 
 void CGameScene::PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
@@ -248,17 +275,17 @@ void CGameScene::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList) con
 		{
 			if (GameObject)
 			{
-				GameObject->Render(D3D12GraphicsCommandList, Player->GetCamera());
+				GameObject->Render(D3D12GraphicsCommandList, Player->GetCamera(), RENDER_TYPE_STANDARD);
 			}
 		}
 	}
 
 	if (m_SkyBox)
 	{
-		m_SkyBox->Render(D3D12GraphicsCommandList, Player->GetCamera());
+		m_SkyBox->Render(D3D12GraphicsCommandList, Player->GetCamera(), RENDER_TYPE_STANDARD);
 	}
 
-	static_pointer_cast<CDebugShader>(CShaderManager::GetInstance()->GetShader(TEXT("DebugShader")))->Render(D3D12GraphicsCommandList, Player->GetCamera(), m_GameObjects);
+	//static_pointer_cast<CDebugShader>(CShaderManager::GetInstance()->GetShader(TEXT("DebugShader")))->Render(D3D12GraphicsCommandList, Player->GetCamera(), m_GameObjects, 0);
 }
 
 void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName)
@@ -356,6 +383,7 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 				m_GameObjects[ObjectType].back()->SetActive(true);
 				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
 				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
+				m_GameObjects[ObjectType].back()->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
 				break;
 			case OBJECT_TYPE_NPC:
 			case OBJECT_TYPE_TERRAIN:

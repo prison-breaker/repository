@@ -47,12 +47,9 @@ D3D12_SHADER_BYTECODE CDebugShader::CreatePixelShader(ID3DBlob* D3D12ShaderBlob,
 
 void CDebugShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, UINT StateNum)
 {
-	if (CShaderManager::GetInstance()->SetGlobalShader("DebugShader"))
+	if (m_D3D12PipelineStates[StateNum])
 	{
-		if (m_D3D12PipelineStates[StateNum])
-		{
-			D3D12GraphicsCommandList->SetPipelineState(m_D3D12PipelineStates[StateNum].Get());
-		}
+		D3D12GraphicsCommandList->SetPipelineState(m_D3D12PipelineStates[StateNum].Get());
 	}
 
 	for (UINT i = OBJECT_TYPE_PLAYER; i <= OBJECT_TYPE_STRUCTURE; ++i)
@@ -65,6 +62,4 @@ void CDebugShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, C
 			}
 		}
 	}
-
-	CShaderManager::GetInstance()->UnSetGlobalShader();
 }

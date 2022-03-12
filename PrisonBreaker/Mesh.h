@@ -1,5 +1,7 @@
 #pragma once
 
+class CGameObject;
+
 class CMesh
 {
 protected:
@@ -54,6 +56,8 @@ public:
 
 	void LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile);
 
+	const tstring& GetName() const;
+
 	void SetBoundingBox(const BoundingBox& BoundingBox);
 	const BoundingBox& GetBoundingBox() const;
 	void RenderBoundingBox(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
@@ -78,6 +82,7 @@ private:
 	ComPtr<ID3D12Resource>			m_D3D12BoneOffsetMatrixes{};
 	XMFLOAT4X4*						m_MappedBoneOffsetMatrixes{};
 
+	vector<shared_ptr<CGameObject>> m_BoneFrameCaches{};
 	ComPtr<ID3D12Resource>			m_D3D12BoneTransformMatrixes{};
 	XMFLOAT4X4*						m_MappedBoneTransformMatrixes{};
 
@@ -94,4 +99,7 @@ public:
 	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, UINT SubSetIndex);
 
 	void LoadSkinInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile);
+	
+	void SetBoneFrameCaches(const vector <shared_ptr<CGameObject>>& BoneFrames);
+	void SetBoneTransformInfo(const ComPtr<ID3D12Resource>& D3D12BoneTransformMatrixes, XMFLOAT4X4* MappedBoneTransformMatrixes);
 };

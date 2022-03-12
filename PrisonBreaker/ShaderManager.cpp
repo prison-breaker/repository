@@ -27,39 +27,20 @@ shared_ptr<CShader> CShaderManager::GetShader(const tstring& ShaderName)
 	return nullptr;
 }
 
-bool CShaderManager::SetGlobalShader(const tstring& ShaderName)
+bool CShaderManager::SetPipelineState(const tstring& ShaderName, UINT StateNum)
 {
 	if (m_Shaders.count(ShaderName))
 	{
-		m_SetGlobalShader = m_Shaders[ShaderName];
-		m_SetShader = nullptr;
-
-		return true;
-	}
-
-	return false;
-}
-
-void CShaderManager::UnSetGlobalShader()
-{
-	m_SetGlobalShader = nullptr;
-}
-
-bool CShaderManager::SetShader(const tstring& ShaderName)
-{
-	if (m_SetGlobalShader)
-	{
-		return false;
-	}
-	else if (m_Shaders.count(ShaderName))
-	{
-		if (m_SetShader == m_Shaders[ShaderName])
-		{
-			return false;
-		}
-		else
+		if (m_SetShader != m_Shaders[ShaderName])
 		{
 			m_SetShader = m_Shaders[ShaderName];
+			m_StateNum = StateNum;
+
+			return true;
+		}
+		else if (m_StateNum != StateNum)
+		{
+			m_StateNum = StateNum;
 
 			return true;
 		}

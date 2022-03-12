@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "GameObject.h"
+#include "AnimationController.h"
 
 shared_ptr<LOADED_MODEL_INFO> CGameObject::LoadObjectFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName)
 {
@@ -21,10 +22,6 @@ shared_ptr<LOADED_MODEL_INFO> CGameObject::LoadObjectFromFile(ID3D12Device* D3D1
 			tcout << FileName << TEXT(" 로드 시작...") << endl;
 			NewObject = CGameObject::LoadObjectInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile, MeshCaches, MaterialCaches);
 		}
-		else if (Token == TEXT("<Animation>"))
-		{
-
-		}
 		else if (Token == TEXT("</Hierarchy>"))
 		{
 			tcout << FileName << TEXT(" 로드 완료...") << endl;
@@ -41,14 +38,19 @@ shared_ptr<LOADED_MODEL_INFO> CGameObject::LoadObjectFromFile(ID3D12Device* D3D1
 			tcout << FileName << TEXT(" 로드 시작...") << endl;
 			ModelInfo->m_Model = CGameObject::LoadObjectInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile, MeshCaches, MaterialCaches);
 		}
-		else if (Token == TEXT("<Animation>"))
-		{
-			CGameObject::LoadAnimationInfoFromFile(InFile, ModelInfo);
-		}
 		else if (Token == TEXT("</Hierarchy>"))
 		{
 			tcout << FileName << TEXT(" 로드 완료...") << endl;
 			break;
+		}
+	}
+
+	if (InFile >> Token)
+	{
+		if (Token == TEXT("<Animation>"))
+		{
+			tcout << FileName << TEXT(" 애니메이션 로드 시작...") << endl;
+			CGameObject::LoadAnimationInfoFromFile(InFile, ModelInfo);
 		}
 	}
 #endif
@@ -60,6 +62,7 @@ shared_ptr<CGameObject> CGameObject::LoadObjectInfoFromFile(ID3D12Device* D3D12D
 {
 	tstring Token{};
 	shared_ptr<CGameObject> NewObject{};
+	bool IsSkinnedMesh{};
 
 #ifdef READ_BINARY_FILE
 	while (true)
@@ -181,7 +184,7 @@ shared_ptr<CGameObject> CGameObject::LoadObjectInfoFromFile(ID3D12Device* D3D12D
 
 				InFile >> Token;
 
-				if (Token != TEXT("<Mesh>"))
+				if (Token == TEXT("<Mesh>"))
 				{
 					SkinnedMesh->LoadMeshInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
 				}
@@ -189,6 +192,8 @@ shared_ptr<CGameObject> CGameObject::LoadObjectInfoFromFile(ID3D12Device* D3D12D
 				NewObject->SetMesh(SkinnedMesh);
 			 	NewObject->SetBoundingBox(make_shared<BoundingBox>());
 				MeshCaches.emplace(NewObject->m_FrameName, SkinnedMesh);
+
+				IsSkinnedMesh = true;
 			}
 		}
 		else if (Token == TEXT("<Mesh>"))
@@ -214,7 +219,7 @@ shared_ptr<CGameObject> CGameObject::LoadObjectInfoFromFile(ID3D12Device* D3D12D
 				{
 					shared_ptr<CMaterial> Material{ make_shared<CMaterial>() };
 
-					Material->LoadMaterialFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
+					Material->LoadMaterialFromFile(D3D12Device, D3D12GraphicsCommandList, InFile, IsSkinnedMesh);
 					NewObject->m_Materials.push_back(Material);
 				}
 
@@ -252,7 +257,8 @@ shared_ptr<CGameObject> CGameObject::LoadObjectInfoFromFile(ID3D12Device* D3D12D
 
 void CGameObject::LoadAnimationInfoFromFile(tifstream& InFile, const shared_ptr<LOADED_MODEL_INFO>& ModelInfo)
 {
-	string Token{};
+	tstring Token{};
+	unordered_map<tstring, shared_ptr<CGameObject>> BoneFrameCaches{};
 
 	while (InFile >> Token)
 	{
@@ -262,21 +268,51 @@ void CGameObject::LoadAnimationInfoFromFile(tifstream& InFile, const shared_ptr<
 
 			InFile >> SkinnedMeshFrameCount;
 			ModelInfo->m_SkinnedMeshCaches.reserve(SkinnedMeshFrameCount);
-			ModelInfo->m_BoneFrameCaches.reserve(SkinnedMeshFrameCount);
+			ModelInfo->m_BoneFrameCaches.resize(SkinnedMeshFrameCount);
 
 			for (UINT i = 0; i < SkinnedMeshFrameCount; ++i)
 			{
-				// 나중에 얘는 빼야댐(i랑 같은 것을 의미)
-				UINT SkinnedMeshIndex{};
-
-				InFile >> SkinnedMeshIndex;
 				InFile >> Token;
-				//ModelInfo->m_BoneFrameCaches.push_back(ModelInfo->m_Model->FindSkinnedMesh(Token));
+				ModelInfo->m_SkinnedMeshCaches.push_back(ModelInfo->m_Model->FindSkinnedMesh(Token));
 
-				UINT InfluencedBoneCount{};
+				UINT BoneCount{};
 
-				InFile >> InfluencedBoneCount;
-				ModelInfo->m_BoneFrameCaches[i].reserve(InfluencedBoneCount);
+				InFile >> BoneCount;
+				ModelInfo->m_BoneFrameCaches[i].reserve(BoneCount);
+
+				for (UINT j = 0; j < BoneCount; ++j)
+				{
+					InFile >> Token;
+					
+					if (BoneFrameCaches.count(Token))
+					{
+						ModelInfo->m_BoneFrameCaches[i].push_back(BoneFrameCaches[Token]);
+					}
+					else
+					{
+						shared_ptr<CGameObject> Frame{ ModelInfo->m_Model->FindFrame(Token) };
+
+						ModelInfo->m_BoneFrameCaches[i].push_back(Frame);
+						BoneFrameCaches.emplace(Token, Frame);
+					}
+				}
+
+				ModelInfo->m_SkinnedMeshCaches.back()->SetBoneFrameCaches(ModelInfo->m_BoneFrameCaches[i]);
+			}
+		}
+		else if (Token == TEXT("<AnimationClips>"))
+		{
+			UINT AnimationClipCount{};
+
+			InFile >> AnimationClipCount;
+			ModelInfo->m_AnimationClips.reserve(AnimationClipCount);
+
+			for (UINT i = 0; i < AnimationClipCount; ++i)
+			{
+				shared_ptr<CAnimationClip> AnimationClip{ make_shared<CAnimationClip>() };
+
+				AnimationClip->LoadAnimationClipInfoFromFile(InFile, ModelInfo);
+				ModelInfo->m_AnimationClips.push_back(AnimationClip);
 			}
 		}
 		else if (Token == TEXT("</Animation>"))
@@ -284,6 +320,68 @@ void CGameObject::LoadAnimationInfoFromFile(tifstream& InFile, const shared_ptr<
 			break;
 		}
 	}
+}
+
+shared_ptr<CGameObject> CGameObject::FindFrame(const tstring& FrameName)
+{
+	shared_ptr<CGameObject> Object{};
+
+	if (m_FrameName == FrameName)
+	{
+		return shared_from_this();
+	}
+
+	if (m_SiblingObject)
+	{
+		if (Object = m_SiblingObject->FindFrame(FrameName))
+		{
+			return Object;
+		}
+	}
+
+	if (m_ChildObject)
+	{
+		if (Object = m_ChildObject->FindFrame(FrameName))
+		{
+			return Object;
+		}
+	}
+
+	return Object;
+}
+
+shared_ptr<CSkinnedMesh> CGameObject::FindSkinnedMesh(const tstring& SkinnedMeshName)
+{
+	shared_ptr<CSkinnedMesh> SkinnedMesh{};
+
+	if (m_Mesh)
+	{
+		if (typeid(*m_Mesh) == typeid(CSkinnedMesh))
+		{
+			if (m_Mesh->GetName() == SkinnedMeshName)
+			{
+				return static_pointer_cast<CSkinnedMesh>(m_Mesh);
+			}
+		}
+	}
+
+	if (m_SiblingObject)
+	{
+		if (SkinnedMesh = m_SiblingObject->FindSkinnedMesh(SkinnedMeshName))
+		{
+			return SkinnedMesh;
+		}
+	}
+
+	if (m_ChildObject)
+	{
+		if (SkinnedMesh = m_ChildObject->FindSkinnedMesh(SkinnedMeshName))
+		{
+			return SkinnedMesh;
+		}
+	}
+
+	return SkinnedMesh;
 }
 
 void CGameObject::CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
@@ -331,18 +429,29 @@ void CGameObject::Move(const XMFLOAT3& Direction, float Distance)
 
 void CGameObject::Animate(float ElapsedTime)
 {
-
+	if (IsActive())
+	{
+		if (m_AnimationController)
+		{
+			m_AnimationController->UpdateAnimationClip(ElapsedTime, shared_from_this());
+		}
+	}
 }
 
-void CGameObject::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera)
+void CGameObject::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType)
 {
 	if (IsActive())
 	{
+		if (m_AnimationController)
+		{
+			m_AnimationController->UpdateShaderVariables(D3D12GraphicsCommandList);
+		}
+
 		if (IsVisible(Camera))
 		{
 			if (m_Mesh)
 			{
-			    UpdateShaderVariables(D3D12GraphicsCommandList);
+				UpdateShaderVariables(D3D12GraphicsCommandList);
 
 				UINT MaterialCount{ static_cast<UINT>(m_Materials.size()) };
 
@@ -350,22 +459,23 @@ void CGameObject::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CC
 				{
 					if (m_Materials[i])
 					{
-						m_Materials[i]->UpdateShaderVariables(D3D12GraphicsCommandList, Camera);
+						m_Materials[i]->SetPipelineState(D3D12GraphicsCommandList, RenderType);
+						m_Materials[i]->UpdateShaderVariables(D3D12GraphicsCommandList);
 					}
 
 					m_Mesh->Render(D3D12GraphicsCommandList, i);
 				}
 			}
 		}
-		
+
 		if (m_SiblingObject)
 		{
-			m_SiblingObject->Render(D3D12GraphicsCommandList, Camera);
+			m_SiblingObject->Render(D3D12GraphicsCommandList, Camera, RenderType);
 		}
 
 		if (m_ChildObject)
 		{
-			m_ChildObject->Render(D3D12GraphicsCommandList, Camera);
+			m_ChildObject->Render(D3D12GraphicsCommandList, Camera, RenderType);
 		}
 	}
 }
@@ -496,6 +606,22 @@ void CGameObject::SetChild(const shared_ptr<CGameObject>& ChildObject)
 	}
 }
 
+void CGameObject::SetAnimationController(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const shared_ptr<LOADED_MODEL_INFO>& ModelInfo)
+{
+	if (ModelInfo)
+	{
+		m_AnimationController = make_shared<CAnimationController>(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
+	}
+}
+
+void CGameObject::SetAnimationClip(UINT ClipNum)
+{
+	if (m_AnimationController)
+	{
+		m_AnimationController->ChangeAnimationClip(ClipNum);
+	}
+}
+
 bool CGameObject::IsVisible(CCamera* Camera) const
 {
 	bool Visible{};
@@ -575,7 +701,6 @@ void CGameObject::RenderBoundingBox(ID3D12GraphicsCommandList* D3D12GraphicsComm
 			if (m_Mesh)
 			{
 				UpdateShaderVariables(D3D12GraphicsCommandList);
-
 				m_Mesh->RenderBoundingBox(D3D12GraphicsCommandList);
 			}
 		}

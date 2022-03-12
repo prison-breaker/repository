@@ -17,7 +17,7 @@ public:
 	CBilboardObject() = default;
 	virtual ~CBilboardObject() = default;
 
-	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera);
+	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType);
 
 	void ReleaseUploadBuffers();
 

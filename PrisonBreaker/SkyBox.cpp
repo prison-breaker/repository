@@ -42,7 +42,8 @@ CSkyBox::CSkyBox(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12Grap
 
 	Texture->LoadTextureFromDDSFile(D3D12Device, D3D12GraphicsCommandList, TEXTURE_TYPE_ALBEDO_MAP, TEXT("Texture/SkyBox_Back.dds"));
 	Material->RegisterTexture(Texture);
-	Material->SetShader(Shader);
+	Material->RegisterShader(Shader);
+	Material->SetStateNum(SHADER_TYPE_STANDARD);
 	CTextureManager::GetInstance()->RegisterTexture(TEXT("SkyBox_Back"), Texture);
 	m_Materials.push_back(Material);
 
@@ -50,7 +51,8 @@ CSkyBox::CSkyBox(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12Grap
 	Texture = make_shared<CTexture>();
 	Texture->LoadTextureFromDDSFile(D3D12Device, D3D12GraphicsCommandList, TEXTURE_TYPE_ALBEDO_MAP, TEXT("Texture/SkyBox_Front.dds"));
 	Material->RegisterTexture(Texture);
-	Material->SetShader(Shader);
+	Material->RegisterShader(Shader);
+	Material->SetStateNum(SHADER_TYPE_STANDARD);
 	CTextureManager::GetInstance()->RegisterTexture(TEXT("SkyBox_Front"), Texture);
 	m_Materials.push_back(Material);
 
@@ -58,7 +60,8 @@ CSkyBox::CSkyBox(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12Grap
 	Texture = make_shared<CTexture>();
 	Texture->LoadTextureFromDDSFile(D3D12Device, D3D12GraphicsCommandList, TEXTURE_TYPE_ALBEDO_MAP, TEXT("Texture/SkyBox_Right.dds"));
 	Material->RegisterTexture(Texture);
-	Material->SetShader(Shader);
+	Material->RegisterShader(Shader);
+	Material->SetStateNum(SHADER_TYPE_STANDARD);
 	CTextureManager::GetInstance()->RegisterTexture(TEXT("SkyBox_Right"), Texture);
 	m_Materials.push_back(Material);
 
@@ -66,7 +69,8 @@ CSkyBox::CSkyBox(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12Grap
 	Texture = make_shared<CTexture>();
 	Texture->LoadTextureFromDDSFile(D3D12Device, D3D12GraphicsCommandList, TEXTURE_TYPE_ALBEDO_MAP, TEXT("Texture/SkyBox_Left.dds"));
 	Material->RegisterTexture(Texture);
-	Material->SetShader(Shader);
+	Material->RegisterShader(Shader);
+	Material->SetStateNum(SHADER_TYPE_STANDARD);
 	CTextureManager::GetInstance()->RegisterTexture(TEXT("SkyBox_Left"), Texture);
 	m_Materials.push_back(Material);
 
@@ -74,7 +78,8 @@ CSkyBox::CSkyBox(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12Grap
 	Texture = make_shared<CTexture>();
 	Texture->LoadTextureFromDDSFile(D3D12Device, D3D12GraphicsCommandList, TEXTURE_TYPE_ALBEDO_MAP, TEXT("Texture/SkyBox_Top.dds"));
 	Material->RegisterTexture(Texture);
-	Material->SetShader(Shader);
+	Material->RegisterShader(Shader);
+	Material->SetStateNum(SHADER_TYPE_STANDARD);
 	CTextureManager::GetInstance()->RegisterTexture(TEXT("SkyBox_Top"), Texture);
 	m_Materials.push_back(Material);
 
@@ -82,12 +87,13 @@ CSkyBox::CSkyBox(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12Grap
 	Texture = make_shared<CTexture>();
 	Texture->LoadTextureFromDDSFile(D3D12Device, D3D12GraphicsCommandList, TEXTURE_TYPE_ALBEDO_MAP, TEXT("Texture/SkyBox_Bottom.dds"));
 	Material->RegisterTexture(Texture);
-	Material->SetShader(Shader);
+	Material->RegisterShader(Shader);
+	Material->SetStateNum(SHADER_TYPE_STANDARD);
 	CTextureManager::GetInstance()->RegisterTexture(TEXT("SkyBox_Bottom"), Texture);
 	m_Materials.push_back(Material);
 }
 
-void CSkyBox::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera)
+void CSkyBox::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType)
 {
 	D3D12_VERTEX_BUFFER_VIEW VertexBufferViews[] = { m_D3D12PositionBufferView };
 
@@ -100,7 +106,8 @@ void CSkyBox::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamer
 	{
 		if (m_Materials[i])
 		{
-			m_Materials[i]->UpdateShaderVariables(D3D12GraphicsCommandList, Camera);
+			m_Materials[i]->SetPipelineState(D3D12GraphicsCommandList, RenderType);
+			m_Materials[i]->UpdateShaderVariables(D3D12GraphicsCommandList);
 		}
 
 		D3D12GraphicsCommandList->DrawInstanced(1, 1, i, 0);
