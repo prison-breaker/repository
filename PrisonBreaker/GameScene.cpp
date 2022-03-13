@@ -214,7 +214,19 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	{
 		// Running
 		Player->Move(Player->GetLook(), 12.0f * ElapsedTime);
-		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(2);
+		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(4);
+	}
+	else if ((GetAsyncKeyState(VK_SHIFT) & 0x8000) && (GetAsyncKeyState('A') & 0x8000))
+	{
+		// Running
+		Player->Move(Player->GetRight(), -12.0f * ElapsedTime);
+		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(5);
+	}
+	else if ((GetAsyncKeyState(VK_SHIFT) & 0x8000) && (GetAsyncKeyState('D') & 0x8000))
+	{
+		// Running
+		Player->Move(Player->GetRight(), 12.0f * ElapsedTime);
+		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(6);
 	}
 	else if (GetAsyncKeyState('W') & 0x8000)
 	{
@@ -222,15 +234,37 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 		Player->Move(Player->GetLook(), 7.0f * ElapsedTime);
 		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(1);
 	}
+	else if (GetAsyncKeyState('S') & 0x8000)
+	{
+		// Crouched Walk
+		Player->Move(Player->GetLook(), -7.0f * ElapsedTime);
+		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(1);
+	}
+	else if (GetAsyncKeyState('A') & 0x8000)
+	{
+		// Crouched Walk
+		Player->Move(Player->GetRight(), -7.0f * ElapsedTime);
+		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(2);
+	}
+	else if (GetAsyncKeyState('D') & 0x8000)
+	{
+		// Crouched Walk
+		Player->Move(Player->GetRight(), 7.0f * ElapsedTime);
+		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(3);
+	}
+	else if (GetAsyncKeyState(MK_LBUTTON) & 0x8000)
+	{
+		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(7);
+	}
+	else if (GetAsyncKeyState(MK_RBUTTON) & 0x8000)
+	{
+		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(8);
+	}
 	else
 	{
 		// IDLE
 		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(0);
 	}
-
-	//if (GetAsyncKeyState('S') & 0x8000) Player->Move(Player->GetLook(), -10.0f * ElapsedTime)
-	//if (GetAsyncKeyState('A') & 0x8000) Player->Move(Player->GetRight(), -10.0f * ElapsedTime);
-	//if (GetAsyncKeyState('D') & 0x8000) Player->Move(Player->GetRight(), 10.0f * ElapsedTime);
 }
 
 void CGameScene::Animate(float ElapsedTime)
@@ -386,6 +420,12 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 				m_GameObjects[ObjectType].back()->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
 				break;
 			case OBJECT_TYPE_NPC:
+				m_GameObjects[ObjectType].push_back(make_shared<CGameObject>());
+				m_GameObjects[ObjectType].back()->SetActive(true);
+				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
+				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
+				m_GameObjects[ObjectType].back()->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
+				break;
 			case OBJECT_TYPE_TERRAIN:
 			case OBJECT_TYPE_STRUCTURE:
 				m_GameObjects[ObjectType].push_back(make_shared<CGameObject>());
