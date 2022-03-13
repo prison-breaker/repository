@@ -6,6 +6,58 @@ void CAnimationClip::LoadAnimationClipInfoFromFile(ifstream& InFile, const share
 	tstring Token{};
 	UINT SkinnedMeshCount{};
 
+#ifdef READ_BINARY_FILE
+	while (true)
+	{
+		File::ReadStringFromFile(InFile, Token);
+
+		if (Token == TEXT("<AnimationClip>"))
+		{
+			File::ReadStringFromFile(InFile, m_ClipName);
+			m_FramePerSec = File::ReadIntegerFromFile(InFile);
+			m_KeyFrameCount = File::ReadIntegerFromFile(InFile);
+			m_KeyFrameTime = File::ReadFloatFromFile(InFile);
+
+			SkinnedMeshCount = static_cast<UINT>(ModelInfo->m_SkinnedMeshCaches.size());
+			m_BoneTransformMatrixes.resize(SkinnedMeshCount);
+
+			for (UINT i = 0; i < SkinnedMeshCount; ++i)
+			{
+				UINT BoneCount{ static_cast<UINT>(ModelInfo->m_BoneFrameCaches[i].size()) };
+
+				m_BoneTransformMatrixes[i].resize(BoneCount);
+
+				for (UINT j = 0; j < BoneCount; ++j)
+				{
+					m_BoneTransformMatrixes[i][j].reserve(m_KeyFrameCount);
+				}
+			}
+		}
+		else if (Token == TEXT("<TransformMatrix>"))
+		{
+			// Current KeyFrameTime
+			File::ReadFloatFromFile(InFile);
+
+			for (UINT i = 0; i < SkinnedMeshCount; ++i)
+			{
+				UINT BoneCount{ static_cast<UINT>(ModelInfo->m_BoneFrameCaches[i].size()) };
+
+				for (UINT j = 0; j < BoneCount; ++j)
+				{
+					XMFLOAT4X4 TransformMatrix{};
+
+					InFile.read(reinterpret_cast<TCHAR*>(&TransformMatrix), sizeof(XMFLOAT4X4));
+
+					m_BoneTransformMatrixes[i][j].push_back(TransformMatrix);
+				}
+			}
+		}
+		else if (Token == TEXT("</AnimationClip>"))
+		{
+			break;
+		}
+	}
+#else
 	while (InFile >> Token)
 	{
 		if (Token == TEXT("<AnimationClip>"))
@@ -32,7 +84,7 @@ void CAnimationClip::LoadAnimationClipInfoFromFile(ifstream& InFile, const share
 		}
 		else if (Token == TEXT("<TransformMatrix>"))
 		{
-			// 이 부분은 빼야함(애니메이션 시간)
+			// Current KeyFrameTime
 			InFile >> Token;
 
 			for (UINT i = 0; i < SkinnedMeshCount; ++i)
@@ -57,6 +109,7 @@ void CAnimationClip::LoadAnimationClipInfoFromFile(ifstream& InFile, const share
 			break;
 		}
 	}
+#endif
 }
 
 //=========================================================================================================================

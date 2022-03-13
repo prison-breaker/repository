@@ -40,8 +40,9 @@
 								</Mesh>
 								<Materials> 1
 									<Material>
-										<AlbedoColor> 1 1 1 1
+										<AlbedoColor> 0.8 0.8 0.8 1
 										<AlbedoMap> Texture/doors_frame_1_tex_AlbedoTransparency.dds
+										<MetallicMap> Texture/doors_frame_1_tex_MetallicSmoothness.dds
 										<NormalMap> Texture/doors_frame_1_tex_Normal.dds
 									</Material>
 								</Materials> 
@@ -262,8 +263,9 @@
 						</Mesh>
 						<Materials> 1
 							<Material>
-								<AlbedoColor> 1 1 1 1
+								<AlbedoColor> 0.8 0.8 0.8 1
 								<AlbedoMap> Texture/metal_tex_AlbedoTransparency.dds
+								<MetallicMap> Texture/metal_tex_MetallicSmoothness.dds
 								<NormalMap> Texture/metal_tex_Normal.dds
 							</Material>
 						</Materials> 
@@ -367,8 +369,9 @@
 						</Mesh>
 						<Materials> 1
 							<Material>
-								<AlbedoColor> 1 1 1 1
+								<AlbedoColor> 0.8 0.8 0.8 1
 								<AlbedoMap> Texture/metal_tex_AlbedoTransparency.dds
+								<MetallicMap> Texture/metal_tex_MetallicSmoothness.dds
 								<NormalMap> Texture/metal_tex_Normal.dds
 							</Material>
 						</Materials> 
@@ -480,8 +483,9 @@
 										</Mesh>
 										<Materials> 1
 											<Material>
-												<AlbedoColor> 1 1 1 1
+												<AlbedoColor> 0.5882353 0.5882353 0.5882353 1
 												<AlbedoMap> Texture/bed_pr_1_bed_pr_1_AlbedoTransparency.dds
+												<MetallicMap> Texture/bed_pr_1_bed_pr_1_MetallicSmoothness.dds
 												<NormalMap> Texture/bed_pr_1_bed_pr_1_Normal.dds
 											</Material>
 										</Materials> 
@@ -523,8 +527,9 @@
 										</Mesh>
 										<Materials> 1
 											<Material>
-												<AlbedoColor> 1 1 1 1
+												<AlbedoColor> 0.6397059 0.6397059 0.6397059 1
 												<AlbedoMap> Texture/brush_pr_1_brush_pr_1_AlbedoTransparency.dds
+												<MetallicMap> Texture/brush_pr_1_brush_pr_1_MetallicSmoothness.dds
 												<NormalMap> Texture/brush_pr_1_brush_pr_1_Normal.dds
 											</Material>
 										</Materials> 

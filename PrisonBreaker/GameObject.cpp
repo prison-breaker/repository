@@ -20,7 +20,7 @@ shared_ptr<LOADED_MODEL_INFO> CGameObject::LoadObjectFromFile(ID3D12Device* D3D1
 		if (Token == TEXT("<Hierarchy>"))
 		{
 			tcout << FileName << TEXT(" 로드 시작...") << endl;
-			NewObject = CGameObject::LoadObjectInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile, MeshCaches, MaterialCaches);
+			ModelInfo->m_Model = CGameObject::LoadObjectInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile, MeshCaches, MaterialCaches);
 		}
 		else if (Token == TEXT("</Hierarchy>"))
 		{
@@ -28,6 +28,15 @@ shared_ptr<LOADED_MODEL_INFO> CGameObject::LoadObjectFromFile(ID3D12Device* D3D1
 			break;
 		}
 	}
+
+	File::ReadStringFromFile(InFile, Token);
+
+	if (Token == TEXT("<Animation>"))
+	{
+		tcout << FileName << TEXT(" 애니메이션 로드 시작...") << endl;
+		CGameObject::LoadAnimationInfoFromFile(InFile, ModelInfo);
+	}
+
 #else
 	tifstream InFile{ FileName };
 
@@ -91,18 +100,38 @@ shared_ptr<CGameObject> CGameObject::LoadObjectInfoFromFile(ID3D12Device* D3D12D
 		{
 			InFile.read(reinterpret_cast<TCHAR*>(&NewObject->m_TransformMatrix), sizeof(XMFLOAT4X4));
 		}
-		else if (Token == TEXT("<Mesh>"))
+		else if (Token == TEXT("<SkinInfo>"))
 		{
 			File::ReadStringFromFile(InFile, Token);
 
 			if (Token != TEXT("Null"))
 			{
-				shared_ptr<CMesh> Mesh{ make_shared<CMesh>() };
+				shared_ptr<CSkinnedMesh> SkinnedMesh{ make_shared<CSkinnedMesh>() };
 
-				Mesh->LoadMeshInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
-				NewObject->SetMesh(Mesh);
-				MeshCaches.emplace(NewObject->m_FrameName, Mesh);
+				SkinnedMesh->LoadSkinInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
+
+				File::ReadStringFromFile(InFile, Token);
+
+				if (Token == TEXT("<Mesh>"))
+				{
+					SkinnedMesh->LoadMeshInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
+				}
+
+				NewObject->SetMesh(SkinnedMesh);
+				NewObject->SetBoundingBox(make_shared<BoundingBox>());
+				MeshCaches.emplace(NewObject->m_FrameName, SkinnedMesh);
+
+				IsSkinnedMesh = true;
 			}
+		}
+		else if (Token == TEXT("<Mesh>"))
+		{
+			shared_ptr<CMesh> Mesh{ make_shared<CMesh>() };
+
+			Mesh->LoadMeshInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
+			NewObject->SetMesh(Mesh);
+			NewObject->SetBoundingBox(make_shared<BoundingBox>());
+			MeshCaches.emplace(NewObject->m_FrameName, Mesh);
 		}
 		else if (Token == TEXT("<Materials>"))
 		{
@@ -116,7 +145,7 @@ shared_ptr<CGameObject> CGameObject::LoadObjectInfoFromFile(ID3D12Device* D3D12D
 				{
 					shared_ptr<CMaterial> Material{ make_shared<CMaterial>() };
 
-					Material->LoadMaterialFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
+					Material->LoadMaterialFromFile(D3D12Device, D3D12GraphicsCommandList, InFile, IsSkinnedMesh);
 					NewObject->m_Materials.push_back(Material);
 				}
 
@@ -260,6 +289,68 @@ void CGameObject::LoadAnimationInfoFromFile(tifstream& InFile, const shared_ptr<
 	tstring Token{};
 	unordered_map<tstring, shared_ptr<CGameObject>> BoneFrameCaches{};
 
+#ifdef READ_BINARY_FILE
+	while (true)
+	{
+		File::ReadStringFromFile(InFile, Token);
+
+		if (Token == TEXT("<FrameNames>"))
+		{
+			UINT SkinnedMeshFrameCount{ File::ReadIntegerFromFile(InFile) };
+
+			ModelInfo->m_SkinnedMeshCaches.reserve(SkinnedMeshFrameCount);
+			ModelInfo->m_BoneFrameCaches.resize(SkinnedMeshFrameCount);
+
+			for (UINT i = 0; i < SkinnedMeshFrameCount; ++i)
+			{
+				File::ReadStringFromFile(InFile, Token);
+				ModelInfo->m_SkinnedMeshCaches.push_back(ModelInfo->m_Model->FindSkinnedMesh(Token));
+
+				UINT BoneCount{ File::ReadIntegerFromFile(InFile) };
+
+				ModelInfo->m_BoneFrameCaches[i].reserve(BoneCount);
+
+				for (UINT j = 0; j < BoneCount; ++j)
+				{
+					File::ReadStringFromFile(InFile, Token);
+
+					if (BoneFrameCaches.count(Token))
+					{
+						ModelInfo->m_BoneFrameCaches[i].push_back(BoneFrameCaches[Token]);
+					}
+					else
+					{
+						shared_ptr<CGameObject> Frame{ ModelInfo->m_Model->FindFrame(Token) };
+
+						ModelInfo->m_BoneFrameCaches[i].push_back(Frame);
+						BoneFrameCaches.emplace(Token, Frame);
+					}
+				}
+
+				ModelInfo->m_SkinnedMeshCaches.back()->SetBoneFrameCaches(ModelInfo->m_BoneFrameCaches[i]);
+			}
+		}
+		else if (Token == TEXT("<AnimationClips>"))
+		{
+			UINT AnimationClipCount{ File::ReadIntegerFromFile(InFile) };
+
+			ModelInfo->m_AnimationClips.reserve(AnimationClipCount);
+
+			for (UINT i = 0; i < AnimationClipCount; ++i)
+			{
+				shared_ptr<CAnimationClip> AnimationClip{ make_shared<CAnimationClip>() };
+
+				AnimationClip->LoadAnimationClipInfoFromFile(InFile, ModelInfo);
+				ModelInfo->m_AnimationClips.push_back(AnimationClip);
+			}
+		}
+		else if (Token == TEXT("</Animation>"))
+		{
+			break;
+		}
+	}
+
+#else
 	while (InFile >> Token)
 	{
 		if (Token == TEXT("<FrameNames>"))
@@ -320,6 +411,7 @@ void CGameObject::LoadAnimationInfoFromFile(tifstream& InFile, const shared_ptr<
 			break;
 		}
 	}
+#endif
 }
 
 shared_ptr<CGameObject> CGameObject::FindFrame(const tstring& FrameName)

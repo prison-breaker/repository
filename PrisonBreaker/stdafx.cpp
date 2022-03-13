@@ -172,6 +172,15 @@ namespace File
 		return Value;
 	}
 
+	float ReadFloatFromFile(tifstream& InFile)
+	{
+		float Value{};
+
+		InFile.read(reinterpret_cast<TCHAR*>(&Value), sizeof(float));
+
+		return Value;
+	}
+
 	void ReadStringFromFile(tifstream& InFile, tstring& Token)
 	{
 		UINT Length{};

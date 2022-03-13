@@ -1,7 +1,7 @@
 #pragma once
 
 #define DEBUG_MODE
-//#define READ_BINARY_FILE
+#define READ_BINARY_FILE
 
 #define WIN32_LEAN_AND_MEAN
 
@@ -18,6 +18,15 @@
 #define DEPTH_BUFFER_HEIGHT       2048
 #define PLANE_WIDTH			      400
 #define PLANE_HEIGHT		      400
+
+#define IDLE					  0x00
+#define MOVE_FORWARD	          0x01
+#define MOVE_BACKWARD             0x02
+#define MOVE_LEFT_STRAFE          0x04
+#define MOVE_RIGHT_STRAFE         0x08
+#define RUNNING					  0x10
+#define PUNCHING				  0x100
+#define SHOOTING				  0x200
 
 #define TEXTURE_MASK_ALBEDO_MAP   0x01
 #define TEXTURE_MASK_METALLIC_MAP 0x02
@@ -149,6 +158,7 @@ namespace DX
 namespace File
 {
 	UINT ReadIntegerFromFile(tifstream& InFile);
+	float ReadFloatFromFile(tifstream& InFile);
 	void ReadStringFromFile(tifstream& InFile, tstring& Token);
 }
 

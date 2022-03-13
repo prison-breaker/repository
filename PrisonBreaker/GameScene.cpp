@@ -210,61 +210,104 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	// 3ÀÎÄª ¸ðµå
 	Player->Rotate(Delta.y, Delta.x, 0.0f, ElapsedTime);
 
-	if ((GetAsyncKeyState(VK_SHIFT) & 0x8000) && (GetAsyncKeyState('W') & 0x8000))
+	UINT Action{};
+	XMFLOAT3 Direction{};
+	float Speed{ 7.0f };
+
+	if (GetAsyncKeyState('W') & 0x8000) Action |= MOVE_FORWARD;
+	if (GetAsyncKeyState('S') & 0x8000) Action |= MOVE_BACKWARD;
+	if (GetAsyncKeyState('A') & 0x8000) Action |= MOVE_LEFT_STRAFE;
+	if (GetAsyncKeyState('D') & 0x8000) Action |= MOVE_RIGHT_STRAFE;
+	if (GetAsyncKeyState(VK_SHIFT) & 0x8000) Action |= RUNNING;
+	if (GetAsyncKeyState(VK_LBUTTON) & 0x8000) Action |= PUNCHING;
+	if (GetAsyncKeyState(VK_RBUTTON) & 0x8000) Action |= SHOOTING;
+
+	switch (Action)
 	{
-		// Running
-		Player->Move(Player->GetLook(), 12.0f * ElapsedTime);
-		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(4);
+	case IDLE:
+	case RUNNING:
+		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(0); // 0: Idle
+		return;
+
+	case PUNCHING:
+		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(7); // 7: Punching
+		return;
+
+	case SHOOTING:
+		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(8); // 8: Shooting
+		return;
+
+	case MOVE_FORWARD:
+		Direction = Player->GetLook();
+		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(1); // 1: Crouched Walk
+		break;
+	case MOVE_FORWARD | MOVE_LEFT_STRAFE:
+		Direction = Vector3::Add(Player->GetLook(), XMFLOAT3(-Player->GetRight().x, Player->GetRight().y, -Player->GetRight().z));
+		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(1); // 1: Crouched Walk
+		break;
+	case MOVE_FORWARD | MOVE_RIGHT_STRAFE:
+		Direction = Vector3::Add(Player->GetLook(), Player->GetRight());
+		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(1); // 1: Crouched Walk
+		break;
+	case MOVE_FORWARD | RUNNING:
+		Direction = Player->GetLook();
+		Speed += 5.0f;
+		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(4); // 4: Running
+		break;
+	case MOVE_FORWARD | MOVE_LEFT_STRAFE | RUNNING:
+		Direction = Vector3::Add(Player->GetLook(), XMFLOAT3(-Player->GetRight().x, Player->GetRight().y, -Player->GetRight().z));
+		Speed += 5.0f;
+		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(4); // 4: Running
+		break;
+	case MOVE_FORWARD | MOVE_RIGHT_STRAFE | RUNNING:
+		Direction = Vector3::Add(Player->GetLook(), Player->GetRight());
+		Speed += 5.0f;
+		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(4); // 4: Running
+		break;
+
+	case MOVE_BACKWARD:
+	case MOVE_BACKWARD | RUNNING:
+		Direction = Player->GetLook();
+		Speed *= -1.0f;
+		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(1); // 1: Crouched Walk
+		break;
+	case MOVE_BACKWARD | MOVE_LEFT_STRAFE:
+	case MOVE_BACKWARD | MOVE_LEFT_STRAFE | RUNNING:
+		Direction = Vector3::Add(Player->GetLook(), Player->GetRight());
+		Speed *= -1.0f;
+		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(1); // 1: Crouched Walk
+		break;
+	case MOVE_BACKWARD | MOVE_RIGHT_STRAFE:
+	case MOVE_BACKWARD | MOVE_RIGHT_STRAFE | RUNNING:
+		Direction = Vector3::Add(Player->GetLook(), XMFLOAT3(-Player->GetRight().x, Player->GetRight().y, -Player->GetRight().z));
+		Speed *= -1.0f;
+		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(1); // 1: Crouched Walk
+		break;
+
+	case MOVE_LEFT_STRAFE:
+		Direction = Player->GetRight();
+		Speed *= -1.0f;
+		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(2); // 2: Left Strafe Walk
+		break;
+	case MOVE_LEFT_STRAFE | RUNNING:
+		Direction = Player->GetRight();
+		Speed += 5.0f;
+		Speed *= -1.0f;
+		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(5); // 5: Left Strafe Running
+		break;
+
+	case MOVE_RIGHT_STRAFE:
+		Direction = Player->GetRight();
+		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(1); // 3: Right Strafe Walk
+		break;
+	case MOVE_RIGHT_STRAFE | RUNNING:
+		Direction = Player->GetRight();
+		Speed += 5.0f;
+		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(6); // 6: Right Strafe Running
+		break;
 	}
-	else if ((GetAsyncKeyState(VK_SHIFT) & 0x8000) && (GetAsyncKeyState('A') & 0x8000))
-	{
-		// Running
-		Player->Move(Player->GetRight(), -12.0f * ElapsedTime);
-		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(5);
-	}
-	else if ((GetAsyncKeyState(VK_SHIFT) & 0x8000) && (GetAsyncKeyState('D') & 0x8000))
-	{
-		// Running
-		Player->Move(Player->GetRight(), 12.0f * ElapsedTime);
-		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(6);
-	}
-	else if (GetAsyncKeyState('W') & 0x8000)
-	{
-		// Crouched Walk
-		Player->Move(Player->GetLook(), 7.0f * ElapsedTime);
-		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(1);
-	}
-	else if (GetAsyncKeyState('S') & 0x8000)
-	{
-		// Crouched Walk
-		Player->Move(Player->GetLook(), -7.0f * ElapsedTime);
-		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(1);
-	}
-	else if (GetAsyncKeyState('A') & 0x8000)
-	{
-		// Crouched Walk
-		Player->Move(Player->GetRight(), -7.0f * ElapsedTime);
-		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(2);
-	}
-	else if (GetAsyncKeyState('D') & 0x8000)
-	{
-		// Crouched Walk
-		Player->Move(Player->GetRight(), 7.0f * ElapsedTime);
-		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(3);
-	}
-	else if (GetAsyncKeyState(MK_LBUTTON) & 0x8000)
-	{
-		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(7);
-	}
-	else if (GetAsyncKeyState(MK_RBUTTON) & 0x8000)
-	{
-		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(8);
-	}
-	else
-	{
-		// IDLE
-		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(0);
-	}
+
+	Player->Move(Direction, Speed * ElapsedTime);
 }
 
 void CGameScene::Animate(float ElapsedTime)
@@ -340,8 +383,7 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 		if (Token == TEXT("<Name>"))
 		{
 			File::ReadStringFromFile(InFile, Token);
-
-			Model = CGameObject::LoadObjectFromFile(D3D12Device, D3D12GraphicsCommandList, Token);
+			ModelInfo = CGameObject::LoadObjectFromFile(D3D12Device, D3D12GraphicsCommandList, Token);
 		}
 		else if (Token == TEXT("<Type>"))
 		{
@@ -356,30 +398,24 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 			switch (ObjectType)
 			{
 			case OBJECT_TYPE_PLAYER:
-				m_Player->SetActive(true);
-				m_Player->SetChild(Model);
-				m_Player->SetTransformMatrix(TransformMatrix);
-				m_Player->SetPosition(XMFLOAT3(50.0f, 0.0f, -50.0f));
+				m_GameObjects[ObjectType].back()->SetActive(true);
+				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
+				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
+				m_GameObjects[ObjectType].back()->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
 				break;
 			case OBJECT_TYPE_NPC:
-				Object = make_shared<CGameObject>();
-				Object->SetActive(true);
-				Object->SetChild(Model);
-				Object->SetTransformMatrix(TransformMatrix);
-				m_Guards.push_back(Object);
+				m_GameObjects[ObjectType].push_back(make_shared<CGameObject>());
+				m_GameObjects[ObjectType].back()->SetActive(true);
+				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
+				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
+				m_GameObjects[ObjectType].back()->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
 				break;
 			case OBJECT_TYPE_TERRAIN:
-				m_Ground = make_shared<CGameObject>();
-				m_Ground->SetActive(true);
-				m_Ground->SetChild(Model);
-				m_Ground->SetTransformMatrix(TransformMatrix);
-				break;
 			case OBJECT_TYPE_STRUCTURE:
-				Object = make_shared<CGameObject>();
-				Object->SetActive(true);
-				Object->SetChild(Model);
-				Object->SetTransformMatrix(TransformMatrix);
-				m_Structures.push_back(Object);
+				m_GameObjects[ObjectType].push_back(make_shared<CGameObject>());
+				m_GameObjects[ObjectType].back()->SetActive(true);
+				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
+				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
 				break;
 			}
 		}

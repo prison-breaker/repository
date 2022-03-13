@@ -14,7 +14,10 @@ void CMaterial::LoadMaterialFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCo
 
 		if (Token == TEXT("<Material>"))
 		{
-			continue;
+			RegisterShader(CShaderManager::GetInstance()->GetShader("ShadowMapShader"));
+			RegisterShader(CShaderManager::GetInstance()->GetShader("DepthWriteShader"));
+
+			m_StateNum = (IsSkinnedMesh) ? SHADER_TYPE_WITH_SKINNING : SHADER_TYPE_STANDARD;
 		}
 		else if (Token == TEXT("<AlbedoColor>"))
 		{
