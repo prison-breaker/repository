@@ -114,25 +114,23 @@ float4 DirectionalLight(int Index, float3 Normal, float3 ToCamera)
 
 float4 SpotLight(int Index, float3 Position, float3 Normal, float3 ToCamera)
 {
-	if (((int)Lights[Index].m_Position.z ^ (int)Position.z) >= 0)
+	float3 ToLight = Lights[Index].m_Position - Position;
+	float Distance = length(ToLight);
+
+	if (Distance <= Lights[Index].m_Range)
 	{
-		float3 ToLight = normalize(Lights[Index].m_Position - Position);
-		float Distance = length(ToLight);
+		ToLight /= Distance;
+
 		float AlbedoFactor = dot(ToLight, Normal);
+		float Alpha = max(dot(-ToLight, Lights[Index].m_Direction), 0.0f);
+		float SpotFactor = pow(max((Alpha - Lights[Index].m_Phi) / (Lights[Index].m_Theta - Lights[Index].m_Phi), 0.0f), Lights[Index].m_Falloff);
+		float AttenuationFactor = 1.0f / dot(Lights[Index].m_Attenuation, float3(1.0f, Distance, Distance * Distance));
 
-		if (Distance <= Lights[Index].m_Range)
-		{
-			//ToLight /= Distance;
-
-			//float Alpha = max(dot(-ToLight, Lights[Index].m_Direction), 0.0f);
-			//float SpotFactor = pow(max((Alpha - Lights[Index].m_Phi) / (Lights[Index].m_Theta - Lights[Index].m_Phi), 0.0f), Lights[Index].m_Falloff);
-			float AttenuationFactor = 1.0f / dot(Lights[Index].m_Attenuation, float3(1.0f, Distance, Distance * Distance));
-
-			return Lights[Index].m_Color * AlbedoFactor * AttenuationFactor;
-		}
+		return Lights[Index].m_Color * AlbedoFactor * SpotFactor * AttenuationFactor;
 	}
 
-	return float4(0.1f, 0.1f, 0.1f, 0.1f);
+
+	return float4(0.0f, 0.0f, 0.0f, 0.0f);
 }
 
 float4 Lighting(float3 Position, float3 Normal, float4 ShadowTexCoord)
@@ -145,7 +143,7 @@ float4 Lighting(float3 Position, float3 Normal, float4 ShadowTexCoord)
 		if (Lights[i].m_IsActive)
 		{
 			float ShadowFactor = 1.0f;
-			ShadowFactor = max(0.1f, Get3x3ShadowFactor(ShadowTexCoord.xy / ShadowTexCoord.ww, ShadowTexCoord.z / ShadowTexCoord.w));
+			ShadowFactor = Get3x3ShadowFactor(ShadowTexCoord.xy / ShadowTexCoord.ww, ShadowTexCoord.z / ShadowTexCoord.w);
 
 			switch (Lights[i].m_Type)
 			{
@@ -236,7 +234,7 @@ float4 PS_Main(VS_OUTPUT Input) : SV_TARGET
 
 	float4 Illumination = Lighting(Input.m_PositionW, NormalW, Input.m_ShadowTexCoord);
 
-	return lerp(Color, Illumination, 0.45f);
+	return lerp(Color, Illumination, 0.8f);
 }
 
 // ====================================== STANDARD SKINNING SHADER ======================================

@@ -58,7 +58,7 @@ D3D12_RASTERIZER_DESC CDepthWriteShader::CreateRasterizerState(UINT StateNum)
 	D3D12RasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
 	D3D12RasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
 	D3D12RasterizerDesc.FrontCounterClockwise = false;
-	D3D12RasterizerDesc.DepthBias = 10000;
+	D3D12RasterizerDesc.DepthBias = 1000;
 	D3D12RasterizerDesc.DepthBiasClamp = 0.0f;
 	D3D12RasterizerDesc.SlopeScaledDepthBias = 1.0f;
 	D3D12RasterizerDesc.DepthClipEnable = true;
