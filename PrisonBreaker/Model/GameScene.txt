@@ -34,4 +34,9 @@
 		<Type> 3
 		<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 
 	</GameObject>
+	<GameObject>
+		<Name> Model/tower.txt
+		<Type> 3
+		<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 2.193999 0 1 
+	</GameObject>
 </GameScene>

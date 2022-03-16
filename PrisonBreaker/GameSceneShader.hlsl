@@ -234,7 +234,7 @@ float4 PS_Main(VS_OUTPUT Input) : SV_TARGET
 
 	float4 Illumination = Lighting(Input.m_PositionW, NormalW, Input.m_ShadowTexCoord);
 
-	return lerp(Color, Illumination, 0.8f);
+	return lerp(Color, Illumination, 0.55f);
 }
 
 // ====================================== STANDARD SKINNING SHADER ======================================

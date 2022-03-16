@@ -200,12 +200,14 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][0]) };
 
 	// 1ÀÎÄª ¸ðµå
-	Player->GetCamera()->Rotate(Delta.y, Delta.x, 0.0f);
+	//Player->GetCamera()->Rotate(Delta.y, Delta.x, 0.0f);
 
-	if (GetAsyncKeyState('W') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(10.0f * ElapsedTime, Player->GetCamera()->GetLook(), false));
-	if (GetAsyncKeyState('S') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(-10.0f * ElapsedTime, Player->GetCamera()->GetLook(), false));
-	if (GetAsyncKeyState('A') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(-10.0f * ElapsedTime, Player->GetCamera()->GetRight(), false));
-	if (GetAsyncKeyState('D') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(10.0f * ElapsedTime, Player->GetCamera()->GetRight(), false));
+	//if (GetAsyncKeyState('W') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(10.0f * ElapsedTime, Player->GetCamera()->GetLook(), false));
+	//if (GetAsyncKeyState('S') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(-10.0f * ElapsedTime, Player->GetCamera()->GetLook(), false));
+	//if (GetAsyncKeyState('A') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(-10.0f * ElapsedTime, Player->GetCamera()->GetRight(), false));
+	//if (GetAsyncKeyState('D') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(10.0f * ElapsedTime, Player->GetCamera()->GetRight(), false));
+
+	//return;
 
 	// 3ÀÎÄª ¸ðµå
 	Player->Rotate(Delta.y, Delta.x, 0.0f, ElapsedTime);
