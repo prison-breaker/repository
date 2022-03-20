@@ -346,20 +346,20 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	{
 		Angle += ElapsedTime;
 
-		m_Lights[0].m_Position.x = 100.0f * cosf(Angle);
-		m_Lights[0].m_Position.z = 100.0f * sinf(Angle) + 50.0f;
-		m_Lights[0].m_Direction.x = cosf(Angle);
-		m_Lights[0].m_Direction.z = sinf(Angle);
+		m_Lights[1].m_Position.x = 100.0f * cosf(Angle);
+		m_Lights[1].m_Position.z = 100.0f * sinf(Angle) + 50.0f;
+		m_Lights[1].m_Direction.x = cosf(Angle);
+		m_Lights[1].m_Direction.z = sinf(Angle);
 	}
 
 	if (GetAsyncKeyState(VK_NUMPAD6) & 0x8000)
 	{
 		Angle -= ElapsedTime;
 
-		m_Lights[0].m_Position.x = 100.0f * cosf(Angle);
-		m_Lights[0].m_Position.z = 100.0f * sinf(Angle) + 50.0f;
-		m_Lights[0].m_Direction.x = cosf(Angle);
-		m_Lights[0].m_Direction.z = sinf(Angle);
+		m_Lights[1].m_Position.x = 100.0f * cosf(Angle);
+		m_Lights[1].m_Position.z = 100.0f * sinf(Angle) + 50.0f;
+		m_Lights[1].m_Direction.x = cosf(Angle);
+		m_Lights[1].m_Direction.z = sinf(Angle);
 	}
 
 	RECT Rect{};
@@ -564,25 +564,26 @@ void CGameScene::BuildLights()
 {
 	LIGHT Lights[MAX_LIGHTS]{};
 
-	//Lights[0].m_IsActive = true;
-	//Lights[0].m_Type = LIGHT_TYPE_DIRECTIONAL;
-	//Lights[0].m_Position = XMFLOAT3(0.0f, 250.0f, 0.0f);
-	//Lights[0].m_Direction = XMFLOAT3(0.0f, -0.8f, -1.0f);
-	//Lights[0].m_Color = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f); // XMFLOAT4(0.45f, 0.45f, 0.45f, 1.0f);
-	//Lights[0].m_Range = 500.0f;
-
 	Lights[0].m_IsActive = true;
-	Lights[0].m_Type = LIGHT_TYPE_SPOT;
-	Lights[0].m_Position = XMFLOAT3(0.0f, 18.0f, 150.0f);
-	Lights[0].m_Direction = XMFLOAT3(0.0f, -1.0f, 1.0f);
-	Lights[0].m_Color = XMFLOAT4(0.15f, 0.15f, 0.1f, 1.0f);
-	Lights[0].m_Attenuation = XMFLOAT3(1.0f, 0.1f, 0.01f);
-	Lights[0].m_Falloff = 10.0f;
-	Lights[0].m_Range = 500.0f;
-	Lights[0].m_Theta = cosf(XMConvertToRadians(30.0f));
-	Lights[0].m_Phi = cosf(XMConvertToRadians(60.0f));
+	Lights[0].m_ShadowMapping = false;
+	Lights[0].m_Type = LIGHT_TYPE_DIRECTIONAL;
+	Lights[0].m_Position = XMFLOAT3(0.0f, 500.0f, 100.0f);
+	Lights[0].m_Direction = XMFLOAT3(0.0f, -1.0f, -1.0f);
+	Lights[0].m_Color = XMFLOAT4(0.03f, 0.03f, 0.03f, 1.0f);
+
+	Lights[1].m_IsActive = true;
+	Lights[1].m_ShadowMapping = true;
+	Lights[1].m_Type = LIGHT_TYPE_SPOT;
+	Lights[1].m_Position = XMFLOAT3(0.0f, 18.0f, 150.0f);
+	Lights[1].m_Direction = XMFLOAT3(0.0f, -1.0f, 1.0f);
+	Lights[1].m_Color = XMFLOAT4(0.1f, 0.1f, 0.05f, 1.0f);
+	Lights[1].m_Attenuation = XMFLOAT3(1.0f, 0.1f, 0.01f);
+	Lights[1].m_Falloff = 10.0f;
+	Lights[1].m_Range = 500.0f;
+	Lights[1].m_Theta = cosf(XMConvertToRadians(30.0f));
+	Lights[1].m_Phi = cosf(XMConvertToRadians(60.0f));
 
 	m_Lights.reserve(MAX_LIGHTS);
 	m_Lights.push_back(Lights[0]);
-	//m_Lights.push_back(Lights[1]);
+	m_Lights.push_back(Lights[1]);
 }

@@ -23,7 +23,7 @@ struct LIGHT
 	float 	   m_Theta{};
 	float	   m_Phi{};
 			   
-	float	   PADDING{};
+	bool	   m_ShadowMapping{};
 
 	XMFLOAT4X4 m_ToTexCoordMatrix{};
 };

@@ -1,4 +1,4 @@
-#define MAX_LIGHTS		             1
+#define MAX_LIGHTS		             2
 #define LIGHT_TYPE_POINT		     1
 #define LIGHT_TYPE_SPOT		         2
 #define LIGHT_TYPE_DIRECTIONAL	     3
@@ -20,24 +20,24 @@
 
 struct LIGHT
 {
-	bool					m_IsActive;
-
-	float3					m_Position;
-	float3					m_Direction;
-
-	int						m_Type;
-
-	float4					m_Color;
-
-	float3					m_Attenuation;
-	float 					m_Falloff;
-	float					m_Range;
-	float 					m_Theta;
-	float					m_Phi;
-
-	float					PADDING;
-
-	float4x4				m_ToTexCoordMatrix;
+	bool	 m_IsActive;
+			 
+	float3	 m_Position;
+	float3	 m_Direction;
+			 
+	int		 m_Type;
+			 
+	float4	 m_Color;
+			 
+	float3	 m_Attenuation;
+	float 	 m_Falloff;
+	float	 m_Range;
+	float 	 m_Theta;
+	float	 m_Phi;
+			 
+	bool	 m_ShadowMapping;
+			 
+	float4x4 m_ToTexCoordMatrix;
 };
 
 // ====================================== ROOT SIGNATURE ======================================
@@ -131,7 +131,6 @@ float4 SpotLight(int Index, float3 Position, float3 Normal, float3 ToCamera)
 		return Lights[Index].m_Color * AlbedoFactor * SpotFactor * AttenuationFactor;
 	}
 
-
 	return float4(0.0f, 0.0f, 0.0f, 0.0f);
 }
 
@@ -145,7 +144,11 @@ float4 Lighting(float3 Position, float3 Normal, float4 ShadowTexCoord)
 		if (Lights[i].m_IsActive)
 		{
 			float ShadowFactor = 1.0f;
-			ShadowFactor = Get3x3ShadowFactor(ShadowTexCoord.xy / ShadowTexCoord.ww, ShadowTexCoord.z / ShadowTexCoord.w);
+
+			if (Lights[i].m_ShadowMapping)
+			{
+				ShadowFactor = Get3x3ShadowFactor(ShadowTexCoord.xy / ShadowTexCoord.ww, ShadowTexCoord.z / ShadowTexCoord.w);
+			}
 
 			switch (Lights[i].m_Type)
 			{
@@ -198,11 +201,7 @@ VS_OUTPUT VS_Main(VS_INPUT Input)
 	Output.m_TangentW = mul(Input.m_Tangent, (float3x3)WorldMatrix);
 	Output.m_BiTangentW = mul(Input.m_BiTangent, (float3x3)WorldMatrix);
 	Output.m_TexCoord = Input.m_TexCoord;
-
-	if (Lights[0].m_IsActive)
-	{
-		Output.m_ShadowTexCoord = mul(PositionW, Lights[0].m_ToTexCoordMatrix);
-	}
+	Output.m_ShadowTexCoord = mul(PositionW, Lights[1].m_ToTexCoordMatrix);
 
 	return Output;
 }
@@ -270,11 +269,7 @@ VS_OUTPUT VS_Main_Skinning(VS_INPUT_SKINNING Input)
 	Output.m_TangentW = mul(Input.m_Tangent, (float3x3)SkinnedWorldMatrix);
 	Output.m_BiTangentW = mul(Input.m_BiTangent, (float3x3)SkinnedWorldMatrix);
 	Output.m_TexCoord = Input.m_TexCoord;
-
-	if (Lights[0].m_IsActive)
-	{
-		Output.m_ShadowTexCoord = mul(PositionW, Lights[0].m_ToTexCoordMatrix);
-	}
+	Output.m_ShadowTexCoord = mul(PositionW, Lights[1].m_ToTexCoordMatrix);
 
 	return Output;
 }

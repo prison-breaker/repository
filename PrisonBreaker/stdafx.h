@@ -8,7 +8,7 @@
 #define EPSILON			           1.0e-10f
 
 #define MAX_TITLE_LENGTH	       64
-#define MAX_LIGHTS                 1
+#define MAX_LIGHTS                 2
 #define MAX_BOUNDINGBOX_INDICES	   36
 #define MAX_BONES				   100
 

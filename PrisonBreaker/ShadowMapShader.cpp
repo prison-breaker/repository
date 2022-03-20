@@ -158,12 +158,12 @@ void CDepthWriteShader::CreateDepthStencilView(ID3D12Device* D3D12Device)
 
 void CDepthWriteShader::PrepareShadowMap(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, vector<LIGHT>& Lights, const vector<vector<shared_ptr<CGameObject>>>& GameObjects)
 {
-	if (Lights[0].m_IsActive)
+	if (Lights[1].m_IsActive)
 	{
 		const float NearPlaneDistance{ 1.0f };
-		const float FarPlaneDistance{ Lights[0].m_Range };
+		const float FarPlaneDistance{ Lights[1].m_Range };
 
-		switch (Lights[0].m_Type)
+		switch (Lights[1].m_Type)
 		{
 		case LIGHT_TYPE_POINT:
 			break;
@@ -175,11 +175,11 @@ void CDepthWriteShader::PrepareShadowMap(ID3D12GraphicsCommandList* D3D12Graphic
 			break;
 		}
 
-		m_LightCamera->GenerateViewMatrix(Lights[0].m_Position, Lights[0].m_Direction);
+		m_LightCamera->GenerateViewMatrix(Lights[1].m_Position, Lights[1].m_Direction);
 
 		XMMATRIX ToTexCoordMatrix{ XMMatrixTranspose(XMLoadFloat4x4(&m_LightCamera->GetViewMatrix()) * XMLoadFloat4x4(&m_LightCamera->GetProjectionMatrix()) * XMLoadFloat4x4(&m_ProjectionMatrixToTexture)) };
 
-		XMStoreFloat4x4(&Lights[0].m_ToTexCoordMatrix, ToTexCoordMatrix);
+		XMStoreFloat4x4(&Lights[1].m_ToTexCoordMatrix, ToTexCoordMatrix);
 
 		ID3D12Resource* DepthTexture{ m_DepthTexture->GetResource() };
 
