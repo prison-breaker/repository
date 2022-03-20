@@ -30,15 +30,14 @@ CSkyBox::CSkyBox(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12Grap
 	Position = { 0.0f, -10.0f, 0.0f };
 	Vertices.emplace_back(Position, Size);
 
-	m_D3D12PositionBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, Vertices.data(), sizeof(CBilboardMesh) * static_cast<UINT>(Vertices.size()),
-		D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12PositionUploadBuffer.GetAddressOf());
-	m_D3D12PositionBufferView.BufferLocation = m_D3D12PositionBuffer->GetGPUVirtualAddress();
-	m_D3D12PositionBufferView.StrideInBytes = sizeof(CBilboardMesh);
-	m_D3D12PositionBufferView.SizeInBytes = sizeof(CBilboardMesh) * static_cast<UINT>(Vertices.size());
+	m_D3D12VertexBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, Vertices.data(), sizeof(CBilboardMesh) * Face, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12VertexUploadBuffer.GetAddressOf());
+	m_D3D12VertexBufferView.BufferLocation = m_D3D12VertexBuffer->GetGPUVirtualAddress();
+	m_D3D12VertexBufferView.StrideInBytes = sizeof(CBilboardMesh);
+	m_D3D12VertexBufferView.SizeInBytes = sizeof(CBilboardMesh) * Face;
 
 	shared_ptr<CMaterial> Material{ make_shared<CMaterial>() };
 	shared_ptr<CTexture> Texture{ make_shared<CTexture>() };
-	shared_ptr<CShader> Shader{ static_pointer_cast<CGraphicsShader>(CShaderManager::GetInstance()->GetShader("SkyBoxShader")) };
+	shared_ptr<CShader> Shader{ CShaderManager::GetInstance()->GetShader(TEXT("SkyBoxShader")) };
 
 	Texture->LoadTextureFromDDSFile(D3D12Device, D3D12GraphicsCommandList, TEXTURE_TYPE_ALBEDO_MAP, TEXT("Texture/SkyBox_Back.dds"));
 	Material->RegisterTexture(Texture);
@@ -95,7 +94,7 @@ CSkyBox::CSkyBox(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12Grap
 
 void CSkyBox::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType)
 {
-	D3D12_VERTEX_BUFFER_VIEW VertexBufferViews[] = { m_D3D12PositionBufferView };
+	D3D12_VERTEX_BUFFER_VIEW VertexBufferViews[] = { m_D3D12VertexBufferView };
 
 	D3D12GraphicsCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
 	D3D12GraphicsCommandList->IASetVertexBuffers(0, 1, VertexBufferViews);

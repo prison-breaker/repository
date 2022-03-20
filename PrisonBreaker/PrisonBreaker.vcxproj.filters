@@ -150,6 +150,9 @@
     <ClCompile Include="ShaderManager.cpp">
       <Filter>소스 파일\Manager</Filter>
     </ClCompile>
+    <ClCompile Include="UIShader.cpp">
+      <Filter>소스 파일\Shaders</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -223,6 +226,9 @@
     </ClInclude>
     <ClInclude Include="ShaderManager.h">
       <Filter>헤더 파일\Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="UIShader.h">
+      <Filter>헤더 파일\Shaders</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

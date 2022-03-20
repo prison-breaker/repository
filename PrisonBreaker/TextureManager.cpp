@@ -47,7 +47,10 @@ void CTextureManager::ReleaseUploadBuffers()
 
 void CTextureManager::RegisterTexture(const tstring& TextureName, const shared_ptr<CTexture>& Texture)
 {
-	m_Textures.emplace(TextureName, Texture);
+	if (Texture)
+	{
+		m_Textures.emplace(TextureName, Texture);
+	}
 }
 
 shared_ptr<CTexture> CTextureManager::GetTexture(const tstring& TextureName)

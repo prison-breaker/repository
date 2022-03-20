@@ -5,7 +5,9 @@
 
 #define MAX_BONES				     100
 #define MAX_BONE_INFLUENCE_TO_VERTEX 4
-							      
+				
+#define CLIENT_WIDTH		         1920
+#define	CLIENT_HEIGHT		         1080
 #define DEPTH_BUFFER_WIDTH	         2048
 #define DEPTH_BUFFER_HEIGHT	         2048
 #define DELTA_X                      (1.0f / DEPTH_BUFFER_WIDTH)
@@ -234,7 +236,7 @@ float4 PS_Main(VS_OUTPUT Input) : SV_TARGET
 
 	float4 Illumination = Lighting(Input.m_PositionW, NormalW, Input.m_ShadowTexCoord);
 
-	return lerp(Color, Illumination, 0.55f);
+	return lerp(Color, Illumination, 0.8f);
 }
 
 // ====================================== STANDARD SKINNING SHADER ======================================
@@ -281,14 +283,14 @@ VS_OUTPUT VS_Main_Skinning(VS_INPUT_SKINNING Input)
 
 struct VS_INPUT_SKYBOX
 {
-	float3 m_Position : POSITION;
-	float2 m_Size	  : SIZE;
+	float3 m_PositionW : POSITION;
+	float2 m_SizeW	   : SIZE;
 };
 
 struct VS_OUTPUT_SKYBOX
 {
-	float3 m_Center   : POSITION;
-	float2 m_Size	  : SIZE;
+	float3 m_CenterW : POSITION;
+	float2 m_SizeW	 : SIZE;
 };
 
 struct GS_OUTPUT_SKYBOX
@@ -308,8 +310,8 @@ VS_OUTPUT_SKYBOX VS_SkyBox(VS_INPUT_SKYBOX Input)
 		 CameraPosition,  1.0f
 	};
 
-	Output.m_Center = (float3)mul(float4(Input.m_Position, 1.0f), CameraWorldMatrix);
-	Output.m_Size = Input.m_Size;
+	Output.m_CenterW = (float3)mul(float4(Input.m_PositionW, 1.0f), CameraWorldMatrix);
+	Output.m_SizeW = Input.m_SizeW;
 
 	return Output;
 }
@@ -317,7 +319,7 @@ VS_OUTPUT_SKYBOX VS_SkyBox(VS_INPUT_SKYBOX Input)
 [maxvertexcount(4)]
 void GS_SkyBox(point VS_OUTPUT_SKYBOX Input[1], inout TriangleStream<GS_OUTPUT_SKYBOX> OutStream)
 {
-	float3 Look = normalize(CameraPosition - Input[0].m_Center);
+	float3 Look = normalize(CameraPosition - Input[0].m_CenterW);
 	float3 Up = float3(0.0f, 1.0f, 0.0f);
 
 	if (Look.y < 0.0f)
@@ -331,14 +333,14 @@ void GS_SkyBox(point VS_OUTPUT_SKYBOX Input[1], inout TriangleStream<GS_OUTPUT_S
 
 	float3 Right = cross(Up, Look);
 
-	float HalfWidth = 0.5f * Input[0].m_Size.x;
-	float HalfHeight = 0.5f * Input[0].m_Size.y;
+	float HalfWidth = 0.5f * Input[0].m_SizeW.x;
+	float HalfHeight = 0.5f * Input[0].m_SizeW.y;
 
 	float4 Vertices[4] = {
-		float4(Input[0].m_Center + HalfWidth * Right - HalfHeight * Up, 1.0f),
-		float4(Input[0].m_Center + HalfWidth * Right + HalfHeight * Up, 1.0f),
-		float4(Input[0].m_Center - HalfWidth * Right - HalfHeight * Up, 1.0f),
-		float4(Input[0].m_Center - HalfWidth * Right + HalfHeight * Up, 1.0f)
+		float4(Input[0].m_CenterW + HalfWidth * Right - HalfHeight * Up, 1.0f),
+		float4(Input[0].m_CenterW + HalfWidth * Right + HalfHeight * Up, 1.0f),
+		float4(Input[0].m_CenterW - HalfWidth * Right - HalfHeight * Up, 1.0f),
+		float4(Input[0].m_CenterW - HalfWidth * Right + HalfHeight * Up, 1.0f)
 	};
 
 	float2 TexCoords[4] = {
@@ -362,6 +364,78 @@ void GS_SkyBox(point VS_OUTPUT_SKYBOX Input[1], inout TriangleStream<GS_OUTPUT_S
 float4 PS_SkyBox(GS_OUTPUT_SKYBOX Input) : SV_TARGET
 {
 	return AlbedoMapTexture.Sample(Sampler, Input.m_TexCoord);
+}
+
+// ====================================== UI IMAGE SHADER ======================================
+
+struct VS_INPUT_IMAGE
+{
+	float3 m_PositionS : POSITION;
+	float2 m_SizeS     : SIZE;
+};
+
+struct VS_OUTPUT_IMAGE
+{
+	float3 m_CenterS : POSITION;
+	float2 m_SizeS   : SIZE;
+};
+
+struct GS_OUTPUT_IMAGE
+{
+	float4 m_Position : SV_POSITION;
+	float2 m_TexCoord : TEXCOORD;
+};
+
+float3 TransScreenToCamera(float Xpos, float Ypos)
+{
+	// 뷰포트 좌표계를 카메라 좌표계로 변환한다.
+	return float3(2.0f * Xpos / CLIENT_WIDTH - 1.0f, -2.0f * Ypos / CLIENT_HEIGHT + 1.0f, 0.0f);
+}
+
+VS_OUTPUT_IMAGE VS_Image(VS_INPUT_IMAGE Input)
+{
+	VS_OUTPUT_IMAGE Output = (VS_OUTPUT_IMAGE)0;
+
+	Output.m_CenterS = Input.m_PositionS;
+	Output.m_SizeS = Input.m_SizeS;
+
+	return Output;
+}
+
+[maxvertexcount(4)]
+void GS_Image(point VS_OUTPUT_IMAGE Input[1], inout TriangleStream<GS_OUTPUT_IMAGE> OutStream)
+{
+	float2 ScreenCoord = float2(Input[0].m_CenterS.x, Input[0].m_CenterS.y);
+	float2 HalfLength = float2(0.5f * Input[0].m_SizeS.x, 0.5f * Input[0].m_SizeS.y); // x: Width, y: Height
+
+	float4 Vertices[4] = {
+		float4(TransScreenToCamera(ScreenCoord.x - HalfLength.x, ScreenCoord.y + HalfLength.y), 1.0f),
+		float4(TransScreenToCamera(ScreenCoord.x - HalfLength.x, ScreenCoord.y - HalfLength.y), 1.0f),
+		float4(TransScreenToCamera(ScreenCoord.x + HalfLength.x, ScreenCoord.y + HalfLength.y), 1.0f),
+		float4(TransScreenToCamera(ScreenCoord.x + HalfLength.x, ScreenCoord.y - HalfLength.y), 1.0f)
+	};
+
+	float2 TexCoords[4] = {
+		float2(0.0f, 1.0f),
+		float2(0.0f, 0.0f),
+		float2(1.0f, 1.0f),
+		float2(1.0f, 0.0f)
+	};
+
+	GS_OUTPUT_IMAGE Output = (GS_OUTPUT_IMAGE)0;
+
+	for (int i = 0; i < 4; ++i)
+	{
+		Output.m_Position = Vertices[i];
+		Output.m_TexCoord = TexCoords[i];
+
+		OutStream.Append(Output);
+	}
+}
+
+float4 PS_Image(GS_OUTPUT_IMAGE Input) : SV_TARGET
+{
+	return  AlbedoMapTexture.Sample(Sampler, Input.m_TexCoord);
 }
 
 // ====================================== STANDARD DEPTH WRITE SHADER ======================================

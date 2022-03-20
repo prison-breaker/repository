@@ -7,3 +7,8 @@ CBilboardMesh::CBilboardMesh(const XMFLOAT3& Position, const XMFLOAT2& Size) :
 {
 
 }
+
+void CBilboardMesh::SetPosition(const XMFLOAT3& Position)
+{
+	m_Position = Position;
+}

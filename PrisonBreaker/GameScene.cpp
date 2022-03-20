@@ -30,6 +30,10 @@ void CGameScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandLi
 	Shader->CreatePipelineState(D3D12Device, m_D3D12RootSignature.Get(), 0);
 	CShaderManager::GetInstance()->RegisterShader(TEXT("SkyBoxShader"), Shader);
 
+	Shader = make_shared<CUIShader>();
+	Shader->CreatePipelineState(D3D12Device, m_D3D12RootSignature.Get(), 0);
+	CShaderManager::GetInstance()->RegisterShader(TEXT("UIShader"), Shader);
+
 	Shader = make_shared<CDebugShader>();
 	Shader->CreatePipelineState(D3D12Device, m_D3D12RootSignature.Get(), 0);
 	CShaderManager::GetInstance()->RegisterShader(TEXT("DebugShader"), Shader);
@@ -55,8 +59,17 @@ void CGameScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandLi
 	LoadSceneInfoFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Model/GameScene.txt"));
 #endif
 
+	// 빌보드 객체 타입 수만큼 벡터의 크기를 재할당한다.
+	m_BilboardObjects.resize(BILBOARD_OBJECT_TYPE_UI + 1);
+
 	// 스카이박스 객체를 생성한다.
-	m_SkyBox = make_shared<CSkyBox>(D3D12Device, D3D12GraphicsCommandList);
+	m_BilboardObjects[BILBOARD_OBJECT_TYPE_SKYBOX].push_back(make_shared<CSkyBox>(D3D12Device, D3D12GraphicsCommandList));
+
+#ifdef READ_BINARY_FILE
+	LoadUIInfoFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Model/GameScene_UI.bin"));
+#else
+	LoadUIInfoFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Model/GameScene_UI.txt"));
+#endif
 
 	// 모든 텍스처를 저장하는 힙과 각 텍스처의 SRV 리소스를 생성한다.
 	CTextureManager::GetInstance()->CreateCbvSrvUavDescriptorHeaps(D3D12Device);
@@ -69,7 +82,164 @@ void CGameScene::ReleaseObjects()
 {
 	ReleaseShaderVariables();
 }
-	
+
+void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName)
+{
+	tstring Token{};
+
+	shared_ptr<CGameObject> Object{};
+	shared_ptr<LOADED_MODEL_INFO> ModelInfo{};
+	UINT ObjectType{};
+
+#ifdef READ_BINARY_FILE
+	tifstream InFile{ FileName, ios::binary };
+
+	while (true)
+	{
+		File::ReadStringFromFile(InFile, Token);
+
+		if (Token == TEXT("<Name>"))
+		{
+			File::ReadStringFromFile(InFile, Token);
+			ModelInfo = CGameObject::LoadObjectFromFile(D3D12Device, D3D12GraphicsCommandList, Token);
+		}
+		else if (Token == TEXT("<Type>"))
+		{
+			ObjectType = File::ReadIntegerFromFile(InFile);
+		}
+		else if (Token == TEXT("<TransformMatrix>"))
+		{
+			XMFLOAT4X4 TransformMatrix{};
+
+			InFile.read(reinterpret_cast<TCHAR*>(&TransformMatrix), sizeof(XMFLOAT4X4));
+
+			switch (ObjectType)
+			{
+			case OBJECT_TYPE_PLAYER:
+				m_GameObjects[ObjectType].back()->SetActive(true);
+				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
+				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
+				m_GameObjects[ObjectType].back()->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
+				break;
+			case OBJECT_TYPE_NPC:
+				m_GameObjects[ObjectType].push_back(make_shared<CGameObject>());
+				m_GameObjects[ObjectType].back()->SetActive(true);
+				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
+				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
+				m_GameObjects[ObjectType].back()->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
+				break;
+			case OBJECT_TYPE_TERRAIN:
+			case OBJECT_TYPE_STRUCTURE:
+				m_GameObjects[ObjectType].push_back(make_shared<CGameObject>());
+				m_GameObjects[ObjectType].back()->SetActive(true);
+				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
+				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
+				break;
+			}
+		}
+		else if (Token == TEXT("</GameScene>"))
+		{
+			break;
+		}
+	}
+#else
+	tifstream InFile{ FileName };
+
+	while (InFile >> Token)
+	{
+		if (Token == TEXT("<Name>"))
+		{
+			InFile >> Token;
+			ModelInfo = CGameObject::LoadObjectFromFile(D3D12Device, D3D12GraphicsCommandList, Token);
+		}
+		else if (Token == TEXT("<Type>"))
+		{
+			InFile >> ObjectType;
+		}
+		else if (Token == TEXT("<TransformMatrix>"))
+		{
+			XMFLOAT4X4 TransformMatrix{};
+
+			InFile >> TransformMatrix._11 >> TransformMatrix._12 >> TransformMatrix._13 >> TransformMatrix._14;
+			InFile >> TransformMatrix._21 >> TransformMatrix._22 >> TransformMatrix._23 >> TransformMatrix._24;
+			InFile >> TransformMatrix._31 >> TransformMatrix._32 >> TransformMatrix._33 >> TransformMatrix._34;
+			InFile >> TransformMatrix._41 >> TransformMatrix._42 >> TransformMatrix._43 >> TransformMatrix._44;
+
+			switch (ObjectType)
+			{
+			case OBJECT_TYPE_PLAYER:
+				m_GameObjects[ObjectType].back()->SetActive(true);
+				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
+				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
+				m_GameObjects[ObjectType].back()->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
+				break;
+			case OBJECT_TYPE_NPC:
+				m_GameObjects[ObjectType].push_back(make_shared<CGameObject>());
+				m_GameObjects[ObjectType].back()->SetActive(true);
+				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
+				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
+				m_GameObjects[ObjectType].back()->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
+				break;
+			case OBJECT_TYPE_TERRAIN:
+			case OBJECT_TYPE_STRUCTURE:
+				m_GameObjects[ObjectType].push_back(make_shared<CGameObject>());
+				m_GameObjects[ObjectType].back()->SetActive(true);
+				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
+				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
+				break;
+			}
+		}
+		else if (Token == TEXT("</GameScene>"))
+		{
+			break;
+		}
+	}
+#endif
+}
+
+void CGameScene::LoadUIInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName)
+{
+	tstring Token{};
+
+	shared_ptr<CBilboardObject> Object{};
+
+#ifdef READ_BINARY_FILE
+	tifstream InFile{ FileName, ios::binary };
+
+	while (true)
+	{
+		File::ReadStringFromFile(InFile, Token);
+
+		if (Token == TEXT("<UIObject>"))
+		{
+			Object = CBilboardObject::LoadObjectInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
+
+			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI].push_back(Object);
+		}
+		else if (Token == TEXT("</UI>"))
+		{
+			break;
+		}
+	}
+#else
+	tifstream InFile{ FileName };
+
+	while (InFile >> Token)
+	{
+		if (Token == TEXT("<UIObject>"))
+		{
+			Object = CBilboardObject::LoadObjectInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
+
+			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI].push_back(Object);
+		}
+		else if (Token == TEXT("</UI>"))
+		{
+			break;
+		}
+	}
+#endif
+}
+
 void CGameScene::CreateRootSignature(ID3D12Device* D3D12Device)
 {
 	CD3DX12_DESCRIPTOR_RANGE D3D12DescriptorRanges[4]{};
@@ -145,9 +315,15 @@ void CGameScene::ReleaseUploadBuffers()
 		}
 	}
 
-	if (m_SkyBox)
+	for (UINT i = BILBOARD_OBJECT_TYPE_SKYBOX; i <= BILBOARD_OBJECT_TYPE_UI; ++i)
 	{
-		m_SkyBox->ReleaseUploadBuffers();
+		for (const auto& BilboardObject : m_BilboardObjects[i])
+		{
+			if (BilboardObject)
+			{
+				BilboardObject->ReleaseUploadBuffers();
+			}
+		}
 	}
 }
 
@@ -324,6 +500,17 @@ void CGameScene::Animate(float ElapsedTime)
 			}
 		}
 	}
+
+	for (UINT i = BILBOARD_OBJECT_TYPE_SKYBOX; i <= BILBOARD_OBJECT_TYPE_UI; ++i)
+	{
+		for (const auto& BilboardObject : m_BilboardObjects[i])
+		{
+			if (BilboardObject)
+			{
+				BilboardObject->Animate(ElapsedTime);
+			}
+		}
+	}
 }
 
 void CGameScene::PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
@@ -359,126 +546,18 @@ void CGameScene::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList) con
 		}
 	}
 
-	if (m_SkyBox)
+	for (UINT i = BILBOARD_OBJECT_TYPE_SKYBOX; i <= BILBOARD_OBJECT_TYPE_UI; ++i)
 	{
-		m_SkyBox->Render(D3D12GraphicsCommandList, Player->GetCamera(), RENDER_TYPE_STANDARD);
+		for (const auto& BilboardObject : m_BilboardObjects[i])
+		{
+			if (BilboardObject)
+			{
+				BilboardObject->Render(D3D12GraphicsCommandList, Player->GetCamera(), RENDER_TYPE_STANDARD);
+			}
+		}
 	}
 
 	//static_pointer_cast<CDebugShader>(CShaderManager::GetInstance()->GetShader(TEXT("DebugShader")))->Render(D3D12GraphicsCommandList, Player->GetCamera(), m_GameObjects, 0);
-}
-
-void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName)
-{
-	tstring Token{};
-
-	shared_ptr<CGameObject> Object{};
-	shared_ptr<LOADED_MODEL_INFO> ModelInfo{};
-	UINT ObjectType{};
-
-#ifdef READ_BINARY_FILE
-	tifstream InFile{ FileName, ios::binary };
-
-	while (true)
-	{
-		File::ReadStringFromFile(InFile, Token);
-
-		if (Token == TEXT("<Name>"))
-		{
-			File::ReadStringFromFile(InFile, Token);
-			ModelInfo = CGameObject::LoadObjectFromFile(D3D12Device, D3D12GraphicsCommandList, Token);
-		}
-		else if (Token == TEXT("<Type>"))
-		{
-			ObjectType = File::ReadIntegerFromFile(InFile);
-		}
-		else if (Token == TEXT("<TransformMatrix>"))
-		{
-			XMFLOAT4X4 TransformMatrix{};
-
-			InFile.read(reinterpret_cast<TCHAR*>(&TransformMatrix), sizeof(XMFLOAT4X4));
-
-			switch (ObjectType)
-			{
-			case OBJECT_TYPE_PLAYER:
-				m_GameObjects[ObjectType].back()->SetActive(true);
-				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
-				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
-				m_GameObjects[ObjectType].back()->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
-				break;
-			case OBJECT_TYPE_NPC:
-				m_GameObjects[ObjectType].push_back(make_shared<CGameObject>());
-				m_GameObjects[ObjectType].back()->SetActive(true);
-				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
-				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
-				m_GameObjects[ObjectType].back()->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
-				break;
-			case OBJECT_TYPE_TERRAIN:
-			case OBJECT_TYPE_STRUCTURE:
-				m_GameObjects[ObjectType].push_back(make_shared<CGameObject>());
-				m_GameObjects[ObjectType].back()->SetActive(true);
-				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
-				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
-				break;
-			}
-		}
-		else if (Token == TEXT("</GameScene>"))
-		{
-			break;
-		}
-	}
-#else
-	tifstream InFile{ FileName };
-
-	while (InFile >> Token)
-	{
-		if (Token == TEXT("<Name>"))
-		{
-			InFile >> Token;
-			ModelInfo = CGameObject::LoadObjectFromFile(D3D12Device, D3D12GraphicsCommandList, Token);
-		}
-		else if (Token == TEXT("<Type>"))
-		{
-			InFile >> ObjectType;
-		}
-		else if (Token == TEXT("<TransformMatrix>"))
-		{
-			XMFLOAT4X4 TransformMatrix{};
-
-			InFile >> TransformMatrix._11 >> TransformMatrix._12 >> TransformMatrix._13 >> TransformMatrix._14;
-			InFile >> TransformMatrix._21 >> TransformMatrix._22 >> TransformMatrix._23 >> TransformMatrix._24;
-			InFile >> TransformMatrix._31 >> TransformMatrix._32 >> TransformMatrix._33 >> TransformMatrix._34;
-			InFile >> TransformMatrix._41 >> TransformMatrix._42 >> TransformMatrix._43 >> TransformMatrix._44;
-
-			switch (ObjectType)
-			{
-			case OBJECT_TYPE_PLAYER:
-				m_GameObjects[ObjectType].back()->SetActive(true);
-				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
-				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
-				m_GameObjects[ObjectType].back()->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
-				break;
-			case OBJECT_TYPE_NPC:
-				m_GameObjects[ObjectType].push_back(make_shared<CGameObject>());
-				m_GameObjects[ObjectType].back()->SetActive(true);
-				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
-				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
-				m_GameObjects[ObjectType].back()->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
-				break;
-			case OBJECT_TYPE_TERRAIN:
-			case OBJECT_TYPE_STRUCTURE:
-				m_GameObjects[ObjectType].push_back(make_shared<CGameObject>());
-				m_GameObjects[ObjectType].back()->SetActive(true);
-				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
-				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
-				break;
-			}
-		}
-		else if (Token == TEXT("</GameScene>"))
-		{
-			break;
-		}
-	}
-#endif
 }
 
 void CGameScene::BuildLights()

@@ -1,45 +1,47 @@
 #pragma once
 #include "Scene.h"
+#include "SkyBox.h"
 #include "SkyBoxShader.h"
 #include "ShadowMapShader.h"
+#include "UIShader.h"
 #include "DebugShader.h"
 
 struct LIGHT
 {
-	bool								m_IsActive{};
+	bool	   m_IsActive{};
+			   
+	XMFLOAT3   m_Position{};
+	XMFLOAT3   m_Direction{};
+			   
+	int		   m_Type{};
+			   
+	XMFLOAT4   m_Color{};
+			   
+	XMFLOAT3   m_Attenuation;
+	float 	   m_Falloff{};
+	float	   m_Range;
+	float 	   m_Theta{};
+	float	   m_Phi{};
+			   
+	float	   PADDING{};
 
-	XMFLOAT3							m_Position{};
-	XMFLOAT3							m_Direction{};
-
-	int									m_Type{};
-
-	XMFLOAT4							m_Color{};
-
-	XMFLOAT3							m_Attenuation;
-	float 								m_Falloff{};
-	float								m_Range;
-	float 								m_Theta{};
-	float								m_Phi{};
-
-	float								PADDING{};
-
-	XMFLOAT4X4							m_ToTexCoordMatrix{};
+	XMFLOAT4X4 m_ToTexCoordMatrix{};
 };
 
 struct CB_LIGHT
 {
-	LIGHT								m_Lights[MAX_LIGHTS]{};
+	LIGHT m_Lights[MAX_LIGHTS]{};
 };
 
 class CGameScene : public CScene
 {
 private:
-	vector<vector<shared_ptr<CGameObject>>> m_GameObjects{};
-	shared_ptr<CSkyBox>						m_SkyBox{};
+	vector<vector<shared_ptr<CGameObject>>>     m_GameObjects{};
+	vector<vector<shared_ptr<CBilboardObject>>> m_BilboardObjects{};
 
-	vector<LIGHT>						    m_Lights{};
-	ComPtr<ID3D12Resource>				    m_D3D12Lights{};
-	CB_LIGHT*							    m_MappedLights{};
+	vector<LIGHT>						        m_Lights{};
+	ComPtr<ID3D12Resource>				        m_D3D12Lights{};
+	CB_LIGHT*							        m_MappedLights{};
 
 public:
 	CGameScene() = default;
@@ -50,6 +52,9 @@ public:
 
 	virtual void BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 	virtual void ReleaseObjects();
+
+	virtual void LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName);
+	virtual void LoadUIInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName);
 
 	virtual void CreateRootSignature(ID3D12Device* D3D12Device);
 
@@ -67,6 +72,5 @@ public:
 	virtual void PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList) const;
 
-	void LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName);
 	void BuildLights();
 };
