@@ -2,36 +2,37 @@
 	<UIObject>
 		<IsActive> 1
 		<TextureName> Texture/Mission_UI.dds
-		<RectTransform> 2 159 289 240 104 159 419 240 104 
+		<CellInfo> 32
+		<RectTransform> 2 159 289 0 240 104 159 419 4 240 104 
 	</UIObject>
 	<UIObject>
 		<IsActive> 1
 		<TextureName> Texture/Portrait_UI.dds
-		<RectTransform> 1 99 979 120 120 
+		<RectTransform> 1 99 979 0 120 120 
 	</UIObject>
 	<UIObject>
 		<IsActive> 1
 		<TextureName> Texture/Life_UI.dds
-		<RectTransform> 1 199 949 40 40 
+		<RectTransform> 1 199 949 0 40 40 
 	</UIObject>
 	<UIObject>
 		<IsActive> 1
 		<TextureName> Texture/Blood_UI.dds
-		<RectTransform> 10 249 949 15 24 269 949 15 24 289 949 15 24 309 949 15 24 329 949 15 24 349 949 15 24 369 949 15 24 389 949 15 24 409 949 15 24 429 949 15 24 
+		<RectTransform> 10 249 949 0 15 24 269 949 0 15 24 289 949 0 15 24 309 949 0 15 24 329 949 0 15 24 349 949 0 15 24 369 949 0 15 24 389 949 0 15 24 409 949 0 15 24 429 949 0 15 24 
 	</UIObject>
 	<UIObject>
 		<IsActive> 1
 		<TextureName> Texture/Punch_UI.dds
-		<RectTransform> 1 199 1009 40 40 
+		<RectTransform> 1 199 1009 0 40 40 
 	</UIObject>
 	<UIObject>
 		<IsActive> 0
 		<TextureName> Texture/Pistol_UI.dds
-		<RectTransform> 1 199 1009 50 34 
+		<RectTransform> 1 199 1009 0 50 34 
 	</UIObject>
 	<UIObject>
 		<IsActive> 0
 		<TextureName> Texture/Bullet_UI.dds
-		<RectTransform> 5 249 1009 8 32 269 1009 8 32 289 1009 8 32 309 1009 8 32 329 1009 8 32 
+		<RectTransform> 5 249 1009 0 8 32 269 1009 0 8 32 289 1009 0 8 32 309 1009 0 8 32 329 1009 0 8 32 
 	</UIObject>
 </UI>

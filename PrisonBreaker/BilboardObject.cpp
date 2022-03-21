@@ -7,6 +7,7 @@ shared_ptr<CBilboardObject> CBilboardObject::LoadObjectInfoFromFile(ID3D12Device
 	tstring Token{};
 
 	shared_ptr<CBilboardObject> NewObject{ make_shared<CBilboardObject>() };
+	XMUINT2 CellCount{};
 
 #ifdef READ_BINARY_FILE
 	while (true)
@@ -34,6 +35,10 @@ shared_ptr<CBilboardObject> CBilboardObject::LoadObjectInfoFromFile(ID3D12Device
 
 			NewObject->SetMaterial(Material);
 		}
+		else if (Token == TEXT("<CellInfo>"))
+		{
+			CellCount = { File::ReadIntegerFromFile(InFile), File::ReadIntegerFromFile(InFile) };
+		}
 		else if (Token == TEXT("<RectTransform>"))
 		{
 			NewObject->m_VertexCount = File::ReadIntegerFromFile(InFile);
@@ -47,13 +52,13 @@ shared_ptr<CBilboardObject> CBilboardObject::LoadObjectInfoFromFile(ID3D12Device
 
 			for (UINT i = 0; i < NewObject->m_VertexCount; ++i)
 			{
-				XMFLOAT3 Position{};
 				XMFLOAT2 Size{};
 
-				InFile.read(reinterpret_cast<TCHAR*>(&Position), sizeof(XMFLOAT2));
+				InFile.read(reinterpret_cast<TCHAR*>(&NewObject->m_Position), sizeof(XMFLOAT2));
+				InFile.read(reinterpret_cast<TCHAR*>(&NewObject->m_IndexTime), sizeof(float));
 				InFile.read(reinterpret_cast<TCHAR*>(&Size), sizeof(XMFLOAT2));
 
-				*(NewObject->m_MappedImageInfo + i) = CBilboardMesh{ Position, Size };
+				*(NewObject->m_MappedImageInfo + i) = CBilboardMesh{ NewObject->m_Position, Size, CellCount, static_cast<UINT>(NewObject->m_IndexTime) };
 			}
 		}
 		else if (Token == TEXT("</UIObject>"))
@@ -117,9 +122,22 @@ shared_ptr<CBilboardObject> CBilboardObject::LoadObjectInfoFromFile(ID3D12Device
 	return NewObject;
 }
 
-void CBilboardObject::Animate(float ElapsedTime)
+void CBilboardObject::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
 
+}
+
+void CBilboardObject::Animate(float ElapsedTime)
+{
+	//m_IndexTime += ElapsedTime;
+
+	//if (m_IndexTime > 5.0f)
+	//{
+	//	m_IndexTime = 0.0f;
+	//}
+
+	//(m_MappedImageInfo)->SetCellIndex(static_cast<UINT>(m_IndexTime));
+	//(m_MappedImageInfo + 1)->SetCellIndex(static_cast<UINT>(m_IndexTime));
 }
 
 void CBilboardObject::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType)
@@ -162,6 +180,26 @@ bool CBilboardObject::IsActive() const
 void CBilboardObject::SetActive(bool IsActive)
 {
 	m_IsActive = IsActive;
+}
+
+void CBilboardObject::SetPosition(const XMFLOAT3& Position)
+{
+	m_Position = Position;
+}
+
+const XMFLOAT3& CBilboardObject::GetPosition() const
+{
+	return m_Position;
+}
+
+void CBilboardObject::SetIndexTime(float IndexTime)
+{
+	m_IndexTime = IndexTime;
+}
+
+float CBilboardObject::GetIndexTime() const
+{
+	return m_IndexTime;
 }
 
 void CBilboardObject::SetMaterial(const shared_ptr<CMaterial>& Material)

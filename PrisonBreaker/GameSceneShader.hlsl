@@ -367,12 +367,16 @@ struct VS_INPUT_IMAGE
 {
 	float3 m_PositionS : POSITION;
 	float2 m_SizeS     : SIZE;
+	uint2 m_CellCount  : CELLCOUNT;
+	uint m_CellIndex   : CELLINDEX;
 };
 
 struct VS_OUTPUT_IMAGE
 {
-	float3 m_CenterS : POSITION;
-	float2 m_SizeS   : SIZE;
+	float3 m_CenterS  : POSITION;
+	float2 m_SizeS    : SIZE;
+	uint2 m_CellCount : CELLCOUNT;
+	uint m_CellIndex  : CELLINDEX;
 };
 
 struct GS_OUTPUT_IMAGE
@@ -393,6 +397,8 @@ VS_OUTPUT_IMAGE VS_Image(VS_INPUT_IMAGE Input)
 
 	Output.m_CenterS = Input.m_PositionS;
 	Output.m_SizeS = Input.m_SizeS;
+	Output.m_CellCount = Input.m_CellCount;
+	Output.m_CellIndex = Input.m_CellIndex;
 
 	return Output;
 }
@@ -417,12 +423,23 @@ void GS_Image(point VS_OUTPUT_IMAGE Input[1], inout TriangleStream<GS_OUTPUT_IMA
 		float2(1.0f, 0.0f)
 	};
 
+	if (Input[0].m_CellCount.x != 0 || Input[0].m_CellCount.y != 0)
+	{
+		float2 CellSize = float2(1.0f / Input[0].m_CellCount.y, 1.0f / Input[0].m_CellCount.x);
+
+		for (int i = 0; i < 4; ++i)
+		{
+			TexCoords[i].x = CellSize.x * TexCoords[i].x + CellSize.x * (Input[0].m_CellIndex % Input[0].m_CellCount.y);
+			TexCoords[i].y = CellSize.y * TexCoords[i].y + CellSize.y * (Input[0].m_CellIndex / Input[0].m_CellCount.y);
+		}
+	}
+
 	GS_OUTPUT_IMAGE Output = (GS_OUTPUT_IMAGE)0;
 
-	for (int i = 0; i < 4; ++i)
+	for (int j = 0; j < 4; ++j)
 	{
-		Output.m_Position = Vertices[i];
-		Output.m_TexCoord = TexCoords[i];
+		Output.m_Position = Vertices[j];
+		Output.m_TexCoord = TexCoords[j];
 
 		OutStream.Append(Output);
 	}

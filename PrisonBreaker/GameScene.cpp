@@ -87,7 +87,6 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 {
 	tstring Token{};
 
-	shared_ptr<CGameObject> Object{};
 	shared_ptr<LOADED_MODEL_INFO> ModelInfo{};
 	UINT ObjectType{};
 
