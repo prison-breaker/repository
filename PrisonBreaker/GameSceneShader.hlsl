@@ -226,16 +226,16 @@ float4 PS_Main(VS_OUTPUT Input) : SV_TARGET
 	{
 		float3x3 TBN = float3x3(Input.m_TangentW, Input.m_BiTangentW, Input.m_NormalW);
 
-		NormalW = mul(2.0f * NormalMapTexture.Sample(Sampler, Input.m_TexCoord).rgb - 1.0f, TBN);
+		NormalW = normalize(mul(2.0f * NormalMapTexture.Sample(Sampler, Input.m_TexCoord).rgb - 1.0f, TBN));
 	}
 	else
 	{
-		NormalW = Input.m_NormalW;
+		NormalW = normalize(Input.m_NormalW);
 	}
 
 	float4 Illumination = Lighting(Input.m_PositionW, NormalW, Input.m_ShadowTexCoord);
 
-	return lerp(Color, Illumination, 0.8f);
+	return lerp(Color, Illumination, 0.7f);
 }
 
 // ====================================== STANDARD SKINNING SHADER ======================================
