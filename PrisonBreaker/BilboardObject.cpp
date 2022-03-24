@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "BilboardObject.h"
 #include "Material.h"
+#include "UIAnimationController.h"
 
 shared_ptr<CBilboardObject> CBilboardObject::LoadObjectInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile)
 {
@@ -52,14 +53,20 @@ shared_ptr<CBilboardObject> CBilboardObject::LoadObjectInfoFromFile(ID3D12Device
 
 			for (UINT i = 0; i < NewObject->m_VertexCount; ++i)
 			{
+				XMFLOAT3 Position{};
 				XMFLOAT2 Size{};
+				float CellIndex{};
 
-				InFile.read(reinterpret_cast<TCHAR*>(&NewObject->m_Position), sizeof(XMFLOAT2));
-				InFile.read(reinterpret_cast<TCHAR*>(&NewObject->m_IndexTime), sizeof(float));
+				InFile.read(reinterpret_cast<TCHAR*>(&Position), sizeof(XMFLOAT2));
+				InFile.read(reinterpret_cast<TCHAR*>(&CellIndex), sizeof(float));
 				InFile.read(reinterpret_cast<TCHAR*>(&Size), sizeof(XMFLOAT2));
 
-				*(NewObject->m_MappedImageInfo + i) = CBilboardMesh{ NewObject->m_Position, Size, CellCount, static_cast<UINT>(NewObject->m_IndexTime) };
+				*(NewObject->m_MappedImageInfo + i) = CBilboardMesh{ Position, Size, CellCount, static_cast<UINT>(CellIndex) };
 			}
+		}
+		else if (Token == TEXT("<Animation>"))
+		{
+			CBilboardObject::LoadAnimationInfoFromFile(InFile, NewObject);
 		}
 		else if (Token == TEXT("</UIObject>"))
 		{
@@ -90,6 +97,10 @@ shared_ptr<CBilboardObject> CBilboardObject::LoadObjectInfoFromFile(ID3D12Device
 
 			NewObject->SetMaterial(Material);
 		}
+		else if (Token == TEXT("<CellInfo>"))
+		{
+			InFile >> CellCount.x >> CellCount.y;
+		}
 		else if (Token == TEXT("<RectTransform>"))
 		{
 			InFile >> NewObject->m_VertexCount;
@@ -105,12 +116,18 @@ shared_ptr<CBilboardObject> CBilboardObject::LoadObjectInfoFromFile(ID3D12Device
 			{
 				XMFLOAT3 Position{};
 				XMFLOAT2 Size{};
+				float CellIndex{};
 
 				InFile >> Position.x >> Position.y;
+				InFile >> CellIndex;
 				InFile >> Size.x >> Size.y;
 
-				*(NewObject->m_MappedImageInfo + i) = CBilboardMesh{ Position, Size };
+				*(NewObject->m_MappedImageInfo + i) = CBilboardMesh{ Position, Size, CellCount, static_cast<UINT>(CellIndex) };
 			}
+		}
+		else if (Token == TEXT("<Animation>"))
+		{
+			CBilboardObject::LoadAnimationInfoFromFile(InFile, NewObject);
 		}
 		else if (Token == TEXT("</UIObject>"))
 		{
@@ -122,22 +139,81 @@ shared_ptr<CBilboardObject> CBilboardObject::LoadObjectInfoFromFile(ID3D12Device
 	return NewObject;
 }
 
-void CBilboardObject::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
+void CBilboardObject::LoadAnimationInfoFromFile(tifstream& InFile, const shared_ptr<CBilboardObject>& Model)
 {
+	tstring Token{};
 
+#ifdef READ_BINARY_FILE
+	while (true)
+	{
+		File::ReadStringFromFile(InFile, Token);
+
+		if (Token == TEXT("<AnimationClips>"))
+		{
+			UINT ClipCount{ File::ReadIntegerFromFile(InFile) };
+
+			if (ClipCount > 0)
+			{
+				vector<shared_ptr<CUIAnimationClip>> UIAnimationClips{};
+
+				UIAnimationClips.reserve(ClipCount);
+
+				for (UINT i = 0; i < ClipCount; ++i)
+				{
+					shared_ptr<CUIAnimationClip> UIAnimationClip{ make_shared<CUIAnimationClip>() };
+
+					UIAnimationClip->LoadAnimationClipInfoFromFile(InFile, Model->m_VertexCount);
+					UIAnimationClips.push_back(UIAnimationClip);
+				}
+
+				Model->m_UIAnimationController = make_shared<CUIAnimationController>(UIAnimationClips);
+			}
+		}
+		else if (Token == TEXT("</AnimationClips>"))
+		{
+			break;
+		}
+	}
+#else
+	while (InFile >> Token)
+	{
+		if (Token == TEXT("<AnimationClips>"))
+		{
+			UINT ClipCount{};
+
+			InFile >> ClipCount;
+
+			if (ClipCount > 0)
+			{
+				vector<shared_ptr<CUIAnimationClip>> UIAnimationClips{};
+
+				UIAnimationClips.reserve(ClipCount);
+
+				for (UINT i = 0; i < ClipCount; ++i)
+				{
+					shared_ptr<CUIAnimationClip> UIAnimationClip{ make_shared<CUIAnimationClip>() };
+
+					UIAnimationClip->LoadAnimationClipInfoFromFile(InFile, Model->m_VertexCount);
+					UIAnimationClips.push_back(UIAnimationClip);
+				}
+
+				Model->m_UIAnimationController = make_shared<CUIAnimationController>(UIAnimationClips);
+			}
+		}
+		else if (Token == TEXT("</AnimationClips>"))
+		{
+			break;
+		}
+	}
+#endif
 }
 
 void CBilboardObject::Animate(float ElapsedTime)
 {
-	//m_IndexTime += ElapsedTime;
-
-	//if (m_IndexTime > 5.0f)
-	//{
-	//	m_IndexTime = 0.0f;
-	//}
-
-	//(m_MappedImageInfo)->SetCellIndex(static_cast<UINT>(m_IndexTime));
-	//(m_MappedImageInfo + 1)->SetCellIndex(static_cast<UINT>(m_IndexTime));
+	if (m_UIAnimationController)
+	{
+		m_UIAnimationController->UpdateAnimationClip(ElapsedTime, shared_from_this());
+	}
 }
 
 void CBilboardObject::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType)
@@ -182,24 +258,39 @@ void CBilboardObject::SetActive(bool IsActive)
 	m_IsActive = IsActive;
 }
 
-void CBilboardObject::SetPosition(const XMFLOAT3& Position)
+UINT CBilboardObject::GetVertexCount() const
 {
-	m_Position = Position;
+	return m_VertexCount;
 }
 
-const XMFLOAT3& CBilboardObject::GetPosition() const
+void CBilboardObject::SetPosition(const XMFLOAT3& Position, UINT Index)
 {
-	return m_Position;
+	if (Index < 0 || Index > m_VertexCount)
+	{
+		return;
+	}
+
+	m_MappedImageInfo[Index].SetPosition(Position);
 }
 
-void CBilboardObject::SetIndexTime(float IndexTime)
+void CBilboardObject::SetSize(const XMFLOAT2& Size, UINT Index)
 {
-	m_IndexTime = IndexTime;
+	if (Index < 0 || Index > m_VertexCount)
+	{
+		return;
+	}
+
+	m_MappedImageInfo[Index].SetSize(Size);
 }
 
-float CBilboardObject::GetIndexTime() const
+void CBilboardObject::SetCellIndex(UINT CellIndex, UINT Index)
 {
-	return m_IndexTime;
+	if (Index < 0 || Index > m_VertexCount)
+	{
+		return;
+	}
+
+	m_MappedImageInfo[Index].SetCellIndex(CellIndex);
 }
 
 void CBilboardObject::SetMaterial(const shared_ptr<CMaterial>& Material)
@@ -207,5 +298,21 @@ void CBilboardObject::SetMaterial(const shared_ptr<CMaterial>& Material)
 	if (Material)
 	{
 		m_Materials.push_back(Material);
+	}
+}
+
+void CBilboardObject::SetAnimationClip(UINT ClipNum)
+{
+	if (m_UIAnimationController)
+	{
+		m_UIAnimationController->SetAnimationClip(ClipNum);
+	}
+}
+
+void CBilboardObject::SetKeyFrameIndex(UINT ClipNum, UINT KeyFrameIndex)
+{
+	if (m_UIAnimationController)
+	{
+		m_UIAnimationController->SetKeyFrameIndex(ClipNum, KeyFrameIndex);
 	}
 }

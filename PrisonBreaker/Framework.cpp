@@ -426,7 +426,7 @@ void CFramework::PopulateCommandList()
 
 void CFramework::FrameAdvance()
 {
-	m_Timer->Tick(0.0f);
+	m_Timer->Tick(60.0f);
 
 	ProcessInput();
 	Animate();

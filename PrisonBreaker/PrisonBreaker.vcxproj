@@ -165,6 +165,7 @@
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="TextureManager.cpp" />
     <ClCompile Include="Timer.cpp" />
+    <ClCompile Include="UIAnimationController.cpp" />
     <ClCompile Include="UIShader.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -192,6 +193,7 @@
     <ClInclude Include="Texture.h" />
     <ClInclude Include="TextureManager.h" />
     <ClInclude Include="Timer.h" />
+    <ClInclude Include="UIAnimationController.h" />
     <ClInclude Include="UIShader.h" />
   </ItemGroup>
   <ItemGroup>

@@ -153,6 +153,9 @@
     <ClCompile Include="UIShader.cpp">
       <Filter>소스 파일\Shaders</Filter>
     </ClCompile>
+    <ClCompile Include="UIAnimationController.cpp">
+      <Filter>소스 파일\Animation</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -229,6 +232,9 @@
     </ClInclude>
     <ClInclude Include="UIShader.h">
       <Filter>헤더 파일\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="UIAnimationController.h">
+      <Filter>헤더 파일\Animation</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

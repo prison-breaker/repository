@@ -710,7 +710,7 @@ void CGameObject::SetAnimationClip(UINT ClipNum)
 {
 	if (m_AnimationController)
 	{
-		m_AnimationController->ChangeAnimationClip(ClipNum);
+		m_AnimationController->SetAnimationClip(ClipNum);
 	}
 }
 

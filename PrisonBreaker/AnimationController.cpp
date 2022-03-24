@@ -143,6 +143,11 @@ void CAnimationController::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D1
 	}
 }
 
+void CAnimationController::SetAnimationClip(UINT ClipNum)
+{
+	m_ClipNum = ClipNum;
+}
+
 void CAnimationController::UpdateAnimationClip(float ElapsedTime, const shared_ptr<CGameObject>& RootObject)
 {
 	UINT SkinnedMeshCount{ static_cast<UINT>(m_SkinnedMeshCaches.size()) };
@@ -157,17 +162,23 @@ void CAnimationController::UpdateAnimationClip(float ElapsedTime, const shared_p
 		}
 	}
 
-	m_AnimationClips[m_ClipNum]->m_KeyFrameIndex += 1;
-
-	if (m_AnimationClips[m_ClipNum]->m_KeyFrameIndex >= m_AnimationClips[m_ClipNum]->m_KeyFrameCount)
+	switch (m_AnimationClips[m_ClipNum]->m_AnimationType)
 	{
-		m_AnimationClips[m_ClipNum]->m_KeyFrameIndex = 0;
+	case ANIMATION_TYPE_LOOP:
+		m_AnimationClips[m_ClipNum]->m_KeyFrameIndex += 1;
+
+		if (m_AnimationClips[m_ClipNum]->m_KeyFrameIndex >= m_AnimationClips[m_ClipNum]->m_KeyFrameCount)
+		{
+			m_AnimationClips[m_ClipNum]->m_KeyFrameIndex = 0;
+		}
+		break;
+	case ANIMATION_TYPE_ONCE:
+		break;
+	case ANIMATION_TYPE_PINGPONG:
+		break;
+	case ANIMATION_TYPE_ONCE_PINGPONG:
+		break;
 	}
 
 	RootObject->UpdateTransform(Matrix4x4::Identity());
-}
-
-void CAnimationController::ChangeAnimationClip(UINT ClipNum)
-{
-	m_ClipNum = ClipNum;
 }

@@ -361,6 +361,12 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 		m_Lights[1].m_Direction.z = sinf(Angle);
 	}
 
+	// ¹Ì¼ÇUI ON
+	if (GetAsyncKeyState(VK_TAB) & 0x8000)
+	{
+		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetKeyFrameIndex(0, 0);
+	}
+
 	RECT Rect{};
 
 	GetWindowRect(hWnd, &Rect);
