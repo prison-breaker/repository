@@ -15,14 +15,14 @@
 		<TransformMatrix> -1.192093E-07 0 1 0 0 1 0 0 -1 0 -1.192093E-07 0 94 1.202297 -145 1 
 	</GameObject>
 	<GameObject>
-		<Name> Model/ground.txt
+		<Name> Model/terrain.txt
 		<Type> 2
 		<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 1 0 1 
 	</GameObject>
 	<GameObject>
-		<Name> Model/fence.txt
+		<Name> Model/fences.txt
 		<Type> 3
-		<TransformMatrix> -1 -7.105427E-15 8.74228E-08 0 8.74228E-08 -1.192093E-07 1 0 -7.105427E-15 1 -1.192093E-07 0 200.0001 7.374899 200.0001 1 
+		<TransformMatrix> 1 0 0 0 0 1 4.371139E-08 0 0 -4.371139E-08 1 0 0 0 0 1 
 	</GameObject>
 	<GameObject>
 		<Name> Model/building.txt

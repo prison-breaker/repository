@@ -27,5 +27,7 @@ public:
 	void RegisterShader(const shared_ptr<CShader>& Shader);
 
 	void SetStateNum(SHADER_TYPE ShaderType);
+	UINT GetStateNum() const;
+
 	void SetPipelineState(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, RENDER_TYPE RenderType);
 };

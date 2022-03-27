@@ -74,7 +74,7 @@ void CSceneManager::Animate(float ElapsedTime)
 	}
 }
 
-void CSceneManager::PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList) const
+void CSceneManager::PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
 	if (m_CurrentScene)
 	{
@@ -82,10 +82,18 @@ void CSceneManager::PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandLis
 	}
 }
 
-void CSceneManager::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList) const
+void CSceneManager::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
 	if (m_CurrentScene)
 	{
 		m_CurrentScene->Render(D3D12GraphicsCommandList);
+	}
+}
+
+void CSceneManager::PostRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
+{
+	if (m_CurrentScene)
+	{
+		m_CurrentScene->PostRender(D3D12GraphicsCommandList);
 	}
 }

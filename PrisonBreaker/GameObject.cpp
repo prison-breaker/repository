@@ -2,13 +2,11 @@
 #include "GameObject.h"
 #include "AnimationController.h"
 
-shared_ptr<LOADED_MODEL_INFO> CGameObject::LoadObjectFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName)
+shared_ptr<LOADED_MODEL_INFO> CGameObject::LoadObjectFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName, unordered_map<tstring, shared_ptr<CMesh>>& MeshCaches, unordered_map<tstring, vector<shared_ptr<CMaterial>>>& MaterialCaches)
 {
 	tstring Token{};
 
 	shared_ptr<LOADED_MODEL_INFO> ModelInfo{ make_shared<LOADED_MODEL_INFO>() };
-	unordered_map<tstring, shared_ptr<CMesh>> MeshCaches{};
-	unordered_map<tstring, vector<shared_ptr<CMaterial>>> MaterialCaches{};
 
 #ifdef READ_BINARY_FILE
 	tifstream InFile{ FileName, ios::binary };
@@ -45,7 +43,7 @@ shared_ptr<LOADED_MODEL_INFO> CGameObject::LoadObjectFromFile(ID3D12Device* D3D1
 		if (Token == TEXT("<Hierarchy>"))
 		{
 			tcout << FileName << TEXT(" 로드 시작...") << endl;
-			ModelInfo->m_Model = CGameObject::LoadModelInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile, MeshCaches, MaterialCaches);
+			ModelInfo->m_Model = CGameObject::LoadModelInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile, ModelInfo, MeshCaches, MaterialCaches);
 		}
 		else if (Token == TEXT("</Hierarchy>"))
 		{
@@ -67,7 +65,7 @@ shared_ptr<LOADED_MODEL_INFO> CGameObject::LoadObjectFromFile(ID3D12Device* D3D1
 	return ModelInfo;
 }
 
-shared_ptr<CGameObject> CGameObject::LoadModelInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile, unordered_map<tstring, shared_ptr<CMesh>>& MeshCaches, unordered_map<tstring, vector<shared_ptr<CMaterial>>>& MaterialCaches)
+shared_ptr<CGameObject> CGameObject::LoadModelInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile, const shared_ptr<LOADED_MODEL_INFO>& ModelInfo, unordered_map<tstring, shared_ptr<CMesh>>& MeshCaches, unordered_map<tstring, vector<shared_ptr<CMaterial>>>& MaterialCaches)
 {
 	tstring Token{};
 	shared_ptr<CGameObject> NewObject{};
@@ -263,9 +261,11 @@ shared_ptr<CGameObject> CGameObject::LoadModelInfoFromFile(ID3D12Device* D3D12De
 
 			if (ChildCount > 0)
 			{
+				NewObject->m_ChildObjects.reserve(ChildCount);
+
 				for (UINT i = 0; i < ChildCount; ++i)
 				{
-					shared_ptr<CGameObject> ChildObject{ CGameObject::LoadModelInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile, MeshCaches, MaterialCaches) };
+					shared_ptr<CGameObject> ChildObject{ CGameObject::LoadModelInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile, ModelInfo, MeshCaches, MaterialCaches) };
 
 					if (ChildObject)
 					{
@@ -423,19 +423,14 @@ shared_ptr<CGameObject> CGameObject::FindFrame(const tstring& FrameName)
 		return shared_from_this();
 	}
 
-	if (m_SiblingObject)
+	for (const auto& ChildObject : m_ChildObjects)
 	{
-		if (Object = m_SiblingObject->FindFrame(FrameName))
+		if (ChildObject)
 		{
-			return Object;
-		}
-	}
-
-	if (m_ChildObject)
-	{
-		if (Object = m_ChildObject->FindFrame(FrameName))
-		{
-			return Object;
+			if (Object = ChildObject->FindFrame(FrameName))
+			{
+				return Object;
+			}
 		}
 	}
 
@@ -457,19 +452,14 @@ shared_ptr<CSkinnedMesh> CGameObject::FindSkinnedMesh(const tstring& SkinnedMesh
 		}
 	}
 
-	if (m_SiblingObject)
+	for (const auto& ChildObject : m_ChildObjects)
 	{
-		if (SkinnedMesh = m_SiblingObject->FindSkinnedMesh(SkinnedMeshName))
+		if (ChildObject)
 		{
-			return SkinnedMesh;
-		}
-	}
-
-	if (m_ChildObject)
-	{
-		if (SkinnedMesh = m_ChildObject->FindSkinnedMesh(SkinnedMeshName))
-		{
-			return SkinnedMesh;
+			if (SkinnedMesh = ChildObject->FindSkinnedMesh(SkinnedMeshName))
+			{
+				return SkinnedMesh;
+			}
 		}
 	}
 
@@ -501,14 +491,12 @@ void CGameObject::ReleaseUploadBuffers()
 		m_Mesh->ReleaseUploadBuffers();
 	}
 
-	if (m_SiblingObject)
+	for (const auto& ChildObject : m_ChildObjects)
 	{
-		m_SiblingObject->ReleaseUploadBuffers();
-	}
-
-	if (m_ChildObject)
-	{
-		m_ChildObject->ReleaseUploadBuffers();
+		if (ChildObject)
+		{
+			ChildObject->ReleaseUploadBuffers();
+		}
 	}
 }
 
@@ -530,7 +518,7 @@ void CGameObject::Animate(float ElapsedTime)
 	}
 }
 
-void CGameObject::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType)
+void CGameObject::PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType)
 {
 	if (IsActive())
 	{
@@ -560,14 +548,75 @@ void CGameObject::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CC
 			}
 		}
 
-		if (m_SiblingObject)
+		for (const auto& ChildObject : m_ChildObjects)
 		{
-			m_SiblingObject->Render(D3D12GraphicsCommandList, Camera, RenderType);
+			if (ChildObject)
+			{
+				ChildObject->Render(D3D12GraphicsCommandList, Camera, RenderType);
+			}
+		}
+	}
+}
+
+void CGameObject::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType)
+{
+	if (IsActive())
+	{
+		if (IsVisible(Camera))
+		{
+			if (m_Mesh)
+			{
+				UpdateShaderVariables(D3D12GraphicsCommandList);
+
+				UINT MaterialCount{ static_cast<UINT>(m_Materials.size()) };
+
+				for (UINT i = 0; i < MaterialCount; ++i)
+				{
+					if (m_Materials[i])
+					{
+						m_Materials[i]->SetPipelineState(D3D12GraphicsCommandList, RenderType);
+						m_Materials[i]->UpdateShaderVariables(D3D12GraphicsCommandList);
+					}
+
+					m_Mesh->Render(D3D12GraphicsCommandList, i);
+				}
+			}
 		}
 
-		if (m_ChildObject)
+		for (const auto& ChildObject : m_ChildObjects)
 		{
-			m_ChildObject->Render(D3D12GraphicsCommandList, Camera, RenderType);
+			if (ChildObject)
+			{
+				ChildObject->Render(D3D12GraphicsCommandList, Camera, RenderType);
+			}
+		}
+	}
+}
+
+void CGameObject::PostRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType)
+{
+	if (IsActive())
+	{
+		if (IsVisible(Camera))
+		{
+			if (m_Mesh)
+			{
+				UpdateShaderVariables(D3D12GraphicsCommandList);
+
+				UINT MaterialCount{ static_cast<UINT>(m_Materials.size()) };
+
+				for (UINT i = 0; i < MaterialCount; ++i)
+				{
+					if (m_Materials[i])
+					{
+						m_Materials[i]->SetPipelineState(D3D12GraphicsCommandList, RenderType);
+						m_Materials[i]->UpdateShaderVariables(D3D12GraphicsCommandList);
+					}
+
+					m_Mesh->Render(D3D12GraphicsCommandList, i);
+
+				}
+			}
 		}
 	}
 }
@@ -684,17 +733,9 @@ shared_ptr<BoundingBox> CGameObject::GetBoundingBox()
 
 void CGameObject::SetChild(const shared_ptr<CGameObject>& ChildObject)
 {
-	if (m_ChildObject)
+	if (ChildObject)
 	{
-		if (ChildObject)
-		{
-			ChildObject->m_SiblingObject = m_ChildObject;
-			m_ChildObject = ChildObject;
-		}
-	}
-	else
-	{
-		m_ChildObject = ChildObject;
+		m_ChildObjects.push_back(ChildObject);
 	}
 }
 
@@ -744,14 +785,12 @@ void CGameObject::UpdateTransform(const XMFLOAT4X4& ParentMatrix)
 {
 	m_WorldMatrix = Matrix4x4::Multiply(m_TransformMatrix, ParentMatrix);
 
-	if (m_SiblingObject)
+	for (const auto& ChildObject : m_ChildObjects)
 	{
-		m_SiblingObject->UpdateTransform(ParentMatrix);
-	}
-
-	if (m_ChildObject)
-	{
-		m_ChildObject->UpdateTransform(m_WorldMatrix);
+		if (ChildObject)
+		{
+			ChildObject->UpdateTransform(m_WorldMatrix);
+		}
 	}
 
 	UpdateBoundingBox();
@@ -797,14 +836,12 @@ void CGameObject::RenderBoundingBox(ID3D12GraphicsCommandList* D3D12GraphicsComm
 			}
 		}
 
-		if (m_SiblingObject)
+		for (const auto& ChildObject : m_ChildObjects)
 		{
-			m_SiblingObject->RenderBoundingBox(D3D12GraphicsCommandList, Camera);
-		}
-
-		if (m_ChildObject)
-		{
-			m_ChildObject->RenderBoundingBox(D3D12GraphicsCommandList, Camera);
+			if (ChildObject)
+			{
+				ChildObject->RenderBoundingBox(D3D12GraphicsCommandList, Camera);
+			}
 		}
 	}
 }

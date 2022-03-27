@@ -199,10 +199,8 @@ void CMaterial::SetStateNum(SHADER_TYPE ShaderType)
 	switch (ShaderType)
 	{
 	case SHADER_TYPE_STANDARD:
-		m_StateNum = 0;
-		break;
 	case SHADER_TYPE_WITH_SKINNING:
-		m_StateNum = 1;
+		m_StateNum = ShaderType;
 		break;
 	}
 }
@@ -212,6 +210,8 @@ void CMaterial::SetPipelineState(ID3D12GraphicsCommandList* D3D12GraphicsCommand
 	switch (RenderType)
 	{
 	case RENDER_TYPE_STANDARD:
+		static_pointer_cast<CGraphicsShader>(m_Shaders[RenderType])->SetPipelineState(D3D12GraphicsCommandList, m_StateNum);
+		break;
 	case RENDER_TYPE_DEPTH_WRITE:
 		static_pointer_cast<CGraphicsShader>(m_Shaders[RenderType])->SetPipelineState(D3D12GraphicsCommandList, m_StateNum);
 		break;

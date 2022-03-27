@@ -85,8 +85,10 @@ public:
 	void ProcessInput();
 
 	void Animate();
+
 	void PreRender();
 	void Render();
+	void PostRender();
 
 	void PopulateCommandList();
 	void FrameAdvance();

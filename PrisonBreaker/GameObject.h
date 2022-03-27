@@ -33,15 +33,14 @@ protected:
 
 	shared_ptr<CAnimationController> m_AnimationController{};
 
-	shared_ptr<CGameObject>          m_SiblingObject{};
-	shared_ptr<CGameObject>          m_ChildObject{};
+	vector<shared_ptr<CGameObject>>  m_ChildObjects{};
 
 public:
 	CGameObject() = default;
 	virtual ~CGameObject() = default;
 
-	static shared_ptr<LOADED_MODEL_INFO> LoadObjectFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName);
-	static shared_ptr<CGameObject> LoadModelInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile, unordered_map<tstring, shared_ptr<CMesh>>& MeshCaches, unordered_map<tstring, vector<shared_ptr<CMaterial>>>& MaterialCaches);
+	static shared_ptr<LOADED_MODEL_INFO> LoadObjectFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName, unordered_map<tstring, shared_ptr<CMesh>>& MeshCaches, unordered_map<tstring, vector<shared_ptr<CMaterial>>>& MaterialCaches);
+	static shared_ptr<CGameObject> LoadModelInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile, const shared_ptr<LOADED_MODEL_INFO>& ModelInfo, unordered_map<tstring, shared_ptr<CMesh>>& MeshCaches, unordered_map<tstring, vector<shared_ptr<CMaterial>>>& MaterialCaches);
 	static void LoadAnimationInfoFromFile(tifstream& InFile, const shared_ptr<LOADED_MODEL_INFO>& ModelInfo);
 
 	virtual void CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
@@ -53,7 +52,10 @@ public:
 	virtual void Move(const XMFLOAT3& Direction, float Distance);
 
 	virtual void Animate(float ElapsedTime);
+
+	virtual void PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType);
 	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType);
+	virtual void PostRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType);
 
 	shared_ptr<CGameObject> FindFrame(const tstring& FrameName);
 	shared_ptr<CSkinnedMesh> FindSkinnedMesh(const tstring& SkinnedMeshName);

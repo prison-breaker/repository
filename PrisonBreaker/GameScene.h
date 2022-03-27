@@ -69,8 +69,10 @@ public:
 	virtual void ProcessInput(HWND hWnd, float ElapsedTime);
 
 	virtual void Animate(float ElapsedTime);
+
 	virtual void PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
-	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList) const;
+	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
+	virtual void PostRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 
 	void BuildLights();
 };

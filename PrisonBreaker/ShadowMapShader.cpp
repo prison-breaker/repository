@@ -29,12 +29,12 @@ D3D12_INPUT_LAYOUT_DESC CDepthWriteShader::CreateInputLayout(UINT StateNum)
 
 	switch (StateNum)
 	{
-	case 0:
+	case SHADER_TYPE_STANDARD:
 		InputElementCount = 1;
 		D3D12InputElementDescs = new D3D12_INPUT_ELEMENT_DESC[InputElementCount];
 		D3D12InputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
 		break;
-	case 1:
+	case SHADER_TYPE_WITH_SKINNING:
 		InputElementCount = 3;
 		D3D12InputElementDescs = new D3D12_INPUT_ELEMENT_DESC[InputElementCount];
 		D3D12InputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
@@ -74,9 +74,9 @@ D3D12_SHADER_BYTECODE CDepthWriteShader::CreateVertexShader(ID3DBlob* D3D12Shade
 {
 	switch (StateNum)
 	{
-	case 0:
+	case SHADER_TYPE_STANDARD:
 		return CGraphicsShader::CompileShaderFromFile(L"GameSceneShader.hlsl", "VS_Position", "vs_5_1", D3D12ShaderBlob);
-	case 1:
+	case SHADER_TYPE_WITH_SKINNING:
 		return CGraphicsShader::CompileShaderFromFile(L"GameSceneShader.hlsl", "VS_Position_Skinning", "vs_5_1", D3D12ShaderBlob);
 	}
 
@@ -100,7 +100,6 @@ DXGI_FORMAT CDepthWriteShader::GetDSVFormat(UINT StateNum)
 
 void CDepthWriteShader::CreatePipelineState(ID3D12Device* D3D12Device, ID3D12RootSignature* D3D12RootSignature, UINT StateNum)
 {
-	// 0: No Skinning, 1: Use Skinning
 	for (UINT i = 0; i < StateNum; ++i)
 	{
 		CGraphicsShader::CreatePipelineState(D3D12Device, D3D12RootSignature, i);
@@ -202,7 +201,7 @@ void CDepthWriteShader::PrepareShadowMap(ID3D12GraphicsCommandList* D3D12Graphic
 				if (GameObject)
 				{
 					GameObject->UpdateTransform(Matrix4x4::Identity());
-					GameObject->Render(D3D12GraphicsCommandList, m_LightCamera.get(), RENDER_TYPE_DEPTH_WRITE);
+					GameObject->PreRender(D3D12GraphicsCommandList, m_LightCamera.get(), RENDER_TYPE_DEPTH_WRITE);
 				}
 			}
 		}
@@ -220,7 +219,7 @@ D3D12_INPUT_LAYOUT_DESC CShadowMapShader::CreateInputLayout(UINT StateNum)
 
 	switch (StateNum)
 	{ 
-	case 0:
+	case SHADER_TYPE_STANDARD:
 		InputElementCount = 5;
 		D3D12InputElementDescs = new D3D12_INPUT_ELEMENT_DESC[InputElementCount];
 		D3D12InputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
@@ -229,7 +228,7 @@ D3D12_INPUT_LAYOUT_DESC CShadowMapShader::CreateInputLayout(UINT StateNum)
 		D3D12InputElementDescs[3] = { "BITANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 3, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
 		D3D12InputElementDescs[4] = { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 4, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
 		break;
-	case 1:
+	case SHADER_TYPE_WITH_SKINNING:
 		InputElementCount = 7;
 		D3D12InputElementDescs = new D3D12_INPUT_ELEMENT_DESC[InputElementCount];
 		D3D12InputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
@@ -250,13 +249,48 @@ D3D12_INPUT_LAYOUT_DESC CShadowMapShader::CreateInputLayout(UINT StateNum)
 	return D3D12InputLayoutDesc;
 }
 
+D3D12_BLEND_DESC CShadowMapShader::CreateBlendState(UINT StateNum)
+{
+	D3D12_BLEND_DESC D3D12BlendDesc{};
+
+	D3D12BlendDesc.AlphaToCoverageEnable = true;
+	D3D12BlendDesc.IndependentBlendEnable = false;
+	D3D12BlendDesc.RenderTarget[0].BlendEnable = true;
+	D3D12BlendDesc.RenderTarget[0].LogicOpEnable = false;
+	D3D12BlendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+	D3D12BlendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+	D3D12BlendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+	D3D12BlendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
+	D3D12BlendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
+	D3D12BlendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+	D3D12BlendDesc.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_NOOP;
+	D3D12BlendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+
+	return D3D12BlendDesc;
+
+	//D3D12_BLEND_DESC D3D12BlendDesc{ CGraphicsShader::CreateBlendState(StateNum) };
+
+	//switch (StateNum)
+	//{
+	//case SHADER_TYPE_STANDARD_ALPHA:
+	//case SHADER_TYPE_WITH_SKINNING_ALPHA:
+	//	D3D12BlendDesc.AlphaToCoverageEnable = true;
+	//	D3D12BlendDesc.RenderTarget[0].BlendEnable = true;
+	//	D3D12BlendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+	//	D3D12BlendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+	//	break;
+	//}
+
+	//return D3D12BlendDesc;
+}
+
 D3D12_SHADER_BYTECODE CShadowMapShader::CreateVertexShader(ID3DBlob* D3D12ShaderBlob, UINT StateNum)
 {
 	switch (StateNum)
 	{
-	case 0: 
+	case SHADER_TYPE_STANDARD:
 		return CGraphicsShader::CompileShaderFromFile(L"GameSceneShader.hlsl", "VS_Main", "vs_5_1", D3D12ShaderBlob);
-	case 1:
+	case SHADER_TYPE_WITH_SKINNING:
 		return CGraphicsShader::CompileShaderFromFile(L"GameSceneShader.hlsl", "VS_Main_Skinning", "vs_5_1", D3D12ShaderBlob);
 	}
 
@@ -270,7 +304,6 @@ D3D12_SHADER_BYTECODE CShadowMapShader::CreatePixelShader(ID3DBlob* D3D12ShaderB
 
 void CShadowMapShader::CreatePipelineState(ID3D12Device* D3D12Device, ID3D12RootSignature* D3D12RootSignature, UINT StateNum)
 {
-	// 0: No Skinning, 1: Use Skinning
 	for (UINT i = 0; i < StateNum; ++i)
 	{
 		CGraphicsShader::CreatePipelineState(D3D12Device, D3D12RootSignature, i);

@@ -31,6 +31,8 @@ public:
 	virtual void ProcessInput(HWND hWnd, float ElapsedTime) = 0;
 
 	virtual void Animate(float ElapsedTime) = 0;
+
 	virtual void PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList) = 0;
-	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList) const = 0;
+	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList) = 0;
+	virtual void PostRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList) = 0;
 };

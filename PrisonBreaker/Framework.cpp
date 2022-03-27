@@ -395,6 +395,11 @@ void CFramework::Render()
 	CSceneManager::GetInstance()->Render(m_D3D12GraphicsCommandList.Get());
 }
 
+void CFramework::PostRender()
+{
+	CSceneManager::GetInstance()->PostRender(m_D3D12GraphicsCommandList.Get());
+}
+
 void CFramework::PopulateCommandList()
 {
 	ResetCommandAllocatorAndList();
@@ -426,7 +431,7 @@ void CFramework::PopulateCommandList()
 
 void CFramework::FrameAdvance()
 {
-	m_Timer->Tick(60.0f);
+	m_Timer->Tick(0.0f);
 
 	ProcessInput();
 	Animate();

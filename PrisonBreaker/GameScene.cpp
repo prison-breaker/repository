@@ -90,6 +90,9 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 	shared_ptr<LOADED_MODEL_INFO> ModelInfo{};
 	UINT ObjectType{};
 
+	unordered_map<tstring, shared_ptr<CMesh>> MeshCaches{};
+	unordered_map<tstring, vector<shared_ptr<CMaterial>>> MaterialCaches{};
+
 #ifdef READ_BINARY_FILE
 	tifstream InFile{ FileName, ios::binary };
 
@@ -126,6 +129,7 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
 				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
 				m_GameObjects[ObjectType].back()->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
+				m_GameObjects[ObjectType].back()->SetAnimationClip(Random::Random(1.0f, 5.0f));
 				break;
 			case OBJECT_TYPE_TERRAIN:
 			case OBJECT_TYPE_STRUCTURE:
@@ -149,7 +153,7 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 		if (Token == TEXT("<Name>"))
 		{
 			InFile >> Token;
-			ModelInfo = CGameObject::LoadObjectFromFile(D3D12Device, D3D12GraphicsCommandList, Token);
+			ModelInfo = CGameObject::LoadObjectFromFile(D3D12Device, D3D12GraphicsCommandList, Token, MeshCaches, MaterialCaches);
 		}
 		else if (Token == TEXT("<Type>"))
 		{
@@ -531,7 +535,7 @@ void CGameScene::PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 	UpdateShaderVariables(D3D12GraphicsCommandList);
 }
 
-void CGameScene::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList) const
+void CGameScene::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
 	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER].back()) };
 
@@ -563,6 +567,11 @@ void CGameScene::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList) con
 	}
 
 	//static_pointer_cast<CDebugShader>(CShaderManager::GetInstance()->GetShader(TEXT("DebugShader")))->Render(D3D12GraphicsCommandList, Player->GetCamera(), m_GameObjects, 0);
+}
+
+void CGameScene::PostRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
+{
+
 }
 
 void CGameScene::BuildLights()

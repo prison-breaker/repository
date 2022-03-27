@@ -214,6 +214,10 @@ float4 PS_Main(VS_OUTPUT Input) : SV_TARGET
 	{
 		Color += AlbedoMapTexture.Sample(Sampler, Input.m_TexCoord) * AlbedoColor;
 	}
+	else
+	{
+		Color += AlbedoColor;
+	}
 
 	//if (TextureMask & TEXTURE_MASK_METALLIC_MAP)
 	//{
@@ -235,7 +239,9 @@ float4 PS_Main(VS_OUTPUT Input) : SV_TARGET
 
 	float4 Illumination = Lighting(Input.m_PositionW, NormalW, Input.m_ShadowTexCoord);
 
-	return lerp(Color, Illumination, 0.7f);
+	Color = float4(lerp(Color.rgb, Illumination.rgb, 0.75f).rgb, Color.a);
+
+	return Color;
 }
 
 // ====================================== STANDARD SKINNING SHADER ======================================
