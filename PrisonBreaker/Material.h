@@ -7,6 +7,8 @@ class CShader;
 class CMaterial
 {
 private:
+	tstring						 m_Name{};
+
 	XMFLOAT4			         m_AlbedoColor{};
 
 	vector<shared_ptr<CTexture>> m_Textures{};
@@ -26,8 +28,10 @@ public:
 	void RegisterTexture(const shared_ptr<CTexture>& Texture);
 	void RegisterShader(const shared_ptr<CShader>& Shader);
 
+	void SetName(const tstring & Name);
+	const tstring& GetName() const;
+
 	void SetStateNum(SHADER_TYPE ShaderType);
-	UINT GetStateNum() const;
 
 	void SetPipelineState(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, RENDER_TYPE RenderType);
 };

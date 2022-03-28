@@ -5,7 +5,7 @@ class CGameObject;
 class CMesh
 {
 protected:
-	tstring						    m_MeshName{};
+	tstring						    m_Name{};
 
 	D3D12_PRIMITIVE_TOPOLOGY        m_D3D12PrimitiveTopology{ D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST };
 							        
@@ -56,6 +56,7 @@ public:
 
 	void LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile);
 
+	void SetName(const tstring& Name);
 	const tstring& GetName() const;
 
 	void SetBoundingBox(const BoundingBox& BoundingBox);

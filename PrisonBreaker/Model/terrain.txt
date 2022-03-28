@@ -12,7 +12,7 @@
 			<Bounds> 0 0 0 0.9999999 0 0.9999999
 		</Mesh>
 		<Materials> 1
-			<Material>
+			<Material> terrain
 				<AlbedoColor> 1 1 1 1
 				<AlbedoMap> Texture/ground_grey_diff_2k.dds
 				<MetallicMap> Texture/ground_grey_rough_2k.dds

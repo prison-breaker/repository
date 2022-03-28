@@ -15,7 +15,7 @@
 					<Bounds> 0 1.013304 -30.99999 8.3 1.034998 32.99999
 				</Mesh>
 				<Materials> 1
-					<Material>
+					<Material> roof_1
 						<AlbedoColor> 0.2867647 0.2867647 0.2867647 1
 						<AlbedoMap> Texture/roof_1_tex_AlbedoTransparency.dds
 						<MetallicMap> Texture/roof_1_tex_MetallicSmoothness.dds
@@ -37,7 +37,7 @@
 					<Bounds> 0 -0.1758491 -31 8.3 0.2241508 33
 				</Mesh>
 				<Materials> 1
-					<Material>
+					<Material> floor_0
 						<AlbedoColor> 0.8 0.8 0.8 1
 						<AlbedoMap> Texture/floor_0_tex_AlbedoTransparency.dds
 						<MetallicMap> Texture/floor_0_tex_MetallicSmoothness.dds
@@ -60,13 +60,13 @@
 					<Bounds> 0 4.925 0 8.3 5.325 33.4
 				</Mesh>
 				<Materials> 2
-					<Material>
+					<Material> wall_1
 						<AlbedoColor> 1 1 1 1
 						<AlbedoMap> Texture/wall_1_tex_AlbedoTransparency.dds
 						<MetallicMap> Texture/wall_1_tex_MetallicSmoothness.dds
 						<NormalMap> Texture/wall_1_tex_Normal.dds
 					</Material>
-					<Material>
+					<Material> wall_0
 						<AlbedoColor> 0.8 0.8 0.8 1
 						<AlbedoMap> Texture/wall_0_tex_AlbedoTransparency.dds
 						<MetallicMap> Texture/wall_0_tex_MetallicSmoothness.dds
@@ -90,19 +90,19 @@
 					<Bounds> -4.768372E-07 4.7 -31 8.300001 5.1 33
 				</Mesh>
 				<Materials> 3
-					<Material>
+					<Material> wall_1
 						<AlbedoColor> 1 1 1 1
 						<AlbedoMap> Texture/wall_1_tex_AlbedoTransparency.dds
 						<MetallicMap> Texture/wall_1_tex_MetallicSmoothness.dds
 						<NormalMap> Texture/wall_1_tex_Normal.dds
 					</Material>
-					<Material>
+					<Material> floor_0
 						<AlbedoColor> 0.8 0.8 0.8 1
 						<AlbedoMap> Texture/floor_0_tex_AlbedoTransparency.dds
 						<MetallicMap> Texture/floor_0_tex_MetallicSmoothness.dds
 						<NormalMap> Texture/floor_0_tex_Normal.dds
 					</Material>
-					<Material>
+					<Material> wall_0
 						<AlbedoColor> 0.8 0.8 0.8 1
 						<AlbedoMap> Texture/wall_0_tex_AlbedoTransparency.dds
 						<MetallicMap> Texture/wall_0_tex_MetallicSmoothness.dds
@@ -125,13 +125,13 @@
 					<Bounds> 0 10.79656 -31.0204 8.400001 1.6772 33.5204
 				</Mesh>
 				<Materials> 2
-					<Material>
+					<Material> wall_1
 						<AlbedoColor> 1 1 1 1
 						<AlbedoMap> Texture/wall_1_tex_AlbedoTransparency.dds
 						<MetallicMap> Texture/wall_1_tex_MetallicSmoothness.dds
 						<NormalMap> Texture/wall_1_tex_Normal.dds
 					</Material>
-					<Material>
+					<Material> roof_2
 						<AlbedoColor> 1 1 1 1
 						<AlbedoMap> Texture/roof_2_tex_AlbedoTransparency.dds
 						<MetallicMap> Texture/roof_2_tex_MetallicSmoothness.dds
@@ -153,7 +153,7 @@
 					<Bounds> 0 -0.2251537 -31 4 0.1748463 33
 				</Mesh>
 				<Materials> 1
-					<Material>
+					<Material> floor_1
 						<AlbedoColor> 0.8 0.8 0.8 1
 						<AlbedoMap> Texture/floor_2_tex_AlbedoTransparency.dds
 						<MetallicMap> Texture/floor_2_tex_MetallicSmoothness.dds

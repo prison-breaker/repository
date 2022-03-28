@@ -15,7 +15,7 @@
 					<Bounds> 8.484996 -0.006730318 -3.980819 8.614085 2.04704 7.001965
 				</Mesh>
 				<Materials> 1
-					<Material>
+					<Material> fence
 						<AlbedoColor> 1 1 1 1
 						<AlbedoMap> Texture/map-fence-1-d.dds
 						<MetallicMap> Texture/map-fence-1-s.dds
@@ -669,12 +669,12 @@
 							<Bounds> -1.50879 1.00492 -0.05552458 1.509716 1.00492 0.05552485
 						</Mesh>
 						<Materials> 2
-							<Material>
+							<Material> wire_2
 								<AlbedoColor> 0.8 0.8 0.8 1
 								<AlbedoMap> Texture/wire_2_Diffuse.dds
 								<NormalMap> Texture/wire_2_Normal.dds
 							</Material>
-							<Material>
+							<Material> metal
 								<AlbedoColor> 0.8 0.8 0.8 1
 								<AlbedoMap> Texture/metal_tex_AlbedoTransparency.dds
 								<MetallicMap> Texture/metal_tex_MetallicSmoothness.dds
@@ -696,7 +696,7 @@
 							<Bounds> 0 1.750737 0.3210279 0.03262174 1.75212 0.3536497
 						</Mesh>
 						<Materials> 1
-							<Material>
+							<Material> metal
 								<AlbedoColor> 0.8 0.8 0.8 1
 								<AlbedoMap> Texture/metal_tex_AlbedoTransparency.dds
 								<MetallicMap> Texture/metal_tex_MetallicSmoothness.dds

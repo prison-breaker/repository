@@ -14,6 +14,8 @@ void CMaterial::LoadMaterialFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCo
 
 		if (Token == TEXT("<Material>"))
 		{
+			File::ReadStringFromFile(InFile, m_Name);
+
 			RegisterShader(CShaderManager::GetInstance()->GetShader("ShadowMapShader"));
 			RegisterShader(CShaderManager::GetInstance()->GetShader("DepthWriteShader"));
 
@@ -192,6 +194,16 @@ void CMaterial::RegisterShader(const shared_ptr<CShader>& Shader)
 	{
 		m_Shaders.push_back(Shader);
 	}
+}
+
+void CMaterial::SetName(const tstring& Name)
+{
+	m_Name = Name;
+}
+
+const tstring& CMaterial::GetName() const
+{
+	return m_Name;
 }
 
 void CMaterial::SetStateNum(SHADER_TYPE ShaderType)

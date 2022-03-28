@@ -103,7 +103,7 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 		if (Token == TEXT("<Name>"))
 		{
 			File::ReadStringFromFile(InFile, Token);
-			ModelInfo = CGameObject::LoadObjectFromFile(D3D12Device, D3D12GraphicsCommandList, Token);
+			ModelInfo = CGameObject::LoadObjectFromFile(D3D12Device, D3D12GraphicsCommandList, Token, MeshCaches, MaterialCaches);
 		}
 		else if (Token == TEXT("<Type>"))
 		{
@@ -387,10 +387,10 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	// 1ÀÎÄª ¸ðµå
 	//Player->GetCamera()->Rotate(Delta.y, Delta.x, 0.0f);
 
-	//if (GetAsyncKeyState('W') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(10.0f * ElapsedTime, Player->GetCamera()->GetLook(), false));
-	//if (GetAsyncKeyState('S') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(-10.0f * ElapsedTime, Player->GetCamera()->GetLook(), false));
-	//if (GetAsyncKeyState('A') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(-10.0f * ElapsedTime, Player->GetCamera()->GetRight(), false));
-	//if (GetAsyncKeyState('D') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(10.0f * ElapsedTime, Player->GetCamera()->GetRight(), false));
+	//if (GetAsyncKeyState('W') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(15.0f * ElapsedTime, Player->GetCamera()->GetLook(), false));
+	//if (GetAsyncKeyState('S') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(-15.0f * ElapsedTime, Player->GetCamera()->GetLook(), false));
+	//if (GetAsyncKeyState('A') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(-15.0f * ElapsedTime, Player->GetCamera()->GetRight(), false));
+	//if (GetAsyncKeyState('D') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(15.0f * ElapsedTime, Player->GetCamera()->GetRight(), false));
 
 	//return;
 

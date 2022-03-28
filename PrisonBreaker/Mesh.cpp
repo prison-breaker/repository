@@ -83,7 +83,7 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 	tstring Token{};
 
 #ifdef READ_BINARY_FILE
-	File::ReadStringFromFile(InFile, m_MeshName);
+	File::ReadStringFromFile(InFile, m_Name);
 
 	while (true)
 	{
@@ -240,7 +240,7 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 		}
 	}
 #else
-	InFile >> m_MeshName;
+	InFile >> m_Name;
 
 	while (InFile >> Token)
 	{
@@ -422,9 +422,14 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 #endif
 }
 
+void CMesh::SetName(const tstring& Name)
+{
+	m_Name = Name;
+}
+
 const tstring& CMesh::GetName() const
 {
-	return m_MeshName;
+	return m_Name;
 }
 
 void CMesh::SetBoundingBox(const BoundingBox& BoundingBox)

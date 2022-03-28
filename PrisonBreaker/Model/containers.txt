@@ -15,7 +15,7 @@
 					<Bounds> 0 0 0 0.01 0.02221408 0.01
 				</Mesh>
 				<Materials> 1
-					<Material>
+					<Material> container
 						<AlbedoColor> 0.7905896 0.7905896 0.7905896 1
 						<AlbedoMap> Texture/green_container_Albedo.dds
 						<MetallicMap> Texture/container_MetallicSmoothness.dds

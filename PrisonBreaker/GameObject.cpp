@@ -43,7 +43,7 @@ shared_ptr<LOADED_MODEL_INFO> CGameObject::LoadObjectFromFile(ID3D12Device* D3D1
 		if (Token == TEXT("<Hierarchy>"))
 		{
 			tcout << FileName << TEXT(" 로드 시작...") << endl;
-			ModelInfo->m_Model = CGameObject::LoadModelInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile, ModelInfo, MeshCaches, MaterialCaches);
+			ModelInfo->m_Model = CGameObject::LoadModelInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile, MeshCaches, MaterialCaches);
 		}
 		else if (Token == TEXT("</Hierarchy>"))
 		{
@@ -65,7 +65,7 @@ shared_ptr<LOADED_MODEL_INFO> CGameObject::LoadObjectFromFile(ID3D12Device* D3D1
 	return ModelInfo;
 }
 
-shared_ptr<CGameObject> CGameObject::LoadModelInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile, const shared_ptr<LOADED_MODEL_INFO>& ModelInfo, unordered_map<tstring, shared_ptr<CMesh>>& MeshCaches, unordered_map<tstring, vector<shared_ptr<CMaterial>>>& MaterialCaches)
+shared_ptr<CGameObject> CGameObject::LoadModelInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile, unordered_map<tstring, shared_ptr<CMesh>>& MeshCaches, unordered_map<tstring, vector<shared_ptr<CMaterial>>>& MaterialCaches)
 {
 	tstring Token{};
 	shared_ptr<CGameObject> NewObject{};
@@ -84,14 +84,14 @@ shared_ptr<CGameObject> CGameObject::LoadModelInfoFromFile(ID3D12Device* D3D12De
 			NewObject->SetActive(true);
 			NewObject->m_FrameName = Token;
 
-			if (MeshCaches.count(NewObject->m_FrameName))
+			if (MeshCaches.count(Token))
 			{
-				NewObject->SetMesh(MeshCaches[NewObject->m_FrameName]);
+				NewObject->SetMesh(MeshCaches[Token]);
 			}
 
-			if (MaterialCaches.count(NewObject->m_FrameName))
+			if (MaterialCaches.count(Token))
 			{
-				copy(MaterialCaches[NewObject->m_FrameName].begin(), MaterialCaches[NewObject->m_FrameName].end(), back_inserter(NewObject->m_Materials));
+				copy(MaterialCaches[Token].begin(), MaterialCaches[Token].end(), back_inserter(NewObject->m_Materials));
 			}
 		}
 		else if (Token == TEXT("<TransformMatrix>"))
@@ -129,6 +129,7 @@ shared_ptr<CGameObject> CGameObject::LoadModelInfoFromFile(ID3D12Device* D3D12De
 			Mesh->LoadMeshInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
 			NewObject->SetMesh(Mesh);
 			NewObject->SetBoundingBox(make_shared<BoundingBox>());
+
 			MeshCaches.emplace(NewObject->m_FrameName, Mesh);
 		}
 		else if (Token == TEXT("<Materials>"))

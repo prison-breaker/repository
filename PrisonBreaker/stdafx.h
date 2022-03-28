@@ -1,7 +1,7 @@
 #pragma once
 
 #define DEBUG_MODE
-//#define READ_BINARY_FILE
+#define READ_BINARY_FILE
 
 #define WIN32_LEAN_AND_MEAN
 
