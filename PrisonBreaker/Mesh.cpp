@@ -105,6 +105,10 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 				m_D3D12PositionBufferView.BufferLocation = m_D3D12PositionBuffer->GetGPUVirtualAddress();
 				m_D3D12PositionBufferView.StrideInBytes = sizeof(XMFLOAT3);
 				m_D3D12PositionBufferView.SizeInBytes = sizeof(XMFLOAT3) * m_VertexCount;
+
+				// 메쉬 캐시는 지역변수이므로 지역을 벗어나면 소멸하기 리소스가 소멸하기 때문에 카운트를 미리 1 증가시켜 놓는다.
+				m_D3D12PositionBuffer->AddRef();
+				m_D3D12PositionUploadBuffer->AddRef();
 			}
 		}
 		else if (Token == TEXT("<Normals>"))
@@ -121,6 +125,10 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 				m_D3D12NormalBufferView.BufferLocation = m_D3D12NormalBuffer->GetGPUVirtualAddress();
 				m_D3D12NormalBufferView.StrideInBytes = sizeof(XMFLOAT3);
 				m_D3D12NormalBufferView.SizeInBytes = sizeof(XMFLOAT3) * m_VertexCount;
+
+				// 메쉬 캐시는 지역변수이므로 지역을 벗어나면 소멸하기 리소스가 소멸하기 때문에 카운트를 미리 1 증가시켜 놓는다.
+				m_D3D12NormalBuffer->AddRef();
+				m_D3D12NormalUploadBuffer->AddRef();
 			}
 		}
 		else if (Token == TEXT("<Tangents>"))
@@ -137,6 +145,10 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 				m_D3D12TangentBufferView.BufferLocation = m_D3D12TangentBuffer->GetGPUVirtualAddress();
 				m_D3D12TangentBufferView.StrideInBytes = sizeof(XMFLOAT3);
 				m_D3D12TangentBufferView.SizeInBytes = sizeof(XMFLOAT3) * m_VertexCount;
+
+				// 메쉬 캐시는 지역변수이므로 지역을 벗어나면 소멸하기 리소스가 소멸하기 때문에 카운트를 미리 1 증가시켜 놓는다.
+				m_D3D12TangentBuffer->AddRef();
+				m_D3D12TangentUploadBuffer->AddRef();
 			}
 		}
 		else if (Token == TEXT("<BiTangents>"))
@@ -153,6 +165,10 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 				m_D3D12BiTangentBufferView.BufferLocation = m_D3D12BiTangentBuffer->GetGPUVirtualAddress();
 				m_D3D12BiTangentBufferView.StrideInBytes = sizeof(XMFLOAT3);
 				m_D3D12BiTangentBufferView.SizeInBytes = sizeof(XMFLOAT3) * m_VertexCount;
+
+				// 메쉬 캐시는 지역변수이므로 지역을 벗어나면 소멸하기 리소스가 소멸하기 때문에 카운트를 미리 1 증가시켜 놓는다.
+				m_D3D12BiTangentBuffer->AddRef();
+				m_D3D12BiTangentUploadBuffer->AddRef();
 			}
 		}
 		else if (Token == TEXT("<TexCoords>"))
@@ -169,6 +185,10 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 				m_D3D12TexCoordBufferView.BufferLocation = m_D3D12TexCoordBuffer->GetGPUVirtualAddress();
 				m_D3D12TexCoordBufferView.StrideInBytes = sizeof(XMFLOAT2);
 				m_D3D12TexCoordBufferView.SizeInBytes = sizeof(XMFLOAT2) * m_VertexCount;
+
+				// 메쉬 캐시는 지역변수이므로 지역을 벗어나면 소멸하기 리소스가 소멸하기 때문에 카운트를 미리 1 증가시켜 놓는다.
+				m_D3D12TexCoordBuffer->AddRef();
+				m_D3D12TexCoordUploadBuffer->AddRef();
 			}
 		}
 		else if (Token == TEXT("<SubMeshes>"))
@@ -199,6 +219,10 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 						m_D3D12IndexBufferViews[i].BufferLocation = m_D3D12IndexBuffers[i]->GetGPUVirtualAddress();
 						m_D3D12IndexBufferViews[i].Format = DXGI_FORMAT_R32_UINT;
 						m_D3D12IndexBufferViews[i].SizeInBytes = sizeof(UINT) * m_IndexCounts[i];
+
+						// 메쉬 캐시는 지역변수이므로 지역을 벗어나면 소멸하기 리소스가 소멸하기 때문에 카운트를 미리 1 증가시켜 놓는다.
+						m_D3D12IndexBuffers[i]->AddRef();
+						m_D3D12IndexUploadBuffers[i]->AddRef();
 					}
 				}
 			}
@@ -233,8 +257,12 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 			m_D3D12IndexBufferViews.back().BufferLocation = m_D3D12IndexBuffers.back()->GetGPUVirtualAddress();
 			m_D3D12IndexBufferViews.back().Format = DXGI_FORMAT_R32_UINT;
 			m_D3D12IndexBufferViews.back().SizeInBytes = sizeof(UINT) * IndexCount;
+
+			// 메쉬 캐시는 지역변수이므로 지역을 벗어나면 소멸하기 리소스가 소멸하기 때문에 카운트를 미리 1 증가시켜 놓는다.
+			m_D3D12IndexBuffers.back()->AddRef();
+			m_D3D12IndexUploadBuffers.back()->AddRef();
 		}
-		else if (Token == TEXT("</Mesh>"))
+		else if (Token == TEXT("</Mesh>") || Token == TEXT("</SkinnedMesh>"))
 		{
 			break;
 		}
@@ -263,6 +291,10 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 				m_D3D12PositionBufferView.BufferLocation = m_D3D12PositionBuffer->GetGPUVirtualAddress();
 				m_D3D12PositionBufferView.StrideInBytes = sizeof(XMFLOAT3);
 				m_D3D12PositionBufferView.SizeInBytes = sizeof(XMFLOAT3) * m_VertexCount;
+
+				// 메쉬 캐시는 지역변수이므로 지역을 벗어나면 소멸하기 리소스가 소멸하기 때문에 카운트를 미리 1 증가시켜 놓는다.
+				m_D3D12PositionBuffer->AddRef();
+				m_D3D12PositionUploadBuffer->AddRef();
 			}
 		}
 		else if (Token == TEXT("<Normals>"))
@@ -282,6 +314,10 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 				m_D3D12NormalBufferView.BufferLocation = m_D3D12NormalBuffer->GetGPUVirtualAddress();
 				m_D3D12NormalBufferView.StrideInBytes = sizeof(XMFLOAT3);
 				m_D3D12NormalBufferView.SizeInBytes = sizeof(XMFLOAT3) * m_VertexCount;
+
+				// 메쉬 캐시는 지역변수이므로 지역을 벗어나면 소멸하기 리소스가 소멸하기 때문에 카운트를 미리 1 증가시켜 놓는다.
+				m_D3D12NormalBuffer->AddRef();
+				m_D3D12NormalUploadBuffer->AddRef();
 			}
 		}
 		else if (Token == TEXT("<Tangents>"))
@@ -301,6 +337,10 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 				m_D3D12TangentBufferView.BufferLocation = m_D3D12TangentBuffer->GetGPUVirtualAddress();
 				m_D3D12TangentBufferView.StrideInBytes = sizeof(XMFLOAT3);
 				m_D3D12TangentBufferView.SizeInBytes = sizeof(XMFLOAT3) * m_VertexCount;
+
+				// 메쉬 캐시는 지역변수이므로 지역을 벗어나면 소멸하기 리소스가 소멸하기 때문에 카운트를 미리 1 증가시켜 놓는다.
+				m_D3D12TangentBuffer->AddRef();
+				m_D3D12TangentUploadBuffer->AddRef();
 			}
 		}
 		else if (Token == TEXT("<BiTangents>"))
@@ -320,6 +360,10 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 				m_D3D12BiTangentBufferView.BufferLocation = m_D3D12BiTangentBuffer->GetGPUVirtualAddress();
 				m_D3D12BiTangentBufferView.StrideInBytes = sizeof(XMFLOAT3);
 				m_D3D12BiTangentBufferView.SizeInBytes = sizeof(XMFLOAT3) * m_VertexCount;
+
+				// 메쉬 캐시는 지역변수이므로 지역을 벗어나면 소멸하기 리소스가 소멸하기 때문에 카운트를 미리 1 증가시켜 놓는다.
+				m_D3D12BiTangentBuffer->AddRef();
+				m_D3D12BiTangentUploadBuffer->AddRef();
 			}
 		}
 		else if (Token == TEXT("<TexCoords>"))
@@ -339,12 +383,16 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 				m_D3D12TexCoordBufferView.BufferLocation = m_D3D12TexCoordBuffer->GetGPUVirtualAddress();
 				m_D3D12TexCoordBufferView.StrideInBytes = sizeof(XMFLOAT2);
 				m_D3D12TexCoordBufferView.SizeInBytes = sizeof(XMFLOAT2) * m_VertexCount;
+
+				// 메쉬 캐시는 지역변수이므로 지역을 벗어나면 소멸하기 리소스가 소멸하기 때문에 카운트를 미리 1 증가시켜 놓는다.
+				m_D3D12TexCoordBuffer->AddRef();
+				m_D3D12TexCoordUploadBuffer->AddRef();
 			}
 		}
 		else if (Token == TEXT("<SubMeshes>"))
 		{
 			UINT SubMeshCount{};
-				
+
 			InFile >> SubMeshCount;
 
 			if (SubMeshCount > 0)
@@ -374,6 +422,10 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 						m_D3D12IndexBufferViews[i].BufferLocation = m_D3D12IndexBuffers[i]->GetGPUVirtualAddress();
 						m_D3D12IndexBufferViews[i].Format = DXGI_FORMAT_R32_UINT;
 						m_D3D12IndexBufferViews[i].SizeInBytes = sizeof(UINT) * m_IndexCounts[i];
+
+						// 메쉬 캐시는 지역변수이므로 지역을 벗어나면 소멸하기 리소스가 소멸하기 때문에 카운트를 미리 1 증가시켜 놓는다.
+						m_D3D12IndexBuffers[i]->AddRef();
+						m_D3D12IndexUploadBuffers[i]->AddRef();
 					}
 				}
 			}
@@ -413,8 +465,12 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 			m_D3D12IndexBufferViews.back().BufferLocation = m_D3D12IndexBuffers.back()->GetGPUVirtualAddress();
 			m_D3D12IndexBufferViews.back().Format = DXGI_FORMAT_R32_UINT;
 			m_D3D12IndexBufferViews.back().SizeInBytes = sizeof(UINT) * IndexCount;
+
+			// 메쉬 캐시는 지역변수이므로 지역을 벗어나면 소멸하기 리소스가 소멸하기 때문에 카운트를 미리 1 증가시켜 놓는다.
+			m_D3D12IndexBuffers.back()->AddRef();
+			m_D3D12IndexUploadBuffers.back()->AddRef();
 		}
-		else if (Token == TEXT("</Mesh>"))
+		else if (Token == TEXT("</Mesh>") || Token == TEXT("</SkinnedMesh>"))
 		{
 			break;
 		}
@@ -453,6 +509,76 @@ void CMesh::RenderBoundingBox(ID3D12GraphicsCommandList* D3D12GraphicsCommandLis
 }
 
 //=========================================================================================================================
+
+CSkinnedMesh::CSkinnedMesh(const CSkinnedMesh& Rhs)
+{
+	m_Name = Rhs.m_Name;
+
+	m_D3D12PrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
+	m_VertexCount = Rhs.m_VertexCount;
+	m_IndexCounts.assign(Rhs.m_IndexCounts.begin(), Rhs.m_IndexCounts.end());
+
+	m_D3D12PositionBuffer = Rhs.m_D3D12PositionBuffer;
+	m_D3D12PositionUploadBuffer = Rhs.m_D3D12PositionUploadBuffer;
+	m_D3D12PositionBufferView = Rhs.m_D3D12PositionBufferView;
+
+	m_D3D12NormalBuffer = Rhs.m_D3D12NormalBuffer;
+	m_D3D12NormalUploadBuffer = Rhs.m_D3D12NormalUploadBuffer;
+	m_D3D12NormalBufferView = Rhs.m_D3D12NormalBufferView;
+
+	m_D3D12TangentBuffer = Rhs.m_D3D12TangentBuffer;
+	m_D3D12TangentUploadBuffer = Rhs.m_D3D12TangentUploadBuffer;
+	m_D3D12TangentBufferView = Rhs.m_D3D12TangentBufferView;
+
+	m_D3D12BiTangentBuffer = Rhs.m_D3D12BiTangentBuffer;
+	m_D3D12BiTangentUploadBuffer = Rhs.m_D3D12BiTangentUploadBuffer;
+	m_D3D12BiTangentBufferView = Rhs.m_D3D12BiTangentBufferView;
+
+	m_D3D12TexCoordBuffer = Rhs.m_D3D12TexCoordBuffer;
+	m_D3D12TexCoordUploadBuffer = Rhs.m_D3D12TexCoordUploadBuffer;
+	m_D3D12TexCoordBufferView = Rhs.m_D3D12TexCoordBufferView;
+
+	m_D3D12BoundingBoxPositionBuffer = Rhs.m_D3D12BoundingBoxPositionBuffer;
+	m_D3D12BoundingBoxPositionUploadBuffer = Rhs.m_D3D12BoundingBoxPositionUploadBuffer;
+	m_D3D12BoundingBoxPositionBufferView = Rhs.m_D3D12BoundingBoxPositionBufferView;
+
+	m_D3D12PositionBuffer->AddRef();
+	m_D3D12PositionUploadBuffer->AddRef();
+
+	m_D3D12NormalBuffer->AddRef();
+	m_D3D12NormalUploadBuffer->AddRef();
+
+	m_D3D12TangentBuffer->AddRef();
+	m_D3D12TangentUploadBuffer->AddRef();
+
+	m_D3D12BiTangentBuffer->AddRef();
+	m_D3D12BiTangentUploadBuffer->AddRef();
+
+	m_D3D12TexCoordBuffer->AddRef();
+	m_D3D12TexCoordUploadBuffer->AddRef();
+
+	m_D3D12BoundingBoxPositionBuffer->AddRef();
+	m_D3D12BoundingBoxPositionUploadBuffer->AddRef();
+
+	UINT IndexBufferSize{ static_cast<UINT>(Rhs.m_D3D12IndexBuffers.size()) };
+
+	m_D3D12IndexBuffers.reserve(IndexBufferSize);
+	m_D3D12IndexUploadBuffers.reserve(IndexBufferSize);
+	m_D3D12IndexBufferViews.reserve(IndexBufferSize);
+
+	for (UINT i = 0; i < IndexBufferSize; ++i)
+	{
+		m_D3D12IndexBuffers.push_back(Rhs.m_D3D12IndexBuffers[i]);
+		m_D3D12IndexUploadBuffers.push_back(Rhs.m_D3D12IndexUploadBuffers[i]);
+		m_D3D12IndexBufferViews.push_back(Rhs.m_D3D12IndexBufferViews[i]);
+
+		m_D3D12IndexBuffers[i]->AddRef();
+		m_D3D12IndexUploadBuffers[i]->AddRef();
+	}
+
+	m_BoundingBox = Rhs.m_BoundingBox;
+}
 
 void CSkinnedMesh::CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {

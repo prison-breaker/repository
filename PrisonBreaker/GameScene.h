@@ -74,5 +74,8 @@ public:
 	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 	virtual void PostRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 
+	void LoadMeshCachesFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName, unordered_map<tstring, shared_ptr<CMesh>>& MeshCaches);
+	void LoadMaterialCachesFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName, unordered_map<tstring, shared_ptr<CMaterial>>& MaterialCaches);
+
 	void BuildLights();
 };

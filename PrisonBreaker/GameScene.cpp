@@ -54,9 +54,9 @@ void CGameScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandLi
 
 	// 파일로부터 씬 객체들을 생성하고 배치한다.
 #ifdef READ_BINARY_FILE
-	LoadSceneInfoFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Model/GameScene.bin"));
+	LoadSceneInfoFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Scenes/GameScene.bin"));
 #else
-	LoadSceneInfoFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Model/GameScene.txt"));
+	LoadSceneInfoFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Scenes/GameScene.txt"));
 #endif
 
 	// 빌보드 객체 타입 수만큼 벡터의 크기를 재할당한다.
@@ -66,9 +66,9 @@ void CGameScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandLi
 	m_BilboardObjects[BILBOARD_OBJECT_TYPE_SKYBOX].push_back(make_shared<CSkyBox>(D3D12Device, D3D12GraphicsCommandList));
 
 #ifdef READ_BINARY_FILE
-	LoadUIInfoFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Model/GameScene_UI.bin"));
+	LoadUIInfoFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Scenes/GameScene_UI.bin"));
 #else
-	LoadUIInfoFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Model/GameScene_UI.txt"));
+	LoadUIInfoFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Scenes/GameScene_UI.txt"));
 #endif
 
 	// 모든 텍스처를 저장하는 힙과 각 텍스처의 SRV 리소스를 생성한다.
@@ -83,6 +83,8 @@ void CGameScene::ReleaseObjects()
 	ReleaseShaderVariables();
 }
 
+
+
 void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName)
 {
 	tstring Token{};
@@ -91,9 +93,12 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 	UINT ObjectType{};
 
 	unordered_map<tstring, shared_ptr<CMesh>> MeshCaches{};
-	unordered_map<tstring, vector<shared_ptr<CMaterial>>> MaterialCaches{};
+	unordered_map<tstring, shared_ptr<CMaterial>> MaterialCaches{};
 
 #ifdef READ_BINARY_FILE
+	LoadMeshCachesFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("MeshesAndMaterials/Meshes.bin"), MeshCaches);
+	LoadMaterialCachesFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("MeshesAndMaterials/Materials.bin"), MaterialCaches);
+
 	tifstream InFile{ FileName, ios::binary };
 
 	while (true)
@@ -129,7 +134,7 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
 				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
 				m_GameObjects[ObjectType].back()->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
-				m_GameObjects[ObjectType].back()->SetAnimationClip(Random::Random(1.0f, 5.0f));
+				m_GameObjects[ObjectType].back()->SetAnimationClip(static_cast<UINT>(Random::Random(1.0f, 5.0f)));
 				break;
 			case OBJECT_TYPE_TERRAIN:
 			case OBJECT_TYPE_STRUCTURE:
@@ -146,6 +151,9 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 		}
 	}
 #else
+	LoadMeshCachesFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("MeshesAndMaterials/Meshes.txt"), MeshCaches);
+	LoadMaterialCachesFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("MeshesAndMaterials/Materials.txt"), MaterialCaches);
+
 	tifstream InFile{ FileName };
 
 	while (InFile >> Token)
@@ -182,6 +190,7 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
 				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
 				m_GameObjects[ObjectType].back()->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
+				m_GameObjects[ObjectType].back()->SetAnimationClip(static_cast<UINT>(Random::Random(1.0f, 5.0f)));
 				break;
 			case OBJECT_TYPE_TERRAIN:
 			case OBJECT_TYPE_STRUCTURE:
@@ -572,6 +581,155 @@ void CGameScene::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 void CGameScene::PostRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
 
+}
+
+void CGameScene::LoadMeshCachesFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName, unordered_map<tstring, shared_ptr<CMesh>>& MeshCaches)
+{
+	tstring Token{};
+
+#ifdef READ_BINARY_FILE
+	tifstream InFile{ FileName, ios::binary };
+
+	while (true)
+	{
+		File::ReadStringFromFile(InFile, Token);
+
+		if (Token == TEXT("<Meshes>"))
+		{
+			UINT MeshCount{ File::ReadIntegerFromFile(InFile) };
+
+			if (MeshCount > 0)
+			{
+				tcout << TEXT("총 ") << MeshCount << TEXT("개의 메쉬를 읽어오는 중입니다.") << endl;
+				MeshCaches.reserve(MeshCount);
+			}
+		}
+		else if (Token == TEXT("<Mesh>"))
+		{
+			shared_ptr<CMesh> Mesh{ make_shared<CMesh>() };
+
+			Mesh->LoadMeshInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
+			MeshCaches.emplace(Mesh->GetName(), Mesh);
+		}
+		else if (Token == TEXT("<SkinnedMesh>"))
+		{
+			shared_ptr<CSkinnedMesh> SkinnedMesh{ make_shared<CSkinnedMesh>() };
+
+			SkinnedMesh->LoadMeshInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
+			MeshCaches.emplace(SkinnedMesh->GetName(), SkinnedMesh);
+		}
+		else if (Token == TEXT("</Meshes>"))
+		{
+			tcout << TEXT("총 ") << MeshCaches.size() << TEXT("개의 메쉬를 읽어왔습니다.") << endl;
+			break;
+		}
+	}
+#else
+	tifstream InFile{ FileName };
+
+	while (InFile >> Token)
+	{
+		if (Token == TEXT("<Meshes>"))
+		{
+			UINT MeshCount{};
+
+			InFile >> MeshCount;
+
+			if (MeshCount > 0)
+			{
+				tcout << TEXT("총 ") << MeshCount << TEXT("개의 메쉬를 읽어오는 중입니다.") << endl;
+				MeshCaches.reserve(MeshCount);
+			}
+		}
+		else if (Token == TEXT("<Mesh>"))
+		{
+			shared_ptr<CMesh> Mesh{ make_shared<CMesh>() };
+
+			Mesh->LoadMeshInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
+			MeshCaches.emplace(Mesh->GetName(), Mesh);
+		}
+		else if (Token == TEXT("<SkinnedMesh>"))
+		{
+			shared_ptr<CSkinnedMesh> SkinnedMesh{ make_shared<CSkinnedMesh>() };
+
+			SkinnedMesh->LoadMeshInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
+			MeshCaches.emplace(SkinnedMesh->GetName(), SkinnedMesh);
+		}
+		else if (Token == TEXT("</Meshes>"))
+		{
+			tcout << TEXT("총 ") << MeshCaches.size() << TEXT("개의 메쉬를 읽어왔습니다.") << endl;
+			break;
+		}
+	}
+#endif
+}
+
+void CGameScene::LoadMaterialCachesFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName, unordered_map<tstring, shared_ptr<CMaterial>>& MaterialCaches)
+{
+	tstring Token{};
+
+#ifdef READ_BINARY_FILE
+	tifstream InFile{ FileName, ios::binary };
+
+	while (true)
+	{
+		File::ReadStringFromFile(InFile, Token);
+
+		if (Token == TEXT("<Materials>"))
+		{
+			UINT MaterialCount{ File::ReadIntegerFromFile(InFile) };
+
+			if (MaterialCount > 0)
+			{
+				tcout << TEXT("총 ") << MaterialCount << TEXT("개의 메터리얼을 읽어오는 중입니다.") << endl;
+				MaterialCaches.reserve(MaterialCount);
+			}
+		}
+		else if (Token == TEXT("<Material>"))
+		{
+			shared_ptr<CMaterial> Material{ make_shared<CMaterial>() };
+
+			Material->LoadMaterialInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
+			MaterialCaches.emplace(Material->GetName(), Material);
+		}
+		else if (Token == TEXT("</Materials>"))
+		{
+			tcout << TEXT("총 ") << MaterialCaches.size() << TEXT("개의 메터리얼을 읽어왔습니다.") << endl;
+			break;
+		}
+	}
+
+#else
+	tifstream InFile{ FileName };
+
+	while (InFile >> Token)
+	{
+		if (Token == TEXT("<Materials>"))
+		{
+			UINT MaterialCount{};
+
+			InFile >> MaterialCount;
+
+			if (MaterialCount > 0)
+			{
+				tcout << TEXT("총 ") << MaterialCount << TEXT("개의 메터리얼을 읽어오는 중입니다.") << endl;
+				MaterialCaches.reserve(MaterialCount);
+			}
+		}
+		else if (Token == TEXT("<Material>"))
+		{
+			shared_ptr<CMaterial> Material{ make_shared<CMaterial>() };
+
+			Material->LoadMaterialInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
+			MaterialCaches.emplace(Material->GetName(), Material);
+		}
+		else if (Token == TEXT("</Materials>"))
+		{
+			tcout << TEXT("총 ") << MaterialCaches.size() << TEXT("개의 메터리얼을 읽어왔습니다.") << endl;
+			break;
+		}
+	}
+#endif
 }
 
 void CGameScene::BuildLights()

@@ -2,24 +2,24 @@
 #include "Material.h"
 #include "Shader.h"
 
-void CMaterial::LoadMaterialFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile, bool IsSkinnedMesh)
+void CMaterial::LoadMaterialInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile)
 {
 	tstring Token{};
 	shared_ptr<CTexture> Texture{};
 
 #ifdef READ_BINARY_FILE
+	File::ReadStringFromFile(InFile, m_Name);
+
 	while (true)
 	{
 		File::ReadStringFromFile(InFile, Token);
 
-		if (Token == TEXT("<Material>"))
+		if (Token == TEXT("<IsSkinnedMesh>"))
 		{
-			File::ReadStringFromFile(InFile, m_Name);
+			m_StateNum = File::ReadIntegerFromFile(InFile);
 
 			RegisterShader(CShaderManager::GetInstance()->GetShader("ShadowMapShader"));
 			RegisterShader(CShaderManager::GetInstance()->GetShader("DepthWriteShader"));
-
-			m_StateNum = (IsSkinnedMesh) ? SHADER_TYPE_WITH_SKINNING : SHADER_TYPE_STANDARD;
 		}
 		else if (Token == TEXT("<AlbedoColor>"))
 		{
@@ -88,14 +88,16 @@ void CMaterial::LoadMaterialFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCo
 		}
 	}
 #else
+	InFile >> m_Name;
+
 	while (InFile >> Token)
 	{
-		if (Token == TEXT("<Material>"))
+		if (Token == TEXT("<IsSkinnedMesh>"))
 		{
+			InFile >> m_StateNum;
+
 			RegisterShader(CShaderManager::GetInstance()->GetShader("ShadowMapShader"));
 			RegisterShader(CShaderManager::GetInstance()->GetShader("DepthWriteShader"));
-
-			m_StateNum = (IsSkinnedMesh) ? SHADER_TYPE_WITH_SKINNING : SHADER_TYPE_STANDARD;
 		}
 		else if (Token == TEXT("<AlbedoColor>"))
 		{

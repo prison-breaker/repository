@@ -1,0 +1,74 @@
+<UI>
+	<UIObject>
+		<IsActive> 1
+		<TextureName> Textures/Mission_UI.dds
+		<CellInfo> 3 2
+		<RectTransform> 2 159 289 0 240 104 159 419 4 240 104 
+		<Animation>
+			<AnimationClips> 1
+				<AnimationClip> Show 60 30 0.5
+					<RectTransform> 0.01666667 -118.535 289 0 240 104 -119.3181 419 4 240 104 
+					<RectTransform> 0.03333334 -111.48 289 0 240 104 -114.4567 419 4 240 104 
+					<RectTransform> 0.05 -100.345 289 0 240 104 -106.6921 419 4 240 104 
+					<RectTransform> 0.06666667 -85.64001 289 0 240 104 -96.30115 419 4 240 104 
+					<RectTransform> 0.08333334 -67.875 289 0 240 104 -83.56006 419 4 240 104 
+					<RectTransform> 0.1 -47.56 289 0 240 104 -68.74524 419 4 240 104 
+					<RectTransform> 0.1166667 -25.20502 289 0 240 104 -52.13342 419 4 240 104 
+					<RectTransform> 0.1333333 -1.320007 289 0 240 104 -34.00098 419 4 240 104 
+					<RectTransform> 0.15 23.58496 289 0 240 104 -14.62433 419 4 240 104 
+					<RectTransform> 0.1666667 49 289 0 240 104 5.719971 419 4 240 104 
+					<RectTransform> 0.1833333 74.41498 289 0 240 104 26.75555 419 4 240 104 
+					<RectTransform> 0.2 99.31995 289 0 240 104 48.20575 419 4 240 104 
+					<RectTransform> 0.2166667 123.205 289 0 240 104 69.79425 419 4 240 104 
+					<RectTransform> 0.2333333 145.5599 289 0 240 104 91.24451 419 4 240 104 
+					<RectTransform> 0.25 165.875 289 0 240 104 112.28 419 4 240 104 
+					<RectTransform> 0.2666667 183.64 289 0 240 104 132.6243 419 4 240 104 
+					<RectTransform> 0.2833334 198.345 289 0 240 104 152.001 419 4 240 104 
+					<RectTransform> 0.3 209.48 289 0 240 104 170.1335 419 4 240 104 
+					<RectTransform> 0.3166667 216.535 289 0 240 104 186.7454 419 4 240 104 
+					<RectTransform> 0.3333334 219 289 0 240 104 201.5601 419 4 240 104 
+					<RectTransform> 0.3500001 217.32 289 0 240 104 214.3012 419 4 240 104 
+					<RectTransform> 0.3666668 212.7599 289 0 240 104 224.6923 419 4 240 104 
+					<RectTransform> 0.3833334 206.04 289 0 240 104 232.4567 419 4 240 104 
+					<RectTransform> 0.4000001 197.8799 289 0 240 104 237.3181 419 4 240 104 
+					<RectTransform> 0.4166668 188.9999 289 0 240 104 239 419 4 240 104 
+					<RectTransform> 0.4333335 180.1199 289 0 240 104 230.6799 419 4 240 104 
+					<RectTransform> 0.4500002 171.9599 289 0 240 104 210.8398 419 4 240 104 
+					<RectTransform> 0.4666668 165.2399 289 0 240 104 187.1597 419 4 240 104 
+					<RectTransform> 0.4833335 160.68 289 0 240 104 167.3198 419 4 240 104 
+					<RectTransform> 0.5000002 159 289 0 240 104 159 419 4 240 104 
+				</AnimationClip>
+			</AnimationClips>
+		</Animation>
+	</UIObject>
+	<UIObject>
+		<IsActive> 1
+		<TextureName> Textures/Portrait_UI.dds
+		<RectTransform> 1 99 979 0 120 120 
+	</UIObject>
+	<UIObject>
+		<IsActive> 1
+		<TextureName> Textures/Life_UI.dds
+		<RectTransform> 1 199 949 0 40 40 
+	</UIObject>
+	<UIObject>
+		<IsActive> 1
+		<TextureName> Textures/Blood_UI.dds
+		<RectTransform> 10 249 949 0 15 24 269 949 0 15 24 289 949 0 15 24 309 949 0 15 24 329 949 0 15 24 349 949 0 15 24 369 949 0 15 24 389 949 0 15 24 409 949 0 15 24 429 949 0 15 24 
+	</UIObject>
+	<UIObject>
+		<IsActive> 1
+		<TextureName> Textures/Punch_UI.dds
+		<RectTransform> 1 199 1009 0 40 40 
+	</UIObject>
+	<UIObject>
+		<IsActive> 0
+		<TextureName> Textures/Pistol_UI.dds
+		<RectTransform> 1 199 1009 0 50 34 
+	</UIObject>
+	<UIObject>
+		<IsActive> 0
+		<TextureName> Textures/Bullet_UI.dds
+		<RectTransform> 5 249 1009 0 8 32 269 1009 0 8 32 289 1009 0 8 32 309 1009 0 8 32 329 1009 0 8 32 
+	</UIObject>
+</UI>
