@@ -18,6 +18,14 @@
 #define TEXTURE_MASK_NORMAL_MAP      0x04
 #define TEXTURE_MASK_SHADOW_MAP      0x08
 
+struct MATERIAL
+{
+	float4 AlbedoColor;
+
+	uint   TextureMask;
+	float2 TextureScale;
+};
+
 struct LIGHT
 {
 	bool	 m_IsActive;
@@ -25,7 +33,7 @@ struct LIGHT
 	float3	 m_Position;
 	float3	 m_Direction;
 			 
-	int		 m_Type;
+	uint	 m_Type;
 			 
 	float4	 m_Color;
 			 
@@ -65,8 +73,7 @@ cbuffer CB_OBJECT : register(b3)
 {
 	matrix WorldMatrix : packoffset(c0);
 
-	float4 AlbedoColor : packoffset(c4);
-	uint   TextureMask : packoffset(c5);
+	MATERIAL Material  : packoffset(c4);
 };
 
 cbuffer CB_BONE_OFFSET : register(b4)
@@ -200,7 +207,7 @@ VS_OUTPUT VS_Main(VS_INPUT Input)
 	Output.m_NormalW = mul(Input.m_Normal, (float3x3)WorldMatrix);
 	Output.m_TangentW = mul(Input.m_Tangent, (float3x3)WorldMatrix);
 	Output.m_BiTangentW = mul(Input.m_BiTangent, (float3x3)WorldMatrix);
-	Output.m_TexCoord = Input.m_TexCoord;
+	Output.m_TexCoord = Material.TextureScale * Input.m_TexCoord;
 	Output.m_ShadowTexCoord = mul(PositionW, Lights[1].m_ToTexCoordMatrix);
 
 	return Output;
@@ -210,23 +217,23 @@ float4 PS_Main(VS_OUTPUT Input) : SV_TARGET
 {
 	float4 Color = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
-	if (TextureMask & TEXTURE_MASK_ALBEDO_MAP)
+	if (Material.TextureMask & TEXTURE_MASK_ALBEDO_MAP)
 	{
-		Color += AlbedoMapTexture.Sample(Sampler, Input.m_TexCoord) * AlbedoColor;
+		Color += AlbedoMapTexture.Sample(Sampler, Input.m_TexCoord) * Material.AlbedoColor;
 	}
 	else
 	{
-		Color += AlbedoColor;
+		Color += Material.AlbedoColor;
 	}
 
-	//if (TextureMask & TEXTURE_MASK_METALLIC_MAP)
+	//if (Material.TextureMask & TEXTURE_MASK_METALLIC_MAP)
 	//{
 	//	Color += MetallicMapTexture.Sample(Sampler, Input.m_TexCoord);
 	//}
 
 	float3 NormalW = float3(0.0f, 0.0f, 0.0f);
 
-	if (TextureMask & TEXTURE_MASK_NORMAL_MAP)
+	if (Material.TextureMask & TEXTURE_MASK_NORMAL_MAP)
 	{
 		float3x3 TBN = float3x3(Input.m_TangentW, Input.m_BiTangentW, Input.m_NormalW);
 
@@ -274,7 +281,7 @@ VS_OUTPUT VS_Main_Skinning(VS_INPUT_SKINNING Input)
 	Output.m_NormalW = mul(Input.m_Normal, (float3x3)SkinnedWorldMatrix);
 	Output.m_TangentW = mul(Input.m_Tangent, (float3x3)SkinnedWorldMatrix);
 	Output.m_BiTangentW = mul(Input.m_BiTangent, (float3x3)SkinnedWorldMatrix);
-	Output.m_TexCoord = Input.m_TexCoord;
+	Output.m_TexCoord = Material.TextureScale * Input.m_TexCoord;
 	Output.m_ShadowTexCoord = mul(PositionW, Lights[1].m_ToTexCoordMatrix);
 
 	return Output;

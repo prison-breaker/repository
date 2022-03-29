@@ -83,8 +83,6 @@ void CGameScene::ReleaseObjects()
 	ReleaseShaderVariables();
 }
 
-
-
 void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName)
 {
 	tstring Token{};
@@ -266,7 +264,7 @@ void CGameScene::CreateRootSignature(ID3D12Device* D3D12Device)
 	D3D12RootParameters[ROOT_PARAMETER_TYPE_FRAMEWORK_INFO].InitAsConstantBufferView(0);					   // 프레임워크 정보(b0)
 	D3D12RootParameters[ROOT_PARAMETER_TYPE_CAMERA].InitAsConstantBufferView(1);							   // 카메라 정보(b1)
 	D3D12RootParameters[ROOT_PARAMETER_TYPE_LIGHT].InitAsConstantBufferView(2);							       // 조명 정보(b2)
-	D3D12RootParameters[ROOT_PARAMETER_TYPE_OBJECT].InitAsConstants(21, 3);								       // 오브젝트 정보(b3)
+	D3D12RootParameters[ROOT_PARAMETER_TYPE_OBJECT].InitAsConstants(23, 3);								       // 오브젝트 정보(b3)
 	D3D12RootParameters[ROOT_PARAMETER_TYPE_BONE_OFFSET].InitAsConstantBufferView(4);						   // 조명 정보(b4)
 	D3D12RootParameters[ROOT_PARAMETER_TYPE_BONE_TRANSFORM].InitAsConstantBufferView(5);					   // 조명 정보(b5)
 	D3D12RootParameters[ROOT_PARAMETER_TYPE_ALBEDO_MAP].InitAsDescriptorTable(1, &D3D12DescriptorRanges[0]);   // 텍스처 정보(AlbedoMap : t0)

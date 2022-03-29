@@ -13,6 +13,7 @@ private:
 
 	vector<shared_ptr<CTexture>> m_Textures{};
 	UINT						 m_TextureMask{};
+	XMFLOAT2					 m_TextureScale{ 1.0f, 1.0f }; // Tiling
 
 	vector<shared_ptr<CShader>>  m_Shaders{};
 	UINT						 m_StateNum{};

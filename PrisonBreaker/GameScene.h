@@ -13,7 +13,7 @@ struct LIGHT
 	XMFLOAT3   m_Position{};
 	XMFLOAT3   m_Direction{};
 			   
-	int		   m_Type{};
+	UINT	   m_Type{};
 			   
 	XMFLOAT4   m_Color{};
 			   

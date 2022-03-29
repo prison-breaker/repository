@@ -14,12 +14,16 @@ void CMaterial::LoadMaterialInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphi
 	{
 		File::ReadStringFromFile(InFile, Token);
 
-		if (Token == TEXT("<IsSkinnedMesh>"))
+		if (Token == TEXT("<StateNum>"))
 		{
 			m_StateNum = File::ReadIntegerFromFile(InFile);
 
 			RegisterShader(CShaderManager::GetInstance()->GetShader("ShadowMapShader"));
 			RegisterShader(CShaderManager::GetInstance()->GetShader("DepthWriteShader"));
+		}
+		else if (Token == TEXT("<TextureScale>"))
+		{
+			InFile.read(reinterpret_cast<TCHAR*>(&m_TextureScale), sizeof(XMFLOAT2));
 		}
 		else if (Token == TEXT("<AlbedoColor>"))
 		{
@@ -92,12 +96,16 @@ void CMaterial::LoadMaterialInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphi
 
 	while (InFile >> Token)
 	{
-		if (Token == TEXT("<IsSkinnedMesh>"))
+		if (Token == TEXT("<StateNum>"))
 		{
 			InFile >> m_StateNum;
 
 			RegisterShader(CShaderManager::GetInstance()->GetShader("ShadowMapShader"));
 			RegisterShader(CShaderManager::GetInstance()->GetShader("DepthWriteShader"));
+		}
+		else if (Token == TEXT("<TextureScale>"))
+		{
+			InFile >> m_TextureScale.x >> m_TextureScale.y;
 		}
 		else if (Token == TEXT("<AlbedoColor>"))
 		{
@@ -172,6 +180,7 @@ void CMaterial::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCo
 {
 	D3D12GraphicsCommandList->SetGraphicsRoot32BitConstants(ROOT_PARAMETER_TYPE_OBJECT, 4, &m_AlbedoColor, 16);
 	D3D12GraphicsCommandList->SetGraphicsRoot32BitConstants(ROOT_PARAMETER_TYPE_OBJECT, 1, &m_TextureMask, 20);
+	D3D12GraphicsCommandList->SetGraphicsRoot32BitConstants(ROOT_PARAMETER_TYPE_OBJECT, 2, &m_TextureScale, 21);
 
 	for (const auto& Texture : m_Textures)
 	{
