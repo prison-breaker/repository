@@ -26,7 +26,7 @@ private:
 	float		                m_Roll{};
 	float		                m_Yaw{};
 				                
-	XMFLOAT3	                m_Offset{ 0.0f, 0.0, -6.0f };
+	XMFLOAT3	                m_Offset{ 0.0f, 0.0, -4.0f };
 	float		                m_TimeLag{ 0.1f };
 	
 	BoundingFrustum             m_BoundingFrustum{};

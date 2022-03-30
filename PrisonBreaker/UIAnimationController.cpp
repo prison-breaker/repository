@@ -131,9 +131,5 @@ void CUIAnimationController::UpdateAnimationClip(float ElapsedTime, const shared
 		break;
 	case ANIMATION_TYPE_ONCE:
 		break;
-	case ANIMATION_TYPE_PINGPONG:
-		break;
-	case ANIMATION_TYPE_ONCE_PINGPONG:
-		break;
 	}
 }

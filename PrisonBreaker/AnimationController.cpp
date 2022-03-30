@@ -145,7 +145,13 @@ void CAnimationController::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D1
 
 void CAnimationController::SetAnimationClip(UINT ClipNum)
 {
+	if (ClipNum < 0 || ClipNum >= m_AnimationClips.size() || m_ClipNum == ClipNum)
+	{
+		return;
+	}
+
 	m_ClipNum = ClipNum;
+	m_AnimationClips[m_ClipNum]->m_KeyFrameIndex = 0;
 }
 
 void CAnimationController::UpdateAnimationClip(float ElapsedTime, const shared_ptr<CGameObject>& RootObject)
@@ -173,10 +179,20 @@ void CAnimationController::UpdateAnimationClip(float ElapsedTime, const shared_p
 		}
 		break;
 	case ANIMATION_TYPE_ONCE:
+		m_AnimationClips[m_ClipNum]->m_KeyFrameIndex += 1;
+
+		if (m_AnimationClips[m_ClipNum]->m_KeyFrameIndex >= m_AnimationClips[m_ClipNum]->m_KeyFrameCount)
+		{
+			m_AnimationClips[m_ClipNum]->m_KeyFrameIndex -= 1;
+		}
 		break;
-	case ANIMATION_TYPE_PINGPONG:
-		break;
-	case ANIMATION_TYPE_ONCE_PINGPONG:
+	case ANIMATION_TYPE_ONCE_REVERSE:
+		m_AnimationClips[m_ClipNum]->m_KeyFrameIndex -= 1;
+
+		if (m_AnimationClips[m_ClipNum]->m_KeyFrameIndex < 0)
+		{
+			m_AnimationClips[m_ClipNum]->m_KeyFrameIndex = m_AnimationClips[m_ClipNum]->m_KeyFrameCount - 1;
+		}
 		break;
 	}
 

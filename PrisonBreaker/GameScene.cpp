@@ -125,6 +125,7 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
 				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
 				m_GameObjects[ObjectType].back()->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
+				m_GameObjects[ObjectType].back()->FindFrame(TEXT("gun_pr_1"))->SetActive(false);
 				break;
 			case OBJECT_TYPE_NPC:
 				m_GameObjects[ObjectType].push_back(make_shared<CGameObject>());
@@ -344,7 +345,42 @@ void CGameScene::ProcessMouseMessage(HWND hWnd, UINT Message, WPARAM wParam, LPA
 
 void CGameScene::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
-
+	switch (wParam)
+	{
+	case '0': // ±ÇÃÑ È¹µæ
+		static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER].back())->AcquirePistol();
+		if (static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER].back())->SwapWeapon(WEAPON_TYPE_PISTOL))
+		{
+			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(false); // 4: Punch UI
+			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][5]->SetActive(true);	 // 5: Pistol UI
+			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(true);	 // 6: Bullet UI
+		}
+		break;
+	case '1': // ¹«±â ½º¿Ò - ÆÝÄ¡
+		if (static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER].back())->SwapWeapon(WEAPON_TYPE_PUNCH))
+		{
+			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(true);  // 4: Punch UI
+			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][5]->SetActive(false); // 5: Pistol UI
+			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(false); // 6: Bullet UI
+		}
+		break;
+	case '2': // ¹«±â ½º¿Ò - ±ÇÃÑ
+		if (static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER].back())->SwapWeapon(WEAPON_TYPE_PISTOL))
+		{
+			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(false); // 4: Punch UI
+			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][5]->SetActive(true);	 // 5: Pistol UI
+			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(true);	 // 6: Bullet UI
+		}
+		break;
+	case '3': // ¹Ì¼Ç UI ¿Ï·á µð¹ö±ë
+		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(1, 0);
+		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(5, 1);
+		break;
+	case 'b':
+	case 'B':
+		(m_RenderBoundingBox) ? m_RenderBoundingBox = false : m_RenderBoundingBox = true;
+		break;
+	}
 }
 
 void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
@@ -406,7 +442,7 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 
 	UINT Action{};
 	XMFLOAT3 Direction{};
-	float Speed{ 7.0f };
+	float Speed{ 3.15f };
 
 	if (GetAsyncKeyState('W') & 0x8000) Action |= MOVE_FORWARD;
 	if (GetAsyncKeyState('S') & 0x8000) Action |= MOVE_BACKWARD;
@@ -445,48 +481,47 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 		break;
 	case MOVE_FORWARD | RUNNING:
 		Direction = Player->GetLook();
-		Speed += 5.0f;
+		Speed = 12.6f;
 		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(4); // 4: Running
 		break;
 	case MOVE_FORWARD | MOVE_LEFT_STRAFE | RUNNING:
 		Direction = Vector3::Add(Player->GetLook(), XMFLOAT3(-Player->GetRight().x, Player->GetRight().y, -Player->GetRight().z));
-		Speed += 5.0f;
+		Speed = 12.6f;
 		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(4); // 4: Running
 		break;
 	case MOVE_FORWARD | MOVE_RIGHT_STRAFE | RUNNING:
 		Direction = Vector3::Add(Player->GetLook(), Player->GetRight());
-		Speed += 5.0f;
+		Speed = 12.6f;
 		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(4); // 4: Running
 		break;
 
 	case MOVE_BACKWARD:
 	case MOVE_BACKWARD | RUNNING:
 		Direction = Player->GetLook();
-		Speed *= -1.0f;
+		Speed = -3.15f;
 		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(1); // 1: Crouched Walk
 		break;
 	case MOVE_BACKWARD | MOVE_LEFT_STRAFE:
 	case MOVE_BACKWARD | MOVE_LEFT_STRAFE | RUNNING:
 		Direction = Vector3::Add(Player->GetLook(), Player->GetRight());
-		Speed *= -1.0f;
+		Speed = -3.15f;
 		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(1); // 1: Crouched Walk
 		break;
 	case MOVE_BACKWARD | MOVE_RIGHT_STRAFE:
 	case MOVE_BACKWARD | MOVE_RIGHT_STRAFE | RUNNING:
 		Direction = Vector3::Add(Player->GetLook(), XMFLOAT3(-Player->GetRight().x, Player->GetRight().y, -Player->GetRight().z));
-		Speed *= -1.0f;
+		Speed = -3.15f;
 		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(1); // 1: Crouched Walk
 		break;
 
 	case MOVE_LEFT_STRAFE:
 		Direction = Player->GetRight();
-		Speed *= -1.0f;
+		Speed = -3.15f;
 		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(2); // 2: Left Strafe Walk
 		break;
 	case MOVE_LEFT_STRAFE | RUNNING:
 		Direction = Player->GetRight();
-		Speed += 5.0f;
-		Speed *= -1.0f;
+		Speed = -12.6f;
 		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(5); // 5: Left Strafe Running
 		break;
 
@@ -496,7 +531,7 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 		break;
 	case MOVE_RIGHT_STRAFE | RUNNING:
 		Direction = Player->GetRight();
-		Speed += 5.0f;
+		Speed = 12.6f;
 		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(6); // 6: Right Strafe Running
 		break;
 	}
@@ -573,7 +608,10 @@ void CGameScene::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 		}
 	}
 
-	//static_pointer_cast<CDebugShader>(CShaderManager::GetInstance()->GetShader(TEXT("DebugShader")))->Render(D3D12GraphicsCommandList, Player->GetCamera(), m_GameObjects, 0);
+	if (m_RenderBoundingBox)
+	{
+		static_pointer_cast<CDebugShader>(CShaderManager::GetInstance()->GetShader(TEXT("DebugShader")))->Render(D3D12GraphicsCommandList, Player->GetCamera(), m_GameObjects, 0);
+	}
 }
 
 void CGameScene::PostRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)

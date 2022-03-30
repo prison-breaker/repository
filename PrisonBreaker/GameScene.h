@@ -43,6 +43,8 @@ private:
 	ComPtr<ID3D12Resource>				        m_D3D12Lights{};
 	CB_LIGHT*							        m_MappedLights{};
 
+	bool										m_RenderBoundingBox{};
+
 public:
 	CGameScene() = default;
 	virtual ~CGameScene() = default;

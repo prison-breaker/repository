@@ -1,4 +1,12 @@
-<Materials> 45
+<Materials> 46
+	<Material> gun_pr_1
+		<StateNum> 0
+		<TextureScale> 1 1
+		<AlbedoColor> 1 1 1 1
+		<AlbedoMap> Textures/gun_pr_1_2T_gun_pr_1_AlbedoTransparency.dds
+		<MetallicMap> Textures/gun_pr_1_2T_gun_pr_1_MetallicSmoothness.dds
+		<NormalMap> Textures/gun_pr_1_2T_gun_pr_1_Normal.dds
+	</Material>
 	<Material> terrain
 		<StateNum> 0
 		<TextureScale> 10 10

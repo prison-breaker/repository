@@ -11,6 +11,34 @@ CCamera* CPlayer::GetCamera() const
 	return m_Camera.get();
 }
 
+void CPlayer::AcquirePistol()
+{
+	shared_ptr<CGameObject> PistolFrame{ FindFrame(TEXT("gun_pr_1")) };
+
+	if (PistolFrame)
+	{
+		m_Weapon = PistolFrame;
+	}
+}
+
+bool CPlayer::SwapWeapon(WEAPON_TYPE WeaponType)
+{
+	if (m_Weapon)
+	{
+		switch (WeaponType)
+		{
+		case WEAPON_TYPE_PUNCH:
+			m_Weapon->SetActive(false);
+			return true;
+		case WEAPON_TYPE_PISTOL:
+			m_Weapon->SetActive(true);
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void CPlayer::Rotate(float Pitch, float Yaw, float Roll, float ElapsedTime)
 {
 	if (!Math::IsZero(Pitch))
