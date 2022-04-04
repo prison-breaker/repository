@@ -19,32 +19,11 @@
     <Filter Include="소스 파일\DirectX">
       <UniqueIdentifier>{dbabf076-8912-4065-961f-6fb311cd90cf}</UniqueIdentifier>
     </Filter>
-    <Filter Include="헤더 파일\Scenes">
-      <UniqueIdentifier>{b57e65c4-1832-4f91-91fe-49bbe3b8b30e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="소스 파일\Scenes">
-      <UniqueIdentifier>{8c32ea8f-03e7-4460-8f3b-53f835fd2b37}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="소스 파일\Shaders">
-      <UniqueIdentifier>{488c507a-8552-4556-9e47-27a3c7410692}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="헤더 파일\Shaders">
-      <UniqueIdentifier>{be66a8fc-e9b5-4ed6-9b9b-bd9d5993f0f7}</UniqueIdentifier>
-    </Filter>
     <Filter Include="쉐이더 파일">
       <UniqueIdentifier>{9d19d74f-4b37-4999-abe4-b1c124dd7251}</UniqueIdentifier>
     </Filter>
-    <Filter Include="소스 파일\Object">
-      <UniqueIdentifier>{925d8140-55d6-42bb-83df-c1ed190af1d5}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="헤더 파일\Object">
-      <UniqueIdentifier>{c3e7e4c0-5e26-4772-b11f-3e77fc2719e0}</UniqueIdentifier>
-    </Filter>
     <Filter Include="소스 파일\Mesh">
       <UniqueIdentifier>{c37ff432-7bc0-47a2-86af-a6256acfd81f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="헤더 파일\Mesh">
-      <UniqueIdentifier>{06c107b3-7762-4043-808e-d2fd0c09efaf}</UniqueIdentifier>
     </Filter>
     <Filter Include="소스 파일\Camera">
       <UniqueIdentifier>{1e34ea17-ef47-4525-9bfc-fe10d28f1cd7}</UniqueIdentifier>
@@ -55,17 +34,8 @@
     <Filter Include="소스 파일\Manager">
       <UniqueIdentifier>{a643409f-ad27-401c-9a31-6dad5f1931a2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="헤더 파일\Manager">
-      <UniqueIdentifier>{dccf2aa2-28ce-429f-b098-4bdd48df99f5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="소스 파일\Material">
       <UniqueIdentifier>{58956089-ea42-4e47-8689-4522397255cb}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="헤더 파일\Material">
-      <UniqueIdentifier>{23e5b0bd-27f6-461f-8538-b4c4747396ff}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="헤더 파일\Material\Texture">
-      <UniqueIdentifier>{123ef2b9-2cfa-4fb1-bd4e-b60e317a3ef2}</UniqueIdentifier>
     </Filter>
     <Filter Include="소스 파일\Material\Texture">
       <UniqueIdentifier>{70a69a67-d819-49b8-be8f-685de605652d}</UniqueIdentifier>
@@ -75,6 +45,42 @@
     </Filter>
     <Filter Include="헤더 파일\Animation">
       <UniqueIdentifier>{cc20a2b1-c2d2-45ff-8ac7-b3ffd1b57b3e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\State">
+      <UniqueIdentifier>{6fddd2f9-61c0-4041-85fc-5cb6f4c69e83}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Mesh">
+      <UniqueIdentifier>{06c107b3-7762-4043-808e-d2fd0c09efaf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Material">
+      <UniqueIdentifier>{23e5b0bd-27f6-461f-8538-b4c4747396ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Material\Texture">
+      <UniqueIdentifier>{123ef2b9-2cfa-4fb1-bd4e-b60e317a3ef2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Object">
+      <UniqueIdentifier>{925d8140-55d6-42bb-83df-c1ed190af1d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Scene">
+      <UniqueIdentifier>{8c32ea8f-03e7-4460-8f3b-53f835fd2b37}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Shader">
+      <UniqueIdentifier>{488c507a-8552-4556-9e47-27a3c7410692}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Manager">
+      <UniqueIdentifier>{dccf2aa2-28ce-429f-b098-4bdd48df99f5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Object">
+      <UniqueIdentifier>{c3e7e4c0-5e26-4772-b11f-3e77fc2719e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Scene">
+      <UniqueIdentifier>{b57e65c4-1832-4f91-91fe-49bbe3b8b30e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Shader">
+      <UniqueIdentifier>{be66a8fc-e9b5-4ed6-9b9b-bd9d5993f0f7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\State">
+      <UniqueIdentifier>{baf005c9-258e-4536-bf7f-889c75348fa5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -94,13 +100,13 @@
       <Filter>소스 파일\DirectX</Filter>
     </ClCompile>
     <ClCompile Include="Scene.cpp">
-      <Filter>소스 파일\Scenes</Filter>
+      <Filter>소스 파일\Scene</Filter>
     </ClCompile>
     <ClCompile Include="GameScene.cpp">
-      <Filter>소스 파일\Scenes</Filter>
+      <Filter>소스 파일\Scene</Filter>
     </ClCompile>
     <ClCompile Include="Shader.cpp">
-      <Filter>소스 파일\Shaders</Filter>
+      <Filter>소스 파일\Shader</Filter>
     </ClCompile>
     <ClCompile Include="GameObject.cpp">
       <Filter>소스 파일\Object</Filter>
@@ -124,7 +130,7 @@
       <Filter>소스 파일\Mesh</Filter>
     </ClCompile>
     <ClCompile Include="SkyBoxShader.cpp">
-      <Filter>소스 파일\Shaders</Filter>
+      <Filter>소스 파일\Shader</Filter>
     </ClCompile>
     <ClCompile Include="SkyBox.cpp">
       <Filter>소스 파일\Object</Filter>
@@ -133,13 +139,13 @@
       <Filter>소스 파일\Object</Filter>
     </ClCompile>
     <ClCompile Include="ShadowMapShader.cpp">
-      <Filter>소스 파일\Shaders</Filter>
+      <Filter>소스 파일\Shader</Filter>
     </ClCompile>
     <ClCompile Include="Material.cpp">
       <Filter>소스 파일\Material</Filter>
     </ClCompile>
     <ClCompile Include="DebugShader.cpp">
-      <Filter>소스 파일\Shaders</Filter>
+      <Filter>소스 파일\Shader</Filter>
     </ClCompile>
     <ClCompile Include="AnimationController.cpp">
       <Filter>소스 파일\Animation</Filter>
@@ -151,10 +157,22 @@
       <Filter>소스 파일\Manager</Filter>
     </ClCompile>
     <ClCompile Include="UIShader.cpp">
-      <Filter>소스 파일\Shaders</Filter>
+      <Filter>소스 파일\Shader</Filter>
     </ClCompile>
     <ClCompile Include="UIAnimationController.cpp">
       <Filter>소스 파일\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="State.cpp">
+      <Filter>소스 파일\State</Filter>
+    </ClCompile>
+    <ClCompile Include="StateMachine.cpp">
+      <Filter>소스 파일\State</Filter>
+    </ClCompile>
+    <ClCompile Include="State_Player.cpp">
+      <Filter>소스 파일\State</Filter>
+    </ClCompile>
+    <ClCompile Include="Guard.cpp">
+      <Filter>소스 파일\Object</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -174,13 +192,13 @@
       <Filter>헤더 파일\DirectX</Filter>
     </ClInclude>
     <ClInclude Include="Scene.h">
-      <Filter>헤더 파일\Scenes</Filter>
+      <Filter>헤더 파일\Scene</Filter>
     </ClInclude>
     <ClInclude Include="GameScene.h">
-      <Filter>헤더 파일\Scenes</Filter>
+      <Filter>헤더 파일\Scene</Filter>
     </ClInclude>
     <ClInclude Include="Shader.h">
-      <Filter>헤더 파일\Shaders</Filter>
+      <Filter>헤더 파일\Shader</Filter>
     </ClInclude>
     <ClInclude Include="GameObject.h">
       <Filter>헤더 파일\Object</Filter>
@@ -207,7 +225,7 @@
       <Filter>헤더 파일\Mesh</Filter>
     </ClInclude>
     <ClInclude Include="SkyBoxShader.h">
-      <Filter>헤더 파일\Shaders</Filter>
+      <Filter>헤더 파일\Shader</Filter>
     </ClInclude>
     <ClInclude Include="SkyBox.h">
       <Filter>헤더 파일\Object</Filter>
@@ -216,13 +234,13 @@
       <Filter>헤더 파일\Object</Filter>
     </ClInclude>
     <ClInclude Include="ShadowMapShader.h">
-      <Filter>헤더 파일\Shaders</Filter>
+      <Filter>헤더 파일\Shader</Filter>
     </ClInclude>
     <ClInclude Include="Material.h">
       <Filter>헤더 파일\Material</Filter>
     </ClInclude>
     <ClInclude Include="DebugShader.h">
-      <Filter>헤더 파일\Shaders</Filter>
+      <Filter>헤더 파일\Shader</Filter>
     </ClInclude>
     <ClInclude Include="AnimationController.h">
       <Filter>헤더 파일\Animation</Filter>
@@ -231,10 +249,22 @@
       <Filter>헤더 파일\Manager</Filter>
     </ClInclude>
     <ClInclude Include="UIShader.h">
-      <Filter>헤더 파일\Shaders</Filter>
+      <Filter>헤더 파일\Shader</Filter>
     </ClInclude>
     <ClInclude Include="UIAnimationController.h">
       <Filter>헤더 파일\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="State.h">
+      <Filter>헤더 파일\State</Filter>
+    </ClInclude>
+    <ClInclude Include="StateMachine.h">
+      <Filter>헤더 파일\State</Filter>
+    </ClInclude>
+    <ClInclude Include="State_Player.h">
+      <Filter>헤더 파일\State</Filter>
+    </ClInclude>
+    <ClInclude Include="Guard.h">
+      <Filter>헤더 파일\Object</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

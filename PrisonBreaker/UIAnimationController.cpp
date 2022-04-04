@@ -104,7 +104,7 @@ void CUIAnimationController::SetKeyFrameIndex(UINT ClipNum, UINT KeyFrameIndex)
 			return;
 		}
 
-		m_AnimationClips[ClipNum]->m_KeyFrameIndex = KeyFrameIndex;
+		m_KeyFrameIndex = KeyFrameIndex;
 	}
 }
 
@@ -115,21 +115,14 @@ void CUIAnimationController::UpdateAnimationClip(float ElapsedTime, const shared
 	for (UINT i = 0; i < VertexCount; ++i)
 	{
 		// CBilboardMesh의 Get 함수는 유일하게 GPU의 가상주소로 사용되지 않는 곳에서만 사용해야한다!!
-		BilboardObject->SetPosition(m_AnimationClips[m_ClipNum]->m_TransformData[i][m_AnimationClips[m_ClipNum]->m_KeyFrameIndex].GetPosition(), i);
-		BilboardObject->SetSize(m_AnimationClips[m_ClipNum]->m_TransformData[i][m_AnimationClips[m_ClipNum]->m_KeyFrameIndex].GetSize(), i);
+		BilboardObject->SetPosition(i, m_AnimationClips[m_ClipNum]->m_TransformData[i][m_KeyFrameIndex].GetPosition());
+		BilboardObject->SetSize(i, m_AnimationClips[m_ClipNum]->m_TransformData[i][m_KeyFrameIndex].GetSize());
 	}
 
-	switch (m_AnimationClips[m_ClipNum]->m_AnimationType)
-	{
-	case ANIMATION_TYPE_LOOP:
-		m_AnimationClips[m_ClipNum]->m_KeyFrameIndex += 1;
+	m_KeyFrameIndex += 1;
 
-		if (m_AnimationClips[m_ClipNum]->m_KeyFrameIndex >= m_AnimationClips[m_ClipNum]->m_KeyFrameCount)
-		{
-			m_AnimationClips[m_ClipNum]->m_KeyFrameIndex -= 1;
-		}
-		break;
-	case ANIMATION_TYPE_ONCE:
-		break;
+	if (m_KeyFrameIndex >= m_AnimationClips[m_ClipNum]->m_KeyFrameCount)
+	{
+		m_KeyFrameIndex = m_AnimationClips[m_ClipNum]->m_KeyFrameCount - 1;
 	}
 }

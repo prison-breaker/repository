@@ -6,15 +6,15 @@ struct LIGHT;
 class CDepthWriteShader : public CGraphicsShader
 {
 private:
-	shared_ptr<CCamera>			    m_LightCamera{};
-	 
-	ComPtr<ID3D12DescriptorHeap>    m_D3D12RtvDescriptorHeap{};
-	ComPtr<ID3D12DescriptorHeap>    m_D3D12DsvDescriptorHeap{};
-									 
-	ComPtr<ID3D12Resource>		    m_D3D12DepthBuffer{};
-	shared_ptr<CTexture>		    m_DepthTexture{};
-									 
-	XMFLOAT4X4						m_ProjectionMatrixToTexture{};
+	shared_ptr<CCamera>			 m_LightCamera{};
+	 							 
+	ComPtr<ID3D12DescriptorHeap> m_D3D12RtvDescriptorHeap{};
+	ComPtr<ID3D12DescriptorHeap> m_D3D12DsvDescriptorHeap{};
+								 
+	ComPtr<ID3D12Resource>		 m_D3D12DepthBuffer{};
+	shared_ptr<CTexture>		 m_DepthTexture{};
+								 
+	XMFLOAT4X4					 m_ProjectionMatrixToTexture{};
 
 public:
 	CDepthWriteShader(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList);

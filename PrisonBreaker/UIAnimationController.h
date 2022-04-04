@@ -9,13 +9,10 @@ class CUIAnimationClip
 
 private:
 	string                        m_ClipName{};
-
-	ANIMATION_TYPE				  m_AnimationType{};
-								
+				
 	UINT	                      m_FramePerSec{};
 	UINT	                      m_KeyFrameCount{};
 	float                         m_KeyFrameTime{};
-	UINT						  m_KeyFrameIndex{};
 
 	vector<vector<CBilboardMesh>> m_TransformData{}; // [VertexIndex][KeyFrameIndex]
 
@@ -33,6 +30,8 @@ class CUIAnimationController
 private:
 	UINT								 m_ClipNum{};
 	vector<shared_ptr<CUIAnimationClip>> m_AnimationClips{};
+
+	UINT						         m_KeyFrameIndex{};
 
 public:
 	CUIAnimationController(vector<shared_ptr<CUIAnimationClip>>& UIAnimationClips);

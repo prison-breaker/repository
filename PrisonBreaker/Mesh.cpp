@@ -461,6 +461,10 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 			m_D3D12BoundingBoxPositionBufferView.StrideInBytes = sizeof(XMFLOAT3);
 			m_D3D12BoundingBoxPositionBufferView.SizeInBytes = sizeof(XMFLOAT3) * VertexCount;
 
+			// 메쉬 캐시는 지역변수이므로 지역을 벗어나면 소멸하기 리소스가 소멸하기 때문에 카운트를 미리 1 증가시켜 놓는다.
+			m_D3D12BoundingBoxPositionBuffer->AddRef();
+			m_D3D12BoundingBoxPositionUploadBuffer->AddRef();
+
 			const UINT IndexCount{ 36 };
 			UINT Indices[IndexCount]{ 0, 1, 2, 1, 3, 2, 4, 6, 5, 5, 6, 7, 0, 4, 1, 1, 4, 5, 2, 3, 6, 3, 7, 6, 0, 2, 6, 0, 6, 4, 1, 5, 7, 1, 7, 3 };
 

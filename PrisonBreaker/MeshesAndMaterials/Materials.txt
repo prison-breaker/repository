@@ -1,4 +1,4 @@
-<Materials> 46
+<Materials> 58
 	<Material> gun_pr_1
 		<StateNum> 0
 		<TextureScale> 1 1
@@ -14,28 +14,18 @@
 		<AlbedoMap> Textures/ground_grey_diff_2k.dds
 		<MetallicMap> Textures/ground_grey_rough_2k.dds
 	</Material>
-	<Material> fence
+	<Material> container
 		<StateNum> 0
 		<TextureScale> 1 1
-		<AlbedoColor> 1 1 1 1
-		<AlbedoMap> Textures/map-fence-1-d.dds
-		<MetallicMap> Textures/map-fence-1-s.dds
-		<NormalMap> Textures/map-fence-1-n.dds
+		<AlbedoColor> 0.7905896 0.7905896 0.7905896 1
+		<AlbedoMap> Textures/green_container_Albedo.dds
+		<MetallicMap> Textures/container_MetallicSmoothness.dds
+		<NormalMap> Textures/container_Normal.dds
 	</Material>
-	<Material> wire_2
+	<Material> ceiling
 		<StateNum> 0
 		<TextureScale> 1 1
 		<AlbedoColor> 0.8 0.8 0.8 1
-		<AlbedoMap> Textures/wire_2_Diffuse.dds
-		<NormalMap> Textures/wire_2_Normal.dds
-	</Material>
-	<Material> metal
-		<StateNum> 0
-		<TextureScale> 1 1
-		<AlbedoColor> 0.8 0.8 0.8 1
-		<AlbedoMap> Textures/metal_tex_AlbedoTransparency.dds
-		<MetallicMap> Textures/metal_tex_MetallicSmoothness.dds
-		<NormalMap> Textures/metal_tex_Normal.dds
 	</Material>
 	<Material> roof_1
 		<StateNum> 0
@@ -45,13 +35,13 @@
 		<MetallicMap> Textures/roof_1_tex_MetallicSmoothness.dds
 		<NormalMap> Textures/roof_1_tex_Normal.dds
 	</Material>
-	<Material> floor_0
+	<Material> roof_2
 		<StateNum> 0
 		<TextureScale> 1 1
-		<AlbedoColor> 0.8 0.8 0.8 1
-		<AlbedoMap> Textures/floor_0_tex_AlbedoTransparency.dds
-		<MetallicMap> Textures/floor_0_tex_MetallicSmoothness.dds
-		<NormalMap> Textures/floor_0_tex_Normal.dds
+		<AlbedoColor> 1 1 1 1
+		<AlbedoMap> Textures/roof_2_tex_AlbedoTransparency.dds
+		<MetallicMap> Textures/roof_2_tex_MetallicSmoothness.dds
+		<NormalMap> Textures/roof_2_tex_Normal.dds
 	</Material>
 	<Material> wall_1
 		<StateNum> 0
@@ -60,22 +50,6 @@
 		<AlbedoMap> Textures/wall_1_tex_AlbedoTransparency.dds
 		<MetallicMap> Textures/wall_1_tex_MetallicSmoothness.dds
 		<NormalMap> Textures/wall_1_tex_Normal.dds
-	</Material>
-	<Material> wall_0
-		<StateNum> 0
-		<TextureScale> 1 1
-		<AlbedoColor> 0.8 0.8 0.8 1
-		<AlbedoMap> Textures/wall_0_tex_AlbedoTransparency.dds
-		<MetallicMap> Textures/wall_0_tex_MetallicSmoothness.dds
-		<NormalMap> Textures/wall_0_tex_Normal.dds
-	</Material>
-	<Material> roof_2
-		<StateNum> 0
-		<TextureScale> 1 1
-		<AlbedoColor> 1 1 1 1
-		<AlbedoMap> Textures/roof_2_tex_AlbedoTransparency.dds
-		<MetallicMap> Textures/roof_2_tex_MetallicSmoothness.dds
-		<NormalMap> Textures/roof_2_tex_Normal.dds
 	</Material>
 	<Material> floor_1
 		<StateNum> 0
@@ -106,6 +80,110 @@
 		<AlbedoColor> 0.8 0.8 0.8 0.966
 		<AlbedoMap> Textures/doors_tex_AlbedoTransparency.dds
 		<NormalMap> Textures/doors_tex_Normal.dds
+	</Material>
+	<Material> barrier_pr_1
+		<StateNum> 0
+		<TextureScale> 1 1
+		<AlbedoColor> 1 1 1 1
+		<AlbedoMap> Textures/barrier_pr_1_barrier_pr_1_AlbedoTransparency.dds
+		<NormalMap> Textures/barrier_pr_1_barrier_pr_1_Normal.dds
+	</Material>
+	<Material> police_car
+		<StateNum> 0
+		<TextureScale> 1 1
+		<AlbedoColor> 1 1 1 1
+		<AlbedoMap> Textures/2015_Ranger_Pol_d.dds
+		<NormalMap> Textures/2015_Ranger_Pol_n.dds
+	</Material>
+	<Material> cone
+		<StateNum> 0
+		<TextureScale> 1 1
+		<AlbedoColor> 1 1 1 1
+		<AlbedoMap> Textures/cone_albedo.dds
+	</Material>
+	<Material> pallet
+		<StateNum> 0
+		<TextureScale> 1 1
+		<AlbedoColor> 1 1 1 1
+		<AlbedoMap> Textures/pallet_pallet_AlbedoTransparency.dds
+		<MetallicMap> Textures/pallet_pallet_MetallicSmoothness.dds
+		<NormalMap> Textures/pallet_pallet_Normal.dds
+	</Material>
+	<Material> Box_1
+		<StateNum> 0
+		<TextureScale> 1 1
+		<AlbedoColor> 1 1 1 1
+		<AlbedoMap> Textures/CardBoardBox1_COLOR4096.dds
+		<NormalMap> Textures/CardBoardBox1_NRM4096.dds
+	</Material>
+	<Material> Box_3
+		<StateNum> 0
+		<TextureScale> 1 1
+		<AlbedoColor> 1 1 1 1
+		<AlbedoMap> Textures/CardBoardBox3_COLOR4096.dds
+		<NormalMap> Textures/CardBoardBox3_NRM4096.dds
+	</Material>
+	<Material> Box_2
+		<StateNum> 0
+		<TextureScale> 1 1
+		<AlbedoColor> 1 1 1 1
+		<AlbedoMap> Textures/CardBoardBox2_COLOR4096.dds
+		<NormalMap> Textures/CardBoardBox2_NRM4096.dds
+	</Material>
+	<Material> concrete_slab_1
+		<StateNum> 0
+		<TextureScale> 1 1
+		<AlbedoColor> 0.5294118 0.5294118 0.5294118 1
+		<AlbedoMap> Textures/concrete_slab_1_concrete_slab_1_AlbedoTransparency.dds
+		<MetallicMap> Textures/concrete_slab_1_concrete_slab_1_MetallicSmoothness.dds
+		<NormalMap> Textures/concrete_slab_1_concrete_slab_1_Normal.dds
+	</Material>
+	<Material> barrel
+		<StateNum> 0
+		<TextureScale> 1 1
+		<AlbedoColor> 1 1 1 1
+		<AlbedoMap> Textures/bidone2_None_BaseColor.dds
+		<MetallicMap> Textures/bidone2_None_Metallic.dds
+		<NormalMap> Textures/bidone2_None_Normal.dds
+	</Material>
+	<Material> barrier
+		<StateNum> 0
+		<TextureScale> 1 1
+		<AlbedoColor> 1 1 1 1
+		<AlbedoMap> Textures/concrete_barrier_02_dm.dds
+		<MetallicMap> Textures/concrete_barrier_02_nm.dds
+	</Material>
+	<Material> electrical_panel_pr_1
+		<StateNum> 0
+		<TextureScale> 1 1
+		<AlbedoColor> 1 1 1 1
+		<AlbedoMap> Textures/electrical_panel_pr_1_electrical_panel_pr_1_AlbedoTransparency.dds
+		<MetallicMap> Textures/electrical_panel_pr_1_electrical_panel_pr_1_MetallicSmoothness.dds
+		<NormalMap> Textures/electrical_panel_pr_1_electrical_panel_pr_1_Normal.dds
+	</Material>
+	<Material> floor_0
+		<StateNum> 0
+		<TextureScale> 1 1
+		<AlbedoColor> 0.8 0.8 0.8 1
+		<AlbedoMap> Textures/floor_0_tex_AlbedoTransparency.dds
+		<MetallicMap> Textures/floor_0_tex_MetallicSmoothness.dds
+		<NormalMap> Textures/floor_0_tex_Normal.dds
+	</Material>
+	<Material> wall_0
+		<StateNum> 0
+		<TextureScale> 1 1
+		<AlbedoColor> 0.8 0.8 0.8 1
+		<AlbedoMap> Textures/wall_0_tex_AlbedoTransparency.dds
+		<MetallicMap> Textures/wall_0_tex_MetallicSmoothness.dds
+		<NormalMap> Textures/wall_0_tex_Normal.dds
+	</Material>
+	<Material> metal
+		<StateNum> 0
+		<TextureScale> 1 1
+		<AlbedoColor> 0.8 0.8 0.8 1
+		<AlbedoMap> Textures/metal_tex_AlbedoTransparency.dds
+		<MetallicMap> Textures/metal_tex_MetallicSmoothness.dds
+		<NormalMap> Textures/metal_tex_Normal.dds
 	</Material>
 	<Material> toilet_pr_1
 		<StateNum> 0
@@ -138,6 +216,28 @@
 		<AlbedoMap> Textures/brush_pr_1_brush_pr_1_AlbedoTransparency.dds
 		<MetallicMap> Textures/brush_pr_1_brush_pr_1_MetallicSmoothness.dds
 		<NormalMap> Textures/brush_pr_1_brush_pr_1_Normal.dds
+	</Material>
+	<Material> fence
+		<StateNum> 0
+		<TextureScale> 1 1
+		<AlbedoColor> 1 1 1 1
+		<AlbedoMap> Textures/map-fence-1-d.dds
+		<MetallicMap> Textures/map-fence-1-s.dds
+		<NormalMap> Textures/map-fence-1-n.dds
+	</Material>
+	<Material> wire_2
+		<StateNum> 0
+		<TextureScale> 1 1
+		<AlbedoColor> 0.8 0.8 0.8 1
+		<AlbedoMap> Textures/wire_2_Diffuse.dds
+		<NormalMap> Textures/wire_2_Normal.dds
+	</Material>
+	<Material> wire_1
+		<StateNum> 0
+		<TextureScale> 1 1
+		<AlbedoColor> 0.8 0.8 0.8 1
+		<AlbedoMap> Textures/wire_1_Diffuse.dds
+		<NormalMap> Textures/wire_1_Normal.dds
 	</Material>
 	<Material> ground
 		<StateNum> 0
@@ -199,19 +299,6 @@
 		<AlbedoMap> Textures/horizontal_bar_pr_1_tex_AlbedoTransparency.dds
 		<MetallicMap> Textures/horizontal_bar_pr_1_tex_MetallicSmoothness.dds
 		<NormalMap> Textures/horizontal_bar_pr_1_tex_Normal.dds
-	</Material>
-	<Material> container
-		<StateNum> 0
-		<TextureScale> 1 1
-		<AlbedoColor> 0.7905896 0.7905896 0.7905896 1
-		<AlbedoMap> Textures/green_container_Albedo.dds
-		<MetallicMap> Textures/container_MetallicSmoothness.dds
-		<NormalMap> Textures/container_Normal.dds
-	</Material>
-	<Material> ceiling
-		<StateNum> 0
-		<TextureScale> 1 1
-		<AlbedoColor> 0.8 0.8 0.8 1
 	</Material>
 	<Material> tower_1
 		<StateNum> 0

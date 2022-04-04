@@ -7,22 +7,30 @@
 	<GameObject>
 		<Name> Models/guards_3.txt
 		<Type> 1
-		<TransformMatrix> -1.192093E-07 0 1 0 0 1 0 0 -1 0 -1.192093E-07 0 94 1.202297 -135 1 
+		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 -140 1.202297 -18 1 
+		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 -110 1.202297 180 1 
+		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 -40 1.202297 130 1 
+		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 -40 1.202297 50 1 
+		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 45 1.202297 50 1 
+		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 45 1.202297 165 1 
+		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 170 1.202297 150 1 
+		<TransformMatrix> -1.192093E-07 0 1 0 0 1 0 0 -1 0 -1.192093E-07 0 140 1.202297 90 1 
+		<TransformMatrix> -0.7645882 0 0.6445193 0 0 1 0 0 -0.6445193 0 -0.7645882 0 4.59 1.202297 -0.84 1 
+		<TransformMatrix> -0.5 0 0.8660254 0 0 1 0 0 -0.8660254 0 -0.5 0 -61 1.202297 -73 1 
+		<TransformMatrix> -0.5000001 0 -0.8660253 0 0 1 0 0 0.8660253 0 -0.5000001 0 61 1.202297 -73 1 
+		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 120 1.202297 25 1 
+		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 150 1.202297 -30 1 
 	</GameObject>
 	<GameObject>
 		<Name> Models/guards_6.txt
 		<Type> 1
-		<TransformMatrix> -1.192093E-07 0 1 0 0 1 0 0 -1 0 -1.192093E-07 0 94 1.202297 -145 1 
+		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 -140 1.202297 35 1 
+		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 -175 1.202297 110 1 
 	</GameObject>
 	<GameObject>
 		<Name> Models/terrain.txt
 		<Type> 2
 		<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 1 0 1 
-	</GameObject>
-	<GameObject>
-		<Name> Models/field.txt
-		<Type> 3
-		<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 
 	</GameObject>
 	<GameObject>
 		<Name> Models/containers.txt
@@ -35,9 +43,34 @@
 		<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 
 	</GameObject>
 	<GameObject>
-		<Name> Models/fences.txt
+		<Name> Models/parking_lot.txt
 		<Type> 3
-		<TransformMatrix> 1 0 0 0 0 1 4.371139E-08 0 0 -4.371139E-08 1 0 0 0 0 1 
+		<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 
+	</GameObject>
+	<GameObject>
+		<Name> Models/dummys.txt
+		<Type> 3
+		<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 
+	</GameObject>
+	<GameObject>
+		<Name> Models/concrete_slabs.txt
+		<Type> 3
+		<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 
+	</GameObject>
+	<GameObject>
+		<Name> Models/barrels.txt
+		<Type> 3
+		<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 
+	</GameObject>
+	<GameObject>
+		<Name> Models/barrieres_low.txt
+		<Type> 3
+		<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 
+	</GameObject>
+	<GameObject>
+		<Name> Models/electrical_panel_pr_1.txt
+		<Type> 3
+		<TransformMatrix> -0.8660253 0 -0.5000001 0 0 1 0 0 0.5000001 0 -0.8660253 0 0.659 5 -1.212 1 
 	</GameObject>
 	<GameObject>
 		<Name> Models/building.txt
@@ -48,6 +81,21 @@
 		<Name> Models/cell.txt
 		<Type> 3
 		<TransformMatrix> -1.192093E-07 0 -1 0 0 1 0 0 1 0 -1.192093E-07 0 90 1.2 -140 1 
+	</GameObject>
+	<GameObject>
+		<Name> Models/fences.txt
+		<Type> 3
+		<TransformMatrix> 1 0 0 0 0 1 4.371139E-08 0 0 -4.371139E-08 1 0 0 0 0 1 
+	</GameObject>
+	<GameObject>
+		<Name> Models/gate_1.txt
+		<Type> 3
+		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 142.62 4.499656 204.5578 1 
+	</GameObject>
+	<GameObject>
+		<Name> Models/field.txt
+		<Type> 3
+		<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 
 	</GameObject>
 	<GameObject>
 		<Name> Models/tower.txt

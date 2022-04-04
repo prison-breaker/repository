@@ -201,7 +201,7 @@ void CDepthWriteShader::PrepareShadowMap(ID3D12GraphicsCommandList* D3D12Graphic
 				if (GameObject)
 				{
 					GameObject->UpdateTransform(Matrix4x4::Identity());
-					GameObject->PreRender(D3D12GraphicsCommandList, m_LightCamera.get(), RENDER_TYPE_DEPTH_WRITE);
+					GameObject->Render(D3D12GraphicsCommandList, m_LightCamera.get(), RENDER_TYPE_DEPTH_WRITE);
 				}
 			}
 		}
@@ -267,21 +267,6 @@ D3D12_BLEND_DESC CShadowMapShader::CreateBlendState(UINT StateNum)
 	D3D12BlendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
 
 	return D3D12BlendDesc;
-
-	//D3D12_BLEND_DESC D3D12BlendDesc{ CGraphicsShader::CreateBlendState(StateNum) };
-
-	//switch (StateNum)
-	//{
-	//case SHADER_TYPE_STANDARD_ALPHA:
-	//case SHADER_TYPE_WITH_SKINNING_ALPHA:
-	//	D3D12BlendDesc.AlphaToCoverageEnable = true;
-	//	D3D12BlendDesc.RenderTarget[0].BlendEnable = true;
-	//	D3D12BlendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
-	//	D3D12BlendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
-	//	break;
-	//}
-
-	//return D3D12BlendDesc;
 }
 
 D3D12_SHADER_BYTECODE CShadowMapShader::CreateVertexShader(ID3DBlob* D3D12ShaderBlob, UINT StateNum)

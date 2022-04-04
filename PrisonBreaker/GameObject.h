@@ -2,10 +2,10 @@
 #include "Mesh.h"
 #include "Material.h"
 #include "Camera.h"
+#include "AnimationController.h"
+#include "StateMachine.h"
 
 class CGameObject;
-class CAnimationClip;
-class CAnimationController;
 
 struct LOADED_MODEL_INFO
 {
@@ -21,9 +21,11 @@ class CGameObject : public enable_shared_from_this<CGameObject>
 {
 protected:
 	bool				             m_IsActive{};
-							         
+	
 	tstring					         m_FrameName{};
-							         
+		
+	float							 m_Speed{};
+
 	XMFLOAT4X4		                 m_WorldMatrix{ Matrix4x4::Identity() };
 	XMFLOAT4X4				         m_TransformMatrix{ Matrix4x4::Identity() };
 							         
@@ -53,15 +55,16 @@ public:
 
 	virtual void Animate(float ElapsedTime);
 
-	virtual void PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType);
 	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType);
-	virtual void PostRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType);
 
 	shared_ptr<CGameObject> FindFrame(const tstring& FrameName);
 	shared_ptr<CSkinnedMesh> FindSkinnedMesh(const tstring& SkinnedMeshName);
 
-	bool IsActive() const;
 	void SetActive(bool IsActive);
+	bool IsActive() const;
+
+	void SetSpeed(float Speed);
+	float GetSpeed() const;
 
 	const XMFLOAT4X4& GetWorldMatrix() const;
 
@@ -89,6 +92,8 @@ public:
 	void SetChild(const shared_ptr<CGameObject>& ChildObject);
 
 	void SetAnimationController(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const shared_ptr<LOADED_MODEL_INFO>& ModelInfo);
+	CAnimationController* GetAnimationController() const;
+
 	void SetAnimationClip(UINT ClipNum);
 
 	bool IsVisible(CCamera* Camera) const;

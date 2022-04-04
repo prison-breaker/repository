@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "AnimationController.h"
+#include "GameObject.h"
 
 void CAnimationClip::LoadAnimationClipInfoFromFile(ifstream& InFile, const shared_ptr<LOADED_MODEL_INFO>& ModelInfo)
 {
@@ -114,7 +115,8 @@ void CAnimationClip::LoadAnimationClipInfoFromFile(ifstream& InFile, const share
 
 //=========================================================================================================================
 
-CAnimationController::CAnimationController(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const shared_ptr<LOADED_MODEL_INFO>& ModelInfo)
+CAnimationController::CAnimationController(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const shared_ptr<LOADED_MODEL_INFO>& ModelInfo, const shared_ptr<CGameObject>& Owner) :
+	m_Owner{ Owner }
 {
 	m_AnimationClips.assign(ModelInfo->m_AnimationClips.begin(), ModelInfo->m_AnimationClips.end());
 	m_BoneFrameCaches.assign(ModelInfo->m_BoneFrameCaches.begin(), ModelInfo->m_BoneFrameCaches.end());
@@ -133,16 +135,6 @@ CAnimationController::CAnimationController(ID3D12Device* D3D12Device, ID3D12Grap
 	}
 }
 
-void CAnimationController::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
-{
-	UINT SkinnedMeshCount{ static_cast<UINT>(m_SkinnedMeshCaches.size()) };
-
-	for (UINT i = 0; i < SkinnedMeshCount; ++i)
-	{
-		m_SkinnedMeshCaches[i]->SetBoneTransformInfo(m_D3D12BoneTransformMatrixes[i], m_MappedBoneTransformMatrixes[i]);
-	}
-}
-
 void CAnimationController::SetAnimationClip(UINT ClipNum)
 {
 	if (ClipNum < 0 || ClipNum >= m_AnimationClips.size() || m_ClipNum == ClipNum)
@@ -151,50 +143,63 @@ void CAnimationController::SetAnimationClip(UINT ClipNum)
 	}
 
 	m_ClipNum = ClipNum;
-	m_AnimationClips[m_ClipNum]->m_KeyFrameIndex = 0;
+	m_KeyFrameIndex = 0;
 }
 
-void CAnimationController::UpdateAnimationClip(float ElapsedTime, const shared_ptr<CGameObject>& RootObject)
+void CAnimationController::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
 	UINT SkinnedMeshCount{ static_cast<UINT>(m_SkinnedMeshCaches.size()) };
 
-	for (UINT i = 0 ; i < SkinnedMeshCount; ++i)
+	// 공유되는 스킨 메쉬에 현재 애니메이션 컨트롤러의 뼈 변환 행렬 리소스를 설정해준다.
+	for (UINT i = 0; i < SkinnedMeshCount; ++i)
+	{
+		m_SkinnedMeshCaches[i]->SetBoneTransformInfo(m_D3D12BoneTransformMatrixes[i], m_MappedBoneTransformMatrixes[i]);
+	}
+
+	// 이번 프레임의 애니메이션 변환 행렬을 각 뼈 프레임에 변환 행렬로 설정한다.
+	for (UINT i = 0; i < SkinnedMeshCount; ++i)
 	{
 		UINT BoneFrameCount{ static_cast<UINT>(m_BoneFrameCaches[i].size()) };
 
 		for (UINT j = 0; j < BoneFrameCount; ++j)
 		{
-			m_BoneFrameCaches[i][j]->SetTransformMatrix(m_AnimationClips[m_ClipNum]->m_BoneTransformMatrixes[i][j][m_AnimationClips[m_ClipNum]->m_KeyFrameIndex]);
+			m_BoneFrameCaches[i][j]->SetTransformMatrix(m_AnimationClips[m_ClipNum]->m_BoneTransformMatrixes[i][j][m_KeyFrameIndex]);
 		}
 	}
 
-	switch (m_AnimationClips[m_ClipNum]->m_AnimationType)
+	if (m_Owner)
+	{
+		m_Owner->UpdateTransform(Matrix4x4::Identity());
+	}
+}
+
+void CAnimationController::UpdateAnimationClip(ANIMATION_TYPE AnimationType)
+{
+	switch (AnimationType)
 	{
 	case ANIMATION_TYPE_LOOP:
-		m_AnimationClips[m_ClipNum]->m_KeyFrameIndex += 1;
+		m_KeyFrameIndex += 1;
 
-		if (m_AnimationClips[m_ClipNum]->m_KeyFrameIndex >= m_AnimationClips[m_ClipNum]->m_KeyFrameCount)
+		if (m_KeyFrameIndex >= m_AnimationClips[m_ClipNum]->m_KeyFrameCount)
 		{
-			m_AnimationClips[m_ClipNum]->m_KeyFrameIndex = 0;
+			m_KeyFrameIndex = 0;
 		}
 		break;
 	case ANIMATION_TYPE_ONCE:
-		m_AnimationClips[m_ClipNum]->m_KeyFrameIndex += 1;
+		m_KeyFrameIndex += 1;
 
-		if (m_AnimationClips[m_ClipNum]->m_KeyFrameIndex >= m_AnimationClips[m_ClipNum]->m_KeyFrameCount)
+		if (m_KeyFrameIndex >= m_AnimationClips[m_ClipNum]->m_KeyFrameCount)
 		{
-			m_AnimationClips[m_ClipNum]->m_KeyFrameIndex -= 1;
+			m_KeyFrameIndex = m_AnimationClips[m_ClipNum]->m_KeyFrameCount - 1;
 		}
 		break;
 	case ANIMATION_TYPE_ONCE_REVERSE:
-		m_AnimationClips[m_ClipNum]->m_KeyFrameIndex -= 1;
+		m_KeyFrameIndex -= 1;
 
-		if (m_AnimationClips[m_ClipNum]->m_KeyFrameIndex < 0)
+		if (m_KeyFrameIndex < 0)
 		{
-			m_AnimationClips[m_ClipNum]->m_KeyFrameIndex = m_AnimationClips[m_ClipNum]->m_KeyFrameCount - 1;
+			m_KeyFrameIndex = 0;
 		}
 		break;
 	}
-
-	RootObject->UpdateTransform(Matrix4x4::Identity());
 }

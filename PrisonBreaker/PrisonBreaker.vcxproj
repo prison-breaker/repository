@@ -146,9 +146,11 @@
     <ClCompile Include="DebugShader.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="GameScene.cpp" />
+    <ClCompile Include="Guard.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Player.cpp" />
+    <ClCompile Include="State_Player.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="DDSTextureLoader12.cpp" />
     <ClCompile Include="Framework.cpp" />
@@ -159,6 +161,8 @@
     <ClCompile Include="ShadowMapShader.cpp" />
     <ClCompile Include="SkyBox.cpp" />
     <ClCompile Include="SkyBoxShader.cpp" />
+    <ClCompile Include="State.cpp" />
+    <ClCompile Include="StateMachine.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
     </ClCompile>
@@ -176,6 +180,7 @@
     <ClInclude Include="DebugShader.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameScene.h" />
+    <ClInclude Include="Guard.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Player.h" />
@@ -189,6 +194,9 @@
     <ClInclude Include="ShadowMapShader.h" />
     <ClInclude Include="SkyBox.h" />
     <ClInclude Include="SkyBoxShader.h" />
+    <ClInclude Include="State.h" />
+    <ClInclude Include="StateMachine.h" />
+    <ClInclude Include="State_Player.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="TextureManager.h" />

@@ -38,19 +38,12 @@ void CGameScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandLi
 	Shader->CreatePipelineState(D3D12Device, m_D3D12RootSignature.Get(), 0);
 	CShaderManager::GetInstance()->RegisterShader(TEXT("DebugShader"), Shader);
 
-	// 카메라 객체를 생성한다.
-	shared_ptr<CCamera> Camera{ make_shared<CCamera>() };
-
-	Camera->CreateShaderVariables(D3D12Device, D3D12GraphicsCommandList);
-	Camera->GeneratePerspectiveProjectionMatrix(90.0f, static_cast<float>(CLIENT_WIDTH) / static_cast<float>(CLIENT_HEIGHT), 1.0f, 500.0f);
-	Camera->GenerateViewMatrix(XMFLOAT3(0.0f, 5.0f, -150.0f), XMFLOAT3(0.0f, 0.0f, 1.0f));
-
-	// 객체 타입 수만큼 벡터의 크기를 재할당한다.
+	// 타입 수만큼 각 벡터의 크기를 재할당한다.
 	m_GameObjects.resize(OBJECT_TYPE_STRUCTURE + 1);
+	m_BilboardObjects.resize(BILBOARD_OBJECT_TYPE_UI + 1);
 
-	// 플레이어 객체를 생성한다.
-	m_GameObjects[OBJECT_TYPE_PLAYER].push_back(make_shared<CPlayer>());
-	static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER].back())->SetCamera(Camera);
+	// 스카이박스 객체를 생성한다.
+	m_BilboardObjects[BILBOARD_OBJECT_TYPE_SKYBOX].push_back(make_shared<CSkyBox>(D3D12Device, D3D12GraphicsCommandList));
 
 	// 파일로부터 씬 객체들을 생성하고 배치한다.
 #ifdef READ_BINARY_FILE
@@ -59,12 +52,7 @@ void CGameScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandLi
 	LoadSceneInfoFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Scenes/GameScene.txt"));
 #endif
 
-	// 빌보드 객체 타입 수만큼 벡터의 크기를 재할당한다.
-	m_BilboardObjects.resize(BILBOARD_OBJECT_TYPE_UI + 1);
-
-	// 스카이박스 객체를 생성한다.
-	m_BilboardObjects[BILBOARD_OBJECT_TYPE_SKYBOX].push_back(make_shared<CSkyBox>(D3D12Device, D3D12GraphicsCommandList));
-
+	// 파일로부터 UI 객체들을 생성하고 배치한다.
 #ifdef READ_BINARY_FILE
 	LoadUIInfoFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Scenes/GameScene_UI.bin"));
 #else
@@ -106,6 +94,7 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 		if (Token == TEXT("<Name>"))
 		{
 			File::ReadStringFromFile(InFile, Token);
+
 			ModelInfo = CGameObject::LoadObjectFromFile(D3D12Device, D3D12GraphicsCommandList, Token, MeshCaches, MaterialCaches);
 		}
 		else if (Token == TEXT("<Type>"))
@@ -121,6 +110,7 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 			switch (ObjectType)
 			{
 			case OBJECT_TYPE_PLAYER:
+				m_GameObjects[ObjectType].push_back(make_shared<CPlayer>(D3D12Device, D3D12GraphicsCommandList));
 				m_GameObjects[ObjectType].back()->SetActive(true);
 				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
 				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
@@ -128,12 +118,12 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 				m_GameObjects[ObjectType].back()->FindFrame(TEXT("gun_pr_1"))->SetActive(false);
 				break;
 			case OBJECT_TYPE_NPC:
-				m_GameObjects[ObjectType].push_back(make_shared<CGameObject>());
+				m_GameObjects[ObjectType].push_back(make_shared<CGuard>());
 				m_GameObjects[ObjectType].back()->SetActive(true);
 				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
 				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
 				m_GameObjects[ObjectType].back()->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
-				m_GameObjects[ObjectType].back()->SetAnimationClip(static_cast<UINT>(Random::Random(1.0f, 5.0f)));
+				m_GameObjects[ObjectType].back()->SetAnimationClip(static_cast<UINT>(Random::Random(0.0f, 4.0f)));
 				break;
 			case OBJECT_TYPE_TERRAIN:
 			case OBJECT_TYPE_STRUCTURE:
@@ -178,18 +168,20 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 			switch (ObjectType)
 			{
 			case OBJECT_TYPE_PLAYER:
+				m_GameObjects[ObjectType].push_back(make_shared<CPlayer>(D3D12Device, D3D12GraphicsCommandList));
 				m_GameObjects[ObjectType].back()->SetActive(true);
 				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
 				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
 				m_GameObjects[ObjectType].back()->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
+				m_GameObjects[ObjectType].back()->FindFrame(TEXT("gun_pr_1"))->SetActive(false);
 				break;
 			case OBJECT_TYPE_NPC:
-				m_GameObjects[ObjectType].push_back(make_shared<CGameObject>());
+				m_GameObjects[ObjectType].push_back(make_shared<CGuard>());
 				m_GameObjects[ObjectType].back()->SetActive(true);
 				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
 				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
 				m_GameObjects[ObjectType].back()->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
-				m_GameObjects[ObjectType].back()->SetAnimationClip(static_cast<UINT>(Random::Random(1.0f, 5.0f)));
+				m_GameObjects[ObjectType].back()->SetAnimationClip(static_cast<UINT>(Random::Random(0.0f, 4.0f)));
 				break;
 			case OBJECT_TYPE_TERRAIN:
 			case OBJECT_TYPE_STRUCTURE:
@@ -373,8 +365,8 @@ void CGameScene::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, 
 		}
 		break;
 	case '3': // 미션 UI 완료 디버깅
-		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(1, 0);
-		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(5, 1);
+		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(0, 1);
+		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(1, 5);
 		break;
 	case 'b':
 	case 'B':
@@ -456,83 +448,83 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	{
 	case IDLE:
 	case RUNNING:
-		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(0); // 0: Idle
+		Player->SetAnimationClip(0); // 0: Idle
 		return;
 
 	case PUNCHING:
-		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(7); // 7: Punching
+		Player->SetAnimationClip(7); // 7: Punching
 		return;
 
 	case SHOOTING:
-		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(8); // 8: Shooting
+		Player->SetAnimationClip(8); // 8: Shooting
 		return;
 
 	case MOVE_FORWARD:
 		Direction = Player->GetLook();
-		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(1); // 1: Crouched Walk
+		Player->SetAnimationClip(1); // 1: Crouched Walk
 		break;
 	case MOVE_FORWARD | MOVE_LEFT_STRAFE:
 		Direction = Vector3::Add(Player->GetLook(), XMFLOAT3(-Player->GetRight().x, Player->GetRight().y, -Player->GetRight().z));
-		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(1); // 1: Crouched Walk
+		Player->SetAnimationClip(1); // 1: Crouched Walk
 		break;
 	case MOVE_FORWARD | MOVE_RIGHT_STRAFE:
 		Direction = Vector3::Add(Player->GetLook(), Player->GetRight());
-		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(1); // 1: Crouched Walk
+		Player->SetAnimationClip(1); // 1: Crouched Walk
 		break;
 	case MOVE_FORWARD | RUNNING:
 		Direction = Player->GetLook();
 		Speed = 12.6f;
-		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(4); // 4: Running
+		Player->SetAnimationClip(4); // 4: Running
 		break;
 	case MOVE_FORWARD | MOVE_LEFT_STRAFE | RUNNING:
 		Direction = Vector3::Add(Player->GetLook(), XMFLOAT3(-Player->GetRight().x, Player->GetRight().y, -Player->GetRight().z));
 		Speed = 12.6f;
-		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(4); // 4: Running
+		Player->SetAnimationClip(4); // 4: Running
 		break;
 	case MOVE_FORWARD | MOVE_RIGHT_STRAFE | RUNNING:
 		Direction = Vector3::Add(Player->GetLook(), Player->GetRight());
 		Speed = 12.6f;
-		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(4); // 4: Running
+		Player->SetAnimationClip(4); // 4: Running
 		break;
 
 	case MOVE_BACKWARD:
 	case MOVE_BACKWARD | RUNNING:
 		Direction = Player->GetLook();
 		Speed = -3.15f;
-		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(1); // 1: Crouched Walk
+		Player->SetAnimationClip(1); // 1: Crouched Walk
 		break;
 	case MOVE_BACKWARD | MOVE_LEFT_STRAFE:
 	case MOVE_BACKWARD | MOVE_LEFT_STRAFE | RUNNING:
 		Direction = Vector3::Add(Player->GetLook(), Player->GetRight());
 		Speed = -3.15f;
-		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(1); // 1: Crouched Walk
+		Player->SetAnimationClip(1); // 1: Crouched Walk
 		break;
 	case MOVE_BACKWARD | MOVE_RIGHT_STRAFE:
 	case MOVE_BACKWARD | MOVE_RIGHT_STRAFE | RUNNING:
 		Direction = Vector3::Add(Player->GetLook(), XMFLOAT3(-Player->GetRight().x, Player->GetRight().y, -Player->GetRight().z));
 		Speed = -3.15f;
-		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(1); // 1: Crouched Walk
+		Player->SetAnimationClip(1); // 1: Crouched Walk
 		break;
 
 	case MOVE_LEFT_STRAFE:
 		Direction = Player->GetRight();
 		Speed = -3.15f;
-		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(2); // 2: Left Strafe Walk
+		Player->SetAnimationClip(2); // 2: Left Strafe Walk
 		break;
 	case MOVE_LEFT_STRAFE | RUNNING:
 		Direction = Player->GetRight();
 		Speed = -12.6f;
-		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(5); // 5: Left Strafe Running
+		Player->SetAnimationClip(5); // 5: Left Strafe Running
 		break;
 
 	case MOVE_RIGHT_STRAFE:
 		Direction = Player->GetRight();
-		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(3); // 3: Right Strafe Walk
+		Player->SetAnimationClip(3); // 3: Right Strafe Walk
 		break;
 	case MOVE_RIGHT_STRAFE | RUNNING:
 		Direction = Player->GetRight();
 		Speed = 12.6f;
-		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetAnimationClip(6); // 6: Right Strafe Running
+		Player->SetAnimationClip(6); // 6: Right Strafe Running
 		break;
 	}
 
@@ -784,9 +776,9 @@ void CGameScene::BuildLights()
 	Lights[1].m_Type = LIGHT_TYPE_SPOT;
 	Lights[1].m_Position = XMFLOAT3(0.0f, 18.0f, 150.0f);
 	Lights[1].m_Direction = XMFLOAT3(0.0f, -1.0f, 1.0f);
-	Lights[1].m_Color = XMFLOAT4(0.1f, 0.1f, 0.05f, 0.0f);
-	Lights[1].m_Attenuation = XMFLOAT3(1.0f, 0.1f, 0.01f);
-	Lights[1].m_Falloff = 10.0f;
+	Lights[1].m_Color = XMFLOAT4(0.05f, 0.05f, 0.01f, 0.0f);
+	Lights[1].m_Attenuation = XMFLOAT3(3.0f, 2.0f, 1.0f);
+	Lights[1].m_Falloff = 15.0f;
 	Lights[1].m_Range = 500.0f;
 	Lights[1].m_Theta = cosf(XMConvertToRadians(30.0f));
 	Lights[1].m_Phi = cosf(XMConvertToRadians(60.0f));

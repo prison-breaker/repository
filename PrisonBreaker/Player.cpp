@@ -1,6 +1,25 @@
 #include "stdafx.h"
 #include "Player.h"
 
+CPlayer::CPlayer(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
+{
+	// 카메라 객체를 생성한다.
+	m_Camera = make_shared<CCamera>();
+	m_Camera->CreateShaderVariables(D3D12Device, D3D12GraphicsCommandList);
+	m_Camera->GeneratePerspectiveProjectionMatrix(60.0f, static_cast<float>(CLIENT_WIDTH) / static_cast<float>(CLIENT_HEIGHT), 1.0f, 500.0f);
+	m_Camera->GenerateViewMatrix(XMFLOAT3(0.0f, 5.0f, -150.0f), XMFLOAT3(0.0f, 0.0f, 1.0f));
+}
+
+void CPlayer::SetHealth(UINT Health)
+{
+	m_Health = Health;
+}
+
+UINT CPlayer::GetHealth() const
+{
+	return m_Health;
+}
+
 void CPlayer::SetCamera(const shared_ptr<CCamera>& Camera)
 {
 	m_Camera = Camera;
@@ -9,6 +28,11 @@ void CPlayer::SetCamera(const shared_ptr<CCamera>& Camera)
 CCamera* CPlayer::GetCamera() const
 {
 	return m_Camera.get();
+}
+
+CStateMachine<CPlayer>* CPlayer::GetStateMachine() const
+{
+	return m_StateMachine.get();
 }
 
 void CPlayer::AcquirePistol()

@@ -5,12 +5,12 @@
 
 #define WIN32_LEAN_AND_MEAN
 
-#define EPSILON			           1.0e-10f
+#define EPSILON			          1.0e-10f
 
-#define MAX_TITLE_LENGTH	       64
-#define MAX_LIGHTS                 2
-#define MAX_BOUNDINGBOX_INDICES	   36
-#define MAX_BONES				   100
+#define MAX_TITLE_LENGTH	      64
+#define MAX_LIGHTS                2
+#define MAX_BOUNDINGBOX_INDICES	  36
+#define MAX_BONES				  100
 
 #define CLIENT_WIDTH		      1920
 #define	CLIENT_HEIGHT		      1080
@@ -25,8 +25,8 @@
 #define MOVE_LEFT_STRAFE          0x04
 #define MOVE_RIGHT_STRAFE         0x08
 #define RUNNING					  0x10
-#define PUNCHING				  0x100
-#define SHOOTING				  0x200
+#define PUNCHING				  0x20
+#define SHOOTING				  0x40
 
 #define TEXTURE_MASK_ALBEDO_MAP   0x01
 #define TEXTURE_MASK_METALLIC_MAP 0x02

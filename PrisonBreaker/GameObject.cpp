@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "GameObject.h"
-#include "AnimationController.h"
 
 shared_ptr<LOADED_MODEL_INFO> CGameObject::LoadObjectFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName, unordered_map<tstring, shared_ptr<CMesh>>& MeshCaches, unordered_map<tstring, shared_ptr<CMaterial>>& MaterialCaches)
 {
@@ -462,12 +461,12 @@ void CGameObject::Animate(float ElapsedTime)
 	{
 		if (m_AnimationController)
 		{
-			m_AnimationController->UpdateAnimationClip(ElapsedTime, shared_from_this());
+			m_AnimationController->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
 		}
 	}
 }
 
-void CGameObject::PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType)
+void CGameObject::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType)
 {
 	if (IsActive())
 	{
@@ -507,67 +506,9 @@ void CGameObject::PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList,
 	}
 }
 
-void CGameObject::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType)
+void CGameObject::SetActive(bool IsActive)
 {
-	if (IsActive())
-	{
-		if (IsVisible(Camera))
-		{
-			if (m_Mesh)
-			{
-				UpdateShaderVariables(D3D12GraphicsCommandList);
-
-				UINT MaterialCount{ static_cast<UINT>(m_Materials.size()) };
-
-				for (UINT i = 0; i < MaterialCount; ++i)
-				{
-					if (m_Materials[i])
-					{
-						m_Materials[i]->SetPipelineState(D3D12GraphicsCommandList, RenderType);
-						m_Materials[i]->UpdateShaderVariables(D3D12GraphicsCommandList);
-					}
-
-					m_Mesh->Render(D3D12GraphicsCommandList, i);
-				}
-			}
-		}
-
-		for (const auto& ChildObject : m_ChildObjects)
-		{
-			if (ChildObject)
-			{
-				ChildObject->Render(D3D12GraphicsCommandList, Camera, RenderType);
-			}
-		}
-	}
-}
-
-void CGameObject::PostRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType)
-{
-	if (IsActive())
-	{
-		if (IsVisible(Camera))
-		{
-			if (m_Mesh)
-			{
-				UpdateShaderVariables(D3D12GraphicsCommandList);
-
-				UINT MaterialCount{ static_cast<UINT>(m_Materials.size()) };
-
-				for (UINT i = 0; i < MaterialCount; ++i)
-				{
-					if (m_Materials[i])
-					{
-						m_Materials[i]->SetPipelineState(D3D12GraphicsCommandList, RenderType);
-						m_Materials[i]->UpdateShaderVariables(D3D12GraphicsCommandList);
-					}
-
-					m_Mesh->Render(D3D12GraphicsCommandList, i);
-
-				}
-			}
-		}
-	}
+	m_IsActive = IsActive;
 }
 
 bool CGameObject::IsActive() const
@@ -575,9 +516,14 @@ bool CGameObject::IsActive() const
 	return m_IsActive;
 }
 
-void CGameObject::SetActive(bool IsActive)
+void CGameObject::SetSpeed(float Speed)
 {
-	m_IsActive = IsActive;
+	m_Speed = Speed;
+}
+
+float CGameObject::GetSpeed() const
+{
+	return m_Speed;
 }
 
 const XMFLOAT4X4& CGameObject::GetWorldMatrix() const
@@ -692,8 +638,13 @@ void CGameObject::SetAnimationController(ID3D12Device* D3D12Device, ID3D12Graphi
 {
 	if (ModelInfo)
 	{
-		m_AnimationController = make_shared<CAnimationController>(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
+		m_AnimationController = make_shared<CAnimationController>(D3D12Device, D3D12GraphicsCommandList, ModelInfo, shared_from_this());
 	}
+}
+
+CAnimationController* CGameObject::GetAnimationController() const
+{
+	return m_AnimationController.get();
 }
 
 void CGameObject::SetAnimationClip(UINT ClipNum)
@@ -734,6 +685,8 @@ void CGameObject::UpdateTransform(const XMFLOAT4X4& ParentMatrix)
 {
 	m_WorldMatrix = Matrix4x4::Multiply(m_TransformMatrix, ParentMatrix);
 
+	UpdateBoundingBox();
+
 	for (const auto& ChildObject : m_ChildObjects)
 	{
 		if (ChildObject)
@@ -741,8 +694,6 @@ void CGameObject::UpdateTransform(const XMFLOAT4X4& ParentMatrix)
 			ChildObject->UpdateTransform(m_WorldMatrix);
 		}
 	}
-
-	UpdateBoundingBox();
 }
 
 void CGameObject::Scale(float Pitch, float Yaw, float Roll)

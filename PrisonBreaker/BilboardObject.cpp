@@ -258,12 +258,20 @@ void CBilboardObject::SetActive(bool IsActive)
 	m_IsActive = IsActive;
 }
 
+void CBilboardObject::SetMaterial(const shared_ptr<CMaterial>& Material)
+{
+	if (Material)
+	{
+		m_Materials.push_back(Material);
+	}
+}
+
 UINT CBilboardObject::GetVertexCount() const
 {
 	return m_VertexCount;
 }
 
-void CBilboardObject::SetPosition(const XMFLOAT3& Position, UINT Index)
+void CBilboardObject::SetPosition(UINT Index, const XMFLOAT3& Position)
 {
 	if (Index < 0 || Index > m_VertexCount)
 	{
@@ -273,7 +281,7 @@ void CBilboardObject::SetPosition(const XMFLOAT3& Position, UINT Index)
 	m_MappedImageInfo[Index].SetPosition(Position);
 }
 
-void CBilboardObject::SetSize(const XMFLOAT2& Size, UINT Index)
+void CBilboardObject::SetSize(UINT Index, const XMFLOAT2& Size)
 {
 	if (Index < 0 || Index > m_VertexCount)
 	{
@@ -283,7 +291,7 @@ void CBilboardObject::SetSize(const XMFLOAT2& Size, UINT Index)
 	m_MappedImageInfo[Index].SetSize(Size);
 }
 
-void CBilboardObject::SetCellIndex(UINT CellIndex, UINT Index)
+void CBilboardObject::SetCellIndex(UINT Index, UINT CellIndex)
 {
 	if (Index < 0 || Index > m_VertexCount)
 	{
@@ -291,14 +299,6 @@ void CBilboardObject::SetCellIndex(UINT CellIndex, UINT Index)
 	}
 
 	m_MappedImageInfo[Index].SetCellIndex(CellIndex);
-}
-
-void CBilboardObject::SetMaterial(const shared_ptr<CMaterial>& Material)
-{
-	if (Material)
-	{
-		m_Materials.push_back(Material);
-	}
 }
 
 void CBilboardObject::SetAnimationClip(UINT ClipNum)

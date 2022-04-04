@@ -1,8 +1,7 @@
 #pragma once
 #include "Scene.h"
-#include "SkyBox.h"
-#include "SkyBoxShader.h"
 #include "ShadowMapShader.h"
+#include "SkyBoxShader.h"
 #include "UIShader.h"
 #include "DebugShader.h"
 
@@ -17,9 +16,9 @@ struct LIGHT
 			   
 	XMFLOAT4   m_Color{};
 			   
-	XMFLOAT3   m_Attenuation;
+	XMFLOAT3   m_Attenuation{};
 	float 	   m_Falloff{};
-	float	   m_Range;
+	float	   m_Range{};
 	float 	   m_Theta{};
 	float	   m_Phi{};
 			   

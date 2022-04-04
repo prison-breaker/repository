@@ -1,5 +1,6 @@
 #pragma once
 #include "BilboardMesh.h"
+#include "StateMachine.h"
 
 class CCamera;
 class CMaterial;
@@ -8,19 +9,20 @@ class CUIAnimationController;
 class CBilboardObject : public enable_shared_from_this<CBilboardObject>
 {
 protected:
-	bool				               m_IsActive{};
-								       
-	vector<shared_ptr<CMaterial>>      m_Materials{};
-								       
-	UINT						       m_VertexCount{};
-								       
-	ComPtr<ID3D12Resource>	           m_D3D12VertexBuffer{};
-	ComPtr<ID3D12Resource>	           m_D3D12VertexUploadBuffer{};
-	D3D12_VERTEX_BUFFER_VIEW           m_D3D12VertexBufferView{};
-								       
-	CBilboardMesh*				       m_MappedImageInfo{};
+	bool				                       m_IsActive{};
+								               
+	vector<shared_ptr<CMaterial>>              m_Materials{};
+								               
+	UINT						               m_VertexCount{};
+								               
+	ComPtr<ID3D12Resource>	                   m_D3D12VertexBuffer{};
+	ComPtr<ID3D12Resource>	                   m_D3D12VertexUploadBuffer{};
+	D3D12_VERTEX_BUFFER_VIEW                   m_D3D12VertexBufferView{};
+								               
+	CBilboardMesh*				               m_MappedImageInfo{};
 
-	shared_ptr<CUIAnimationController> m_UIAnimationController{};
+	shared_ptr<CStateMachine<CBilboardObject>> m_StateMachine{};
+	shared_ptr<CUIAnimationController>         m_UIAnimationController{};
 
 public:
 	CBilboardObject() = default;
@@ -37,14 +39,13 @@ public:
 	bool IsActive() const;
 	void SetActive(bool IsActive);
 
+	void SetMaterial(const shared_ptr<CMaterial>& Material);
+
 	UINT GetVertexCount() const;
 
-	void SetPosition(const XMFLOAT3& Position, UINT Index);
-	void SetSize(const XMFLOAT2& Size, UINT Index);
-
-	void SetCellIndex(UINT CellIndex, UINT Index);
-
-	void SetMaterial(const shared_ptr<CMaterial>& Material);
+	void SetPosition(UINT Index, const XMFLOAT3& Position);
+	void SetSize(UINT Index, const XMFLOAT2& Size);
+	void SetCellIndex(UINT Index, UINT CellIndex);
 
 	void SetAnimationClip(UINT ClipNum);
 	void SetKeyFrameIndex(UINT ClipNum, UINT KeyFrameIndex);

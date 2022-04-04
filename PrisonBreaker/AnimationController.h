@@ -1,5 +1,8 @@
 #pragma once
-#include "GameObject.h"
+
+struct LOADED_MODEL_INFO;
+class CGameObject;
+class CSkinnedMesh;
 
 class CAnimationClip
 {
@@ -7,13 +10,10 @@ class CAnimationClip
 
 private:
 	string                             m_ClipName{};
-
-	ANIMATION_TYPE					   m_AnimationType{};
-		                               
+                             
 	UINT	                           m_FramePerSec{};
 	UINT	                           m_KeyFrameCount{};
 	float                              m_KeyFrameTime{};
-	UINT							   m_KeyFrameIndex{};
 
 	vector<vector<vector<XMFLOAT4X4>>> m_BoneTransformMatrixes{}; // [SkinnedMesh][Bone][KeyFrameTimeIndex]
 
@@ -29,8 +29,12 @@ public:
 class CAnimationController
 {
 private:
+	shared_ptr<CGameObject>					m_Owner{};
+
 	UINT									m_ClipNum{};
 	vector<shared_ptr<CAnimationClip>>	    m_AnimationClips{};
+
+	UINT							        m_KeyFrameIndex{};
 
 	vector<shared_ptr<CSkinnedMesh>>        m_SkinnedMeshCaches{};
 	vector<vector<shared_ptr<CGameObject>>> m_BoneFrameCaches{}; // [SkinnedMesh][Bone]
@@ -39,13 +43,12 @@ private:
 	vector<XMFLOAT4X4*>				        m_MappedBoneTransformMatrixes{};
 
 public:
-	CAnimationController(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const shared_ptr<LOADED_MODEL_INFO>& ModelInfo);
+	CAnimationController(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const shared_ptr<LOADED_MODEL_INFO>& ModelInfo, const shared_ptr<CGameObject>& Owner);
 	~CAnimationController() = default;
-
+	
 	void SetAnimationClip(UINT ClipNum);
 
 	void UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 
-	void UpdateAnimationClip(float ElapsedTime, const shared_ptr<CGameObject>& RootObject);
-
+	void UpdateAnimationClip(ANIMATION_TYPE AnimationType);
 };
