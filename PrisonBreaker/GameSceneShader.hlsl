@@ -20,10 +20,18 @@
 
 struct MATERIAL
 {
-	float4 AlbedoColor;
+	float4 m_AlbedoColor;
 
-	uint   TextureMask;
-	float2 TextureScale;
+	uint   m_TextureMask;
+	float2 m_TextureScale;
+};
+
+struct FOG
+{
+	float4 m_Color;
+
+	float2 m_Range; // End, End - Start
+	float  m_Density;
 };
 
 struct LIGHT
@@ -69,19 +77,24 @@ cbuffer CB_LIGHT : register(b2)
 	LIGHT Lights[MAX_LIGHTS];
 };
 
-cbuffer CB_OBJECT : register(b3)
+cbuffer CB_FOG : register(b3)
+{
+	FOG Fog;
+}
+
+cbuffer CB_OBJECT : register(b4)
 {
 	matrix WorldMatrix : packoffset(c0);
 
 	MATERIAL Material  : packoffset(c4);
 };
 
-cbuffer CB_BONE_OFFSET : register(b4)
+cbuffer CB_BONE_OFFSET : register(b5)
 {
 	matrix BoneOffsetMatrix[MAX_BONES];
 }
 
-cbuffer CB_BONE_TRANSFORM : register(b5)
+cbuffer CB_BONE_TRANSFORM : register(b6)
 {
 	matrix BoneTransformMatrix[MAX_BONES];
 }
@@ -109,6 +122,18 @@ float Get3x3ShadowFactor(float2 ShadowTexCoord, float Depth)
 	Percent += ShadowMapTexture.SampleCmpLevelZero(PCFShadowSampler, ShadowTexCoord + float2(+DELTA_X, +DELTA_Y), Depth).r;
 
 	return Percent /= 9.0f;
+}
+
+// ====================================== FOG FUNCTION ======================================
+
+float4 Fogging(float4 Color, float3 Position)
+{
+	float3 ToCamera = CameraPosition - Position;
+	float DistanceToCamera = length(ToCamera);
+	float FogFactor = saturate((Fog.m_Range.x - DistanceToCamera) / Fog.m_Range.y); // 1.0f / exp(DistanceToCamera * Fog.m_Density);
+	float4 FoggedColor = float4(lerp(Fog.m_Color.rgb, Color.rgb, FogFactor), Color.a);
+
+	return FoggedColor;
 }
 
 // ====================================== LIGHT FUNCTION ======================================
@@ -207,7 +232,7 @@ VS_OUTPUT VS_Main(VS_INPUT Input)
 	Output.m_NormalW = mul(Input.m_Normal, (float3x3)WorldMatrix);
 	Output.m_TangentW = mul(Input.m_Tangent, (float3x3)WorldMatrix);
 	Output.m_BiTangentW = mul(Input.m_BiTangent, (float3x3)WorldMatrix);
-	Output.m_TexCoord = Material.TextureScale * Input.m_TexCoord;
+	Output.m_TexCoord = Material.m_TextureScale * Input.m_TexCoord;
 	Output.m_ShadowTexCoord = mul(PositionW, Lights[1].m_ToTexCoordMatrix);
 
 	return Output;
@@ -217,23 +242,23 @@ float4 PS_Main(VS_OUTPUT Input) : SV_TARGET
 {
 	float4 Color = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
-	if (Material.TextureMask & TEXTURE_MASK_ALBEDO_MAP)
+	if (Material.m_TextureMask & TEXTURE_MASK_ALBEDO_MAP)
 	{
-		Color += AlbedoMapTexture.Sample(Sampler, Input.m_TexCoord) * Material.AlbedoColor;
+		Color += AlbedoMapTexture.Sample(Sampler, Input.m_TexCoord) * Material.m_AlbedoColor;
 	}
 	else
 	{
-		Color += Material.AlbedoColor;
+		Color += Material.m_AlbedoColor;
 	}
 
-	//if (Material.TextureMask & TEXTURE_MASK_METALLIC_MAP)
+	//if (Material.m_TextureMask & TEXTURE_MASK_METALLIC_MAP)
 	//{
 	//	Color += MetallicMapTexture.Sample(Sampler, Input.m_TexCoord);
 	//}
 
 	float3 NormalW = float3(0.0f, 0.0f, 0.0f);
 
-	if (Material.TextureMask & TEXTURE_MASK_NORMAL_MAP)
+	if (Material.m_TextureMask & TEXTURE_MASK_NORMAL_MAP)
 	{
 		float3x3 TBN = float3x3(Input.m_TangentW, Input.m_BiTangentW, Input.m_NormalW);
 
@@ -242,11 +267,12 @@ float4 PS_Main(VS_OUTPUT Input) : SV_TARGET
 	else
 	{
 		NormalW = normalize(Input.m_NormalW);
-	}
 
+	}
 	float4 Illumination = Lighting(Input.m_PositionW, NormalW, Input.m_ShadowTexCoord);
 
 	Color = float4(lerp(Color.rgb, Illumination.rgb, 0.75f).rgb, Color.a);
+	Color = Fogging(Color, Input.m_PositionW);
 
 	return Color;
 }
@@ -281,7 +307,7 @@ VS_OUTPUT VS_Main_Skinning(VS_INPUT_SKINNING Input)
 	Output.m_NormalW = mul(Input.m_Normal, (float3x3)SkinnedWorldMatrix);
 	Output.m_TangentW = mul(Input.m_Tangent, (float3x3)SkinnedWorldMatrix);
 	Output.m_BiTangentW = mul(Input.m_BiTangent, (float3x3)SkinnedWorldMatrix);
-	Output.m_TexCoord = Material.TextureScale * Input.m_TexCoord;
+	Output.m_TexCoord = Material.m_TextureScale * Input.m_TexCoord;
 	Output.m_ShadowTexCoord = mul(PositionW, Lights[1].m_ToTexCoordMatrix);
 
 	return Output;

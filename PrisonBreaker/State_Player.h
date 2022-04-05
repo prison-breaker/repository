@@ -13,75 +13,92 @@ public:
 	static CPlayerIdleState* GetInstance();
 
 	virtual void Enter(const shared_ptr<CPlayer>& Entity);
-	virtual void ProcessInput(const shared_ptr<CPlayer>& Entity, UINT InputMask);
+	virtual void ProcessInput(const shared_ptr<CPlayer>& Entity, UINT InputMask, float ElapsedTime);
 	virtual void Update(const shared_ptr<CPlayer>& Entity);
 	virtual void Exit(const shared_ptr<CPlayer>& Entity);
 };
 
 //=========================================================================================================================
 
-class CPlayerWalkState : public CState<CPlayer>
+class CPlayerWalkingState : public CState<CPlayer>
 {
 private:
-	CPlayerWalkState() = default;
-	virtual ~CPlayerWalkState() = default;
+	CPlayerWalkingState() = default;
+	virtual ~CPlayerWalkingState() = default;
 
 public:
-	static CPlayerWalkState* GetInstance();
+	static CPlayerWalkingState* GetInstance();
 
 	virtual void Enter(const shared_ptr<CPlayer>& Entity);
-	virtual void ProcessInput(const shared_ptr<CPlayer>& Entity, UINT InputMask);
+	virtual void ProcessInput(const shared_ptr<CPlayer>& Entity, UINT InputMask, float ElapsedTime);
 	virtual void Update(const shared_ptr<CPlayer>& Entity);
 	virtual void Exit(const shared_ptr<CPlayer>& Entity);
 };
 
 //=========================================================================================================================
 
-class CPlayerRunState : public CState<CPlayer>
+class CPlayerRunningState : public CState<CPlayer>
 {
 private:
-	CPlayerRunState() = default;
-	virtual ~CPlayerRunState() = default;
+	CPlayerRunningState() = default;
+	virtual ~CPlayerRunningState() = default;
 
 public:
-	static CPlayerRunState* GetInstance();
+	static CPlayerRunningState* GetInstance();
 
 	virtual void Enter(const shared_ptr<CPlayer>& Entity);
-	virtual void ProcessInput(const shared_ptr<CPlayer>& Entity, UINT InputMask);
+	virtual void ProcessInput(const shared_ptr<CPlayer>& Entity, UINT InputMask, float ElapsedTime);
 	virtual void Update(const shared_ptr<CPlayer>& Entity);
 	virtual void Exit(const shared_ptr<CPlayer>& Entity);
 };
 
 //=========================================================================================================================
 
-class CPlayerAttackState : public CState<CPlayer>
+class CPlayerPunchingState : public CState<CPlayer>
 {
 private:
-	CPlayerAttackState() = default;
-	virtual ~CPlayerAttackState() = default;
+	CPlayerPunchingState() = default;
+	virtual ~CPlayerPunchingState() = default;
 
 public:
-	static CPlayerAttackState* GetInstance();
+	static CPlayerPunchingState* GetInstance();
 
 	virtual void Enter(const shared_ptr<CPlayer>& Entity);
-	virtual void ProcessInput(const shared_ptr<CPlayer>& Entity, UINT InputMask);
+	virtual void ProcessInput(const shared_ptr<CPlayer>& Entity, UINT InputMask, float ElapsedTime);
 	virtual void Update(const shared_ptr<CPlayer>& Entity);
 	virtual void Exit(const shared_ptr<CPlayer>& Entity);
 };
 
 //=========================================================================================================================
 
-class CPlayerDieState : public CState<CPlayer>
+class CPlayerShootingState : public CState<CPlayer>
 {
 private:
-	CPlayerDieState() = default;
-	virtual ~CPlayerDieState() = default;
+	CPlayerShootingState() = default;
+	virtual ~CPlayerShootingState() = default;
 
 public:
-	static CPlayerDieState* GetInstance();
+	static CPlayerShootingState* GetInstance();
 
 	virtual void Enter(const shared_ptr<CPlayer>& Entity);
-	virtual void ProcessInput(const shared_ptr<CPlayer>& Entity, UINT InputMask);
+	virtual void ProcessInput(const shared_ptr<CPlayer>& Entity, UINT InputMask, float ElapsedTime);
+	virtual void Update(const shared_ptr<CPlayer>& Entity);
+	virtual void Exit(const shared_ptr<CPlayer>& Entity);
+};
+
+//=========================================================================================================================
+
+class CPlayerDyingState : public CState<CPlayer>
+{
+private:
+	CPlayerDyingState() = default;
+	virtual ~CPlayerDyingState() = default;
+
+public:
+	static CPlayerDyingState* GetInstance();
+
+	virtual void Enter(const shared_ptr<CPlayer>& Entity);
+	virtual void ProcessInput(const shared_ptr<CPlayer>& Entity, UINT InputMask, float ElapsedTime);
 	virtual void Update(const shared_ptr<CPlayer>& Entity);
 	virtual void Exit(const shared_ptr<CPlayer>& Entity);
 };

@@ -19,15 +19,21 @@ public:
 
 	~CStateMachine() = default;
 
+	void SetOwner(shared_ptr<EntityType> Owner)
+	{
+		m_Owner = Owner;
+	}
+
 	void SetCurrentState(CState<EntityType>* State)
 	{
 		if (State)
 		{
 			m_CurrentState = State;
+			m_CurrentState->Enter(m_Owner);
 		}
 	}
 
-	const shared_ptr<CState<EntityType>> GetCurrentState() const
+	const CState<EntityType>* GetCurrentState() const
 	{
 		return m_CurrentState;
 	}
@@ -48,11 +54,11 @@ public:
 		return typeid(*m_CurrentState) == typeid(*State);
 	}
 
-	void ProcessInput(UINT InputMask)
+	void ProcessInput(UINT InputMask, float ElapsedTime)
 	{
 		if (m_CurrentState)
 		{
-			m_CurrentState->ProcessInput(m_Owner, InputMask);
+			m_CurrentState->ProcessInput(m_Owner, InputMask, ElapsedTime);
 		}
 	}
 

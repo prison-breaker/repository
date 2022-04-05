@@ -5,6 +5,19 @@
 #include "UIShader.h"
 #include "DebugShader.h"
 
+struct FOG
+{
+	XMFLOAT4 m_Color{};
+
+	XMFLOAT2 m_Range{}; // End, End - Start
+	float	 m_Density{};
+};
+
+struct CB_FOG
+{
+	FOG m_Fog{};
+};
+
 struct LIGHT
 {
 	bool	   m_IsActive{};
@@ -41,6 +54,9 @@ private:
 	vector<LIGHT>						        m_Lights{};
 	ComPtr<ID3D12Resource>				        m_D3D12Lights{};
 	CB_LIGHT*							        m_MappedLights{};
+
+	ComPtr<ID3D12Resource>						m_D3D12Fog{};
+	CB_FOG*										m_MappedFog{};
 
 	bool										m_RenderBoundingBox{};
 
@@ -79,4 +95,5 @@ public:
 	void LoadMaterialCachesFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName, unordered_map<tstring, shared_ptr<CMaterial>>& MaterialCaches);
 
 	void BuildLights();
+	void BuildFog();
 };

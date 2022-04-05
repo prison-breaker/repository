@@ -23,6 +23,30 @@ void CCamera::ReleaseShaderVariables()
 	m_D3D12Camera->Unmap(0, nullptr);
 }
 
+void CCamera::SetZoomIn(bool IsZoomIn)
+{
+	m_IsZoomIn = IsZoomIn;
+	m_ZoomFactor = 0.0f;
+}
+
+bool CCamera::IsZoomIn() const
+{
+	return m_IsZoomIn;
+}
+
+void CCamera::IncreaseZoomFactor(float ElapsedTime)
+{
+	if (IsZoomIn())
+	{
+		m_ZoomFactor += 10.0f * ElapsedTime;
+
+		if (m_ZoomFactor > 1.75f)
+		{
+			m_ZoomFactor = 1.75f;
+		}
+	}
+}
+
 void CCamera::SetViewport(int TopLeftX, int TopLeftY, UINT Width, UINT Height, float MinDepth, float MaxDepth)
 {
 	m_D3D12Viewport.TopLeftX = static_cast<float>(TopLeftX);
@@ -168,6 +192,11 @@ void CCamera::Rotate(const XMFLOAT4X4& WorldMatrix, float ElapsedTime)
 				   0.0f,			0.0f,			 0.0f, 1.0f
 	};
 	XMFLOAT3 Position{ WorldMatrix._41, WorldMatrix._42 + 4.5f, WorldMatrix._43 };
+	XMFLOAT3 ZoomDirection{ Vector3::Add(XMFLOAT3(WorldMatrix._11, WorldMatrix._12, WorldMatrix._13), XMFLOAT3(WorldMatrix._31, WorldMatrix._32, WorldMatrix._33)) };
+	
+	ZoomDirection = Vector3::ScalarProduct(m_ZoomFactor, ZoomDirection, false);
+	Position = Vector3::Add(Position, ZoomDirection);
+
 	XMFLOAT3 NewOffset{ Vector3::TransformNormal(m_Offset, RotationMatrix) };
 	XMFLOAT3 NewPosition{ Vector3::Add(Position, NewOffset) };
 	XMFLOAT3 Direction{ Vector3::Subtract(NewPosition, m_Position) };

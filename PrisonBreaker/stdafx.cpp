@@ -247,6 +247,15 @@ namespace Vector3
 		return Result;
 	}
 
+	XMFLOAT3 Inverse(const XMFLOAT3& Vector)
+	{
+		XMFLOAT3 Result{};
+
+		XMStoreFloat3(&Result, XMVectorScale(XMLoadFloat3(&Vector), -1.0f));
+
+		return Result;
+	}
+
 	XMFLOAT3 XMVectorToXMFloat3(const XMVECTOR& Vector)
 	{
 		XMFLOAT3 Result{};

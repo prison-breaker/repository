@@ -174,6 +174,12 @@
     <ClCompile Include="Guard.cpp">
       <Filter>소스 파일\Object</Filter>
     </ClCompile>
+    <ClCompile Include="State_Guard.cpp">
+      <Filter>소스 파일\State</Filter>
+    </ClCompile>
+    <ClCompile Include="State_MissionUI.cpp">
+      <Filter>소스 파일\State</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -265,6 +271,12 @@
     </ClInclude>
     <ClInclude Include="Guard.h">
       <Filter>헤더 파일\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="State_Guard.h">
+      <Filter>헤더 파일\State</Filter>
+    </ClInclude>
+    <ClInclude Include="State_MissionUI.h">
+      <Filter>헤더 파일\State</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

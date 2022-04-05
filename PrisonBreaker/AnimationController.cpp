@@ -135,6 +135,16 @@ CAnimationController::CAnimationController(ID3D12Device* D3D12Device, ID3D12Grap
 	}
 }
 
+void CAnimationController::SetActive(bool IsActive)
+{
+	m_IsActive = IsActive;
+}
+
+bool CAnimationController::IsActive() const
+{
+	return m_IsActive;
+}
+
 void CAnimationController::SetAnimationClip(UINT ClipNum)
 {
 	if (ClipNum < 0 || ClipNum >= m_AnimationClips.size() || m_ClipNum == ClipNum)
@@ -144,6 +154,26 @@ void CAnimationController::SetAnimationClip(UINT ClipNum)
 
 	m_ClipNum = ClipNum;
 	m_KeyFrameIndex = 0;
+}
+
+UINT CAnimationController::GetAnimationClip() const
+{
+	return m_ClipNum;
+}
+
+void CAnimationController::SetKeyFrameIndex(UINT KeyFrameIndex)
+{
+	if (KeyFrameIndex < 0 || KeyFrameIndex >= m_AnimationClips[m_ClipNum]->m_KeyFrameCount)
+	{
+		return;
+	}
+
+	m_KeyFrameIndex = KeyFrameIndex;
+}
+
+UINT CAnimationController::GetKeyFrameIndex() const
+{
+	return m_KeyFrameIndex;
 }
 
 void CAnimationController::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
@@ -173,33 +203,42 @@ void CAnimationController::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D1
 	}
 }
 
-void CAnimationController::UpdateAnimationClip(ANIMATION_TYPE AnimationType)
+bool CAnimationController::UpdateAnimationClip(ANIMATION_TYPE AnimationType)
 {
-	switch (AnimationType)
+	bool IsFinished{};
+
+	if (IsActive())
 	{
-	case ANIMATION_TYPE_LOOP:
-		m_KeyFrameIndex += 1;
-
-		if (m_KeyFrameIndex >= m_AnimationClips[m_ClipNum]->m_KeyFrameCount)
+		switch (AnimationType)
 		{
-			m_KeyFrameIndex = 0;
-		}
-		break;
-	case ANIMATION_TYPE_ONCE:
-		m_KeyFrameIndex += 1;
+		case ANIMATION_TYPE_LOOP:
+			m_KeyFrameIndex += 1;
 
-		if (m_KeyFrameIndex >= m_AnimationClips[m_ClipNum]->m_KeyFrameCount)
-		{
-			m_KeyFrameIndex = m_AnimationClips[m_ClipNum]->m_KeyFrameCount - 1;
-		}
-		break;
-	case ANIMATION_TYPE_ONCE_REVERSE:
-		m_KeyFrameIndex -= 1;
+			if (m_KeyFrameIndex >= m_AnimationClips[m_ClipNum]->m_KeyFrameCount)
+			{
+				m_KeyFrameIndex = 0;
+			}
+			break;
+		case ANIMATION_TYPE_ONCE:
+			m_KeyFrameIndex += 1;
 
-		if (m_KeyFrameIndex < 0)
-		{
-			m_KeyFrameIndex = 0;
+			if (m_KeyFrameIndex >= m_AnimationClips[m_ClipNum]->m_KeyFrameCount)
+			{
+				m_KeyFrameIndex = m_AnimationClips[m_ClipNum]->m_KeyFrameCount - 1;
+				IsFinished = true;
+			}
+			break;
+		case ANIMATION_TYPE_ONCE_REVERSE:
+			m_KeyFrameIndex -= 1;
+
+			if (m_KeyFrameIndex < 0)
+			{
+				m_KeyFrameIndex = 0;
+				IsFinished = true;
+			}
+			break;
 		}
-		break;
 	}
+
+	return IsFinished;
 }

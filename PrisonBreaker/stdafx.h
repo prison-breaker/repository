@@ -19,14 +19,15 @@
 #define PLANE_WIDTH			      400
 #define PLANE_HEIGHT		      400
 
-#define IDLE					  0x00
-#define MOVE_FORWARD	          0x01
-#define MOVE_BACKWARD             0x02
-#define MOVE_LEFT_STRAFE          0x04
-#define MOVE_RIGHT_STRAFE         0x08
-#define RUNNING					  0x10
-#define PUNCHING				  0x20
-#define SHOOTING				  0x40
+#define INPUT_MASK_NONE			  0x00
+#define INPUT_MASK_W	          0x01
+#define INPUT_MASK_S              0x02
+#define INPUT_MASK_A              0x04
+#define INPUT_MASK_D              0x08
+#define INPUT_MASK_SHIFT          0x10
+#define INPUT_MASK_TAB            0x20
+#define INPUT_MASK_LMB            0x40
+#define INPUT_MASK_RMB            0x80
 
 #define TEXTURE_MASK_ALBEDO_MAP   0x01
 #define TEXTURE_MASK_METALLIC_MAP 0x02
@@ -84,6 +85,7 @@ enum ROOT_PARAMETER_TYPE
 	ROOT_PARAMETER_TYPE_FRAMEWORK_INFO,
 	ROOT_PARAMETER_TYPE_CAMERA,
 	ROOT_PARAMETER_TYPE_LIGHT,
+	ROOT_PARAMETER_TYPE_FOG,
 	ROOT_PARAMETER_TYPE_OBJECT,
 	ROOT_PARAMETER_TYPE_BONE_OFFSET,
 	ROOT_PARAMETER_TYPE_BONE_TRANSFORM,
@@ -200,6 +202,7 @@ namespace Vector3
 
 	float Length(const XMFLOAT3& Vector);
 	XMFLOAT3 Normalize(const XMFLOAT3& Vector);
+	XMFLOAT3 Inverse(const XMFLOAT3& Vector);
 
 	XMFLOAT3 XMVectorToXMFloat3(const XMVECTOR& Vector);
 

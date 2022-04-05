@@ -84,10 +84,21 @@ void CUIAnimationClip::LoadAnimationClipInfoFromFile(ifstream& InFile, UINT Vert
 
 //=========================================================================================================================
 
-CUIAnimationController::CUIAnimationController(vector<shared_ptr<CUIAnimationClip>>& UIAnimationClips) :
+CUIAnimationController::CUIAnimationController(const shared_ptr<CBilboardObject>& Owner, vector<shared_ptr<CUIAnimationClip>>& UIAnimationClips) :
+	m_Owner{ Owner },
 	m_AnimationClips{ move(UIAnimationClips) }
 {
 
+}
+
+void CUIAnimationController::SetActive(bool IsActive)
+{
+	m_IsActive = IsActive;
+}
+
+bool CUIAnimationController::IsActive() const
+{
+	return m_IsActive;
 }
 
 void CUIAnimationController::SetAnimationClip(UINT ClipNum)
@@ -108,21 +119,51 @@ void CUIAnimationController::SetKeyFrameIndex(UINT ClipNum, UINT KeyFrameIndex)
 	}
 }
 
-void CUIAnimationController::UpdateAnimationClip(float ElapsedTime, const shared_ptr<CBilboardObject>& BilboardObject)
+bool CUIAnimationController::UpdateAnimationClip(ANIMATION_TYPE AnimationType)
 {
-	UINT VertexCount{ BilboardObject->GetVertexCount() };
+	UINT VertexCount{ m_Owner->GetVertexCount() };
 
 	for (UINT i = 0; i < VertexCount; ++i)
 	{
 		// CBilboardMesh의 Get 함수는 유일하게 GPU의 가상주소로 사용되지 않는 곳에서만 사용해야한다!!
-		BilboardObject->SetPosition(i, m_AnimationClips[m_ClipNum]->m_TransformData[i][m_KeyFrameIndex].GetPosition());
-		BilboardObject->SetSize(i, m_AnimationClips[m_ClipNum]->m_TransformData[i][m_KeyFrameIndex].GetSize());
+		m_Owner->SetPosition(i, m_AnimationClips[m_ClipNum]->m_TransformData[i][m_KeyFrameIndex].GetPosition());
+		m_Owner->SetSize(i, m_AnimationClips[m_ClipNum]->m_TransformData[i][m_KeyFrameIndex].GetSize());
 	}
 
-	m_KeyFrameIndex += 1;
+	bool IsFinished{};
 
-	if (m_KeyFrameIndex >= m_AnimationClips[m_ClipNum]->m_KeyFrameCount)
+	if (IsActive())
 	{
-		m_KeyFrameIndex = m_AnimationClips[m_ClipNum]->m_KeyFrameCount - 1;
+		switch (AnimationType)
+		{
+		case ANIMATION_TYPE_LOOP:
+			m_KeyFrameIndex += 1;
+
+			if (m_KeyFrameIndex >= m_AnimationClips[m_ClipNum]->m_KeyFrameCount)
+			{
+				m_KeyFrameIndex = 0;
+			}
+			break;
+		case ANIMATION_TYPE_ONCE:
+			m_KeyFrameIndex += 1;
+
+			if (m_KeyFrameIndex >= m_AnimationClips[m_ClipNum]->m_KeyFrameCount)
+			{
+				m_KeyFrameIndex = m_AnimationClips[m_ClipNum]->m_KeyFrameCount - 1;
+				IsFinished = true;
+			}
+			break;
+		case ANIMATION_TYPE_ONCE_REVERSE:
+			m_KeyFrameIndex -= 1;
+
+			if (m_KeyFrameIndex < 1)
+			{
+				m_KeyFrameIndex = 1;
+				IsFinished = true;
+			}
+			break;
+		}
 	}
+
+	return IsFinished;
 }

@@ -11,6 +11,9 @@ struct CB_CAMERA
 class CCamera
 {
 private:
+	bool				   m_IsZoomIn{};
+	float				   m_ZoomFactor{};
+
 	D3D12_VIEWPORT         m_D3D12Viewport{ 0, 0, CLIENT_WIDTH, CLIENT_HEIGHT, 0.0f, 1.0f };
 	D3D12_RECT	           m_D3D12ScissorRect{ 0, 0, CLIENT_WIDTH, CLIENT_HEIGHT };
 				           
@@ -27,7 +30,7 @@ private:
 	float		           m_Yaw{};
 				           
 	XMFLOAT3	           m_Offset{ 0.0f, 0.0, -5.5f };
-	float		           m_TimeLag{ 0.1f };
+	float		           m_TimeLag{ 0.05f };
 						   
 	BoundingFrustum        m_BoundingFrustum{};
 						   
@@ -41,6 +44,11 @@ public:
 	void CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 	void UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 	void ReleaseShaderVariables();
+
+	void SetZoomIn(bool IsZoomIn);
+	bool IsZoomIn() const;
+
+	void IncreaseZoomFactor(float ElapsedTime);
 
 	void SetViewport(int TopLeftX, int TopLeftY, UINT Width, UINT Height, float MinDepth, float MaxDepth);
 	void SetScissorRect(LONG Left, LONG Top, LONG Right, LONG Bottom);

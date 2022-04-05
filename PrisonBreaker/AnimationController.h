@@ -29,6 +29,8 @@ public:
 class CAnimationController
 {
 private:
+	bool									m_IsActive{ true };
+
 	shared_ptr<CGameObject>					m_Owner{};
 
 	UINT									m_ClipNum{};
@@ -46,9 +48,16 @@ public:
 	CAnimationController(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const shared_ptr<LOADED_MODEL_INFO>& ModelInfo, const shared_ptr<CGameObject>& Owner);
 	~CAnimationController() = default;
 	
+	void SetActive(bool IsActive);
+	bool IsActive() const;
+
 	void SetAnimationClip(UINT ClipNum);
+	UINT GetAnimationClip() const;
+
+	void SetKeyFrameIndex(UINT KeyFrameIndex);
+	UINT GetKeyFrameIndex() const;
 
 	void UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 
-	void UpdateAnimationClip(ANIMATION_TYPE AnimationType);
+	bool UpdateAnimationClip(ANIMATION_TYPE AnimationType);
 };

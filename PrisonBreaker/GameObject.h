@@ -33,8 +33,6 @@ protected:
 	vector<shared_ptr<CMaterial>>    m_Materials{};
 	shared_ptr<BoundingBox>			 m_BoundingBox{};
 
-	shared_ptr<CAnimationController> m_AnimationController{};
-
 	vector<shared_ptr<CGameObject>>  m_ChildObjects{};
 
 public:
@@ -44,6 +42,8 @@ public:
 	static shared_ptr<LOADED_MODEL_INFO> LoadObjectFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName, unordered_map<tstring, shared_ptr<CMesh>>& MeshCaches, unordered_map<tstring, shared_ptr<CMaterial>>& MaterialCaches);
 	static shared_ptr<CGameObject> LoadModelInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile, unordered_map<tstring, shared_ptr<CMesh>>& MeshCaches, unordered_map<tstring, shared_ptr<CMaterial>>& MaterialCaches);
 	static void LoadAnimationInfoFromFile(tifstream& InFile, const shared_ptr<LOADED_MODEL_INFO>& ModelInfo);
+
+	virtual void Initialize();
 
 	virtual void CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
@@ -90,11 +90,6 @@ public:
 	shared_ptr<BoundingBox> GetBoundingBox();
 
 	void SetChild(const shared_ptr<CGameObject>& ChildObject);
-
-	void SetAnimationController(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const shared_ptr<LOADED_MODEL_INFO>& ModelInfo);
-	CAnimationController* GetAnimationController() const;
-
-	void SetAnimationClip(UINT ClipNum);
 
 	bool IsVisible(CCamera* Camera) const;
 

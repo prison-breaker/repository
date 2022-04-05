@@ -414,6 +414,11 @@ shared_ptr<CSkinnedMesh> CGameObject::FindSkinnedMesh(const tstring& SkinnedMesh
 	return SkinnedMesh;
 }
 
+void CGameObject::Initialize()
+{
+	SetActive(true);
+}
+
 void CGameObject::CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
 
@@ -457,24 +462,13 @@ void CGameObject::Move(const XMFLOAT3& Direction, float Distance)
 
 void CGameObject::Animate(float ElapsedTime)
 {
-	if (IsActive())
-	{
-		if (m_AnimationController)
-		{
-			m_AnimationController->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
-		}
-	}
+
 }
 
 void CGameObject::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType)
 {
 	if (IsActive())
 	{
-		if (m_AnimationController)
-		{
-			m_AnimationController->UpdateShaderVariables(D3D12GraphicsCommandList);
-		}
-
 		if (IsVisible(Camera))
 		{
 			if (m_Mesh)
@@ -631,27 +625,6 @@ void CGameObject::SetChild(const shared_ptr<CGameObject>& ChildObject)
 	if (ChildObject)
 	{
 		m_ChildObjects.push_back(ChildObject);
-	}
-}
-
-void CGameObject::SetAnimationController(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const shared_ptr<LOADED_MODEL_INFO>& ModelInfo)
-{
-	if (ModelInfo)
-	{
-		m_AnimationController = make_shared<CAnimationController>(D3D12Device, D3D12GraphicsCommandList, ModelInfo, shared_from_this());
-	}
-}
-
-CAnimationController* CGameObject::GetAnimationController() const
-{
-	return m_AnimationController.get();
-}
-
-void CGameObject::SetAnimationClip(UINT ClipNum)
-{
-	if (m_AnimationController)
-	{
-		m_AnimationController->SetAnimationClip(ClipNum);
 	}
 }
 

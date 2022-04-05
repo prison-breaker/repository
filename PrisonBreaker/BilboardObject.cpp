@@ -2,6 +2,7 @@
 #include "BilboardObject.h"
 #include "Material.h"
 #include "UIAnimationController.h"
+#include "State_MissionUI.h"
 
 shared_ptr<CBilboardObject> CBilboardObject::LoadObjectInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile)
 {
@@ -166,7 +167,11 @@ void CBilboardObject::LoadAnimationInfoFromFile(tifstream& InFile, const shared_
 					UIAnimationClips.push_back(UIAnimationClip);
 				}
 
-				Model->m_UIAnimationController = make_shared<CUIAnimationController>(UIAnimationClips);
+				Model->m_UIAnimationController = make_shared<CUIAnimationController>(Model, UIAnimationClips);
+
+				// 애니메이션 동작을 임시로 확인해보기 위해서 작성한 코드(미션 애니메이션 SHOW/HIDE)
+				Model->m_StateMachine = make_shared<CStateMachine<CBilboardObject>>(Model);
+				Model->m_StateMachine->SetCurrentState(CBilboardObjectShowingState::GetInstance());
 			}
 		}
 		else if (Token == TEXT("</AnimationClips>"))
@@ -208,11 +213,16 @@ void CBilboardObject::LoadAnimationInfoFromFile(tifstream& InFile, const shared_
 #endif
 }
 
+void CBilboardObject::Initialize()
+{
+	SetActive(true);
+}
+
 void CBilboardObject::Animate(float ElapsedTime)
 {
-	if (m_UIAnimationController)
+	if (m_StateMachine)
 	{
-		m_UIAnimationController->UpdateAnimationClip(ElapsedTime, shared_from_this());
+		m_StateMachine->Update();
 	}
 }
 
@@ -299,6 +309,16 @@ void CBilboardObject::SetCellIndex(UINT Index, UINT CellIndex)
 	}
 
 	m_MappedImageInfo[Index].SetCellIndex(CellIndex);
+}
+
+CStateMachine<CBilboardObject>* CBilboardObject::GetStateMachine() const
+{
+	return m_StateMachine.get();
+}
+
+CUIAnimationController* CBilboardObject::GetUIAnimationController() const
+{
+	return m_UIAnimationController.get();
 }
 
 void CBilboardObject::SetAnimationClip(UINT ClipNum)

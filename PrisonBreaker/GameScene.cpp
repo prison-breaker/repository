@@ -110,27 +110,45 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 			switch (ObjectType)
 			{
 			case OBJECT_TYPE_PLAYER:
-				m_GameObjects[ObjectType].push_back(make_shared<CPlayer>(D3D12Device, D3D12GraphicsCommandList));
-				m_GameObjects[ObjectType].back()->SetActive(true);
-				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
-				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
-				m_GameObjects[ObjectType].back()->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
-				m_GameObjects[ObjectType].back()->FindFrame(TEXT("gun_pr_1"))->SetActive(false);
+			{
+				// 플레이어 객체를 생성한다.
+				shared_ptr<CPlayer> Player{ make_shared<CPlayer>(D3D12Device, D3D12GraphicsCommandList) };
+
+				Player->Initialize();
+				Player->SetChild(ModelInfo->m_Model);
+				Player->SetTransformMatrix(TransformMatrix);
+				Player->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
+				Player->FindFrame(TEXT("gun_pr_1"))->SetActive(false);
+
+				m_GameObjects[ObjectType].push_back(Player);
+			}
 				break;
 			case OBJECT_TYPE_NPC:
-				m_GameObjects[ObjectType].push_back(make_shared<CGuard>());
-				m_GameObjects[ObjectType].back()->SetActive(true);
-				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
-				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
-				m_GameObjects[ObjectType].back()->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
-				m_GameObjects[ObjectType].back()->SetAnimationClip(static_cast<UINT>(Random::Random(0.0f, 4.0f)));
+			{
+				// 교도관 객체를 생성한다.
+				shared_ptr<CGuard> Guard{ make_shared<CGuard>() };
+
+				Guard->Initialize();
+				Guard->SetChild(ModelInfo->m_Model);
+				Guard->SetTransformMatrix(TransformMatrix);
+				Guard->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
+				Guard->SetAnimationClip(static_cast<UINT>(rand() % 4));
+
+				m_GameObjects[ObjectType].push_back(Guard);
+			}
 				break;
 			case OBJECT_TYPE_TERRAIN:
 			case OBJECT_TYPE_STRUCTURE:
-				m_GameObjects[ObjectType].push_back(make_shared<CGameObject>());
-				m_GameObjects[ObjectType].back()->SetActive(true);
-				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
-				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
+			{
+				// 지형 및 구조물 객체를 생성한다.
+				shared_ptr<CGameObject> Architecture{ make_shared<CGameObject>() };
+
+				Architecture->Initialize();
+				Architecture->SetChild(ModelInfo->m_Model);
+				Architecture->SetTransformMatrix(TransformMatrix);
+
+				m_GameObjects[ObjectType].push_back(Architecture);
+			}
 				break;
 			}
 		}
@@ -168,28 +186,46 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 			switch (ObjectType)
 			{
 			case OBJECT_TYPE_PLAYER:
-				m_GameObjects[ObjectType].push_back(make_shared<CPlayer>(D3D12Device, D3D12GraphicsCommandList));
-				m_GameObjects[ObjectType].back()->SetActive(true);
-				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
-				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
-				m_GameObjects[ObjectType].back()->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
-				m_GameObjects[ObjectType].back()->FindFrame(TEXT("gun_pr_1"))->SetActive(false);
-				break;
+			{
+				// 플레이어 객체를 생성한다.
+				shared_ptr<CPlayer> Player{ make_shared<CPlayer>(D3D12Device, D3D12GraphicsCommandList) };
+
+				Player->Initialize();
+				Player->SetChild(ModelInfo->m_Model);
+				Player->SetTransformMatrix(TransformMatrix);
+				Player->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
+				Player->FindFrame(TEXT("gun_pr_1"))->SetActive(false);
+
+				m_GameObjects[ObjectType].push_back(Player);
+			}
+			break;
 			case OBJECT_TYPE_NPC:
-				m_GameObjects[ObjectType].push_back(make_shared<CGuard>());
-				m_GameObjects[ObjectType].back()->SetActive(true);
-				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
-				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
-				m_GameObjects[ObjectType].back()->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
-				m_GameObjects[ObjectType].back()->SetAnimationClip(static_cast<UINT>(Random::Random(0.0f, 4.0f)));
-				break;
+			{
+				// 교도관 객체를 생성한다.
+				shared_ptr<CGuard> Guard{ make_shared<CGuard>() };
+
+				Guard->Initialize();
+				Guard->SetChild(ModelInfo->m_Model);
+				Guard->SetTransformMatrix(TransformMatrix);
+				Guard->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
+				Guard->SetAnimationClip(static_cast<UINT>(rand() % 4));
+
+				m_GameObjects[ObjectType].push_back(Guard);
+			}
+			break;
 			case OBJECT_TYPE_TERRAIN:
 			case OBJECT_TYPE_STRUCTURE:
-				m_GameObjects[ObjectType].push_back(make_shared<CGameObject>());
-				m_GameObjects[ObjectType].back()->SetActive(true);
-				m_GameObjects[ObjectType].back()->SetChild(ModelInfo->m_Model);
-				m_GameObjects[ObjectType].back()->SetTransformMatrix(TransformMatrix);
-				break;
+			{
+				// 지형 및 구조물 객체를 생성한다.
+				shared_ptr<CGameObject> Architecture{ make_shared<CGameObject>() };
+
+				Architecture->Initialize();
+				Architecture->SetChild(ModelInfo->m_Model);
+				Architecture->SetTransformMatrix(TransformMatrix);
+
+				m_GameObjects[ObjectType].push_back(Architecture);
+			}
+			break;
 			}
 		}
 		else if (Token == TEXT("</GameScene>"))
@@ -252,14 +288,15 @@ void CGameScene::CreateRootSignature(ID3D12Device* D3D12Device)
 	D3D12DescriptorRanges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2);
 	D3D12DescriptorRanges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3);
 
-	CD3DX12_ROOT_PARAMETER D3D12RootParameters[10]{};
+	CD3DX12_ROOT_PARAMETER D3D12RootParameters[11]{};
 
 	D3D12RootParameters[ROOT_PARAMETER_TYPE_FRAMEWORK_INFO].InitAsConstantBufferView(0);					   // 프레임워크 정보(b0)
 	D3D12RootParameters[ROOT_PARAMETER_TYPE_CAMERA].InitAsConstantBufferView(1);							   // 카메라 정보(b1)
 	D3D12RootParameters[ROOT_PARAMETER_TYPE_LIGHT].InitAsConstantBufferView(2);							       // 조명 정보(b2)
-	D3D12RootParameters[ROOT_PARAMETER_TYPE_OBJECT].InitAsConstants(23, 3);								       // 오브젝트 정보(b3)
-	D3D12RootParameters[ROOT_PARAMETER_TYPE_BONE_OFFSET].InitAsConstantBufferView(4);						   // 조명 정보(b4)
-	D3D12RootParameters[ROOT_PARAMETER_TYPE_BONE_TRANSFORM].InitAsConstantBufferView(5);					   // 조명 정보(b5)
+	D3D12RootParameters[ROOT_PARAMETER_TYPE_FOG].InitAsConstantBufferView(3);								   // 안개 정보(b3)
+	D3D12RootParameters[ROOT_PARAMETER_TYPE_OBJECT].InitAsConstants(23, 4);								       // 오브젝트 정보(b4)
+	D3D12RootParameters[ROOT_PARAMETER_TYPE_BONE_OFFSET].InitAsConstantBufferView(5);						   // 스키닝 애니메이션(오프셋 행렬) 정보(b5)
+	D3D12RootParameters[ROOT_PARAMETER_TYPE_BONE_TRANSFORM].InitAsConstantBufferView(6);					   // 스키닝 애니메이션(변환된 뼈들의 행렬) 정보(b6)
 	D3D12RootParameters[ROOT_PARAMETER_TYPE_ALBEDO_MAP].InitAsDescriptorTable(1, &D3D12DescriptorRanges[0]);   // 텍스처 정보(AlbedoMap : t0)
 	D3D12RootParameters[ROOT_PARAMETER_TYPE_METALLIC_MAP].InitAsDescriptorTable(1, &D3D12DescriptorRanges[1]); // 텍스처 정보(MetallicMap : t1)
 	D3D12RootParameters[ROOT_PARAMETER_TYPE_NORMAL_MAP].InitAsDescriptorTable(1, &D3D12DescriptorRanges[2]);   // 텍스처 정보(NormalMap : t2)
@@ -289,12 +326,20 @@ void CGameScene::CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12Graphics
 
 	m_D3D12Lights = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, nullptr, Bytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, nullptr);
 	DX::ThrowIfFailed(m_D3D12Lights->Map(0, nullptr, reinterpret_cast<void**>(&m_MappedLights)));
+
+	Bytes = (sizeof(CB_FOG) + 255) & ~255;
+
+	m_D3D12Fog = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, nullptr, Bytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, nullptr);
+	DX::ThrowIfFailed(m_D3D12Fog->Map(0, nullptr, reinterpret_cast<void**>(&m_MappedFog)));
+
+	BuildFog();
 }
 
 void CGameScene::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
 	memcpy(m_MappedLights->m_Lights, m_Lights.data(), sizeof(CB_LIGHT) * (UINT)m_Lights.size());
 	D3D12GraphicsCommandList->SetGraphicsRootConstantBufferView(ROOT_PARAMETER_TYPE_LIGHT, m_D3D12Lights->GetGPUVirtualAddress());
+	D3D12GraphicsCommandList->SetGraphicsRootConstantBufferView(ROOT_PARAMETER_TYPE_FOG, m_D3D12Fog->GetGPUVirtualAddress());
 }
 
 void CGameScene::ReleaseShaderVariables()
@@ -372,6 +417,10 @@ void CGameScene::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, 
 	case 'B':
 		(m_RenderBoundingBox) ? m_RenderBoundingBox = false : m_RenderBoundingBox = true;
 		break;
+	case VK_TAB:
+		// 미션UI ON/OFF
+		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->GetStateMachine()->ProcessInput(INPUT_MASK_TAB, 0.0f);
+		break;
 	}
 }
 
@@ -400,12 +449,6 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 		m_Lights[1].m_Direction.z = sinf(Angle);
 	}
 
-	// 미션UI ON
-	if (GetAsyncKeyState(VK_TAB) & 0x8000)
-	{
-		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetKeyFrameIndex(0, 0);
-	}
-
 	RECT Rect{};
 
 	GetWindowRect(hWnd, &Rect);
@@ -430,105 +473,20 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	//return;
 
 	// 3인칭 모드
+	UINT InputMask{};
+
+	if (GetAsyncKeyState('W') & 0x8000) InputMask |= INPUT_MASK_W;
+	if (GetAsyncKeyState('S') & 0x8000) InputMask |= INPUT_MASK_S;
+	if (GetAsyncKeyState('A') & 0x8000) InputMask |= INPUT_MASK_A;
+	if (GetAsyncKeyState('D') & 0x8000) InputMask |= INPUT_MASK_D;
+	if (GetAsyncKeyState(VK_SHIFT) & 0x8000) InputMask |= INPUT_MASK_SHIFT;
+	if (GetAsyncKeyState(VK_TAB) & 0x8000) InputMask |= INPUT_MASK_TAB;
+	if (GetAsyncKeyState(VK_LBUTTON) & 0x8000) InputMask |= INPUT_MASK_LMB;
+	if (GetAsyncKeyState(VK_RBUTTON) & 0x8000) InputMask |= INPUT_MASK_RMB;
+	
 	Player->Rotate(Delta.y, Delta.x, 0.0f, ElapsedTime);
-
-	UINT Action{};
-	XMFLOAT3 Direction{};
-	float Speed{ 3.15f };
-
-	if (GetAsyncKeyState('W') & 0x8000) Action |= MOVE_FORWARD;
-	if (GetAsyncKeyState('S') & 0x8000) Action |= MOVE_BACKWARD;
-	if (GetAsyncKeyState('A') & 0x8000) Action |= MOVE_LEFT_STRAFE;
-	if (GetAsyncKeyState('D') & 0x8000) Action |= MOVE_RIGHT_STRAFE;
-	if (GetAsyncKeyState(VK_SHIFT) & 0x8000) Action |= RUNNING;
-	if (GetAsyncKeyState(VK_LBUTTON) & 0x8000) Action |= PUNCHING;
-	if (GetAsyncKeyState(VK_RBUTTON) & 0x8000) Action |= SHOOTING;
-
-	switch (Action)
-	{
-	case IDLE:
-	case RUNNING:
-		Player->SetAnimationClip(0); // 0: Idle
-		return;
-
-	case PUNCHING:
-		Player->SetAnimationClip(7); // 7: Punching
-		return;
-
-	case SHOOTING:
-		Player->SetAnimationClip(8); // 8: Shooting
-		return;
-
-	case MOVE_FORWARD:
-		Direction = Player->GetLook();
-		Player->SetAnimationClip(1); // 1: Crouched Walk
-		break;
-	case MOVE_FORWARD | MOVE_LEFT_STRAFE:
-		Direction = Vector3::Add(Player->GetLook(), XMFLOAT3(-Player->GetRight().x, Player->GetRight().y, -Player->GetRight().z));
-		Player->SetAnimationClip(1); // 1: Crouched Walk
-		break;
-	case MOVE_FORWARD | MOVE_RIGHT_STRAFE:
-		Direction = Vector3::Add(Player->GetLook(), Player->GetRight());
-		Player->SetAnimationClip(1); // 1: Crouched Walk
-		break;
-	case MOVE_FORWARD | RUNNING:
-		Direction = Player->GetLook();
-		Speed = 12.6f;
-		Player->SetAnimationClip(4); // 4: Running
-		break;
-	case MOVE_FORWARD | MOVE_LEFT_STRAFE | RUNNING:
-		Direction = Vector3::Add(Player->GetLook(), XMFLOAT3(-Player->GetRight().x, Player->GetRight().y, -Player->GetRight().z));
-		Speed = 12.6f;
-		Player->SetAnimationClip(4); // 4: Running
-		break;
-	case MOVE_FORWARD | MOVE_RIGHT_STRAFE | RUNNING:
-		Direction = Vector3::Add(Player->GetLook(), Player->GetRight());
-		Speed = 12.6f;
-		Player->SetAnimationClip(4); // 4: Running
-		break;
-
-	case MOVE_BACKWARD:
-	case MOVE_BACKWARD | RUNNING:
-		Direction = Player->GetLook();
-		Speed = -3.15f;
-		Player->SetAnimationClip(1); // 1: Crouched Walk
-		break;
-	case MOVE_BACKWARD | MOVE_LEFT_STRAFE:
-	case MOVE_BACKWARD | MOVE_LEFT_STRAFE | RUNNING:
-		Direction = Vector3::Add(Player->GetLook(), Player->GetRight());
-		Speed = -3.15f;
-		Player->SetAnimationClip(1); // 1: Crouched Walk
-		break;
-	case MOVE_BACKWARD | MOVE_RIGHT_STRAFE:
-	case MOVE_BACKWARD | MOVE_RIGHT_STRAFE | RUNNING:
-		Direction = Vector3::Add(Player->GetLook(), XMFLOAT3(-Player->GetRight().x, Player->GetRight().y, -Player->GetRight().z));
-		Speed = -3.15f;
-		Player->SetAnimationClip(1); // 1: Crouched Walk
-		break;
-
-	case MOVE_LEFT_STRAFE:
-		Direction = Player->GetRight();
-		Speed = -3.15f;
-		Player->SetAnimationClip(2); // 2: Left Strafe Walk
-		break;
-	case MOVE_LEFT_STRAFE | RUNNING:
-		Direction = Player->GetRight();
-		Speed = -12.6f;
-		Player->SetAnimationClip(5); // 5: Left Strafe Running
-		break;
-
-	case MOVE_RIGHT_STRAFE:
-		Direction = Player->GetRight();
-		Player->SetAnimationClip(3); // 3: Right Strafe Walk
-		break;
-	case MOVE_RIGHT_STRAFE | RUNNING:
-		Direction = Player->GetRight();
-		Speed = 12.6f;
-		Player->SetAnimationClip(6); // 6: Right Strafe Running
-		break;
-	}
-
-	Player->Move(Direction, Speed * ElapsedTime);
+	Player->ProcessInput(InputMask, ElapsedTime);
+	(Player->GetCamera()->IsZoomIn()) ? m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->SetActive(true) : m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->SetActive(false);
 }
 
 void CGameScene::Animate(float ElapsedTime)
@@ -786,4 +744,11 @@ void CGameScene::BuildLights()
 	m_Lights.reserve(MAX_LIGHTS);
 	m_Lights.push_back(Lights[0]);
 	m_Lights.push_back(Lights[1]);
+}
+
+void CGameScene::BuildFog()
+{
+	m_MappedFog->m_Fog.m_Color = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
+	m_MappedFog->m_Fog.m_Range = XMFLOAT2(200.0f, 100.0f);
+	m_MappedFog->m_Fog.m_Density = 0.1f;
 }

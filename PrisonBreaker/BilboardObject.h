@@ -1,10 +1,10 @@
 #pragma once
 #include "BilboardMesh.h"
 #include "StateMachine.h"
+#include "UIAnimationController.h"
 
 class CCamera;
 class CMaterial;
-class CUIAnimationController;
 
 class CBilboardObject : public enable_shared_from_this<CBilboardObject>
 {
@@ -31,7 +31,10 @@ public:
 	static shared_ptr<CBilboardObject> LoadObjectInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile);
 	static void LoadAnimationInfoFromFile(tifstream& InFile, const shared_ptr<CBilboardObject>& Model);
 
+	virtual void Initialize();
+
 	virtual void Animate(float ElapsedTime);
+
 	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType);
 
 	virtual void ReleaseUploadBuffers();
@@ -46,6 +49,10 @@ public:
 	void SetPosition(UINT Index, const XMFLOAT3& Position);
 	void SetSize(UINT Index, const XMFLOAT2& Size);
 	void SetCellIndex(UINT Index, UINT CellIndex);
+
+	CStateMachine<CBilboardObject>* GetStateMachine() const;
+
+	CUIAnimationController* GetUIAnimationController() const;
 
 	void SetAnimationClip(UINT ClipNum);
 	void SetKeyFrameIndex(UINT ClipNum, UINT KeyFrameIndex);

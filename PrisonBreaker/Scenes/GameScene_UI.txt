@@ -71,4 +71,9 @@
 		<TextureName> Textures/Bullet_UI.dds
 		<RectTransform> 5 249 1009 0 8 32 269 1009 0 8 32 289 1009 0 8 32 309 1009 0 8 32 329 1009 0 8 32 
 	</UIObject>
+	<UIObject>
+		<IsActive> 1
+		<TextureName> Textures/Crosshair_UI.dds
+		<RectTransform> 1 959 539 0 32 32 
+	</UIObject>
 </UI>

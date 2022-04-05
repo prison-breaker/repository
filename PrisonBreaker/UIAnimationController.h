@@ -28,17 +28,24 @@ public:
 class CUIAnimationController
 {
 private:
+	bool								 m_IsActive{ true };
+
+	shared_ptr<CBilboardObject>			 m_Owner{};
+
 	UINT								 m_ClipNum{};
 	vector<shared_ptr<CUIAnimationClip>> m_AnimationClips{};
 
 	UINT						         m_KeyFrameIndex{};
 
 public:
-	CUIAnimationController(vector<shared_ptr<CUIAnimationClip>>& UIAnimationClips);
+	CUIAnimationController(const shared_ptr<CBilboardObject>& Owner, vector<shared_ptr<CUIAnimationClip>>& UIAnimationClips);
 	~CUIAnimationController() = default;
+
+	void SetActive(bool IsActive);
+	bool IsActive() const;
 
 	void SetAnimationClip(UINT ClipNum);
 	void SetKeyFrameIndex(UINT ClipNum, UINT KeyFrameIndex);
 
-	void UpdateAnimationClip(float ElapsedTime, const shared_ptr<CBilboardObject>& BilboardObject);
+	bool UpdateAnimationClip(ANIMATION_TYPE AnimationType);
 };
