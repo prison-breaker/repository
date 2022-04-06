@@ -417,6 +417,10 @@ void CGameScene::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, 
 	case 'B':
 		(m_RenderBoundingBox) ? m_RenderBoundingBox = false : m_RenderBoundingBox = true;
 		break;
+	case 'p':
+	case 'P':
+		(m_MappedFog->m_Fog.m_Density > 0.0f) ? m_MappedFog->m_Fog.m_Density = 0.0f : m_MappedFog->m_Fog.m_Density = 0.025f;
+		break;
 	case VK_TAB:
 		// ¹Ì¼ÇUI ON/OFF
 		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->GetStateMachine()->ProcessInput(INPUT_MASK_TAB, 0.0f);
@@ -748,7 +752,6 @@ void CGameScene::BuildLights()
 
 void CGameScene::BuildFog()
 {
-	m_MappedFog->m_Fog.m_Color = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
-	m_MappedFog->m_Fog.m_Range = XMFLOAT2(200.0f, 100.0f);
-	m_MappedFog->m_Fog.m_Density = 0.1f;
+	m_MappedFog->m_Fog.m_Color = XMFLOAT4(0.0f, 0.015f, 0.03f, 1.0f);
+	m_MappedFog->m_Fog.m_Density = 0.025f;
 }

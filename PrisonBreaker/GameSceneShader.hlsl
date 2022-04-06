@@ -30,7 +30,6 @@ struct FOG
 {
 	float4 m_Color;
 
-	float2 m_Range; // End, End - Start
 	float  m_Density;
 };
 
@@ -130,7 +129,7 @@ float4 Fogging(float4 Color, float3 Position)
 {
 	float3 ToCamera = CameraPosition - Position;
 	float DistanceToCamera = length(ToCamera);
-	float FogFactor = saturate((Fog.m_Range.x - DistanceToCamera) / Fog.m_Range.y); // 1.0f / exp(DistanceToCamera * Fog.m_Density);
+	float FogFactor = 1.0f / exp(pow(DistanceToCamera * Fog.m_Density, 2));
 	float4 FoggedColor = float4(lerp(Fog.m_Color.rgb, Color.rgb, FogFactor), Color.a);
 
 	return FoggedColor;

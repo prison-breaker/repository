@@ -9,7 +9,6 @@ struct FOG
 {
 	XMFLOAT4 m_Color{};
 
-	XMFLOAT2 m_Range{}; // End, End - Start
 	float	 m_Density{};
 };
 
