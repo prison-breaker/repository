@@ -118,6 +118,7 @@ enum TEXTURE_TYPE
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <queue>
 #include <iterator>
 #include <algorithm>
 using namespace std;
@@ -194,11 +195,18 @@ namespace Math
 	bool IsEqual(float Value1, float Value2);
 
 	float InverseSqrt(float Value);
+
+	float Distance(const XMFLOAT3& Vector1, const XMFLOAT3& Vector2);
+
+	int GetTriangleSize(const XMFLOAT3& Vertex1, const XMFLOAT3& Vertex2, const XMFLOAT3& Vertex3);
+	bool IsInTriangle(const XMFLOAT3& Vertex1, const XMFLOAT3& Vertex2, const XMFLOAT3& Vertex3, const XMFLOAT3& NewPosition);
 }
 
 namespace Vector3
 {
 	bool IsZero(const XMFLOAT3& Vector);
+
+	bool IsEqual(const XMFLOAT3& Vector1, const XMFLOAT3& Vector2);
 
 	float Length(const XMFLOAT3& Vector);
 	XMFLOAT3 Normalize(const XMFLOAT3& Vector);

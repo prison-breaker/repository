@@ -47,5 +47,5 @@ public:
 
 	void Rotate(float Pitch, float Yaw, float Roll, float ElapsedTime);
 
-	void ProcessInput(UINT InputMask, float ElapsedTime);
+	void ProcessInput(UINT InputMask, float ElapsedTime, const shared_ptr<CNavMesh>& NavMesh);
 };

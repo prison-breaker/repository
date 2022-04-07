@@ -4,6 +4,7 @@
 #include "Camera.h"
 #include "AnimationController.h"
 #include "StateMachine.h"
+#include "NavMesh.h"
 
 class CGameObject;
 
@@ -92,6 +93,8 @@ public:
 	void SetChild(const shared_ptr<CGameObject>& ChildObject);
 
 	bool IsVisible(CCamera* Camera) const;
+
+	bool IsInNavMesh(const shared_ptr<CNavMesh>& NavMesh, const XMFLOAT3& NewPosition);
 
 	void UpdateBoundingBox();
 	void UpdateTransform(const XMFLOAT4X4& ParentMatrix);

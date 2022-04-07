@@ -62,11 +62,11 @@ public:
 		}
 	}
 
-	void Update()
+	void Update(float ElapsedTime)
 	{
 		if (m_CurrentState)
 		{
-			m_CurrentState->Update(m_Owner);
+			m_CurrentState->Update(m_Owner, ElapsedTime);
 		}
 	}
 };

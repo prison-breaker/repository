@@ -215,6 +215,28 @@ namespace Math
 	{
 		return 1.0f / sqrtf(Value);
 	}
+
+	float Distance(const XMFLOAT3& Vector1, const XMFLOAT3& Vector2)
+	{
+		return sqrtf(powf(Vector2.x - Vector1.x, 2) + powf(Vector2.y - Vector1.y, 2) + powf(Vector2.z - Vector1.z, 2));
+	}
+
+	int GetTriangleSize(const XMFLOAT3& Vertex1, const XMFLOAT3& Vertex2, const XMFLOAT3& Vertex3)
+	{
+		int Size{ static_cast<int>(abs((Vertex1.x * (Vertex2.z - Vertex3.z)) + (Vertex2.x * (Vertex3.z - Vertex1.z)) + (Vertex3.x * (Vertex1.z - Vertex2.z)))) };
+		
+		return Size;
+	}
+
+	bool IsInTriangle(const XMFLOAT3& Vertex1, const XMFLOAT3& Vertex2, const XMFLOAT3& Vertex3, const XMFLOAT3& NewPosition)
+	{
+		int TotalSize{ GetTriangleSize(Vertex1, Vertex2, Vertex3) };
+		int Size1{ GetTriangleSize(NewPosition, Vertex2, Vertex3) };
+		int Size2{ GetTriangleSize(Vertex1, NewPosition, Vertex3) };
+		int Size3{ GetTriangleSize(Vertex1, Vertex2, NewPosition) };
+
+		return TotalSize >= Size1 + Size2 + Size3;
+	}
 }
 
 namespace Vector3
@@ -222,6 +244,16 @@ namespace Vector3
 	bool IsZero(const XMFLOAT3& Vector)
 	{
 		if (Math::IsZero(Vector.x) && Math::IsZero(Vector.y) && Math::IsZero(Vector.z))
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	bool IsEqual(const XMFLOAT3& Vector1, const XMFLOAT3& Vector2)
+	{
+		if (Math::IsEqual(Vector1.x, Vector2.x) && Math::IsEqual(Vector1.y, Vector2.y) && Math::IsEqual(Vector1.z, Vector2.z))
 		{
 			return true;
 		}

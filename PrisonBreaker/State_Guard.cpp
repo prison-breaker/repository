@@ -19,9 +19,10 @@ void CGuardIdleState::ProcessInput(const shared_ptr<CGuard>& Entity, UINT InputM
 
 }
 
-void CGuardIdleState::Update(const shared_ptr<CGuard>& Entity)
+void CGuardIdleState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTime)
 {
 	Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
+	Entity->MoveToNavPath(ElapsedTime);
 }
 
 void CGuardIdleState::Exit(const shared_ptr<CGuard>& Entity)
@@ -48,9 +49,10 @@ void CGuardPatrolState::ProcessInput(const shared_ptr<CGuard>& Entity, UINT Inpu
 
 }
 
-void CGuardPatrolState::Update(const shared_ptr<CGuard>& Entity)
+void CGuardPatrolState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTime)
 {
 	Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
+	Entity->MoveToNavPath(ElapsedTime);
 }
 
 void CGuardPatrolState::Exit(const shared_ptr<CGuard>& Entity)
@@ -77,9 +79,10 @@ void CGuardChaseState::ProcessInput(const shared_ptr<CGuard>& Entity, UINT Input
 
 }
 
-void CGuardChaseState::Update(const shared_ptr<CGuard>& Entity)
+void CGuardChaseState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTime)
 {
 	Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
+	Entity->MoveToNavPath(ElapsedTime);
 }
 
 void CGuardChaseState::Exit(const shared_ptr<CGuard>& Entity)
@@ -106,9 +109,10 @@ void CGuardShootingState::ProcessInput(const shared_ptr<CGuard>& Entity, UINT In
 
 }
 
-void CGuardShootingState::Update(const shared_ptr<CGuard>& Entity)
+void CGuardShootingState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTime)
 {
 	Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
+	Entity->MoveToNavPath(ElapsedTime);
 }
 
 void CGuardShootingState::Exit(const shared_ptr<CGuard>& Entity)
@@ -135,9 +139,10 @@ void CGuardDyingState::ProcessInput(const shared_ptr<CGuard>& Entity, UINT Input
 
 }
 
-void CGuardDyingState::Update(const shared_ptr<CGuard>& Entity)
+void CGuardDyingState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTime)
 {
 	Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
+	Entity->MoveToNavPath(ElapsedTime);
 }
 
 void CGuardDyingState::Exit(const shared_ptr<CGuard>& Entity)

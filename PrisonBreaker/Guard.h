@@ -11,6 +11,8 @@ private:
 	shared_ptr<CStateMachine<CGuard>> m_StateMachine{};
 	shared_ptr<CAnimationController>  m_AnimationController{};
 
+	vector<XMFLOAT3>                  m_NavPath{};
+
 public:
 	CGuard() = default;
 	virtual ~CGuard() = default;
@@ -33,4 +35,7 @@ public:
 
 	void SetAnimationClip(UINT ClipNum);
 	UINT GetAnimationClip() const;
+
+	void FindPath(const shared_ptr<CNavMesh>& NavMesh, const XMFLOAT3& TargetPosition);
+	void MoveToNavPath(float ElapsedTime);
 };

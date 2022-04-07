@@ -222,7 +222,7 @@ void CBilboardObject::Animate(float ElapsedTime)
 {
 	if (m_StateMachine)
 	{
-		m_StateMachine->Update();
+		m_StateMachine->Update(ElapsedTime);
 	}
 }
 

@@ -646,6 +646,22 @@ bool CGameObject::IsVisible(CCamera* Camera) const
 	return Visible;
 }
 
+bool CGameObject::IsInNavMesh(const shared_ptr<CNavMesh>& NavMesh, const XMFLOAT3& NewPosition)
+{
+	if (NavMesh)
+	{
+		for (const auto& NavNode : NavMesh->GetNavNodes())
+		{
+			if (Math::IsInTriangle(NavNode->GetTriangle().m_Vertices[0], NavNode->GetTriangle().m_Vertices[1], NavNode->GetTriangle().m_Vertices[2], NewPosition))
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 void CGameObject::UpdateBoundingBox()
 {
 	if (m_Mesh && m_BoundingBox)

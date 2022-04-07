@@ -50,6 +50,8 @@ private:
 	vector<vector<shared_ptr<CGameObject>>>     m_GameObjects{};
 	vector<vector<shared_ptr<CBilboardObject>>> m_BilboardObjects{};
 
+	shared_ptr<CNavMesh>					    m_NavMesh{};
+
 	vector<LIGHT>						        m_Lights{};
 	ComPtr<ID3D12Resource>				        m_D3D12Lights{};
 	CB_LIGHT*							        m_MappedLights{};

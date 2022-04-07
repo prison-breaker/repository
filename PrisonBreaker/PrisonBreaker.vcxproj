@@ -149,6 +149,8 @@
     <ClCompile Include="Guard.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="NavMesh.cpp" />
+    <ClCompile Include="NavNode.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="State_Guard.cpp" />
     <ClCompile Include="State_MissionUI.cpp" />
@@ -185,6 +187,8 @@
     <ClInclude Include="Guard.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="Mesh.h" />
+    <ClInclude Include="NavMesh.h" />
+    <ClInclude Include="NavNode.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="D3DX12.h" />

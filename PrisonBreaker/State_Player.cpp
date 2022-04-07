@@ -33,7 +33,7 @@ void CPlayerIdleState::ProcessInput(const shared_ptr<CPlayer>& Entity, UINT Inpu
 	}
 }
 
-void CPlayerIdleState::Update(const shared_ptr<CPlayer>& Entity)
+void CPlayerIdleState::Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime)
 {
 	Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
 }
@@ -126,7 +126,7 @@ void CPlayerWalkingState::ProcessInput(const shared_ptr<CPlayer>& Entity, UINT I
 	}
 }
 
-void CPlayerWalkingState::Update(const shared_ptr<CPlayer>& Entity)
+void CPlayerWalkingState::Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime)
 {
 	Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
 }
@@ -220,7 +220,7 @@ void CPlayerRunningState::ProcessInput(const shared_ptr<CPlayer>& Entity, UINT I
 	}
 }
 
-void CPlayerRunningState::Update(const shared_ptr<CPlayer>& Entity)
+void CPlayerRunningState::Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime)
 {
 	Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
 }
@@ -251,7 +251,7 @@ void CPlayerPunchingState::ProcessInput(const shared_ptr<CPlayer>& Entity, UINT 
 
 }
 
-void CPlayerPunchingState::Update(const shared_ptr<CPlayer>& Entity)
+void CPlayerPunchingState::Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime)
 {
 	if (Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE))
 	{
@@ -299,7 +299,7 @@ void CPlayerShootingState::ProcessInput(const shared_ptr<CPlayer>& Entity, UINT 
 	}
 }
 
-void CPlayerShootingState::Update(const shared_ptr<CPlayer>& Entity)
+void CPlayerShootingState::Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime)
 {
 	switch (Entity->GetAnimationController()->GetAnimationClip())
 	{
@@ -339,7 +339,7 @@ void CPlayerDyingState::ProcessInput(const shared_ptr<CPlayer>& Entity, UINT Inp
 
 }
 
-void CPlayerDyingState::Update(const shared_ptr<CPlayer>& Entity)
+void CPlayerDyingState::Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime)
 {
 
 }

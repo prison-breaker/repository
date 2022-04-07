@@ -82,6 +82,12 @@
     <Filter Include="헤더 파일\State">
       <UniqueIdentifier>{baf005c9-258e-4536-bf7f-889c75348fa5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\Navigation">
+      <UniqueIdentifier>{cba9b774-a24f-4363-909c-652d5ee36669}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Navigation">
+      <UniqueIdentifier>{a8195f52-9976-4368-a2dd-54cea02a7587}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -180,6 +186,12 @@
     <ClCompile Include="State_MissionUI.cpp">
       <Filter>소스 파일\State</Filter>
     </ClCompile>
+    <ClCompile Include="NavMesh.cpp">
+      <Filter>소스 파일\Navigation</Filter>
+    </ClCompile>
+    <ClCompile Include="NavNode.cpp">
+      <Filter>소스 파일\Navigation</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -277,6 +289,12 @@
     </ClInclude>
     <ClInclude Include="State_MissionUI.h">
       <Filter>헤더 파일\State</Filter>
+    </ClInclude>
+    <ClInclude Include="NavMesh.h">
+      <Filter>헤더 파일\Navigation</Filter>
+    </ClInclude>
+    <ClInclude Include="NavNode.h">
+      <Filter>헤더 파일\Navigation</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

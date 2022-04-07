@@ -14,7 +14,7 @@ public:
 
 	virtual void Enter(const shared_ptr<CBilboardObject>& Entity);
 	virtual void ProcessInput(const shared_ptr<CBilboardObject>& Entity, UINT InputMask, float ElapsedTime);
-	virtual void Update(const shared_ptr<CBilboardObject>& Entity);
+	virtual void Update(const shared_ptr<CBilboardObject>& Entity, float ElapsedTime);
 	virtual void Exit(const shared_ptr<CBilboardObject>& Entity);
 };
 
@@ -31,6 +31,6 @@ public:
 
 	virtual void Enter(const shared_ptr<CBilboardObject>& Entity);
 	virtual void ProcessInput(const shared_ptr<CBilboardObject>& Entity, UINT InputMask, float ElapsedTime);
-	virtual void Update(const shared_ptr<CBilboardObject>& Entity);
+	virtual void Update(const shared_ptr<CBilboardObject>& Entity, float ElapsedTime);
 	virtual void Exit(const shared_ptr<CBilboardObject>& Entity);
 };

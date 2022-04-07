@@ -26,7 +26,7 @@ void CPlayer::Animate(float ElapsedTime)
 	{
 		if (m_StateMachine)
 		{
-			m_StateMachine->Update();
+			m_StateMachine->Update(ElapsedTime);
 		}
 	}
 }
@@ -193,12 +193,17 @@ void CPlayer::Rotate(float Pitch, float Yaw, float Roll, float ElapsedTime)
 	SetUp(Vector3::CrossProduct(GetLook(), GetRight(), false));
 }
 
-void CPlayer::ProcessInput(UINT InputMask, float ElapsedTime)
+void CPlayer::ProcessInput(UINT InputMask, float ElapsedTime, const shared_ptr<CNavMesh>& NavMesh)
 {
 	if (m_StateMachine)
 	{
 		m_StateMachine->ProcessInput(InputMask, ElapsedTime);
 	}
 
-	CGameObject::Move(m_MovingDirection, m_Speed * ElapsedTime);
+	XMFLOAT3 NewPosition{ Vector3::Add(GetPosition(), Vector3::ScalarProduct(m_Speed * ElapsedTime, m_MovingDirection, false)) };
+
+	if (IsInNavMesh(NavMesh, NewPosition))
+	{
+		SetPosition(NewPosition);
+	}
 }

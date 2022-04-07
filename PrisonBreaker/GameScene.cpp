@@ -16,6 +16,10 @@ void CGameScene::OnDestroy()
 	
 void CGameScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
+	// NavMesh 객체를 생성한다.
+	m_NavMesh = make_shared<CNavMesh>();
+	m_NavMesh->LoadNavNodeFromFile(TEXT("Navigation/NavMesh.obj"));
+
 	// 렌더링에 필요한 셰이더 객체(PSO)를 생성한다.
 	shared_ptr<CGraphicsShader> Shader{ make_shared<CDepthWriteShader>(D3D12Device, D3D12GraphicsCommandList) };
 
@@ -132,7 +136,7 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 				Guard->SetChild(ModelInfo->m_Model);
 				Guard->SetTransformMatrix(TransformMatrix);
 				Guard->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
-				Guard->SetAnimationClip(static_cast<UINT>(rand() % 4));
+				Guard->SetAnimationClip(2);//static_cast<UINT>(rand() % 4));
 
 				m_GameObjects[ObjectType].push_back(Guard);
 			}
@@ -421,6 +425,15 @@ void CGameScene::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, 
 	case 'P':
 		(m_MappedFog->m_Fog.m_Density > 0.0f) ? m_MappedFog->m_Fog.m_Density = 0.0f : m_MappedFog->m_Fog.m_Density = 0.025f;
 		break;
+	case 'e':
+	case 'E':
+		static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][2])->FindPath(m_NavMesh, m_GameObjects[OBJECT_TYPE_PLAYER].back()->GetPosition());
+		break;
+	case 'q':
+	case 'Q':
+		m_GameObjects[OBJECT_TYPE_NPC][2]->SetPosition(m_NavMesh->GetNavNodes()[510]->GetTriangle().m_Centroid);
+		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetPosition(m_NavMesh->GetNavNodes()[500]->GetTriangle().m_Centroid);
+		break;
 	case VK_TAB:
 		// 미션UI ON/OFF
 		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->GetStateMachine()->ProcessInput(INPUT_MASK_TAB, 0.0f);
@@ -489,7 +502,7 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	if (GetAsyncKeyState(VK_RBUTTON) & 0x8000) InputMask |= INPUT_MASK_RMB;
 	
 	Player->Rotate(Delta.y, Delta.x, 0.0f, ElapsedTime);
-	Player->ProcessInput(InputMask, ElapsedTime);
+	Player->ProcessInput(InputMask, ElapsedTime, m_NavMesh);
 	(Player->GetCamera()->IsZoomIn()) ? m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->SetActive(true) : m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->SetActive(false);
 }
 

@@ -22,7 +22,7 @@ void CBilboardObjectShowingState::ProcessInput(const shared_ptr<CBilboardObject>
 	}
 }
 
-void CBilboardObjectShowingState::Update(const shared_ptr<CBilboardObject>& Entity)
+void CBilboardObjectShowingState::Update(const shared_ptr<CBilboardObject>& Entity, float ElapsedTime)
 {
 	Entity->GetUIAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE);
 }
@@ -54,7 +54,7 @@ void CBilboardObjectHidingState::ProcessInput(const shared_ptr<CBilboardObject>&
 	}
 }
 
-void CBilboardObjectHidingState::Update(const shared_ptr<CBilboardObject>& Entity)
+void CBilboardObjectHidingState::Update(const shared_ptr<CBilboardObject>& Entity, float ElapsedTime)
 {
 	Entity->GetUIAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE_REVERSE);
 }

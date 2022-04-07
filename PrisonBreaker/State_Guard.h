@@ -14,7 +14,7 @@ public:
 
 	virtual void Enter(const shared_ptr<CGuard>& Entity);
 	virtual void ProcessInput(const shared_ptr<CGuard>& Entity, UINT InputMask, float ElapsedTime);
-	virtual void Update(const shared_ptr<CGuard>& Entity);
+	virtual void Update(const shared_ptr<CGuard>& Entity, float ElapsedTime);
 	virtual void Exit(const shared_ptr<CGuard>& Entity);
 };
 
@@ -31,7 +31,7 @@ public:
 
 	virtual void Enter(const shared_ptr<CGuard>& Entity);
 	virtual void ProcessInput(const shared_ptr<CGuard>& Entity, UINT InputMask, float ElapsedTime);
-	virtual void Update(const shared_ptr<CGuard>& Entity);
+	virtual void Update(const shared_ptr<CGuard>& Entity, float ElapsedTime);
 	virtual void Exit(const shared_ptr<CGuard>& Entity);
 };
 
@@ -48,7 +48,7 @@ public:
 
 	virtual void Enter(const shared_ptr<CGuard>& Entity);
 	virtual void ProcessInput(const shared_ptr<CGuard>& Entity, UINT InputMask, float ElapsedTime);
-	virtual void Update(const shared_ptr<CGuard>& Entity);
+	virtual void Update(const shared_ptr<CGuard>& Entity, float ElapsedTime);
 	virtual void Exit(const shared_ptr<CGuard>& Entity);
 };
 
@@ -65,7 +65,7 @@ public:
 
 	virtual void Enter(const shared_ptr<CGuard>& Entity);
 	virtual void ProcessInput(const shared_ptr<CGuard>& Entity, UINT InputMask, float ElapsedTime);
-	virtual void Update(const shared_ptr<CGuard>& Entity);
+	virtual void Update(const shared_ptr<CGuard>& Entity, float ElapsedTime);
 	virtual void Exit(const shared_ptr<CGuard>& Entity);
 };
 
@@ -82,6 +82,6 @@ public:
 
 	virtual void Enter(const shared_ptr<CGuard>& Entity);
 	virtual void ProcessInput(const shared_ptr<CGuard>& Entity, UINT InputMask, float ElapsedTime);
-	virtual void Update(const shared_ptr<CGuard>& Entity);
+	virtual void Update(const shared_ptr<CGuard>& Entity, float ElapsedTime);
 	virtual void Exit(const shared_ptr<CGuard>& Entity);
 };
