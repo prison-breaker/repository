@@ -18,7 +18,7 @@ void CGameScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandLi
 {
 	// NavMesh 객체를 생성한다.
 	m_NavMesh = make_shared<CNavMesh>();
-	m_NavMesh->LoadNavNodeFromFile(TEXT("Navigation/NavMesh.obj"));
+	m_NavMesh->LoadNavNodeFromFile(TEXT("Navigation/NavMesh.txt"));
 
 	// 렌더링에 필요한 셰이더 객체(PSO)를 생성한다.
 	shared_ptr<CGraphicsShader> Shader{ make_shared<CDepthWriteShader>(D3D12Device, D3D12GraphicsCommandList) };
