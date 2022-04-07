@@ -500,6 +500,30 @@ void CGameObject::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CC
 	}
 }
 
+void CGameObject::RenderBoundingBox(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera)
+{
+	if (IsActive())
+	{
+		if (IsVisible(Camera))
+		{
+			if (m_Mesh)
+			{
+				UpdateShaderVariables(D3D12GraphicsCommandList);
+				m_Mesh->RenderBoundingBox(D3D12GraphicsCommandList);
+			}
+		}
+
+		for (const auto& ChildObject : m_ChildObjects)
+		{
+			if (ChildObject)
+			{
+				ChildObject->RenderBoundingBox(D3D12GraphicsCommandList, Camera);
+			}
+		}
+	}
+}
+
+
 void CGameObject::SetActive(bool IsActive)
 {
 	m_IsActive = IsActive;
@@ -710,27 +734,4 @@ void CGameObject::Rotate(const XMFLOAT3& Axis, float Angle)
 	m_TransformMatrix = Matrix4x4::Multiply(RotationMatrix, m_TransformMatrix);
 
 	UpdateTransform(Matrix4x4::Identity());
-}
-
-void CGameObject::RenderBoundingBox(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera)
-{
-	if (IsActive())
-	{
-		if (IsVisible(Camera))
-		{
-			if (m_Mesh)
-			{
-				UpdateShaderVariables(D3D12GraphicsCommandList);
-				m_Mesh->RenderBoundingBox(D3D12GraphicsCommandList);
-			}
-		}
-
-		for (const auto& ChildObject : m_ChildObjects)
-		{
-			if (ChildObject)
-			{
-				ChildObject->RenderBoundingBox(D3D12GraphicsCommandList, Camera);
-			}
-		}
-	}
 }

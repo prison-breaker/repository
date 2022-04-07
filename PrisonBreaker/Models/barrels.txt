@@ -1,7 +1,7 @@
 <Hierarchy>
 	<Frame> barrels
 		<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 
-		<ChildCount> 7
+		<ChildCount> 10
 			<Frame> barrel
 				<TransformMatrix> 80 0 0 0 0 80 0 0 0 0 80 0 -105.11 6.92993 89.53 1 
 				<Mesh> Cerchio_Cerchio.001
@@ -31,7 +31,7 @@
 				<ChildCount> 0
 			</Frame>
 			<Frame> barrel
-				<TransformMatrix> 80 0 0 0 0 80 0 0 0 0 80 0 -86.57 3.467739 74.52 1 
+				<TransformMatrix> 80 0 0 0 0 80 0 0 0 0 80 0 -81.39 3.467739 72.29 1 
 				<Mesh> Cerchio_Cerchio.001
 				<Materials> 1
 					<Material> barrel 
@@ -45,7 +45,28 @@
 				<ChildCount> 0
 			</Frame>
 			<Frame> barrel
-				<TransformMatrix> 0 80 0 0 -57.09423 0 -56.03792 0 -56.03792 0 57.09423 0 -128.41 2.21 83.63 1 
+				<TransformMatrix> 0 80 0 0 -57.09423 0 -56.03792 0 -56.03792 0 57.09423 0 -127.87 2.21 80.12 1 
+				<Mesh> Cerchio_Cerchio.001
+				<Materials> 1
+					<Material> barrel 
+				<ChildCount> 0
+			</Frame>
+			<Frame> barrel
+				<TransformMatrix> 80 0 0 0 0 80 0 0 0 0 80 0 -66.45 3.442883 96.44 1 
+				<Mesh> Cerchio_Cerchio.001
+				<Materials> 1
+					<Material> barrel 
+				<ChildCount> 0
+			</Frame>
+			<Frame> barrel
+				<TransformMatrix> 80 0 0 0 0 80 0 0 0 0 80 0 -65.25 3.442883 93.81 1 
+				<Mesh> Cerchio_Cerchio.001
+				<Materials> 1
+					<Material> barrel 
+				<ChildCount> 0
+			</Frame>
+			<Frame> barrel
+				<TransformMatrix> 80 0 0 0 0 80 0 0 0 0 80 0 -65.70238 6.973918 95.369 1 
 				<Mesh> Cerchio_Cerchio.001
 				<Materials> 1
 					<Material> barrel 

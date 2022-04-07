@@ -57,6 +57,7 @@ public:
 	virtual void Animate(float ElapsedTime);
 
 	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType);
+	virtual void RenderBoundingBox(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera);
 
 	shared_ptr<CGameObject> FindFrame(const tstring& FrameName);
 	shared_ptr<CSkinnedMesh> FindSkinnedMesh(const tstring& SkinnedMeshName);
@@ -102,6 +103,4 @@ public:
 	void Scale(float Pitch, float Yaw, float Roll);
 	void Rotate(float Pitch, float Yaw, float Roll);
 	void Rotate(const XMFLOAT3& Axis, float Angle);
-
-	void RenderBoundingBox(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera);
 };

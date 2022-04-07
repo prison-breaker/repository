@@ -71,6 +71,34 @@ void CPlayer::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamer
 	}
 }
 
+void CPlayer::RenderBoundingBox(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera)
+{
+	if (IsActive())
+	{
+		if (m_AnimationController)
+		{
+			m_AnimationController->UpdateShaderVariables(D3D12GraphicsCommandList);
+		}
+
+		if (IsVisible(Camera))
+		{
+			if (m_Mesh)
+			{
+				UpdateShaderVariables(D3D12GraphicsCommandList);
+				m_Mesh->RenderBoundingBox(D3D12GraphicsCommandList);
+			}
+		}
+
+		for (const auto& ChildObject : m_ChildObjects)
+		{
+			if (ChildObject)
+			{
+				ChildObject->RenderBoundingBox(D3D12GraphicsCommandList, Camera);
+			}
+		}
+	}
+}
+
 void CPlayer::SetHealth(UINT Health)
 {
 	m_Health = Health;

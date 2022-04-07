@@ -136,7 +136,7 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 				Guard->SetChild(ModelInfo->m_Model);
 				Guard->SetTransformMatrix(TransformMatrix);
 				Guard->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
-				Guard->SetAnimationClip(2);//static_cast<UINT>(rand() % 4));
+				Guard->SetAnimationClip(static_cast<UINT>(rand() % 4));
 
 				m_GameObjects[ObjectType].push_back(Guard);
 			}
@@ -388,7 +388,8 @@ void CGameScene::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, 
 {
 	switch (wParam)
 	{
-	case '0': // 권총 획득
+	case 'r': // 권총 획득
+	case 'R':
 		static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER].back())->AcquirePistol();
 		if (static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER].back())->SwapWeapon(WEAPON_TYPE_PISTOL))
 		{
@@ -417,25 +418,24 @@ void CGameScene::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, 
 		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(0, 1);
 		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(1, 5);
 		break;
-	case 'b':
+	case 'b': // 바운딩 박스 렌더링 ON/OFF
 	case 'B':
 		(m_RenderBoundingBox) ? m_RenderBoundingBox = false : m_RenderBoundingBox = true;
 		break;
-	case 'p':
+	case 'p': // 안개 ON/OFF
 	case 'P':
 		(m_MappedFog->m_Fog.m_Density > 0.0f) ? m_MappedFog->m_Fog.m_Density = 0.0f : m_MappedFog->m_Fog.m_Density = 0.025f;
 		break;
-	case 'e':
+	case 'e': // 현재 플레이어가 있는 위치를 향해 길찾기 시작
 	case 'E':
-		static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][2])->FindPath(m_NavMesh, m_GameObjects[OBJECT_TYPE_PLAYER].back()->GetPosition());
+		static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][11])->FindPath(m_NavMesh, m_GameObjects[OBJECT_TYPE_PLAYER].back()->GetPosition());
 		break;
-	case 'q':
+	case 'q': // 플레이어를 감옥 밖으로 이동시키고 'e'키를 통해 길찾기를 하는 NPC를 운동장 근처로 소환
 	case 'Q':
-		m_GameObjects[OBJECT_TYPE_NPC][2]->SetPosition(m_NavMesh->GetNavNodes()[510]->GetTriangle().m_Centroid);
+		m_GameObjects[OBJECT_TYPE_NPC][11]->SetPosition(m_NavMesh->GetNavNodes()[522]->GetTriangle().m_Centroid);
 		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetPosition(m_NavMesh->GetNavNodes()[500]->GetTriangle().m_Centroid);
 		break;
-	case VK_TAB:
-		// 미션UI ON/OFF
+	case VK_TAB: // 미션 UI ON/OFF
 		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->GetStateMachine()->ProcessInput(INPUT_MASK_TAB, 0.0f);
 		break;
 	}
@@ -446,7 +446,7 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	// 방향성 조명 방향 변경
 	static float Angle = XMConvertToRadians(90.0f);
 
-	if (GetAsyncKeyState(VK_NUMPAD4) & 0x8000)
+	if (GetAsyncKeyState(VK_NEXT) & 0x8000)
 	{
 		Angle += ElapsedTime;
 
@@ -456,7 +456,7 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 		m_Lights[1].m_Direction.z = sinf(Angle);
 	}
 
-	if (GetAsyncKeyState(VK_NUMPAD6) & 0x8000)
+	if (GetAsyncKeyState(VK_PRIOR) & 0x8000)
 	{
 		Angle -= ElapsedTime;
 
