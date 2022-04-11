@@ -25,13 +25,13 @@ protected:
 	
 	tstring					         m_FrameName{};
 		
-	float							 m_Speed{};
-
 	XMFLOAT4X4		                 m_WorldMatrix{ Matrix4x4::Identity() };
 	XMFLOAT4X4				         m_TransformMatrix{ Matrix4x4::Identity() };
-							         
+							     
 	shared_ptr<CMesh>	             m_Mesh{};
 	vector<shared_ptr<CMaterial>>    m_Materials{};
+	shared_ptr<CAnimationController> m_AnimationController{};
+
 	shared_ptr<BoundingBox>			 m_BoundingBox{};
 
 	vector<shared_ptr<CGameObject>>  m_ChildObjects{};
@@ -52,8 +52,6 @@ public:
 
 	virtual void ReleaseUploadBuffers();
 
-	virtual void Move(const XMFLOAT3& Direction, float Distance);
-
 	virtual void Animate(float ElapsedTime);
 
 	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType);
@@ -62,11 +60,12 @@ public:
 	shared_ptr<CGameObject> FindFrame(const tstring& FrameName);
 	shared_ptr<CSkinnedMesh> FindSkinnedMesh(const tstring& SkinnedMeshName);
 
+	shared_ptr<CGameObject> PickObjectByRayIntersection(const XMFLOAT4X4& ViewMatrix, float& HitDistance);
+
 	void SetActive(bool IsActive);
 	bool IsActive() const;
 
-	void SetSpeed(float Speed);
-	float GetSpeed() const;
+	const tstring& GetName() const;
 
 	const XMFLOAT4X4& GetWorldMatrix() const;
 
@@ -86,10 +85,17 @@ public:
 	XMFLOAT3 GetPosition() const;
 
 	void SetMesh(const shared_ptr<CMesh>& Mesh);
+
 	void SetMaterial(const shared_ptr<CMaterial>& Material);
 
+	void SetAnimationController(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const shared_ptr<LOADED_MODEL_INFO>& ModelInfo);
+	CAnimationController* GetAnimationController() const;
+
+	void SetAnimationClip(UINT ClipNum);
+	UINT GetAnimationClip() const;
+
 	void SetBoundingBox(const shared_ptr<BoundingBox>& BoundingBox);
-	shared_ptr<BoundingBox> GetBoundingBox();
+	BoundingBox* GetBoundingBox();
 
 	void SetChild(const shared_ptr<CGameObject>& ChildObject);
 
@@ -100,6 +106,7 @@ public:
 	void UpdateBoundingBox();
 	void UpdateTransform(const XMFLOAT4X4& ParentMatrix);
 
+	void Move(const XMFLOAT3& Direction, float Distance);
 	void Scale(float Pitch, float Yaw, float Roll);
 	void Rotate(float Pitch, float Yaw, float Roll);
 	void Rotate(const XMFLOAT3& Axis, float Angle);

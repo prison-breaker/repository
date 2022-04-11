@@ -9,8 +9,8 @@ protected:
 
 	D3D12_PRIMITIVE_TOPOLOGY        m_D3D12PrimitiveTopology{ D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST };
 							        
-	UINT					        m_VertexCount{};
-	vector<UINT>					m_IndexCounts{};
+	vector<XMFLOAT3>				m_Positions{};
+	vector<vector<UINT>>			m_Indices{};
 							        
 	ComPtr<ID3D12Resource>	        m_D3D12PositionBuffer{};
 	ComPtr<ID3D12Resource>	        m_D3D12PositionUploadBuffer{};
@@ -61,7 +61,10 @@ public:
 
 	void SetBoundingBox(const BoundingBox& BoundingBox);
 	const BoundingBox& GetBoundingBox() const;
+
 	void RenderBoundingBox(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
+
+	bool CheckRayIntersection(const XMFLOAT3& RayOrigin, const XMFLOAT3& RayDirection, float& Distance);
 };
 
 //=========================================================================================================================

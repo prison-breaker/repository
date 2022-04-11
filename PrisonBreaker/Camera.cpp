@@ -40,9 +40,9 @@ void CCamera::IncreaseZoomFactor(float ElapsedTime)
 	{
 		m_ZoomFactor += 10.0f * ElapsedTime;
 
-		if (m_ZoomFactor > 1.75f)
+		if (m_ZoomFactor > 1.2f)
 		{
-			m_ZoomFactor = 1.75f;
+			m_ZoomFactor = 1.2f;
 		}
 	}
 }

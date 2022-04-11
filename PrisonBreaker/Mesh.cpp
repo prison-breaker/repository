@@ -61,7 +61,7 @@ void CMesh::ReleaseUploadBuffers()
 void CMesh::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, UINT SubSetIndex)
 {
 	D3D12_VERTEX_BUFFER_VIEW VertexBufferViews[] = { m_D3D12PositionBufferView, m_D3D12NormalBufferView, m_D3D12TangentBufferView, m_D3D12BiTangentBufferView, m_D3D12TexCoordBufferView };
-
+	
 	D3D12GraphicsCommandList->IASetVertexBuffers(0, _countof(VertexBufferViews), VertexBufferViews);
 	D3D12GraphicsCommandList->IASetPrimitiveTopology(m_D3D12PrimitiveTopology);
 
@@ -70,11 +70,11 @@ void CMesh::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, UINT Sub
 	if (BufferSize > 0 && SubSetIndex < BufferSize)
 	{
 		D3D12GraphicsCommandList->IASetIndexBuffer(&m_D3D12IndexBufferViews[SubSetIndex]);
-		D3D12GraphicsCommandList->DrawIndexedInstanced(m_IndexCounts[SubSetIndex], 1, 0, 0, 0);
+		D3D12GraphicsCommandList->DrawIndexedInstanced(static_cast<UINT>(m_Indices[SubSetIndex].size()), 1, 0, 0, 0);
 	}
 	else
 	{
-		D3D12GraphicsCommandList->DrawInstanced(m_VertexCount, 1, 0, 0);
+		D3D12GraphicsCommandList->DrawInstanced(static_cast<UINT>(m_Positions.size()), 1, 0, 0);
 	}
 }
 
@@ -91,40 +91,40 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 
 		if (Token == TEXT("<Positions>"))
 		{
-			m_VertexCount = File::ReadIntegerFromFile(InFile);
+			UINT VertexCount{ File::ReadIntegerFromFile(InFile) };
 
-			if (m_VertexCount > 0)
+			if (VertexCount > 0)
 			{
-				tcout << TEXT(" 정점 수 : ") << m_VertexCount << endl;
+				m_Positions.resize(VertexCount);
 
-				vector<XMFLOAT3> Positions{ m_VertexCount };
+				InFile.read(reinterpret_cast<TCHAR*>(m_Positions.data()), sizeof(XMFLOAT3) * VertexCount);
 
-				InFile.read(reinterpret_cast<TCHAR*>(Positions.data()), sizeof(XMFLOAT3) * m_VertexCount);
-
-				m_D3D12PositionBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, Positions.data(), sizeof(XMFLOAT3) * m_VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12PositionUploadBuffer.GetAddressOf());
+				m_D3D12PositionBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, m_Positions.data(), sizeof(XMFLOAT3) * VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12PositionUploadBuffer.GetAddressOf());
 				m_D3D12PositionBufferView.BufferLocation = m_D3D12PositionBuffer->GetGPUVirtualAddress();
 				m_D3D12PositionBufferView.StrideInBytes = sizeof(XMFLOAT3);
-				m_D3D12PositionBufferView.SizeInBytes = sizeof(XMFLOAT3) * m_VertexCount;
+				m_D3D12PositionBufferView.SizeInBytes = sizeof(XMFLOAT3) * VertexCount;
 
 				// 메쉬 캐시는 지역변수이므로 지역을 벗어나면 소멸하기 리소스가 소멸하기 때문에 카운트를 미리 1 증가시켜 놓는다.
 				m_D3D12PositionBuffer->AddRef();
 				m_D3D12PositionUploadBuffer->AddRef();
+
+				tcout << TEXT(" 정점 수 : ") << VertexCount << endl;
 			}
 		}
 		else if (Token == TEXT("<Normals>"))
 		{
-			m_VertexCount = File::ReadIntegerFromFile(InFile);
+			UINT VertexCount{ File::ReadIntegerFromFile(InFile) };
 
-			if (m_VertexCount > 0)
+			if (VertexCount > 0)
 			{
-				vector<XMFLOAT3> Normals{ m_VertexCount };
+				vector<XMFLOAT3> Normals{ VertexCount };
 
-				InFile.read(reinterpret_cast<TCHAR*>(Normals.data()), sizeof(XMFLOAT3) * m_VertexCount);
+				InFile.read(reinterpret_cast<TCHAR*>(Normals.data()), sizeof(XMFLOAT3) * VertexCount);
 
-				m_D3D12NormalBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, Normals.data(), sizeof(XMFLOAT3) * m_VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12NormalUploadBuffer.GetAddressOf());
+				m_D3D12NormalBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, Normals.data(), sizeof(XMFLOAT3) * VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12NormalUploadBuffer.GetAddressOf());
 				m_D3D12NormalBufferView.BufferLocation = m_D3D12NormalBuffer->GetGPUVirtualAddress();
 				m_D3D12NormalBufferView.StrideInBytes = sizeof(XMFLOAT3);
-				m_D3D12NormalBufferView.SizeInBytes = sizeof(XMFLOAT3) * m_VertexCount;
+				m_D3D12NormalBufferView.SizeInBytes = sizeof(XMFLOAT3) * VertexCount;
 
 				// 메쉬 캐시는 지역변수이므로 지역을 벗어나면 소멸하기 리소스가 소멸하기 때문에 카운트를 미리 1 증가시켜 놓는다.
 				m_D3D12NormalBuffer->AddRef();
@@ -133,18 +133,18 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 		}
 		else if (Token == TEXT("<Tangents>"))
 		{
-			m_VertexCount = File::ReadIntegerFromFile(InFile);
+			UINT VertexCount{ File::ReadIntegerFromFile(InFile) };
 
-			if (m_VertexCount > 0)
+			if (VertexCount > 0)
 			{
-				vector<XMFLOAT3> Tangents{ m_VertexCount };
+				vector<XMFLOAT3> Tangents{ VertexCount };
 
-				InFile.read(reinterpret_cast<TCHAR*>(Tangents.data()), sizeof(XMFLOAT3) * m_VertexCount);
+				InFile.read(reinterpret_cast<TCHAR*>(Tangents.data()), sizeof(XMFLOAT3) * VertexCount);
 
-				m_D3D12TangentBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, Tangents.data(), sizeof(XMFLOAT3) * m_VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12TangentUploadBuffer.GetAddressOf());
+				m_D3D12TangentBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, Tangents.data(), sizeof(XMFLOAT3) * VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12TangentUploadBuffer.GetAddressOf());
 				m_D3D12TangentBufferView.BufferLocation = m_D3D12TangentBuffer->GetGPUVirtualAddress();
 				m_D3D12TangentBufferView.StrideInBytes = sizeof(XMFLOAT3);
-				m_D3D12TangentBufferView.SizeInBytes = sizeof(XMFLOAT3) * m_VertexCount;
+				m_D3D12TangentBufferView.SizeInBytes = sizeof(XMFLOAT3) * VertexCount;
 
 				// 메쉬 캐시는 지역변수이므로 지역을 벗어나면 소멸하기 리소스가 소멸하기 때문에 카운트를 미리 1 증가시켜 놓는다.
 				m_D3D12TangentBuffer->AddRef();
@@ -153,18 +153,18 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 		}
 		else if (Token == TEXT("<BiTangents>"))
 		{
-			m_VertexCount = File::ReadIntegerFromFile(InFile);
+			UINT VertexCount{ File::ReadIntegerFromFile(InFile) };
 
-			if (m_VertexCount > 0)
+			if (VertexCount > 0)
 			{
-				vector<XMFLOAT3> BiTangents{ m_VertexCount };
+				vector<XMFLOAT3> BiTangents{ VertexCount };
 
-				InFile.read(reinterpret_cast<TCHAR*>(BiTangents.data()), sizeof(XMFLOAT3) * m_VertexCount);
+				InFile.read(reinterpret_cast<TCHAR*>(BiTangents.data()), sizeof(XMFLOAT3) * VertexCount);
 
-				m_D3D12BiTangentBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, BiTangents.data(), sizeof(XMFLOAT3) * m_VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12BiTangentUploadBuffer.GetAddressOf());
+				m_D3D12BiTangentBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, BiTangents.data(), sizeof(XMFLOAT3) * VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12BiTangentUploadBuffer.GetAddressOf());
 				m_D3D12BiTangentBufferView.BufferLocation = m_D3D12BiTangentBuffer->GetGPUVirtualAddress();
 				m_D3D12BiTangentBufferView.StrideInBytes = sizeof(XMFLOAT3);
-				m_D3D12BiTangentBufferView.SizeInBytes = sizeof(XMFLOAT3) * m_VertexCount;
+				m_D3D12BiTangentBufferView.SizeInBytes = sizeof(XMFLOAT3) * VertexCount;
 
 				// 메쉬 캐시는 지역변수이므로 지역을 벗어나면 소멸하기 리소스가 소멸하기 때문에 카운트를 미리 1 증가시켜 놓는다.
 				m_D3D12BiTangentBuffer->AddRef();
@@ -173,18 +173,18 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 		}
 		else if (Token == TEXT("<TexCoords>"))
 		{
-			m_VertexCount = File::ReadIntegerFromFile(InFile);
+			UINT VertexCount{ File::ReadIntegerFromFile(InFile) };
 
-			if (m_VertexCount > 0)
+			if (VertexCount > 0)
 			{
-				vector<XMFLOAT2> TexCoords{ m_VertexCount };
+				vector<XMFLOAT2> TexCoords{ VertexCount };
 
-				InFile.read(reinterpret_cast<TCHAR*>(TexCoords.data()), sizeof(XMFLOAT2) * m_VertexCount);
+				InFile.read(reinterpret_cast<TCHAR*>(TexCoords.data()), sizeof(XMFLOAT2) * VertexCount);
 
-				m_D3D12TexCoordBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, TexCoords.data(), sizeof(XMFLOAT2) * m_VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12TexCoordUploadBuffer.GetAddressOf());
+				m_D3D12TexCoordBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, TexCoords.data(), sizeof(XMFLOAT2) * VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12TexCoordUploadBuffer.GetAddressOf());
 				m_D3D12TexCoordBufferView.BufferLocation = m_D3D12TexCoordBuffer->GetGPUVirtualAddress();
 				m_D3D12TexCoordBufferView.StrideInBytes = sizeof(XMFLOAT2);
-				m_D3D12TexCoordBufferView.SizeInBytes = sizeof(XMFLOAT2) * m_VertexCount;
+				m_D3D12TexCoordBufferView.SizeInBytes = sizeof(XMFLOAT2) * VertexCount;
 
 				// 메쉬 캐시는 지역변수이므로 지역을 벗어나면 소멸하기 리소스가 소멸하기 때문에 카운트를 미리 1 증가시켜 놓는다.
 				m_D3D12TexCoordBuffer->AddRef();
@@ -198,7 +198,7 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 			if (SubMeshCount > 0)
 			{
 				// +1: BoundingBox
-				m_IndexCounts.resize(SubMeshCount + 1);
+				m_Indices.resize(SubMeshCount + 1);
 				m_D3D12IndexBuffers.resize(SubMeshCount + 1);
 				m_D3D12IndexUploadBuffers.resize(SubMeshCount + 1);
 				m_D3D12IndexBufferViews.resize(SubMeshCount + 1);
@@ -207,18 +207,19 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 				{
 					// <Indices>
 					File::ReadStringFromFile(InFile, Token);
-					m_IndexCounts[i] = File::ReadIntegerFromFile(InFile);
 
-					if (m_IndexCounts[i] > 0)
+					UINT IndexCount{ File::ReadIntegerFromFile(InFile) };
+
+					if (IndexCount > 0)
 					{
-						vector<UINT> Indices(m_IndexCounts[i]);
+						m_Indices[i].resize(IndexCount);
 
-						InFile.read(reinterpret_cast<TCHAR*>(Indices.data()), sizeof(UINT) * m_IndexCounts[i]);
+						InFile.read(reinterpret_cast<TCHAR*>(m_Indices[i].data()), sizeof(UINT) * m_Indices[i].size());
 
-						m_D3D12IndexBuffers[i] = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, Indices.data(), sizeof(UINT) * m_IndexCounts[i], D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_INDEX_BUFFER, m_D3D12IndexUploadBuffers[i].GetAddressOf());
+						m_D3D12IndexBuffers[i] = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, m_Indices[i].data(), sizeof(UINT) * IndexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_INDEX_BUFFER, m_D3D12IndexUploadBuffers[i].GetAddressOf());
 						m_D3D12IndexBufferViews[i].BufferLocation = m_D3D12IndexBuffers[i]->GetGPUVirtualAddress();
 						m_D3D12IndexBufferViews[i].Format = DXGI_FORMAT_R32_UINT;
-						m_D3D12IndexBufferViews[i].SizeInBytes = sizeof(UINT) * m_IndexCounts[i];
+						m_D3D12IndexBufferViews[i].SizeInBytes = sizeof(UINT) * IndexCount;
 
 						// 메쉬 캐시는 지역변수이므로 지역을 벗어나면 소멸하기 리소스가 소멸하기 때문에 카운트를 미리 1 증가시켜 놓는다.
 						m_D3D12IndexBuffers[i]->AddRef();
@@ -256,7 +257,13 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 			const UINT IndexCount{ 36 };
 			UINT Indices[IndexCount]{ 0, 1, 2, 1, 3, 2, 4, 6, 5, 5, 6, 7, 0, 4, 1, 1, 4, 5, 2, 3, 6, 3, 7, 6, 0, 2, 6, 0, 6, 4, 1, 5, 7, 1, 7, 3 };
 
-			m_IndexCounts.back() = IndexCount;
+			m_Indices.back().reserve(IndexCount);
+
+			for (UINT i = 0; i < IndexCount; ++i)
+			{
+				m_Indices.back().push_back(Indices[i]);
+			}
+
 			m_D3D12IndexBuffers.back() = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, Indices, sizeof(UINT) * IndexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_INDEX_BUFFER, m_D3D12IndexUploadBuffers.back().GetAddressOf());
 			m_D3D12IndexBufferViews.back().BufferLocation = m_D3D12IndexBuffers.back()->GetGPUVirtualAddress();
 			m_D3D12IndexBufferViews.back().Format = DXGI_FORMAT_R32_UINT;
@@ -278,23 +285,23 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 	{
 		if (Token == TEXT("<Positions>"))
 		{
-			InFile >> m_VertexCount;
+			InFile >> VertexCount;
 
-			if (m_VertexCount > 0)
+			if (VertexCount > 0)
 			{
-				tcout << TEXT(" 정점 수 : ") << m_VertexCount << endl;
+				tcout << TEXT(" 정점 수 : ") << VertexCount << endl;
 
-				vector<XMFLOAT3> Positions{ m_VertexCount };
+				vector<XMFLOAT3> Positions{ VertexCount };
 
-				for (UINT i = 0; i < m_VertexCount; ++i)
+				for (UINT i = 0; i < VertexCount; ++i)
 				{
 					InFile >> Positions[i].x >> Positions[i].y >> Positions[i].z;
 				}
 
-				m_D3D12PositionBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, Positions.data(), sizeof(XMFLOAT3) * m_VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12PositionUploadBuffer.GetAddressOf());
+				m_D3D12PositionBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, Positions.data(), sizeof(XMFLOAT3) * VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12PositionUploadBuffer.GetAddressOf());
 				m_D3D12PositionBufferView.BufferLocation = m_D3D12PositionBuffer->GetGPUVirtualAddress();
 				m_D3D12PositionBufferView.StrideInBytes = sizeof(XMFLOAT3);
-				m_D3D12PositionBufferView.SizeInBytes = sizeof(XMFLOAT3) * m_VertexCount;
+				m_D3D12PositionBufferView.SizeInBytes = sizeof(XMFLOAT3) * VertexCount;
 
 				// 메쉬 캐시는 지역변수이므로 지역을 벗어나면 소멸하기 리소스가 소멸하기 때문에 카운트를 미리 1 증가시켜 놓는다.
 				m_D3D12PositionBuffer->AddRef();
@@ -303,21 +310,21 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 		}
 		else if (Token == TEXT("<Normals>"))
 		{
-			InFile >> m_VertexCount;
+			InFile >> VertexCount;
 
-			if (m_VertexCount > 0)
+			if (VertexCount > 0)
 			{
-				vector<XMFLOAT3> Normals{ m_VertexCount };
+				vector<XMFLOAT3> Normals{ VertexCount };
 
-				for (UINT i = 0; i < m_VertexCount; ++i)
+				for (UINT i = 0; i < VertexCount; ++i)
 				{
 					InFile >> Normals[i].x >> Normals[i].y >> Normals[i].z;
 				}
 
-				m_D3D12NormalBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, Normals.data(), sizeof(XMFLOAT3) * m_VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12NormalUploadBuffer.GetAddressOf());
+				m_D3D12NormalBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, Normals.data(), sizeof(XMFLOAT3) * VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12NormalUploadBuffer.GetAddressOf());
 				m_D3D12NormalBufferView.BufferLocation = m_D3D12NormalBuffer->GetGPUVirtualAddress();
 				m_D3D12NormalBufferView.StrideInBytes = sizeof(XMFLOAT3);
-				m_D3D12NormalBufferView.SizeInBytes = sizeof(XMFLOAT3) * m_VertexCount;
+				m_D3D12NormalBufferView.SizeInBytes = sizeof(XMFLOAT3) * VertexCount;
 
 				// 메쉬 캐시는 지역변수이므로 지역을 벗어나면 소멸하기 리소스가 소멸하기 때문에 카운트를 미리 1 증가시켜 놓는다.
 				m_D3D12NormalBuffer->AddRef();
@@ -326,21 +333,21 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 		}
 		else if (Token == TEXT("<Tangents>"))
 		{
-			InFile >> m_VertexCount;
+			InFile >> VertexCount;
 
-			if (m_VertexCount > 0)
+			if (VertexCount > 0)
 			{
-				vector<XMFLOAT3> Tangents{ m_VertexCount };
+				vector<XMFLOAT3> Tangents{ VertexCount };
 
-				for (UINT i = 0; i < m_VertexCount; ++i)
+				for (UINT i = 0; i < VertexCount; ++i)
 				{
 					InFile >> Tangents[i].x >> Tangents[i].y >> Tangents[i].z;
 				}
 
-				m_D3D12TangentBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, Tangents.data(), sizeof(XMFLOAT3) * m_VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12TangentUploadBuffer.GetAddressOf());
+				m_D3D12TangentBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, Tangents.data(), sizeof(XMFLOAT3) * VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12TangentUploadBuffer.GetAddressOf());
 				m_D3D12TangentBufferView.BufferLocation = m_D3D12TangentBuffer->GetGPUVirtualAddress();
 				m_D3D12TangentBufferView.StrideInBytes = sizeof(XMFLOAT3);
-				m_D3D12TangentBufferView.SizeInBytes = sizeof(XMFLOAT3) * m_VertexCount;
+				m_D3D12TangentBufferView.SizeInBytes = sizeof(XMFLOAT3) * VertexCount;
 
 				// 메쉬 캐시는 지역변수이므로 지역을 벗어나면 소멸하기 리소스가 소멸하기 때문에 카운트를 미리 1 증가시켜 놓는다.
 				m_D3D12TangentBuffer->AddRef();
@@ -349,21 +356,21 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 		}
 		else if (Token == TEXT("<BiTangents>"))
 		{
-			InFile >> m_VertexCount;
+			InFile >> VertexCount;
 
-			if (m_VertexCount > 0)
+			if (VertexCount > 0)
 			{
-				vector<XMFLOAT3> BiTangents{ m_VertexCount };
+				vector<XMFLOAT3> BiTangents{ VertexCount };
 
-				for (UINT i = 0; i < m_VertexCount; ++i)
+				for (UINT i = 0; i < VertexCount; ++i)
 				{
 					InFile >> BiTangents[i].x >> BiTangents[i].y >> BiTangents[i].z;
 				}
 
-				m_D3D12BiTangentBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, BiTangents.data(), sizeof(XMFLOAT3) * m_VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12BiTangentUploadBuffer.GetAddressOf());
+				m_D3D12BiTangentBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, BiTangents.data(), sizeof(XMFLOAT3) * VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12BiTangentUploadBuffer.GetAddressOf());
 				m_D3D12BiTangentBufferView.BufferLocation = m_D3D12BiTangentBuffer->GetGPUVirtualAddress();
 				m_D3D12BiTangentBufferView.StrideInBytes = sizeof(XMFLOAT3);
-				m_D3D12BiTangentBufferView.SizeInBytes = sizeof(XMFLOAT3) * m_VertexCount;
+				m_D3D12BiTangentBufferView.SizeInBytes = sizeof(XMFLOAT3) * VertexCount;
 
 				// 메쉬 캐시는 지역변수이므로 지역을 벗어나면 소멸하기 리소스가 소멸하기 때문에 카운트를 미리 1 증가시켜 놓는다.
 				m_D3D12BiTangentBuffer->AddRef();
@@ -372,21 +379,21 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 		}
 		else if (Token == TEXT("<TexCoords>"))
 		{
-			InFile >> m_VertexCount;
+			InFile >> VertexCount;
 
-			if (m_VertexCount > 0)
+			if (VertexCount > 0)
 			{
-				vector<XMFLOAT2> TexCoords{ m_VertexCount };
+				vector<XMFLOAT2> TexCoords{ VertexCount };
 
-				for (UINT i = 0; i < m_VertexCount; ++i)
+				for (UINT i = 0; i < VertexCount; ++i)
 				{
 					InFile >> TexCoords[i].x >> TexCoords[i].y;
 				}
 
-				m_D3D12TexCoordBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, TexCoords.data(), sizeof(XMFLOAT2) * m_VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12TexCoordUploadBuffer.GetAddressOf());
+				m_D3D12TexCoordBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, TexCoords.data(), sizeof(XMFLOAT2) * VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12TexCoordUploadBuffer.GetAddressOf());
 				m_D3D12TexCoordBufferView.BufferLocation = m_D3D12TexCoordBuffer->GetGPUVirtualAddress();
 				m_D3D12TexCoordBufferView.StrideInBytes = sizeof(XMFLOAT2);
-				m_D3D12TexCoordBufferView.SizeInBytes = sizeof(XMFLOAT2) * m_VertexCount;
+				m_D3D12TexCoordBufferView.SizeInBytes = sizeof(XMFLOAT2) * VertexCount;
 
 				// 메쉬 캐시는 지역변수이므로 지역을 벗어나면 소멸하기 리소스가 소멸하기 때문에 카운트를 미리 1 증가시켜 놓는다.
 				m_D3D12TexCoordBuffer->AddRef();
@@ -513,7 +520,41 @@ void CMesh::RenderBoundingBox(ID3D12GraphicsCommandList* D3D12GraphicsCommandLis
 	D3D12GraphicsCommandList->IASetVertexBuffers(0, _countof(VertexBufferViews), VertexBufferViews);
 	D3D12GraphicsCommandList->IASetPrimitiveTopology(m_D3D12PrimitiveTopology);
 	D3D12GraphicsCommandList->IASetIndexBuffer(&m_D3D12IndexBufferViews.back());
-	D3D12GraphicsCommandList->DrawIndexedInstanced(m_IndexCounts.back(), 1, 0, 0, 0);
+	D3D12GraphicsCommandList->DrawIndexedInstanced(static_cast<UINT>(m_Indices.back().size()), 1, 0, 0, 0);
+}
+
+bool CMesh::CheckRayIntersection(const XMFLOAT3& RayOrigin, const XMFLOAT3& RayDirection, float& Distance)
+{
+	// 광선은 모델 좌표계로 표현된다.
+	// 모델 좌표계의 광선과 메쉬의 바운딩 박스(모델 좌표계)와의 교차를 검사한다.
+	bool IsIntersected{ m_BoundingBox.Intersects(XMLoadFloat3(&RayOrigin), XMLoadFloat3(&RayDirection), Distance) };
+
+	// 모델 좌표계의 광선이 메쉬의 바운딩 박스와 교차하면 메쉬와의 교차를 검사한다.
+	if (IsIntersected)
+	{
+		UINT SubMeshCount{ static_cast<UINT>(m_Indices.size()) };
+
+		for (UINT i = 0; i < SubMeshCount; ++i)
+		{
+			UINT PrimitiveCount{ static_cast<UINT>(m_Indices[i].size() / 3) };
+
+			for (UINT j = 0; j < PrimitiveCount; j += 3)
+			{
+				XMVECTOR Vertex1{ XMLoadFloat3((XMFLOAT3*)&m_Positions[m_Indices[i][j]]) };
+				XMVECTOR Vertex2{ XMLoadFloat3((XMFLOAT3*)&m_Positions[m_Indices[i][j + 1]]) };
+				XMVECTOR Vertex3{ XMLoadFloat3((XMFLOAT3*)&m_Positions[m_Indices[i][j + 2]]) };
+
+				// 메쉬의 모든 프리미티브(삼각형)들에 대하여 픽킹 광선과의 충돌을 검사한다.
+				// 충돌하는 모든 삼각형을 찾아 광선의 시작점(실제로는 카메라 좌표계의 원점)에 가장 가까운 삼각형을 찾는다.
+				if (TriangleTests::Intersects(XMLoadFloat3(&RayOrigin), XMLoadFloat3(&RayDirection), Vertex1, Vertex2, Vertex3, Distance))
+				{
+					return true;
+				}
+			}
+		}
+	}
+
+	return false;
 }
 
 //=========================================================================================================================
@@ -524,8 +565,8 @@ CSkinnedMesh::CSkinnedMesh(const CSkinnedMesh& Rhs)
 
 	m_D3D12PrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
-	m_VertexCount = Rhs.m_VertexCount;
-	m_IndexCounts.assign(Rhs.m_IndexCounts.begin(), Rhs.m_IndexCounts.end());
+	m_Positions = Rhs.m_Positions;
+	m_Indices = Rhs.m_Indices;
 
 	m_D3D12PositionBuffer = Rhs.m_D3D12PositionBuffer;
 	m_D3D12PositionUploadBuffer = Rhs.m_D3D12PositionUploadBuffer;
@@ -647,11 +688,11 @@ void CSkinnedMesh::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, U
 	if (BufferSize > 0 && SubSetIndex < BufferSize)
 	{
 		D3D12GraphicsCommandList->IASetIndexBuffer(&m_D3D12IndexBufferViews[SubSetIndex]);
-		D3D12GraphicsCommandList->DrawIndexedInstanced(m_IndexCounts[SubSetIndex], 1, 0, 0, 0);
+		D3D12GraphicsCommandList->DrawIndexedInstanced(static_cast<UINT>(m_Indices[SubSetIndex].size()), 1, 0, 0, 0);
 	}
 	else
 	{
-		D3D12GraphicsCommandList->DrawInstanced(m_VertexCount, 1, 0, 0);
+		D3D12GraphicsCommandList->DrawInstanced(static_cast<UINT>(m_Positions.size()), 1, 0, 0);
 	}
 }
 
@@ -694,40 +735,40 @@ void CSkinnedMesh::LoadSkinInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphic
 		}
 		else if (Token == TEXT("<BoneIndices>"))
 		{
-			m_VertexCount = File::ReadIntegerFromFile(InFile);
+			UINT VertexCount{ File::ReadIntegerFromFile(InFile) };
 
-			if (m_VertexCount > 0)
+			if (VertexCount > 0)
 			{
-				vector<XMUINT4> BoneIndices{ m_VertexCount };
+				vector<XMUINT4> BoneIndices{ VertexCount };
 
-				for (UINT i = 0; i < m_VertexCount; ++i)
+				for (UINT i = 0; i < VertexCount; ++i)
 				{
 					InFile.read(reinterpret_cast<TCHAR*>(&BoneIndices[i]), sizeof(XMUINT4));
 				}
 
-				m_D3D12BoneIndexBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, BoneIndices.data(), sizeof(XMUINT4) * m_VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12BoneIndexUploadBuffer.GetAddressOf());
+				m_D3D12BoneIndexBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, BoneIndices.data(), sizeof(XMUINT4) * VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12BoneIndexUploadBuffer.GetAddressOf());
 				m_D3D12BoneIndexBufferView.BufferLocation = m_D3D12BoneIndexBuffer->GetGPUVirtualAddress();
 				m_D3D12BoneIndexBufferView.StrideInBytes = sizeof(XMUINT4);
-				m_D3D12BoneIndexBufferView.SizeInBytes = sizeof(XMUINT4) * m_VertexCount;
+				m_D3D12BoneIndexBufferView.SizeInBytes = sizeof(XMUINT4) * VertexCount;
 			}
 		}
 		else if (Token == TEXT("<BoneWeights>"))
 		{
-			m_VertexCount = File::ReadIntegerFromFile(InFile);
+			UINT VertexCount{ File::ReadIntegerFromFile(InFile) };
 
-			if (m_VertexCount > 0)
+			if (VertexCount > 0)
 			{
-				vector<XMFLOAT4> BoneWeights{ m_VertexCount };
+				vector<XMFLOAT4> BoneWeights{ VertexCount };
 
-				for (UINT i = 0; i < m_VertexCount; ++i)
+				for (UINT i = 0; i < VertexCount; ++i)
 				{
 					InFile.read(reinterpret_cast<TCHAR*>(&BoneWeights[i]), sizeof(XMFLOAT4));
 				}
 
-				m_D3D12BoneWeightBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, BoneWeights.data(), sizeof(XMFLOAT4) * m_VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12BoneWeightUploadBuffer.GetAddressOf());
+				m_D3D12BoneWeightBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, BoneWeights.data(), sizeof(XMFLOAT4) * VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12BoneWeightUploadBuffer.GetAddressOf());
 				m_D3D12BoneWeightBufferView.BufferLocation = m_D3D12BoneWeightBuffer->GetGPUVirtualAddress();
 				m_D3D12BoneWeightBufferView.StrideInBytes = sizeof(XMFLOAT4);
-				m_D3D12BoneWeightBufferView.SizeInBytes = sizeof(XMFLOAT4) * m_VertexCount;
+				m_D3D12BoneWeightBufferView.SizeInBytes = sizeof(XMFLOAT4) * VertexCount;
 			}
 		}
 		else if (Token == TEXT("</SkinInfo>"))
@@ -771,40 +812,40 @@ void CSkinnedMesh::LoadSkinInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphic
 		}
 		else if (Token == TEXT("<BoneIndices>"))
 		{
-			InFile >> m_VertexCount;
+			InFile >> VertexCount;
 
-			if (m_VertexCount > 0)
+			if (VertexCount > 0)
 			{
-				vector<XMUINT4> BoneIndices{ m_VertexCount };
+				vector<XMUINT4> BoneIndices{ VertexCount };
 
-				for (UINT i = 0; i < m_VertexCount; ++i)
+				for (UINT i = 0; i < VertexCount; ++i)
 				{
 					InFile >> BoneIndices[i].x >> BoneIndices[i].y >> BoneIndices[i].z >> BoneIndices[i].w;
 				}
 
-				m_D3D12BoneIndexBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, BoneIndices.data(), sizeof(XMUINT4) * m_VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12BoneIndexUploadBuffer.GetAddressOf());
+				m_D3D12BoneIndexBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, BoneIndices.data(), sizeof(XMUINT4) * VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12BoneIndexUploadBuffer.GetAddressOf());
 				m_D3D12BoneIndexBufferView.BufferLocation = m_D3D12BoneIndexBuffer->GetGPUVirtualAddress();
 				m_D3D12BoneIndexBufferView.StrideInBytes = sizeof(XMUINT4);
-				m_D3D12BoneIndexBufferView.SizeInBytes = sizeof(XMUINT4) * m_VertexCount;
+				m_D3D12BoneIndexBufferView.SizeInBytes = sizeof(XMUINT4) * VertexCount;
 			}
 		}
 		else if (Token == TEXT("<BoneWeights>"))
 		{
-			InFile >> m_VertexCount;
+			InFile >> VertexCount;
 
-			if (m_VertexCount > 0)
+			if (VertexCount > 0)
 			{
-				vector<XMFLOAT4> BoneWeights{ m_VertexCount };
+				vector<XMFLOAT4> BoneWeights{ VertexCount };
 
-				for (UINT i = 0; i < m_VertexCount; ++i)
+				for (UINT i = 0; i < VertexCount; ++i)
 				{
 					InFile >> BoneWeights[i].x >> BoneWeights[i].y >> BoneWeights[i].z >> BoneWeights[i].w;
 				}
 
-				m_D3D12BoneWeightBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, BoneWeights.data(), sizeof(XMFLOAT4) * m_VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12BoneWeightUploadBuffer.GetAddressOf());
+				m_D3D12BoneWeightBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, BoneWeights.data(), sizeof(XMFLOAT4) * VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12BoneWeightUploadBuffer.GetAddressOf());
 				m_D3D12BoneWeightBufferView.BufferLocation = m_D3D12BoneWeightBuffer->GetGPUVirtualAddress();
 				m_D3D12BoneWeightBufferView.StrideInBytes = sizeof(XMFLOAT4);
-				m_D3D12BoneWeightBufferView.SizeInBytes = sizeof(XMFLOAT4) * m_VertexCount;
+				m_D3D12BoneWeightBufferView.SizeInBytes = sizeof(XMFLOAT4) * VertexCount;
 			}
 		}
 		else if (Token == TEXT("</SkinInfo>"))

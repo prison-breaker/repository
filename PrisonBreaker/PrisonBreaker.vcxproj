@@ -144,6 +144,7 @@
     <ClCompile Include="BilboardObject.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="DebugShader.cpp" />
+    <ClCompile Include="EventTriggers.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="GameScene.cpp" />
     <ClCompile Include="Guard.cpp" />
@@ -173,6 +174,7 @@
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="TextureManager.cpp" />
     <ClCompile Include="Timer.cpp" />
+    <ClCompile Include="EventTrigger.cpp" />
     <ClCompile Include="UIAnimationController.cpp" />
     <ClCompile Include="UIShader.cpp" />
   </ItemGroup>
@@ -182,6 +184,7 @@
     <ClInclude Include="BilboardObject.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="DebugShader.h" />
+    <ClInclude Include="EventTriggers.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameScene.h" />
     <ClInclude Include="Guard.h" />
@@ -209,6 +212,7 @@
     <ClInclude Include="Texture.h" />
     <ClInclude Include="TextureManager.h" />
     <ClInclude Include="Timer.h" />
+    <ClInclude Include="EventTrigger.h" />
     <ClInclude Include="UIAnimationController.h" />
     <ClInclude Include="UIShader.h" />
   </ItemGroup>

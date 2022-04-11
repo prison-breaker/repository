@@ -57,7 +57,7 @@ public:
 	void SetKeyFrameIndex(UINT KeyFrameIndex);
 	UINT GetKeyFrameIndex() const;
 
-	void UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
+	void UpdateShaderVariables();
 
 	bool UpdateAnimationClip(ANIMATION_TYPE AnimationType);
 };

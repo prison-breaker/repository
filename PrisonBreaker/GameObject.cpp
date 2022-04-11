@@ -414,6 +414,52 @@ shared_ptr<CSkinnedMesh> CGameObject::FindSkinnedMesh(const tstring& SkinnedMesh
 	return SkinnedMesh;
 }
 
+shared_ptr<CGameObject> CGameObject::PickObjectByRayIntersection(const XMFLOAT4X4& ViewMatrix, float& HitDistance)
+{
+	shared_ptr<CGameObject> NearestIntersectedObject{};
+
+	if (m_Mesh)
+	{
+		XMFLOAT4X4 WorldViewMatrix{ Matrix4x4::Multiply(m_WorldMatrix, ViewMatrix) };
+		XMFLOAT4X4 InverseWorldViewMatrix{ Matrix4x4::Inverse(WorldViewMatrix) };
+
+		// 카메라 좌표계의 원점을 모델 좌표계로 변환한다.
+		XMFLOAT3 RayOrigin{ Vector3::TransformCoord(XMFLOAT3(0.0f, 0.0f, 0.0f), InverseWorldViewMatrix) };
+		XMFLOAT3 RayDirection{ Vector3::TransformCoord(XMFLOAT3(0.0f, 0.0f, 1.0f), InverseWorldViewMatrix) };
+
+		RayDirection = Vector3::Normalize(Vector3::Subtract(RayDirection, RayOrigin));
+
+		// 모델 좌표계의 광선과 메쉬의 교차를 검사한다.
+		if (m_Mesh->CheckRayIntersection(RayOrigin, RayDirection, HitDistance))
+		{
+			return shared_from_this();
+		}
+	}
+
+	float NearestHitDistance{ FLT_MAX };
+
+	for (const auto& ChildObject : m_ChildObjects)
+	{
+		if (ChildObject)
+		{
+			shared_ptr<CGameObject> IntersectedObject = ChildObject->PickObjectByRayIntersection(ViewMatrix, HitDistance);
+
+			if (IntersectedObject && (HitDistance < NearestHitDistance))
+			{
+				NearestIntersectedObject = IntersectedObject;
+				NearestHitDistance = HitDistance;
+			}
+		}
+	}
+
+	if (NearestIntersectedObject)
+	{
+		HitDistance = NearestHitDistance;
+	}
+
+	return NearestIntersectedObject;
+}
+
 void CGameObject::Initialize()
 {
 	SetActive(true);
@@ -453,13 +499,6 @@ void CGameObject::ReleaseUploadBuffers()
 	}
 }
 
-void CGameObject::Move(const XMFLOAT3& Direction, float Distance)
-{
-	XMFLOAT3 Shift{ Vector3::ScalarProduct(Distance, Direction, false) };
-
-	SetPosition(Vector3::Add(GetPosition(), Shift));
-}
-
 void CGameObject::Animate(float ElapsedTime)
 {
 
@@ -469,6 +508,11 @@ void CGameObject::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CC
 {
 	if (IsActive())
 	{
+		if (m_AnimationController)
+		{
+			m_AnimationController->UpdateShaderVariables();
+		}
+
 		if (IsVisible(Camera))
 		{
 			if (m_Mesh)
@@ -504,6 +548,11 @@ void CGameObject::RenderBoundingBox(ID3D12GraphicsCommandList* D3D12GraphicsComm
 {
 	if (IsActive())
 	{
+		if (m_AnimationController)
+		{
+			m_AnimationController->UpdateShaderVariables();
+		}
+
 		if (IsVisible(Camera))
 		{
 			if (m_Mesh)
@@ -523,7 +572,6 @@ void CGameObject::RenderBoundingBox(ID3D12GraphicsCommandList* D3D12GraphicsComm
 	}
 }
 
-
 void CGameObject::SetActive(bool IsActive)
 {
 	m_IsActive = IsActive;
@@ -534,14 +582,9 @@ bool CGameObject::IsActive() const
 	return m_IsActive;
 }
 
-void CGameObject::SetSpeed(float Speed)
+const tstring& CGameObject::GetName() const
 {
-	m_Speed = Speed;
-}
-
-float CGameObject::GetSpeed() const
-{
-	return m_Speed;
+	return m_FrameName;
 }
 
 const XMFLOAT4X4& CGameObject::GetWorldMatrix() const
@@ -631,6 +674,37 @@ void CGameObject::SetMaterial(const shared_ptr<CMaterial>& Material)
 	}
 }
 
+void CGameObject::SetAnimationController(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const shared_ptr<LOADED_MODEL_INFO>& ModelInfo)
+{
+	if (ModelInfo)
+	{
+		m_AnimationController = make_shared<CAnimationController>(D3D12Device, D3D12GraphicsCommandList, ModelInfo, shared_from_this());
+	}
+}
+
+CAnimationController* CGameObject::GetAnimationController() const
+{
+	return m_AnimationController.get();
+}
+
+void CGameObject::SetAnimationClip(UINT ClipNum)
+{
+	if (m_AnimationController)
+	{
+		m_AnimationController->SetAnimationClip(ClipNum);
+	}
+}
+
+UINT CGameObject::GetAnimationClip() const
+{
+	if (m_AnimationController)
+	{
+		return m_AnimationController->GetAnimationClip();
+	}
+
+	return 0;
+}
+
 void CGameObject::SetBoundingBox(const shared_ptr<BoundingBox>& BoundingBox)
 {
 	if (BoundingBox)
@@ -639,9 +713,9 @@ void CGameObject::SetBoundingBox(const shared_ptr<BoundingBox>& BoundingBox)
 	}
 }
 
-shared_ptr<BoundingBox> CGameObject::GetBoundingBox()
+BoundingBox* CGameObject::GetBoundingBox()
 {
-	return m_BoundingBox;
+	return m_BoundingBox.get();
 }
 
 void CGameObject::SetChild(const shared_ptr<CGameObject>& ChildObject)
@@ -707,6 +781,13 @@ void CGameObject::UpdateTransform(const XMFLOAT4X4& ParentMatrix)
 			ChildObject->UpdateTransform(m_WorldMatrix);
 		}
 	}
+}
+
+void CGameObject::Move(const XMFLOAT3& Direction, float Distance)
+{
+	XMFLOAT3 Shift{ Vector3::ScalarProduct(Distance, Direction, false) };
+
+	SetPosition(Vector3::Add(GetPosition(), Shift));
 }
 
 void CGameObject::Scale(float Pitch, float Yaw, float Roll)

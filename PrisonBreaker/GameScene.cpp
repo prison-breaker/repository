@@ -88,6 +88,7 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 #ifdef READ_BINARY_FILE
 	LoadMeshCachesFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("MeshesAndMaterials/Meshes.bin"), MeshCaches);
 	LoadMaterialCachesFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("MeshesAndMaterials/Materials.bin"), MaterialCaches);
+	LoadEventTriggerFromFile(TEXT("Triggers/EventTriggers.bin"));
 
 	tifstream InFile{ FileName, ios::binary };
 
@@ -435,14 +436,13 @@ void CGameScene::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, 
 		m_GameObjects[OBJECT_TYPE_NPC][11]->SetPosition(m_NavMesh->GetNavNodes()[522]->GetTriangle().m_Centroid);
 		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetPosition(m_NavMesh->GetNavNodes()[500]->GetTriangle().m_Centroid);
 		break;
-	case VK_TAB: // 미션 UI ON/OFF
-		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->GetStateMachine()->ProcessInput(INPUT_MASK_TAB, 0.0f);
-		break;
 	}
 }
 
 void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 {
+	m_RayCasting = false;
+
 	// 방향성 조명 방향 변경
 	static float Angle = XMConvertToRadians(90.0f);
 
@@ -490,18 +490,94 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	//return;
 
 	// 3인칭 모드
+	Player->Rotate(Delta.y, Delta.x, 0.0f, ElapsedTime);
+
 	UINT InputMask{};
 
-	if (GetAsyncKeyState('W') & 0x8000) InputMask |= INPUT_MASK_W;
-	if (GetAsyncKeyState('S') & 0x8000) InputMask |= INPUT_MASK_S;
-	if (GetAsyncKeyState('A') & 0x8000) InputMask |= INPUT_MASK_A;
-	if (GetAsyncKeyState('D') & 0x8000) InputMask |= INPUT_MASK_D;
-	if (GetAsyncKeyState(VK_SHIFT) & 0x8000) InputMask |= INPUT_MASK_SHIFT;
-	if (GetAsyncKeyState(VK_TAB) & 0x8000) InputMask |= INPUT_MASK_TAB;
-	if (GetAsyncKeyState(VK_LBUTTON) & 0x8000) InputMask |= INPUT_MASK_LMB;
-	if (GetAsyncKeyState(VK_RBUTTON) & 0x8000) InputMask |= INPUT_MASK_RMB;
-	
-	Player->Rotate(Delta.y, Delta.x, 0.0f, ElapsedTime);
+	if (GetAsyncKeyState('W') & 0x8000)
+	{
+		InputMask |= INPUT_MASK_W;
+	}
+
+	if (GetAsyncKeyState('S') & 0x8000)
+	{
+		InputMask |= INPUT_MASK_S;
+	}
+
+	if (GetAsyncKeyState('A') & 0x8000)
+	{
+		InputMask |= INPUT_MASK_A;
+	}
+
+	if (GetAsyncKeyState('D') & 0x8000)
+	{
+		InputMask |= INPUT_MASK_D;
+	}
+
+	if (GetAsyncKeyState(VK_SHIFT) & 0x8000)
+	{
+		InputMask |= INPUT_MASK_SHIFT;
+	}
+
+	// 미션 UI ON/OFF
+	if (GetAsyncKeyState(VK_TAB) & 0x0001)
+	{
+		InputMask |= INPUT_MASK_TAB;
+		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->GetStateMachine()->ProcessInput(INPUT_MASK_TAB, ElapsedTime);
+	}
+
+	if (GetAsyncKeyState(VK_RBUTTON) & 0x8000)
+	{
+		InputMask |= INPUT_MASK_RMB;
+		m_RayCasting = true;
+	}
+
+	if (GetAsyncKeyState(VK_LBUTTON) & 0x0001)
+	{
+		InputMask |= INPUT_MASK_LMB;
+
+		if (m_RayCasting)
+		{
+			m_NearestHitDistance = FLT_MAX;
+			float HitDistance{};
+
+			for (UINT i = OBJECT_TYPE_PLAYER; i <= OBJECT_TYPE_STRUCTURE; ++i)
+			{
+				for (const auto& GameObject : m_GameObjects[i])
+				{
+					if (GameObject)
+					{
+						// 모델을 공유하기 때문에, 월드 변환 행렬을 객체마다 갱신시켜주어야 한다.
+						CAnimationController* AnimationController{ GameObject->GetAnimationController() };
+
+						if (AnimationController)
+						{
+							AnimationController->UpdateShaderVariables();
+						}
+
+						shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(Player->GetCamera()->GetViewMatrix(), HitDistance) };
+
+						if (IntersectedObject)
+						{
+							tcout << TEXT("광선을 맞은 객체명 : ") << IntersectedObject->GetName() << TEXT(" (거리 : ") << HitDistance << TEXT(")") << endl;
+						}
+
+						if (IntersectedObject && (HitDistance < m_NearestHitDistance))
+						{
+							m_NearestIntersectedObject = IntersectedObject;
+							m_NearestHitDistance = HitDistance;
+						}
+					}
+				}
+			}
+
+			if (m_NearestIntersectedObject)
+			{
+				tcout << TEXT("가장 먼저 광선을 맞은 객체명 : ") << m_NearestIntersectedObject->GetName() << TEXT(" (거리 : ") << m_NearestHitDistance << TEXT(")") << endl;
+			}
+		}
+	}
+
 	Player->ProcessInput(InputMask, ElapsedTime, m_NavMesh);
 	(Player->GetCamera()->IsZoomIn()) ? m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->SetActive(true) : m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->SetActive(false);
 }
@@ -526,6 +602,21 @@ void CGameScene::Animate(float ElapsedTime)
 			if (BilboardObject)
 			{
 				BilboardObject->Animate(ElapsedTime);
+			}
+		}
+	}
+
+	for (const auto& EventTrigger : m_EventTriggers)
+	{
+		if (EventTrigger)
+		{
+			XMFLOAT3 Position{ m_GameObjects[OBJECT_TYPE_PLAYER].back()->GetPosition() };
+
+			if (EventTrigger->IsInTriggerArea(Position))
+			{
+				EventTrigger->GenerateEventTrigger(ElapsedTime);
+				tcout << TEXT("현재 플레이어가 트리거 영역안에 있습니다! (X: ") << Position.x << " Y: " << Position.y  << " Z: " << Position.z << ")" << endl;
+				break;
 			}
 		}
 	}
@@ -563,7 +654,7 @@ void CGameScene::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 			}
 		}
 	}
-
+	
 	for (UINT i = BILBOARD_OBJECT_TYPE_SKYBOX; i <= BILBOARD_OBJECT_TYPE_UI; ++i)
 	{
 		for (const auto& BilboardObject : m_BilboardObjects[i])
@@ -732,6 +823,40 @@ void CGameScene::LoadMaterialCachesFromFile(ID3D12Device* D3D12Device, ID3D12Gra
 			break;
 		}
 	}
+#endif
+}
+
+void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
+{
+	tstring Token{};
+
+#ifdef READ_BINARY_FILE
+	tifstream InFile{ FileName, ios::binary };
+
+	while (true)
+	{
+		File::ReadStringFromFile(InFile, Token);
+
+		if (Token == TEXT("<EventTriggers>"))
+		{
+			UINT TriggerCount{ File::ReadIntegerFromFile(InFile) };
+
+			m_EventTriggers.reserve(TriggerCount);
+		}
+		else if (Token == TEXT("<EventTrigger>"))
+		{
+			shared_ptr<CEventTrigger> EventTriger{ make_shared<CEventTrigger>() };
+
+			EventTriger->LoadEventTriggerFromFile(InFile);
+			m_EventTriggers.push_back(EventTriger);
+		}
+		else if (Token == TEXT("</EventTriggers>"))
+		{
+			break;
+		}
+	}
+#else
+	tifstream InFile{ FileName };
 #endif
 }
 

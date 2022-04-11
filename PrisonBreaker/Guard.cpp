@@ -31,76 +31,11 @@ void CGuard::Initialize()
 
 void CGuard::Animate(float ElapsedTime)
 {
-	if (m_StateMachine)
-	{
-		m_StateMachine->Update(ElapsedTime);
-	}
-}
-
-void CGuard::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType)
-{
 	if (IsActive())
 	{
-		if (m_AnimationController)
+		if (m_StateMachine)
 		{
-			m_AnimationController->UpdateShaderVariables(D3D12GraphicsCommandList);
-		}
-
-		if (IsVisible(Camera))
-		{
-			if (m_Mesh)
-			{
-				UpdateShaderVariables(D3D12GraphicsCommandList);
-
-				UINT MaterialCount{ static_cast<UINT>(m_Materials.size()) };
-
-				for (UINT i = 0; i < MaterialCount; ++i)
-				{
-					if (m_Materials[i])
-					{
-						m_Materials[i]->SetPipelineState(D3D12GraphicsCommandList, RenderType);
-						m_Materials[i]->UpdateShaderVariables(D3D12GraphicsCommandList);
-					}
-
-					m_Mesh->Render(D3D12GraphicsCommandList, i);
-				}
-			}
-		}
-
-		for (const auto& ChildObject : m_ChildObjects)
-		{
-			if (ChildObject)
-			{
-				ChildObject->Render(D3D12GraphicsCommandList, Camera, RenderType);
-			}
-		}
-	}
-}
-
-void CGuard::RenderBoundingBox(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera)
-{
-	if (IsActive())
-	{
-		if (m_AnimationController)
-		{
-			m_AnimationController->UpdateShaderVariables(D3D12GraphicsCommandList);
-		}
-
-		if (IsVisible(Camera))
-		{
-			if (m_Mesh)
-			{
-				UpdateShaderVariables(D3D12GraphicsCommandList);
-				m_Mesh->RenderBoundingBox(D3D12GraphicsCommandList);
-			}
-		}
-
-		for (const auto& ChildObject : m_ChildObjects)
-		{
-			if (ChildObject)
-			{
-				ChildObject->RenderBoundingBox(D3D12GraphicsCommandList, Camera);
-			}
+			m_StateMachine->Update(ElapsedTime);
 		}
 	}
 }
@@ -115,6 +50,16 @@ UINT CGuard::GetHealth() const
 	return m_Health;
 }
 
+void CGuard::SetSpeed(float Speed)
+{
+	m_Speed = Speed;
+}
+
+float CGuard::GetSpeed() const
+{
+	return m_Speed;
+}
+
 CCamera* CGuard::GetCamera() const
 {
 	return m_Camera.get();
@@ -123,37 +68,6 @@ CCamera* CGuard::GetCamera() const
 CStateMachine<CGuard>* CGuard::GetStateMachine() const
 {
 	return m_StateMachine.get();
-}
-
-void CGuard::SetAnimationController(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const shared_ptr<LOADED_MODEL_INFO>& ModelInfo)
-{
-	if (ModelInfo)
-	{
-		m_AnimationController = make_shared<CAnimationController>(D3D12Device, D3D12GraphicsCommandList, ModelInfo, shared_from_this());
-	}
-}
-
-CAnimationController* CGuard::GetAnimationController() const
-{
-	return m_AnimationController.get();
-}
-
-void CGuard::SetAnimationClip(UINT ClipNum)
-{
-	if (m_AnimationController)
-	{
-		m_AnimationController->SetAnimationClip(ClipNum);
-	}
-}
-
-UINT CGuard::GetAnimationClip() const
-{
-	if (m_AnimationController)
-	{
-		return m_AnimationController->GetAnimationClip();
-	}
-
-	return 0;
 }
 
 void CGuard::FindPath(const shared_ptr<CNavMesh>& NavMesh, const XMFLOAT3& TargetPosition)

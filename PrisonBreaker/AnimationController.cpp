@@ -176,7 +176,7 @@ UINT CAnimationController::GetKeyFrameIndex() const
 	return m_KeyFrameIndex;
 }
 
-void CAnimationController::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
+void CAnimationController::UpdateShaderVariables()
 {
 	UINT SkinnedMeshCount{ static_cast<UINT>(m_SkinnedMeshCaches.size()) };
 

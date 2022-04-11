@@ -88,6 +88,12 @@
     <Filter Include="헤더 파일\Navigation">
       <UniqueIdentifier>{a8195f52-9976-4368-a2dd-54cea02a7587}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\Event">
+      <UniqueIdentifier>{e497fe1a-23bc-4897-8e89-47317c9d37fa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Event">
+      <UniqueIdentifier>{c2c38898-6902-4ad4-80f9-2edadc1a04d5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -192,6 +198,12 @@
     <ClCompile Include="NavNode.cpp">
       <Filter>소스 파일\Navigation</Filter>
     </ClCompile>
+    <ClCompile Include="EventTrigger.cpp">
+      <Filter>소스 파일\Event</Filter>
+    </ClCompile>
+    <ClCompile Include="EventTriggers.cpp">
+      <Filter>소스 파일\Event</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -295,6 +307,12 @@
     </ClInclude>
     <ClInclude Include="NavNode.h">
       <Filter>헤더 파일\Navigation</Filter>
+    </ClInclude>
+    <ClInclude Include="EventTrigger.h">
+      <Filter>헤더 파일\Event</Filter>
+    </ClInclude>
+    <ClInclude Include="EventTriggers.h">
+      <Filter>헤더 파일\Event</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

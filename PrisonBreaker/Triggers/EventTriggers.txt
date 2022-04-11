@@ -1,0 +1,17 @@
+<EventTriggers> 5
+		<EventTrigger>
+			<TriggerArea> 79.37 84.37 -163.92 -162.32
+		</EventTrigger>
+		<EventTrigger>
+			<TriggerArea> 0.8300002 3.83 -4.61 -3.41
+		</EventTrigger>
+		<EventTrigger>
+			<TriggerArea> 140.9436 145.9436 34.12017 36.72017
+		</EventTrigger>
+		<EventTrigger>
+			<TriggerArea> 184.73 192.73 17.88 21.88
+		</EventTrigger>
+		<EventTrigger>
+			<TriggerArea> 147.66 152.66 197.063 198.663
+		</EventTrigger>
+</EventTriggers>

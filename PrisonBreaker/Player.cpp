@@ -7,7 +7,7 @@ CPlayer::CPlayer(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12Grap
 	// 카메라 객체를 생성한다.
 	m_Camera = make_shared<CCamera>();
 	m_Camera->CreateShaderVariables(D3D12Device, D3D12GraphicsCommandList);
-	m_Camera->GeneratePerspectiveProjectionMatrix(60.0f, static_cast<float>(CLIENT_WIDTH) / static_cast<float>(CLIENT_HEIGHT), 1.0f, 200.0f);
+	m_Camera->GeneratePerspectiveProjectionMatrix(90.0f, static_cast<float>(CLIENT_WIDTH) / static_cast<float>(CLIENT_HEIGHT), 1.0f, 200.0f);
 	m_Camera->GenerateViewMatrix(XMFLOAT3(0.0f, 5.0f, -150.0f), XMFLOAT3(0.0f, 0.0f, 1.0f));
 }
 
@@ -31,74 +31,6 @@ void CPlayer::Animate(float ElapsedTime)
 	}
 }
 
-void CPlayer::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType)
-{
-	if (IsActive())
-	{
-		if (m_AnimationController)
-		{
-			m_AnimationController->UpdateShaderVariables(D3D12GraphicsCommandList);
-		}
-
-		if (IsVisible(Camera))
-		{
-			if (m_Mesh)
-			{
-				UpdateShaderVariables(D3D12GraphicsCommandList);
-
-				UINT MaterialCount{ static_cast<UINT>(m_Materials.size()) };
-
-				for (UINT i = 0; i < MaterialCount; ++i)
-				{
-					if (m_Materials[i])
-					{
-						m_Materials[i]->SetPipelineState(D3D12GraphicsCommandList, RenderType);
-						m_Materials[i]->UpdateShaderVariables(D3D12GraphicsCommandList);
-					}
-
-					m_Mesh->Render(D3D12GraphicsCommandList, i);
-				}
-			}
-		}
-
-		for (const auto& ChildObject : m_ChildObjects)
-		{
-			if (ChildObject)
-			{
-				ChildObject->Render(D3D12GraphicsCommandList, Camera, RenderType);
-			}
-		}
-	}
-}
-
-void CPlayer::RenderBoundingBox(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera)
-{
-	if (IsActive())
-	{
-		if (m_AnimationController)
-		{
-			m_AnimationController->UpdateShaderVariables(D3D12GraphicsCommandList);
-		}
-
-		if (IsVisible(Camera))
-		{
-			if (m_Mesh)
-			{
-				UpdateShaderVariables(D3D12GraphicsCommandList);
-				m_Mesh->RenderBoundingBox(D3D12GraphicsCommandList);
-			}
-		}
-
-		for (const auto& ChildObject : m_ChildObjects)
-		{
-			if (ChildObject)
-			{
-				ChildObject->RenderBoundingBox(D3D12GraphicsCommandList, Camera);
-			}
-		}
-	}
-}
-
 void CPlayer::SetHealth(UINT Health)
 {
 	m_Health = Health;
@@ -107,6 +39,16 @@ void CPlayer::SetHealth(UINT Health)
 UINT CPlayer::GetHealth() const
 {
 	return m_Health;
+}
+
+void CPlayer::SetSpeed(float Speed)
+{
+	m_Speed = Speed;
+}
+
+float CPlayer::GetSpeed() const
+{
+	return m_Speed;
 }
 
 void CPlayer::SetMovingDirection(const XMFLOAT3& MovingDirection)
@@ -127,37 +69,6 @@ CCamera* CPlayer::GetCamera() const
 CStateMachine<CPlayer>* CPlayer::GetStateMachine() const
 {
 	return m_StateMachine.get();
-}
-
-void CPlayer::SetAnimationController(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const shared_ptr<LOADED_MODEL_INFO>& ModelInfo)
-{
-	if (ModelInfo)
-	{
-		m_AnimationController = make_shared<CAnimationController>(D3D12Device, D3D12GraphicsCommandList, ModelInfo, shared_from_this());
-	}
-}
-
-CAnimationController* CPlayer::GetAnimationController() const
-{
-	return m_AnimationController.get();
-}
-
-void CPlayer::SetAnimationClip(UINT ClipNum)
-{
-	if (m_AnimationController)
-	{
-		m_AnimationController->SetAnimationClip(ClipNum);
-	}
-}
-
-UINT CPlayer::GetAnimationClip() const
-{
-	if (m_AnimationController)
-	{
-		return m_AnimationController->GetAnimationClip();
-	}
-
-	return 0;
 }
 
 void CPlayer::AcquirePistol()

@@ -25,11 +25,7 @@ private:
 	XMFLOAT3	           m_Look{ 0.0f, 0.0f, 1.0f };
 	XMFLOAT3	           m_Position{};
 				              
-	float		           m_Pitch{};
-	float		           m_Roll{};
-	float		           m_Yaw{};
-				           
-	XMFLOAT3	           m_Offset{ 0.0f, 0.0, -5.5f };
+	XMFLOAT3	           m_Offset{ 0.0f, 0.0, -3.0f };
 	float		           m_TimeLag{ 0.05f };
 						   
 	BoundingFrustum        m_BoundingFrustum{};
