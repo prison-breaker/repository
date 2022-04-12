@@ -1,40 +1,19 @@
 <Hierarchy>
 	<Frame> gate_1
 		<TransformMatrix> 4.5 0 0 0 0 3.5 0 0 0 0 4.5 0 0 0 0 1 
-		<ChildCount> 7
-			<Frame> gate_1_1
+		<ChildCount> 4
+			<Frame> gate_1_1_t
 				<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0.3679321 -0.2827094 0.9712619 1 
 				<Mesh> gate_1_1
 				<Materials> 2
 					<Material> metal wire_2 
 				<ChildCount> 0
 			</Frame>
-			<Frame> gate_1_2
+			<Frame> gate_1_2_t
 				<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 -3.708318 -0.1873063 0.9712619 1 
 				<Mesh> gate_1_2
 				<Materials> 2
 					<Material> metal wire_2 
-				<ChildCount> 0
-			</Frame>
-			<Frame> gate_1_wire_1
-				<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 -0.8923428 0 1 
-				<Mesh> gate_1_wire_1
-				<Materials> 1
-					<Material> wire_1 
-				<ChildCount> 0
-			</Frame>
-			<Frame> gate_1_wire_2
-				<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 -2.01956 -0.8923428 0 1 
-				<Mesh> gate_1_wire_2
-				<Materials> 1
-					<Material> wire_1 
-				<ChildCount> 0
-			</Frame>
-			<Frame> lock
-				<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 -1.531231 0.3766128 1.04625 1 
-				<Mesh> lock
-				<Materials> 1
-					<Material> metal 
 				<ChildCount> 0
 			</Frame>
 			<Frame> gate_column

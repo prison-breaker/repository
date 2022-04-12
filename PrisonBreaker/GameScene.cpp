@@ -88,7 +88,6 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 #ifdef READ_BINARY_FILE
 	LoadMeshCachesFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("MeshesAndMaterials/Meshes.bin"), MeshCaches);
 	LoadMaterialCachesFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("MeshesAndMaterials/Materials.bin"), MaterialCaches);
-	LoadEventTriggerFromFile(TEXT("Triggers/EventTriggers.bin"));
 
 	tifstream InFile{ FileName, ios::binary };
 
@@ -282,6 +281,8 @@ void CGameScene::LoadUIInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCom
 		}
 	}
 #endif
+
+	LoadEventTriggerFromFile(TEXT("Triggers/EventTriggers.bin"));
 }
 
 void CGameScene::CreateRootSignature(ID3D12Device* D3D12Device)
@@ -514,6 +515,24 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 		InputMask |= INPUT_MASK_D;
 	}
 
+	if (GetAsyncKeyState('F') & 0x0001)
+	{
+		XMFLOAT3 Position{ Player->GetPosition() };
+		XMFLOAT3 LookDirection{ Player->GetLook() };
+
+		for (const auto& EventTrigger : m_EventTriggers)
+		{
+			if (EventTrigger)
+			{
+				if (EventTrigger->IsInTriggerArea(Position, LookDirection))
+				{
+					EventTrigger->SetActive(true);
+					break;
+				}
+			}
+		}
+	}
+
 	if (GetAsyncKeyState(VK_SHIFT) & 0x8000)
 	{
 		InputMask |= INPUT_MASK_SHIFT;
@@ -611,12 +630,18 @@ void CGameScene::Animate(float ElapsedTime)
 		if (EventTrigger)
 		{
 			XMFLOAT3 Position{ m_GameObjects[OBJECT_TYPE_PLAYER].back()->GetPosition() };
+			XMFLOAT3 LookDirection{ m_GameObjects[OBJECT_TYPE_PLAYER].back()->GetLook() };
 
-			if (EventTrigger->IsInTriggerArea(Position))
+			for (const auto& EventTrigger : m_EventTriggers)
 			{
-				EventTrigger->GenerateEventTrigger(ElapsedTime);
-				tcout << TEXT("현재 플레이어가 트리거 영역안에 있습니다! (X: ") << Position.x << " Y: " << Position.y  << " Z: " << Position.z << ")" << endl;
-				break;
+				if (EventTrigger)
+				{
+					if (EventTrigger->IsInTriggerArea(Position, LookDirection))
+					{
+						EventTrigger->GenerateEventTrigger(ElapsedTime);
+						break;
+					}
+				}
 			}
 		}
 	}
@@ -845,10 +870,53 @@ void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
 		}
 		else if (Token == TEXT("<EventTrigger>"))
 		{
-			shared_ptr<CEventTrigger> EventTriger{ make_shared<CEventTrigger>() };
+			// <Type>
+			File::ReadStringFromFile(InFile, Token);
 
-			EventTriger->LoadEventTriggerFromFile(InFile);
-			m_EventTriggers.push_back(EventTriger);
+			UINT TriggerType{File::ReadIntegerFromFile(InFile)};
+			shared_ptr<CEventTrigger> EventTrigger{};
+
+			switch (TriggerType)
+			{
+			case 0:
+				EventTrigger = make_shared<COpenDoorEventTrigger>();
+				break;
+			case 1:
+				EventTrigger = make_shared<CPowerDownEventTrigger>();
+				break;
+			case 2:
+				EventTrigger = make_shared<CSirenEventTrigger>();
+				break;
+			case 3:
+				EventTrigger = make_shared<COpenGateEventTrigger>();
+				break;
+			}
+
+			EventTrigger->LoadEventTriggerFromFile(InFile);
+
+			// <TargetRootIndex>
+			File::ReadStringFromFile(InFile, Token);
+
+			UINT TargetRootIndex{ File::ReadIntegerFromFile(InFile) };
+
+			// <TargetObject>
+			File::ReadStringFromFile(InFile, Token);
+
+			UINT TargetObjectCount{ File::ReadIntegerFromFile(InFile) };
+			
+			if (TargetObjectCount > 0)
+			{
+				for (UINT i = 0; i < TargetObjectCount; ++i)
+				{
+					File::ReadStringFromFile(InFile, Token);
+
+					shared_ptr<CGameObject> TargetObject{ m_GameObjects[OBJECT_TYPE_STRUCTURE][TargetRootIndex]->FindFrame(Token) };
+
+					EventTrigger->InsertEventObject(TargetObject);
+				}
+			}
+
+			m_EventTriggers.push_back(EventTrigger);
 		}
 		else if (Token == TEXT("</EventTriggers>"))
 		{
@@ -858,6 +926,16 @@ void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
 #else
 	tifstream InFile{ FileName };
 #endif
+
+	UINT TriggerCount{ static_cast<UINT>(m_EventTriggers.size()) };
+
+	for (const auto& EventTrigger : m_EventTriggers)
+	{
+		if (EventTrigger)
+		{
+			EventTrigger->SetInteractionUI(m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI].back());
+		}
+	}
 }
 
 void CGameScene::BuildLights()

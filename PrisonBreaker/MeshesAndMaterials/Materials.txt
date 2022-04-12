@@ -1,4 +1,4 @@
-<Materials> 56
+<Materials> 55
 	<Material> gun_pr_1
 		<StateNum> 0
 		<TextureScale> 1 1
@@ -231,13 +231,6 @@
 		<AlbedoColor> 0.8 0.8 0.8 1
 		<AlbedoMap> Textures/wire_2_Diffuse.dds
 		<NormalMap> Textures/wire_2_Normal.dds
-	</Material>
-	<Material> wire_1
-		<StateNum> 0
-		<TextureScale> 1 1
-		<AlbedoColor> 0.8 0.8 0.8 1
-		<AlbedoMap> Textures/wire_1_Diffuse.dds
-		<NormalMap> Textures/wire_1_Normal.dds
 	</Material>
 	<Material> ground
 		<StateNum> 0

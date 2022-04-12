@@ -83,9 +83,9 @@ cbuffer CB_FOG : register(b3)
 
 cbuffer CB_OBJECT : register(b4)
 {
-	matrix WorldMatrix : packoffset(c0);
+	matrix   WorldMatrix : packoffset(c0);
 
-	MATERIAL Material  : packoffset(c4);
+	MATERIAL Material    : packoffset(c4);
 };
 
 cbuffer CB_BONE_OFFSET : register(b5)
@@ -98,12 +98,12 @@ cbuffer CB_BONE_TRANSFORM : register(b6)
 	matrix BoneTransformMatrix[MAX_BONES];
 }
 
-Texture2D AlbedoMapTexture		  : register(t0);
-Texture2D MetallicMapTexture	  : register(t1);
-Texture2D NormalMapTexture		  : register(t2);
-Texture2D<float> ShadowMapTexture : register(t3);
+Texture2D        AlbedoMapTexture   : register(t0);
+Texture2D        MetallicMapTexture	: register(t1);
+Texture2D        NormalMapTexture   : register(t2);
+Texture2D<float> ShadowMapTexture   : register(t3);
 
-SamplerState Sampler                    : register(s0);
+SamplerState           Sampler          : register(s0);
 SamplerComparisonState PCFShadowSampler : register(s1);
 
 // ====================================== SHADOW FUNCTION ======================================
@@ -111,6 +111,7 @@ SamplerComparisonState PCFShadowSampler : register(s1);
 float Get3x3ShadowFactor(float2 ShadowTexCoord, float Depth)
 {
 	float Percent = ShadowMapTexture.SampleCmpLevelZero(PCFShadowSampler, ShadowTexCoord, Depth).r;
+
 	Percent += ShadowMapTexture.SampleCmpLevelZero(PCFShadowSampler, ShadowTexCoord + float2(-DELTA_X, 0.0f), Depth).r;
 	Percent += ShadowMapTexture.SampleCmpLevelZero(PCFShadowSampler, ShadowTexCoord + float2(+DELTA_X, 0.0f), Depth).r;
 	Percent += ShadowMapTexture.SampleCmpLevelZero(PCFShadowSampler, ShadowTexCoord + float2(0.0f, -DELTA_Y), Depth).r;
@@ -285,7 +286,7 @@ struct VS_INPUT_SKINNING
 	float3 m_Tangent     : TANGENT;
 	float3 m_BiTangent   : BITANGENT;
 	float2 m_TexCoord    : TEXCOORD;
-	uint4 m_BoneIndices  : BONEINDEX;
+	uint4  m_BoneIndices : BONEINDEX;
 	float4 m_BoneWeights : BONEWEIGHT;
 };
 
@@ -405,16 +406,16 @@ struct VS_INPUT_IMAGE
 {
 	float3 m_PositionS : POSITION;
 	float2 m_SizeS     : SIZE;
-	uint2 m_CellCount  : CELLCOUNT;
-	uint m_CellIndex   : CELLINDEX;
+	uint2  m_CellCount : CELLCOUNT;
+	uint   m_CellIndex : CELLINDEX;
 };
 
 struct VS_OUTPUT_IMAGE
 {
-	float3 m_CenterS  : POSITION;
-	float2 m_SizeS    : SIZE;
-	uint2 m_CellCount : CELLCOUNT;
-	uint m_CellIndex  : CELLINDEX;
+	float3 m_CenterS   : POSITION;
+	float2 m_SizeS     : SIZE;
+	uint2  m_CellCount : CELLCOUNT;
+	uint   m_CellIndex : CELLINDEX;
 };
 
 struct GS_OUTPUT_IMAGE

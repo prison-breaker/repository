@@ -39,7 +39,7 @@
 									<Material> doors_frame_1 
 								<ChildCount> 0
 							</Frame>
-							<Frame> doors_3_1
+							<Frame> doors_3_1_t
 								<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 -0.7906814 0.2639076 -0.04861931 1 
 								<Mesh> doors_3_1
 								<Materials> 2
@@ -53,7 +53,7 @@
 										<ChildCount> 0
 									</Frame>
 							</Frame>
-							<Frame> doors_3_3
+							<Frame> doors_3_3_t
 								<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0.7906806 0.2036194 -0.04861932 1 
 								<Mesh> doors_3_3
 								<Materials> 2

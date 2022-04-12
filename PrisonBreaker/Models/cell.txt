@@ -172,8 +172,8 @@
 									<Material> doors_frame_1 
 								<ChildCount> 0
 							</Frame>
-							<Frame> doors_3_1
-								<TransformMatrix> 1 0 0 0 0 1.05476 0 0 0 0 1 0 -0.7906814 0.22358 -0.04861931 1 
+							<Frame> doors_3_1_t
+								<TransformMatrix> -1 0 0 0 0 1.05476 0 0 0 0 -1 0 0.7906814 0.22358 -0.04861931 1 
 								<Mesh> doors_3_1
 								<Materials> 2
 									<Material> doors door_glass 
@@ -186,8 +186,8 @@
 										<ChildCount> 0
 									</Frame>
 							</Frame>
-							<Frame> doors_3_3
-								<TransformMatrix> 1 0 0 0 0 1.05476 0 0 0 0 1 0 0.7906806 0.16 -0.04861932 1 
+							<Frame> doors_3_3_t
+								<TransformMatrix> -1 0 0 0 0 1.05476 0 0 0 0 -1 0 -0.7906806 0.16 -0.04861932 1 
 								<Mesh> doors_3_3
 								<Materials> 2
 									<Material> doors door_glass 

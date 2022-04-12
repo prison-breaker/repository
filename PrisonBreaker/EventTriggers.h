@@ -4,7 +4,7 @@
 class COpenDoorEventTrigger : public CEventTrigger
 {
 private:
-	float m_MaxRotationAngle{};
+	float m_DoorAngle{};
 
 public:
 	COpenDoorEventTrigger() = default;
@@ -17,6 +17,9 @@ public:
 
 class CPowerDownEventTrigger : public CEventTrigger
 {
+private:
+	float m_PanelAngle{};
+
 public:
 	CPowerDownEventTrigger() = default;
 	virtual ~CPowerDownEventTrigger() = default;
@@ -31,6 +34,20 @@ class CSirenEventTrigger : public CEventTrigger
 public:
 	CSirenEventTrigger() = default;
 	virtual ~CSirenEventTrigger() = default;
+
+	virtual void GenerateEventTrigger(float ElapsedTime);
+};
+
+//=========================================================================================================================
+
+class COpenGateEventTrigger : public CEventTrigger
+{
+private:
+	float m_DoorAngle{};
+
+public:
+	COpenGateEventTrigger() = default;
+	virtual ~COpenGateEventTrigger() = default;
 
 	virtual void GenerateEventTrigger(float ElapsedTime);
 };
