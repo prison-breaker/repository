@@ -1,5 +1,6 @@
 #pragma once
 #include "GameObject.h"
+#include "State_Guard.h"
 
 class CGuard : public CGameObject
 {
@@ -7,12 +8,14 @@ private:
 	UINT							  m_Health{};
 
 	float							  m_Speed{};
-
-	shared_ptr<CCamera>               m_Camera{};
+	XMFLOAT3						  m_MovingDirection{};
 
 	shared_ptr<CStateMachine<CGuard>> m_StateMachine{};
 
+	XMFLOAT3					      m_TargetPosition{};
 	vector<XMFLOAT3>                  m_NavPath{};
+	vector<XMFLOAT3>				  m_PatrolNavPath{};
+	UINT							  m_PatrolIndex{};
 
 public:
 	CGuard() = default;
@@ -28,10 +31,19 @@ public:
 	void SetSpeed(float Speed);
 	float GetSpeed() const;
 
-	CCamera* GetCamera() const;
+	void SetMovingDirection(const XMFLOAT3& MovingDirection);
+	const XMFLOAT3& GetMovingDirection() const;
 
 	CStateMachine<CGuard>* GetStateMachine() const;
 
+	void SetTargetPosition(const XMFLOAT3& TargetPosition);
+	const XMFLOAT3& GetTargetPosition() const;
+
+	bool IsFoundPlayer(const XMFLOAT3& Position);
+
 	void FindPath(const shared_ptr<CNavMesh>& NavMesh, const XMFLOAT3& TargetPosition);
+	void FindPatrolNavPath(const shared_ptr<CNavMesh>& NavMesh);
+
 	void MoveToNavPath(float ElapsedTime);
+	void Patrol(float ElapsedTime);
 };

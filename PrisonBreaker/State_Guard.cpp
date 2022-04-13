@@ -22,7 +22,6 @@ void CGuardIdleState::ProcessInput(const shared_ptr<CGuard>& Entity, UINT InputM
 void CGuardIdleState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTime)
 {
 	Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
-	Entity->MoveToNavPath(ElapsedTime);
 }
 
 void CGuardIdleState::Exit(const shared_ptr<CGuard>& Entity)
@@ -42,6 +41,7 @@ CGuardPatrolState* CGuardPatrolState::GetInstance()
 void CGuardPatrolState::Enter(const shared_ptr<CGuard>& Entity)
 {
 	Entity->SetAnimationClip(1);
+	Entity->SetSpeed(5.0f);
 }
 
 void CGuardPatrolState::ProcessInput(const shared_ptr<CGuard>& Entity, UINT InputMask, float ElapsedTime)
@@ -52,7 +52,7 @@ void CGuardPatrolState::ProcessInput(const shared_ptr<CGuard>& Entity, UINT Inpu
 void CGuardPatrolState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTime)
 {
 	Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
-	Entity->MoveToNavPath(ElapsedTime);
+	//Entity->Patrol(ElapsedTime);
 }
 
 void CGuardPatrolState::Exit(const shared_ptr<CGuard>& Entity)
@@ -72,6 +72,7 @@ CGuardChaseState* CGuardChaseState::GetInstance()
 void CGuardChaseState::Enter(const shared_ptr<CGuard>& Entity)
 {
 	Entity->SetAnimationClip(2);
+	Entity->SetSpeed(13.0f);
 }
 
 void CGuardChaseState::ProcessInput(const shared_ptr<CGuard>& Entity, UINT InputMask, float ElapsedTime)
@@ -142,7 +143,6 @@ void CGuardDyingState::ProcessInput(const shared_ptr<CGuard>& Entity, UINT Input
 void CGuardDyingState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTime)
 {
 	Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
-	Entity->MoveToNavPath(ElapsedTime);
 }
 
 void CGuardDyingState::Exit(const shared_ptr<CGuard>& Entity)

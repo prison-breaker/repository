@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "Player.h"
-#include "State_Player.h"
 
 CPlayer::CPlayer(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
@@ -18,6 +17,8 @@ void CPlayer::Initialize()
 	// 상태머신 객체를 생성한다.
 	m_StateMachine = make_shared<CStateMachine<CPlayer>>(static_pointer_cast<CPlayer>(shared_from_this()));
 	m_StateMachine->SetCurrentState(CPlayerIdleState::GetInstance());
+
+	FindFrame(TEXT("gun_pr_1"))->SetActive(false);
 }
 
 void CPlayer::Animate(float ElapsedTime)

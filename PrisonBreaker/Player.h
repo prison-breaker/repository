@@ -1,5 +1,6 @@
 #pragma once
 #include "GameObject.h"
+#include "State_Player.h"
 
 class CPlayer : public CGameObject
 {

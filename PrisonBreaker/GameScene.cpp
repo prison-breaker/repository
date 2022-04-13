@@ -118,25 +118,34 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 				// 플레이어 객체를 생성한다.
 				shared_ptr<CPlayer> Player{ make_shared<CPlayer>(D3D12Device, D3D12GraphicsCommandList) };
 
-				Player->Initialize();
 				Player->SetChild(ModelInfo->m_Model);
 				Player->SetTransformMatrix(TransformMatrix);
 				Player->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
-				Player->FindFrame(TEXT("gun_pr_1"))->SetActive(false);
+				Player->Initialize();
 
 				m_GameObjects[ObjectType].push_back(Player);
 			}
 				break;
 			case OBJECT_TYPE_NPC:
 			{
+				XMFLOAT3 TargetPosition{};
+
+				// <TargetPosition>
+				File::ReadStringFromFile(InFile, Token);
+				InFile.read(reinterpret_cast<TCHAR*>(&TargetPosition), sizeof(XMFLOAT3));
+
+				tcout << TargetPosition.x << ", " << TargetPosition.y << ", " << TargetPosition.z << endl;
+
 				// 교도관 객체를 생성한다.
 				shared_ptr<CGuard> Guard{ make_shared<CGuard>() };
 
-				Guard->Initialize();
 				Guard->SetChild(ModelInfo->m_Model);
 				Guard->SetTransformMatrix(TransformMatrix);
+				Guard->UpdateTransform(Matrix4x4::Identity());
 				Guard->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
-				Guard->SetAnimationClip(static_cast<UINT>(rand() % 4));
+				Guard->SetTargetPosition(TargetPosition);
+				//Guard->FindPatrolNavPath(m_NavMesh);
+				Guard->Initialize();
 
 				m_GameObjects[ObjectType].push_back(Guard);
 			}
@@ -147,9 +156,9 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 				// 지형 및 구조물 객체를 생성한다.
 				shared_ptr<CGameObject> Architecture{ make_shared<CGameObject>() };
 
-				Architecture->Initialize();
 				Architecture->SetChild(ModelInfo->m_Model);
 				Architecture->SetTransformMatrix(TransformMatrix);
+				Architecture->Initialize();
 
 				m_GameObjects[ObjectType].push_back(Architecture);
 			}
@@ -434,7 +443,6 @@ void CGameScene::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, 
 		break;
 	case 'q': // 플레이어를 감옥 밖으로 이동시키고 'e'키를 통해 길찾기를 하는 NPC를 운동장 근처로 소환
 	case 'Q':
-		m_GameObjects[OBJECT_TYPE_NPC][11]->SetPosition(m_NavMesh->GetNavNodes()[522]->GetTriangle().m_Centroid);
 		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetPosition(m_NavMesh->GetNavNodes()[500]->GetTriangle().m_Centroid);
 		break;
 	}
@@ -603,6 +611,25 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 
 void CGameScene::Animate(float ElapsedTime)
 {
+	for (const auto& GameObject : m_GameObjects[OBJECT_TYPE_NPC])
+	{
+		shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(GameObject) };
+
+		if (Guard)
+		{
+			if (Guard->IsFoundPlayer(m_GameObjects[OBJECT_TYPE_PLAYER].back()->GetPosition()))
+			{
+				Guard->GetStateMachine()->ChangeState(CGuardChaseState::GetInstance());
+				Guard->FindPath(m_NavMesh, m_GameObjects[OBJECT_TYPE_PLAYER].back()->GetPosition());
+			}
+
+			//if (Guard->GetStateMachine()->IsInState(CGuardChaseState::GetInstance()))
+			//{
+			//	Guard->FindPath(m_NavMesh, m_GameObjects[OBJECT_TYPE_PLAYER].back()->GetPosition());
+			//}
+		}
+	}
+
 	for (UINT i = OBJECT_TYPE_PLAYER; i <= OBJECT_TYPE_STRUCTURE; ++i)
 	{
 		for (const auto& GameObject : m_GameObjects[i])

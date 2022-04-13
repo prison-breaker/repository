@@ -40,7 +40,7 @@ public:
 
 	void ChangeState(CState<EntityType>* NewState)
 	{
-		if (NewState && m_CurrentState != NewState)
+		if (NewState && (m_CurrentState != NewState))
 		{
 			m_CurrentState->Exit(m_Owner);
 			m_PreviousState = m_CurrentState;
