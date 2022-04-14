@@ -64,7 +64,7 @@ public:
 
 	void RenderBoundingBox(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 
-	bool CheckRayIntersection(const XMFLOAT3& RayOrigin, const XMFLOAT3& RayDirection, float& Distance);
+	bool CheckRayIntersection(const XMFLOAT3& RayOrigin, const XMFLOAT3& RayDirection, const XMMATRIX& WorldMatrix, float& HitDistance);
 };
 
 //=========================================================================================================================

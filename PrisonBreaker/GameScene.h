@@ -62,9 +62,6 @@ private:
 	CB_FOG*										m_MappedFog{};
 
 	bool										m_RayCasting{};
-	shared_ptr<CGameObject>						m_NearestIntersectedObject{};
-	float										m_NearestHitDistance{};
-
 	bool										m_RenderBoundingBox{};
 
 public:

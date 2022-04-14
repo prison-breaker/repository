@@ -362,104 +362,6 @@ void CGameObject::LoadAnimationInfoFromFile(tifstream& InFile, const shared_ptr<
 #endif
 }
 
-shared_ptr<CGameObject> CGameObject::FindFrame(const tstring& FrameName)
-{
-	shared_ptr<CGameObject> Object{};
-
-	if (m_FrameName == FrameName)
-	{
-		return shared_from_this();
-	}
-
-	for (const auto& ChildObject : m_ChildObjects)
-	{
-		if (ChildObject)
-		{
-			if (Object = ChildObject->FindFrame(FrameName))
-			{
-				return Object;
-			}
-		}
-	}
-
-	return Object;
-}
-
-shared_ptr<CSkinnedMesh> CGameObject::FindSkinnedMesh(const tstring& SkinnedMeshName)
-{
-	shared_ptr<CSkinnedMesh> SkinnedMesh{};
-
-	if (m_Mesh)
-	{
-		if (typeid(*m_Mesh) == typeid(CSkinnedMesh))
-		{
-			if (m_Mesh->GetName() == SkinnedMeshName)
-			{
-				return static_pointer_cast<CSkinnedMesh>(m_Mesh);
-			}
-		}
-	}
-
-	for (const auto& ChildObject : m_ChildObjects)
-	{
-		if (ChildObject)
-		{
-			if (SkinnedMesh = ChildObject->FindSkinnedMesh(SkinnedMeshName))
-			{
-				return SkinnedMesh;
-			}
-		}
-	}
-
-	return SkinnedMesh;
-}
-
-shared_ptr<CGameObject> CGameObject::PickObjectByRayIntersection(const XMFLOAT4X4& ViewMatrix, float& HitDistance)
-{
-	shared_ptr<CGameObject> NearestIntersectedObject{};
-
-	if (m_Mesh)
-	{
-		XMFLOAT4X4 WorldViewMatrix{ Matrix4x4::Multiply(m_WorldMatrix, ViewMatrix) };
-		XMFLOAT4X4 InverseWorldViewMatrix{ Matrix4x4::Inverse(WorldViewMatrix) };
-
-		// 카메라 좌표계의 원점을 모델 좌표계로 변환한다.
-		XMFLOAT3 RayOrigin{ Vector3::TransformCoord(XMFLOAT3(0.0f, 0.0f, 0.0f), InverseWorldViewMatrix) };
-		XMFLOAT3 RayDirection{ Vector3::TransformCoord(XMFLOAT3(0.0f, 0.0f, 1.0f), InverseWorldViewMatrix) };
-
-		RayDirection = Vector3::Normalize(Vector3::Subtract(RayDirection, RayOrigin));
-
-		// 모델 좌표계의 광선과 메쉬의 교차를 검사한다.
-		if (m_Mesh->CheckRayIntersection(RayOrigin, RayDirection, HitDistance))
-		{
-			return shared_from_this();
-		}
-	}
-
-	float NearestHitDistance{ FLT_MAX };
-
-	for (const auto& ChildObject : m_ChildObjects)
-	{
-		if (ChildObject)
-		{
-			shared_ptr<CGameObject> IntersectedObject = ChildObject->PickObjectByRayIntersection(ViewMatrix, HitDistance);
-
-			if (IntersectedObject && (HitDistance < NearestHitDistance))
-			{
-				NearestIntersectedObject = IntersectedObject;
-				NearestHitDistance = HitDistance;
-			}
-		}
-	}
-
-	if (NearestIntersectedObject)
-	{
-		HitDistance = NearestHitDistance;
-	}
-
-	return NearestIntersectedObject;
-}
-
 void CGameObject::Initialize()
 {
 	SetActive(true);
@@ -570,6 +472,100 @@ void CGameObject::RenderBoundingBox(ID3D12GraphicsCommandList* D3D12GraphicsComm
 			}
 		}
 	}
+}
+
+shared_ptr<CGameObject> CGameObject::FindFrame(const tstring& FrameName)
+{
+	shared_ptr<CGameObject> Object{};
+
+	if (m_FrameName == FrameName)
+	{
+		return shared_from_this();
+	}
+
+	for (const auto& ChildObject : m_ChildObjects)
+	{
+		if (ChildObject)
+		{
+			if (Object = ChildObject->FindFrame(FrameName))
+			{
+				return Object;
+			}
+		}
+	}
+
+	return Object;
+}
+
+shared_ptr<CSkinnedMesh> CGameObject::FindSkinnedMesh(const tstring& SkinnedMeshName)
+{
+	shared_ptr<CSkinnedMesh> SkinnedMesh{};
+
+	if (m_Mesh)
+	{
+		if (typeid(*m_Mesh) == typeid(CSkinnedMesh))
+		{
+			if (m_Mesh->GetName() == SkinnedMeshName)
+			{
+				return static_pointer_cast<CSkinnedMesh>(m_Mesh);
+			}
+		}
+	}
+
+	for (const auto& ChildObject : m_ChildObjects)
+	{
+		if (ChildObject)
+		{
+			if (SkinnedMesh = ChildObject->FindSkinnedMesh(SkinnedMeshName))
+			{
+				return SkinnedMesh;
+			}
+		}
+	}
+
+	return SkinnedMesh;
+}
+
+shared_ptr<CGameObject> CGameObject::PickObjectByRayIntersection(const XMFLOAT3& RayOrigin, const XMFLOAT3& RayDirection, float& HitDistance)
+{
+	shared_ptr<CGameObject> NearestIntersectedObject{};
+
+	if (m_Mesh)
+	{
+		bool IsIntersected{ m_BoundingBox->Intersects(XMLoadFloat3(&RayOrigin), XMLoadFloat3(&RayDirection), HitDistance) };
+
+		if (IsIntersected)
+		{
+			// 광선과 메쉬의 교차를 검사한다.
+			if (m_Mesh->CheckRayIntersection(RayOrigin, RayDirection, XMLoadFloat4x4(&m_WorldMatrix), HitDistance))
+			{
+				return shared_from_this();
+			}
+		}
+	}
+
+	float NearestHitDistance{ FLT_MAX };
+
+	for (const auto& ChildObject : m_ChildObjects)
+	{
+		if (ChildObject)
+		{
+			shared_ptr<CGameObject> IntersectedObject = ChildObject->PickObjectByRayIntersection(RayOrigin, RayDirection, HitDistance);
+
+			if (IntersectedObject && (HitDistance < NearestHitDistance))
+			{
+				NearestIntersectedObject = IntersectedObject;
+				NearestHitDistance = HitDistance;
+			}
+		}
+	}
+
+	if (NearestIntersectedObject)
+	{
+		HitDistance = NearestHitDistance;
+	}
+
+	return NearestIntersectedObject;
 }
 
 void CGameObject::SetActive(bool IsActive)

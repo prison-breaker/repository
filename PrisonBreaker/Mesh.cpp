@@ -523,38 +523,39 @@ void CMesh::RenderBoundingBox(ID3D12GraphicsCommandList* D3D12GraphicsCommandLis
 	D3D12GraphicsCommandList->DrawIndexedInstanced(static_cast<UINT>(m_Indices.back().size()), 1, 0, 0, 0);
 }
 
-bool CMesh::CheckRayIntersection(const XMFLOAT3& RayOrigin, const XMFLOAT3& RayDirection, float& Distance)
+bool CMesh::CheckRayIntersection(const XMFLOAT3& RayOrigin, const XMFLOAT3& RayDirection, const XMMATRIX& WorldMatrix, float& HitDistance)
 {
-	// 광선은 모델 좌표계로 표현된다.
-	// 모델 좌표계의 광선과 메쉬의 바운딩 박스(모델 좌표계)와의 교차를 검사한다.
-	bool IsIntersected{ m_BoundingBox.Intersects(XMLoadFloat3(&RayOrigin), XMLoadFloat3(&RayDirection), Distance) };
+	bool Intersected{};
 
-	// 모델 좌표계의 광선이 메쉬의 바운딩 박스와 교차하면 메쉬와의 교차를 검사한다.
-	if (IsIntersected)
+	// -1: BoundBox
+	UINT SubMeshCount{ static_cast<UINT>(m_Indices.size() - 1) };
+	float NearestHitDistance{ FLT_MAX };
+
+	for (UINT i = 0; i < SubMeshCount; ++i)
 	{
-		UINT SubMeshCount{ static_cast<UINT>(m_Indices.size()) };
+		UINT PrimitiveCount{ static_cast<UINT>(m_Indices[i].size() / 3) };
 
-		for (UINT i = 0; i < SubMeshCount; ++i)
+		for (UINT j = 0; j < PrimitiveCount; j += 3)
 		{
-			UINT PrimitiveCount{ static_cast<UINT>(m_Indices[i].size() / 3) };
+			XMVECTOR Vertex1{ XMVector3TransformCoord(XMLoadFloat3(&m_Positions[m_Indices[i][j]]), WorldMatrix) };
+			XMVECTOR Vertex2{ XMVector3TransformCoord(XMLoadFloat3(&m_Positions[m_Indices[i][j + 1]]), WorldMatrix) };
+			XMVECTOR Vertex3{ XMVector3TransformCoord(XMLoadFloat3(&m_Positions[m_Indices[i][j + 2]]), WorldMatrix) };
 
-			for (UINT j = 0; j < PrimitiveCount; j += 3)
+			// 메쉬의 모든 프리미티브(삼각형)들에 대하여 픽킹 광선과의 충돌을 검사한다.
+			if (TriangleTests::Intersects(XMLoadFloat3(&RayOrigin), XMLoadFloat3(&RayDirection), Vertex1, Vertex2, Vertex3, HitDistance))
 			{
-				XMVECTOR Vertex1{ XMLoadFloat3((XMFLOAT3*)&m_Positions[m_Indices[i][j]]) };
-				XMVECTOR Vertex2{ XMLoadFloat3((XMFLOAT3*)&m_Positions[m_Indices[i][j + 1]]) };
-				XMVECTOR Vertex3{ XMLoadFloat3((XMFLOAT3*)&m_Positions[m_Indices[i][j + 2]]) };
-
-				// 메쉬의 모든 프리미티브(삼각형)들에 대하여 픽킹 광선과의 충돌을 검사한다.
-				// 충돌하는 모든 삼각형을 찾아 광선의 시작점(실제로는 카메라 좌표계의 원점)에 가장 가까운 삼각형을 찾는다.
-				if (TriangleTests::Intersects(XMLoadFloat3(&RayOrigin), XMLoadFloat3(&RayDirection), Vertex1, Vertex2, Vertex3, Distance))
+				if (HitDistance < NearestHitDistance)
 				{
-					return true;
+					NearestHitDistance = HitDistance;
+					Intersected = true;
 				}
 			}
 		}
 	}
 
-	return false;
+	HitDistance = NearestHitDistance;
+
+	return Intersected;
 }
 
 //=========================================================================================================================

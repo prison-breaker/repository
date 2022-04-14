@@ -60,7 +60,7 @@ public:
 	shared_ptr<CGameObject> FindFrame(const tstring& FrameName);
 	shared_ptr<CSkinnedMesh> FindSkinnedMesh(const tstring& SkinnedMeshName);
 
-	shared_ptr<CGameObject> PickObjectByRayIntersection(const XMFLOAT4X4& ViewMatrix, float& HitDistance);
+	shared_ptr<CGameObject> PickObjectByRayIntersection(const XMFLOAT3& RayOrigin, const XMFLOAT3& RayDirection, float& HitDistance);
 
 	void SetActive(bool IsActive);
 	bool IsActive() const;

@@ -565,10 +565,11 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 
 		if (m_RayCasting)
 		{
-			m_NearestHitDistance = FLT_MAX;
+			shared_ptr<CGameObject> NearestIntersectedObject{};
+			float NearestHitDistance = FLT_MAX;
 			float HitDistance{};
 
-			for (UINT i = OBJECT_TYPE_PLAYER; i <= OBJECT_TYPE_STRUCTURE; ++i)
+			for (UINT i = OBJECT_TYPE_NPC; i <= OBJECT_TYPE_STRUCTURE; ++i)
 			{
 				for (const auto& GameObject : m_GameObjects[i])
 				{
@@ -582,25 +583,27 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 							AnimationController->UpdateShaderVariables();
 						}
 
-						shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(Player->GetCamera()->GetViewMatrix(), HitDistance) };
+						shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(Player->GetCamera()->GetPosition(),Player->GetCamera()->GetLook(), HitDistance) };
 
 						if (IntersectedObject)
 						{
 							tcout << TEXT("광선을 맞은 객체명 : ") << IntersectedObject->GetName() << TEXT(" (거리 : ") << HitDistance << TEXT(")") << endl;
+							tcout << TEXT("- 해당 객체의 위치 : ") << IntersectedObject->GetPosition().x << ", " << IntersectedObject->GetPosition().y << ", " << IntersectedObject->GetPosition().z << endl;
+							tcout << TEXT("- 해당 객체 중심까지의 거리 : ") << Vector3::Length(Vector3::Subtract(IntersectedObject->GetPosition(), Player->GetCamera()->GetPosition())) << endl;
 						}
 
-						if (IntersectedObject && (HitDistance < m_NearestHitDistance))
+						if (IntersectedObject && (HitDistance < NearestHitDistance))
 						{
-							m_NearestIntersectedObject = IntersectedObject;
-							m_NearestHitDistance = HitDistance;
+							NearestIntersectedObject = IntersectedObject;
+							NearestHitDistance = HitDistance;
 						}
 					}
 				}
 			}
 
-			if (m_NearestIntersectedObject)
+			if (NearestIntersectedObject)
 			{
-				tcout << TEXT("가장 먼저 광선을 맞은 객체명 : ") << m_NearestIntersectedObject->GetName() << TEXT(" (거리 : ") << m_NearestHitDistance << TEXT(")") << endl;
+				tcout << TEXT("★ 가장 먼저 광선을 맞은 객체명 : ") << NearestIntersectedObject->GetName() << TEXT(" (거리 : ") << NearestHitDistance << TEXT(")") << endl << endl;
 			}
 		}
 	}
