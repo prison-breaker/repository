@@ -439,7 +439,9 @@ void CGameScene::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, 
 		break;
 	case 'e': // 현재 플레이어가 있는 위치를 향해 길찾기 시작
 	case 'E':
-		static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][11])->FindPath(m_NavMesh, m_GameObjects[OBJECT_TYPE_PLAYER].back()->GetPosition());
+
+		static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][2])->GetStateMachine()->ChangeState(CGuardChaseState::GetInstance());
+		static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][2])->FindNavPath(m_NavMesh, m_GameObjects);
 		break;
 	case 'q': // 플레이어를 감옥 밖으로 이동시키고 'e'키를 통해 길찾기를 하는 NPC를 운동장 근처로 소환
 	case 'Q':
@@ -620,18 +622,21 @@ void CGameScene::Animate(float ElapsedTime)
 
 		if (Guard)
 		{
-			if (Guard->IsFoundPlayer(m_GameObjects[OBJECT_TYPE_PLAYER].back()->GetPosition()))
+			
+			/*if (Guard->IsFoundPlayer(m_GameObjects[OBJECT_TYPE_PLAYER].back()->GetPosition()))
 			{
-				Guard->GetStateMachine()->ChangeState(CGuardChaseState::GetInstance());
-				Guard->FindPath(m_NavMesh, m_GameObjects[OBJECT_TYPE_PLAYER].back()->GetPosition());
-			}
-
-			//if (Guard->GetStateMachine()->IsInState(CGuardChaseState::GetInstance()))
-			//{
-			//	Guard->FindPath(m_NavMesh, m_GameObjects[OBJECT_TYPE_PLAYER].back()->GetPosition());
-			//}
+				if (!Guard->check)
+				{
+					Guard->GetStateMachine()->ChangeState(CGuardChaseState::GetInstance());
+					Guard->FindPath(m_NavMesh, m_GameObjects);
+				}
+			}*/
 		}
 	}
+
+
+
+
 
 	for (UINT i = OBJECT_TYPE_PLAYER; i <= OBJECT_TYPE_STRUCTURE; ++i)
 	{

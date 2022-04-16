@@ -41,7 +41,9 @@ public:
 
 	bool IsFoundPlayer(const XMFLOAT3& Position);
 
-	void FindPath(const shared_ptr<CNavMesh>& NavMesh, const XMFLOAT3& TargetPosition);
+	void FindNavPath(const shared_ptr<CNavMesh>& NavMesh, const vector<vector<shared_ptr<CGameObject>>>& GameObjects);
+	void FindRayCastingNavPath(const vector<vector<shared_ptr<CGameObject>>>& GameObjects);
+
 	void FindPatrolNavPath(const shared_ptr<CNavMesh>& NavMesh);
 
 	void MoveToNavPath(float ElapsedTime);

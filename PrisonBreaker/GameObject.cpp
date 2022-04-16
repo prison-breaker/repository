@@ -537,7 +537,7 @@ shared_ptr<CGameObject> CGameObject::PickObjectByRayIntersection(const XMFLOAT3&
 		if (IsIntersected)
 		{
 			// 광선과 메쉬의 교차를 검사한다.
-			if (m_Mesh->CheckRayIntersection(RayOrigin, RayDirection, XMLoadFloat4x4(&m_WorldMatrix), HitDistance))
+			//if (m_Mesh->CheckRayIntersection(RayOrigin, RayDirection, XMLoadFloat4x4(&m_WorldMatrix), HitDistance))
 			{
 				return shared_from_this();
 			}
