@@ -8,6 +8,8 @@ void CNavMesh::LoadNavNodeFromFile(const tstring& FileName)
 
 	vector<XMFLOAT3> Vertices{};
 
+	tcout << FileName << TEXT(" 로드 시작...") << endl;
+
 	while (InFile >> Token)
 	{
 		shared_ptr<CNavNode> NewNavNode{ make_shared<CNavNode>() };
@@ -42,7 +44,7 @@ void CNavMesh::LoadNavNodeFromFile(const tstring& FileName)
 		}
 	}
 
-	tcout << TEXT("성공적으로 ") << m_NavNodes.size() << TEXT("개의 삼각형을 읽어 왔습니다!") << endl;
+	tcout << FileName << TEXT(" 로드 완료...(정점 수: ") << m_NavNodes.size() << ")" << endl << endl;
 }
 
 vector<shared_ptr<CNavNode>>& CNavMesh::GetNavNodes()

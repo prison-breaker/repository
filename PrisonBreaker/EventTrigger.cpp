@@ -19,6 +19,10 @@ void CEventTrigger::LoadEventTriggerFromFile(tifstream& InFile)
 		if (Token == TEXT("<TriggerArea>"))
 		{
 			InFile.read(reinterpret_cast<TCHAR*>(&m_TriggerArea), sizeof(XMFLOAT4));
+		}
+		else if (Token == TEXT("<ToTrigger>"))
+		{
+			InFile.read(reinterpret_cast<TCHAR*>(&m_ToTrigger), sizeof(XMFLOAT3));
 			break;
 		}
 	}
@@ -26,14 +30,14 @@ void CEventTrigger::LoadEventTriggerFromFile(tifstream& InFile)
 #endif
 }
 
-void CEventTrigger::SetActive(bool IsActive)
+void CEventTrigger::SetInteracted(bool IsInteracted)
 {
-	m_IsActive = IsActive;
+	m_IsInteracted = IsInteracted;
 }
 
-bool CEventTrigger::IsActive() const
+bool CEventTrigger::IsInteracted() const
 {
-	return m_IsActive;
+	return m_IsInteracted;
 }
 
 bool CEventTrigger::IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& LookDirection)
@@ -43,14 +47,24 @@ bool CEventTrigger::IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& Lo
 	float ZMin{ m_TriggerArea.z };
 	float ZMax{ m_TriggerArea.w };
 
-	if ((Position.x > XMin) && (Position.x < XMax) && (Position.z > ZMin) && (Position.z < ZMax))
+	if ((Position.x > XMin) && (Position.x < XMax) && (Position.z > ZMin) && (Position.z < ZMax) &&
+		Vector3::Angle(LookDirection, m_ToTrigger) >= 120.0f)
 	{
-		m_InteractionUI->SetActive(true);
+		if (!IsInteracted())
+		{
+			if (m_InteractionUI)
+			{
+				m_InteractionUI->SetActive(true);
+			}
+		}
 
 		return true;
 	}
-	
-	m_InteractionUI->SetActive(false);
+
+	if (m_InteractionUI)
+	{
+		m_InteractionUI->SetActive(false);
+	}
 
 	return false;
 }

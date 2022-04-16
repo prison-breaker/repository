@@ -2,30 +2,35 @@
 	<EventTrigger>
 		<Type> 0
 		<TriggerArea> 79.37 84.37 -163.92 -162.32
+		<ToTrigger> 0 0 -1
 		<TargetRootIndex> 11
 		<TargetObject> 2 doors_3_1_t doors_3_3_t 
 	</EventTrigger>
 	<EventTrigger>
 		<Type> 1
-		<TriggerArea> -0.2899997 4.71 -4.5 -3.1
+		<TriggerArea> -0.2084608 4.748461 -5.78282 -1.99718
+		<ToTrigger> 0.5 0 -0.8660254
 		<TargetRootIndex> 9
 		<TargetObject> 1 electrical_panel_pr_1_1_t 
 	</EventTrigger>
 	<EventTrigger>
 		<Type> 0
-		<TriggerArea> 141.21 146.21 34.62017 36.22017
+		<TriggerArea> 142.8 144.8 32.87 37.87
+		<ToTrigger> -1 0 1.192093E-07
 		<TargetRootIndex> 3
 		<TargetObject> 2 doors_3_1_t doors_3_3_t 
 	</EventTrigger>
 	<EventTrigger>
 		<Type> 2
 		<TriggerArea> 184.73 192.73 17.88 21.88
+		<ToTrigger> 0 0 -1
 		<TargetRootIndex> 15
 		<TargetObject> 0 
 	</EventTrigger>
 	<EventTrigger>
 		<Type> 3
 		<TriggerArea> 147.66 152.66 196.96 198.96
+		<ToTrigger> 0 0 -1
 		<TargetRootIndex> 12
 		<TargetObject> 2 gate_1_1_t gate_1_2_t 
 	</EventTrigger>

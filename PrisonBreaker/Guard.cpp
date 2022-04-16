@@ -83,12 +83,12 @@ bool CGuard::IsFoundPlayer(const XMFLOAT3& Position)
 	return false;
 }
 
-void CGuard::FindNavPath(const shared_ptr<CNavMesh>& NavMesh, const vector<vector<shared_ptr<CGameObject>>>& GameObjects)
+void CGuard::FindNavPath(const shared_ptr<CNavMesh>& NavMesh, const XMFLOAT3& TargetPosition, const vector<vector<shared_ptr<CGameObject>>>& GameObjects)
 {
 	priority_queue<shared_ptr<CNavNode>, vector<shared_ptr<CNavNode>>, compare> NavNodeQueue{};
 
 	UINT StartNavNodeIndex{ NavMesh->GetNodeIndex(GetPosition()) };
-	UINT TargetNavNodeIndex{ NavMesh->GetNodeIndex(GameObjects[OBJECT_TYPE_PLAYER].back()->GetPosition()) };
+	UINT TargetNavNodeIndex{ NavMesh->GetNodeIndex(TargetPosition) };
 
 	shared_ptr<CNavNode> StartNavNode{ NavMesh->GetNavNodes()[StartNavNodeIndex] };
 	shared_ptr<CNavNode> TargetNavNode{ NavMesh->GetNavNodes()[TargetNavNodeIndex] };
@@ -140,7 +140,7 @@ void CGuard::FindNavPath(const shared_ptr<CNavMesh>& NavMesh, const vector<vecto
 	}
 
 	m_NavPath.clear();
-	m_NavPath.push_back(GameObjects[OBJECT_TYPE_PLAYER].back()->GetPosition());
+	m_NavPath.push_back(TargetPosition);
 
 	while (true)
 	{
@@ -197,7 +197,7 @@ void CGuard::FindRayCastingNavPath(const vector<vector<shared_ptr<CGameObject>>>
 			{
 				if (GameObject)
 				{
-					shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(CheckPosition, LookDirection, HitDistance) };
+					shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(CheckPosition, LookDirection, HitDistance, false) };
 
 					if (IntersectedObject && (HitDistance < NearestHitDistance))
 					{
@@ -208,7 +208,7 @@ void CGuard::FindRayCastingNavPath(const vector<vector<shared_ptr<CGameObject>>>
 			}
 
 			// 바운딩박스 내에 있어 음수가 나온 경우 기존 경로를 사용하도록 리턴한다.
-			if (NearestHitDistance < 0)
+			if (NearestHitDistance < 0.0f)
 			{
 				return;
 			}

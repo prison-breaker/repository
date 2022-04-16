@@ -72,7 +72,7 @@
 		<RectTransform> 5 249 1009 0 8 32 269 1009 0 8 32 289 1009 0 8 32 309 1009 0 8 32 329 1009 0 8 32 
 	</UIObject>
 	<UIObject>
-		<IsActive> 1
+		<IsActive> 0
 		<TextureName> Textures/Crosshair_UI.dds
 		<RectTransform> 1 959 539 0 32 32 
 	</UIObject>
@@ -80,6 +80,6 @@
 		<IsActive> 0
 		<TextureName> Textures/Interaction_UI.dds
 		<CellInfo> 5 1
-		<RectTransform> 5 959 759 0 400 83 959 759 0 400 83 959 759 0 400 83 959 759 0 400 83 959 759 0 400 83 
+		<RectTransform> 1 959 759 0 400 83 
 	</UIObject>
 </UI>

@@ -526,18 +526,26 @@ shared_ptr<CSkinnedMesh> CGameObject::FindSkinnedMesh(const tstring& SkinnedMesh
 	return SkinnedMesh;
 }
 
-shared_ptr<CGameObject> CGameObject::PickObjectByRayIntersection(const XMFLOAT3& RayOrigin, const XMFLOAT3& RayDirection, float& HitDistance)
+shared_ptr<CGameObject> CGameObject::PickObjectByRayIntersection(const XMFLOAT3& RayOrigin, const XMFLOAT3& RayDirection, float& HitDistance, bool CheckTriangle)
 {
 	shared_ptr<CGameObject> NearestIntersectedObject{};
 
-	if (m_Mesh)
+	if (m_Mesh && m_BoundingBox)
 	{
+		// 광선과 바운딩박싀 교차를 검사한다.
 		bool IsIntersected{ m_BoundingBox->Intersects(XMLoadFloat3(&RayOrigin), XMLoadFloat3(&RayDirection), HitDistance) };
 
 		if (IsIntersected)
 		{
-			// 광선과 메쉬의 교차를 검사한다.
-			//if (m_Mesh->CheckRayIntersection(RayOrigin, RayDirection, XMLoadFloat4x4(&m_WorldMatrix), HitDistance))
+			// 광선과 메쉬(삼각형)의 교차를 검사한다.
+			if (CheckTriangle)
+			{
+				if (m_Mesh->CheckRayIntersection(RayOrigin, RayDirection, XMLoadFloat4x4(&m_WorldMatrix), HitDistance))
+				{
+					return shared_from_this();
+				}
+			}
+			else
 			{
 				return shared_from_this();
 			}
@@ -550,7 +558,7 @@ shared_ptr<CGameObject> CGameObject::PickObjectByRayIntersection(const XMFLOAT3&
 	{
 		if (ChildObject)
 		{
-			shared_ptr<CGameObject> IntersectedObject = ChildObject->PickObjectByRayIntersection(RayOrigin, RayDirection, HitDistance);
+			shared_ptr<CGameObject> IntersectedObject = ChildObject->PickObjectByRayIntersection(RayOrigin, RayDirection, HitDistance, CheckTriangle);
 
 			if (IntersectedObject && (HitDistance < NearestHitDistance))
 			{

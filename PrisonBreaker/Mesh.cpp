@@ -108,7 +108,7 @@ void CMesh::LoadMeshInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsComman
 				m_D3D12PositionBuffer->AddRef();
 				m_D3D12PositionUploadBuffer->AddRef();
 
-				tcout << TEXT(" 정점 수 : ") << VertexCount << endl;
+				//tcout << TEXT(" 정점 수 : ") << VertexCount << endl;
 			}
 		}
 		else if (Token == TEXT("<Normals>"))

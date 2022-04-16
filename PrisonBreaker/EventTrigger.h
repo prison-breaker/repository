@@ -6,8 +6,9 @@ class CBilboardObject;
 class CEventTrigger
 {
 protected:
-	bool							m_IsActive{};
+	bool							m_IsInteracted{};
 
+	XMFLOAT3						m_ToTrigger{};
 	XMFLOAT4						m_TriggerArea{};
 
 	vector<shared_ptr<CGameObject>> m_EventObjects{};
@@ -21,8 +22,8 @@ public:
 
 	void LoadEventTriggerFromFile(tifstream& InFile);
 
-	void SetActive(bool IsActive);
-	bool IsActive() const;
+	void SetInteracted(bool IsInteracted);
+	bool IsInteracted() const;
 
 	bool IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& LookDirection);
 

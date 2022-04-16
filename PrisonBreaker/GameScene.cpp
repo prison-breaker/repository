@@ -125,7 +125,7 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 
 				m_GameObjects[ObjectType].push_back(Player);
 			}
-				break;
+			break;
 			case OBJECT_TYPE_NPC:
 			{
 				XMFLOAT3 TargetPosition{};
@@ -133,8 +133,6 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 				// <TargetPosition>
 				File::ReadStringFromFile(InFile, Token);
 				InFile.read(reinterpret_cast<TCHAR*>(&TargetPosition), sizeof(XMFLOAT3));
-
-				tcout << TargetPosition.x << ", " << TargetPosition.y << ", " << TargetPosition.z << endl;
 
 				// 교도관 객체를 생성한다.
 				shared_ptr<CGuard> Guard{ make_shared<CGuard>() };
@@ -149,7 +147,7 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 
 				m_GameObjects[ObjectType].push_back(Guard);
 			}
-				break;
+			break;
 			case OBJECT_TYPE_TERRAIN:
 			case OBJECT_TYPE_STRUCTURE:
 			{
@@ -167,6 +165,7 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 		}
 		else if (Token == TEXT("</GameScene>"))
 		{
+			tcout << endl;
 			break;
 		}
 	}
@@ -203,25 +202,32 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 				// 플레이어 객체를 생성한다.
 				shared_ptr<CPlayer> Player{ make_shared<CPlayer>(D3D12Device, D3D12GraphicsCommandList) };
 
-				Player->Initialize();
 				Player->SetChild(ModelInfo->m_Model);
 				Player->SetTransformMatrix(TransformMatrix);
 				Player->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
-				Player->FindFrame(TEXT("gun_pr_1"))->SetActive(false);
+				Player->Initialize();
 
 				m_GameObjects[ObjectType].push_back(Player);
 			}
 			break;
 			case OBJECT_TYPE_NPC:
 			{
+				XMFLOAT3 TargetPosition{};
+
+				// <TargetPosition>
+				InFile >> Token;
+				InFile >> TargetPosition.x >> TargetPosition.y >> TargetPosition.z;
+
 				// 교도관 객체를 생성한다.
 				shared_ptr<CGuard> Guard{ make_shared<CGuard>() };
 
-				Guard->Initialize();
 				Guard->SetChild(ModelInfo->m_Model);
 				Guard->SetTransformMatrix(TransformMatrix);
+				Guard->UpdateTransform(Matrix4x4::Identity());
 				Guard->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
-				Guard->SetAnimationClip(static_cast<UINT>(rand() % 4));
+				Guard->SetTargetPosition(TargetPosition);
+				//Guard->FindPatrolNavPath(m_NavMesh);
+				Guard->Initialize();
 
 				m_GameObjects[ObjectType].push_back(Guard);
 			}
@@ -232,9 +238,9 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 				// 지형 및 구조물 객체를 생성한다.
 				shared_ptr<CGameObject> Architecture{ make_shared<CGameObject>() };
 
-				Architecture->Initialize();
 				Architecture->SetChild(ModelInfo->m_Model);
 				Architecture->SetTransformMatrix(TransformMatrix);
+				Architecture->Initialize();
 
 				m_GameObjects[ObjectType].push_back(Architecture);
 			}
@@ -243,6 +249,7 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 		}
 		else if (Token == TEXT("</GameScene>"))
 		{
+			tcout << endl;
 			break;
 		}
 	}
@@ -254,6 +261,8 @@ void CGameScene::LoadUIInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCom
 	tstring Token{};
 
 	shared_ptr<CBilboardObject> Object{};
+
+	tcout << FileName << TEXT(" 로드 시작...") << endl;
 
 #ifdef READ_BINARY_FILE
 	tifstream InFile{ FileName, ios::binary };
@@ -290,6 +299,7 @@ void CGameScene::LoadUIInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCom
 		}
 	}
 #endif
+	tcout << FileName << TEXT(" 로드 완료...") << endl << endl;
 
 	LoadEventTriggerFromFile(TEXT("Triggers/EventTriggers.bin"));
 }
@@ -439,9 +449,8 @@ void CGameScene::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, 
 		break;
 	case 'e': // 현재 플레이어가 있는 위치를 향해 길찾기 시작
 	case 'E':
-
 		static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][2])->GetStateMachine()->ChangeState(CGuardChaseState::GetInstance());
-		static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][2])->FindNavPath(m_NavMesh, m_GameObjects);
+		static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][2])->FindNavPath(m_NavMesh, m_GameObjects[OBJECT_TYPE_PLAYER].back()->GetPosition(), m_GameObjects);
 		break;
 	case 'q': // 플레이어를 감옥 밖으로 이동시키고 'e'키를 통해 길찾기를 하는 NPC를 운동장 근처로 소환
 	case 'Q':
@@ -534,10 +543,33 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 		{
 			if (EventTrigger)
 			{
-				if (EventTrigger->IsInTriggerArea(Position, LookDirection))
+				if (!EventTrigger->IsInteracted())
 				{
-					EventTrigger->SetActive(true);
-					break;
+					if (EventTrigger->IsInTriggerArea(Position, LookDirection))
+					{
+						EventTrigger->SetInteracted(true);
+
+						// 사이렌을 작동시킨다.
+						if (typeid(*EventTrigger) == typeid(CSirenEventTrigger))
+						{
+							tcout << TEXT("플레이어가 사이렌을 작동시켰습니다. 잠시 뒤 5명의 경찰이 이곳으로 올 것입니다!") << endl;
+
+							UINT GuardCount{ static_cast<UINT>(m_GameObjects[OBJECT_TYPE_NPC].size()) };
+
+							for (UINT i = 0; i < 5; ++i)
+							{
+								UINT Index{ rand() % GuardCount };
+								shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][Index]) };
+
+								if (Guard)
+								{
+									Guard->FindNavPath(m_NavMesh, m_GameObjects[OBJECT_TYPE_PLAYER].back()->GetPosition(), m_GameObjects);
+									Guard->GetStateMachine()->ChangeState(CGuardChaseState::GetInstance());
+								}
+							}
+						}
+						break;
+					}
 				}
 			}
 		}
@@ -585,7 +617,7 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 							AnimationController->UpdateShaderVariables();
 						}
 
-						shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(Player->GetCamera()->GetPosition(),Player->GetCamera()->GetLook(), HitDistance) };
+						shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(Player->GetCamera()->GetPosition(),Player->GetCamera()->GetLook(), HitDistance, true) };
 
 						if (IntersectedObject)
 						{
@@ -622,21 +654,9 @@ void CGameScene::Animate(float ElapsedTime)
 
 		if (Guard)
 		{
-			
-			/*if (Guard->IsFoundPlayer(m_GameObjects[OBJECT_TYPE_PLAYER].back()->GetPosition()))
-			{
-				if (!Guard->check)
-				{
-					Guard->GetStateMachine()->ChangeState(CGuardChaseState::GetInstance());
-					Guard->FindPath(m_NavMesh, m_GameObjects);
-				}
-			}*/
+
 		}
 	}
-
-
-
-
 
 	for (UINT i = OBJECT_TYPE_PLAYER; i <= OBJECT_TYPE_STRUCTURE; ++i)
 	{
@@ -667,16 +687,10 @@ void CGameScene::Animate(float ElapsedTime)
 			XMFLOAT3 Position{ m_GameObjects[OBJECT_TYPE_PLAYER].back()->GetPosition() };
 			XMFLOAT3 LookDirection{ m_GameObjects[OBJECT_TYPE_PLAYER].back()->GetLook() };
 
-			for (const auto& EventTrigger : m_EventTriggers)
+			if (EventTrigger->IsInTriggerArea(Position, LookDirection))
 			{
-				if (EventTrigger)
-				{
-					if (EventTrigger->IsInTriggerArea(Position, LookDirection))
-					{
-						EventTrigger->GenerateEventTrigger(ElapsedTime);
-						break;
-					}
-				}
+				EventTrigger->GenerateEventTrigger(ElapsedTime);
+				break;
 			}
 		}
 	}
@@ -754,8 +768,8 @@ void CGameScene::LoadMeshCachesFromFile(ID3D12Device* D3D12Device, ID3D12Graphic
 
 			if (MeshCount > 0)
 			{
-				tcout << TEXT("총 ") << MeshCount << TEXT("개의 메쉬를 읽어오는 중입니다.") << endl;
 				MeshCaches.reserve(MeshCount);
+				tcout << FileName << TEXT(" 로드 시작...") << endl;
 			}
 		}
 		else if (Token == TEXT("<Mesh>"))
@@ -774,7 +788,7 @@ void CGameScene::LoadMeshCachesFromFile(ID3D12Device* D3D12Device, ID3D12Graphic
 		}
 		else if (Token == TEXT("</Meshes>"))
 		{
-			tcout << TEXT("총 ") << MeshCaches.size() << TEXT("개의 메쉬를 읽어왔습니다.") << endl;
+			tcout << FileName << TEXT(" 로드 완료...(메쉬 수: ") << MeshCaches.size() << ")" << endl << endl;
 			break;
 		}
 	}
@@ -791,7 +805,7 @@ void CGameScene::LoadMeshCachesFromFile(ID3D12Device* D3D12Device, ID3D12Graphic
 
 			if (MeshCount > 0)
 			{
-				tcout << TEXT("총 ") << MeshCount << TEXT("개의 메쉬를 읽어오는 중입니다.") << endl;
+				tcout << FileName << TEXT(" 로드 시작...") << endl;
 				MeshCaches.reserve(MeshCount);
 			}
 		}
@@ -811,7 +825,7 @@ void CGameScene::LoadMeshCachesFromFile(ID3D12Device* D3D12Device, ID3D12Graphic
 		}
 		else if (Token == TEXT("</Meshes>"))
 		{
-			tcout << TEXT("총 ") << MeshCaches.size() << TEXT("개의 메쉬를 읽어왔습니다.") << endl;
+			tcout << FileName << TEXT(" 로드 완료...(메쉬 수: ") << MeshCaches.size() << ")" << endl << endl;
 			break;
 		}
 	}
@@ -835,7 +849,7 @@ void CGameScene::LoadMaterialCachesFromFile(ID3D12Device* D3D12Device, ID3D12Gra
 
 			if (MaterialCount > 0)
 			{
-				tcout << TEXT("총 ") << MaterialCount << TEXT("개의 메터리얼을 읽어오는 중입니다.") << endl;
+				tcout << FileName << TEXT(" 로드 시작...") << endl;
 				MaterialCaches.reserve(MaterialCount);
 			}
 		}
@@ -848,7 +862,7 @@ void CGameScene::LoadMaterialCachesFromFile(ID3D12Device* D3D12Device, ID3D12Gra
 		}
 		else if (Token == TEXT("</Materials>"))
 		{
-			tcout << TEXT("총 ") << MaterialCaches.size() << TEXT("개의 메터리얼을 읽어왔습니다.") << endl;
+			tcout << FileName << TEXT(" 로드 완료...(메터리얼 수: ") << MaterialCaches.size() << ")" << endl << endl;
 			break;
 		}
 	}
@@ -866,7 +880,7 @@ void CGameScene::LoadMaterialCachesFromFile(ID3D12Device* D3D12Device, ID3D12Gra
 
 			if (MaterialCount > 0)
 			{
-				tcout << TEXT("총 ") << MaterialCount << TEXT("개의 메터리얼을 읽어오는 중입니다.") << endl;
+				tcout << FileName << TEXT(" 로드 시작...") << endl;
 				MaterialCaches.reserve(MaterialCount);
 			}
 		}
@@ -879,7 +893,7 @@ void CGameScene::LoadMaterialCachesFromFile(ID3D12Device* D3D12Device, ID3D12Gra
 		}
 		else if (Token == TEXT("</Materials>"))
 		{
-			tcout << TEXT("총 ") << MaterialCaches.size() << TEXT("개의 메터리얼을 읽어왔습니다.") << endl;
+			tcout << FileName << TEXT(" 로드 완료...(메터리얼 수: ") << MaterialCaches.size() << ")" << endl << endl;
 			break;
 		}
 	}
@@ -889,6 +903,8 @@ void CGameScene::LoadMaterialCachesFromFile(ID3D12Device* D3D12Device, ID3D12Gra
 void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
 {
 	tstring Token{};
+
+	tcout << FileName << TEXT(" 로드 시작...") << endl;
 
 #ifdef READ_BINARY_FILE
 	tifstream InFile{ FileName, ios::binary };
@@ -961,6 +977,7 @@ void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
 #else
 	tifstream InFile{ FileName };
 #endif
+	tcout << FileName << TEXT(" 로드 완료...") << endl << endl;
 
 	UINT TriggerCount{ static_cast<UINT>(m_EventTriggers.size()) };
 
