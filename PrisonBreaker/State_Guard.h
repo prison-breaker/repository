@@ -54,6 +54,23 @@ public:
 
 //=========================================================================================================================
 
+class CGuardReturnState : public CState<CGuard>
+{
+private:
+	CGuardReturnState() = default;
+	virtual ~CGuardReturnState() = default;
+
+public:
+	static CGuardReturnState* GetInstance();
+
+	virtual void Enter(const shared_ptr<CGuard>& Entity);
+	virtual void ProcessInput(const shared_ptr<CGuard>& Entity, UINT InputMask, float ElapsedTime);
+	virtual void Update(const shared_ptr<CGuard>& Entity, float ElapsedTime);
+	virtual void Exit(const shared_ptr<CGuard>& Entity);
+};
+
+//=========================================================================================================================
+
 class CGuardShootingState : public CState<CGuard>
 {
 private:

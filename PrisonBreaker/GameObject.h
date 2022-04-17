@@ -81,6 +81,8 @@ public:
 	void SetLook(const XMFLOAT3& Look);
 	XMFLOAT3 GetLook() const;
 
+	void UpdateLocalCoord(const XMFLOAT3& LookDirection);
+
 	void SetPosition(const XMFLOAT3& Position);
 	XMFLOAT3 GetPosition() const;
 

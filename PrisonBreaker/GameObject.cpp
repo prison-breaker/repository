@@ -648,6 +648,15 @@ XMFLOAT3 CGameObject::GetLook() const
 	return XMFLOAT3(m_WorldMatrix._31, m_WorldMatrix._32, m_WorldMatrix._33);
 }
 
+void CGameObject::UpdateLocalCoord(const XMFLOAT3& LookDirection)
+{
+	const XMFLOAT3 WorldUp{ 0.0f, 1.0f, 0.0f };
+
+	SetLook(LookDirection);
+	SetRight(Vector3::CrossProduct(WorldUp, GetLook(), false));
+	SetUp(Vector3::CrossProduct(GetLook(), GetRight(), false));
+}
+
 void CGameObject::SetPosition(const XMFLOAT3& Position)
 {
 	m_TransformMatrix._41 = Position.x;

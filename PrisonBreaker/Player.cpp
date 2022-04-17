@@ -126,11 +126,7 @@ void CPlayer::Rotate(float Pitch, float Yaw, float Roll, float ElapsedTime)
 		SetLook(Vector3::TransformNormal(GetLook(), RotationMatrix));
 	}
 
-	const XMFLOAT3 WorldUp{ 0.0f, 1.0f, 0.0f };
-
-	SetLook(Vector3::Normalize(GetLook()));
-	SetRight(Vector3::CrossProduct(WorldUp, GetLook(), false));
-	SetUp(Vector3::CrossProduct(GetLook(), GetRight(), false));
+	CGameObject::UpdateLocalCoord(Vector3::Normalize(GetLook()));
 }
 
 void CPlayer::ProcessInput(UINT InputMask, float ElapsedTime, const shared_ptr<CNavMesh>& NavMesh)

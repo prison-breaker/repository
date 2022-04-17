@@ -7,7 +7,7 @@ void CGuard::Initialize()
 
 	// 상태머신 객체를 생성한다.
 	m_StateMachine = make_shared<CStateMachine<CGuard>>(static_pointer_cast<CGuard>(shared_from_this()));
-	m_StateMachine->SetCurrentState(CGuardPatrolState::GetInstance());
+	m_StateMachine->SetCurrentState(CGuardIdleState::GetInstance());
 }
 
 void CGuard::Animate(float ElapsedTime)
@@ -56,6 +56,41 @@ CStateMachine<CGuard>* CGuard::GetStateMachine() const
 	return m_StateMachine.get();
 }
 
+void CGuard::SetRecentTransition(bool RecentTransition)
+{
+	m_RecentTransition = RecentTransition;
+}
+
+bool CGuard::GetRecentTransition() const
+{
+	return m_RecentTransition;
+}
+
+void CGuard::SetElapsedTime(float ElapsedTime)
+{
+	m_ElapsedTime = ElapsedTime;
+
+	if (m_ElapsedTime >= 3.0f)
+	{
+		m_RecentTransition = true;
+	}
+}
+
+float CGuard::GetElapsedTime() const
+{
+	return m_ElapsedTime;
+}
+
+float CGuard::GetToIdleEntryTime() const
+{
+	return m_ToIdleEntryTime;
+}
+
+float CGuard::GetUpdateTargetTime() const
+{
+	return m_UpdateTargetTime;
+}
+
 void CGuard::SetTargetPosition(const XMFLOAT3& TargetPosition)
 {
 	m_TargetPosition = TargetPosition;
@@ -66,15 +101,30 @@ const XMFLOAT3& CGuard::GetTargetPosition() const
 	return m_TargetPosition;
 }
 
+vector<XMFLOAT3>& CGuard::GetNavPath()
+{
+	return m_NavPath;
+}
+
+vector<XMFLOAT3>& CGuard::GetPatrolNavPath()
+{
+	return m_PatrolNavPath;
+}
+
+UINT CGuard::GetPatrolIndex() const
+{
+	return m_PatrolIndex;
+}
+
 bool CGuard::IsFoundPlayer(const XMFLOAT3& Position)
 {
 	XMFLOAT3 ToPlayer{ Vector3::Subtract(Position, GetPosition()) };
 
-	if (Vector3::Length(ToPlayer) < 20.0f)
+	if (Vector3::Length(ToPlayer) <= 30.0f)
 	{
 		float BetweenDegree{ Vector3::Angle(Vector3::Normalize(GetLook()), Vector3::Normalize(ToPlayer)) };
 
-		if (BetweenDegree < 40.0f)
+		if (BetweenDegree < 100.0f)
 		{
 			return true;
 		}
@@ -158,14 +208,6 @@ void CGuard::FindNavPath(const shared_ptr<CNavMesh>& NavMesh, const XMFLOAT3& Ta
 
 	// 경로를 만들었다면, 노드를 순회하며 광선을 쏴 더 최적화된 경로를 구한다.
 	FindRayCastingNavPath(GameObjects);
-
-	m_MovingDirection = Vector3::Normalize(Vector3::Subtract(m_NavPath.back(), GetPosition()));
-
-	const XMFLOAT3 WorldUp{ 0.0f, 1.0f, 0.0f };
-
-	SetLook(m_MovingDirection);
-	SetRight(Vector3::CrossProduct(WorldUp, GetLook(), false));
-	SetUp(Vector3::CrossProduct(GetLook(), GetRight(), false));
 }
 
 void CGuard::FindRayCastingNavPath(const vector<vector<shared_ptr<CGameObject>>>& GameObjects)
@@ -302,14 +344,6 @@ void CGuard::FindPatrolNavPath(const shared_ptr<CNavMesh>& NavMesh)
 	}
 
 	reverse(m_PatrolNavPath.begin(), m_PatrolNavPath.end());
-
-	m_MovingDirection = Vector3::Normalize(Vector3::Subtract(m_PatrolNavPath.front(), GetPosition()));
-
-	const XMFLOAT3 WorldUp{ 0.0f, 1.0f, 0.0f };
-
-	SetLook(m_MovingDirection);
-	SetRight(Vector3::CrossProduct(WorldUp, GetLook(), false));
-	SetUp(Vector3::CrossProduct(GetLook(), GetRight(), false));
 }
 
 void CGuard::MoveToNavPath(float ElapsedTime)
@@ -323,12 +357,8 @@ void CGuard::MoveToNavPath(float ElapsedTime)
 			if (!m_NavPath.empty())
 			{
 				m_MovingDirection = Vector3::Normalize(Vector3::Subtract(m_NavPath.back(), GetPosition()));
-
-				const XMFLOAT3 WorldUp{ 0.0f, 1.0f, 0.0f };
-
-				SetLook(m_MovingDirection);
-				SetRight(Vector3::CrossProduct(WorldUp, GetLook(), false));
-				SetUp(Vector3::CrossProduct(GetLook(), GetRight(), false));
+				
+				UpdateLocalCoord(m_MovingDirection);
 			}
 		}
 		else
@@ -353,11 +383,7 @@ void CGuard::Patrol(float ElapsedTime)
 
 		m_MovingDirection = Vector3::Normalize(Vector3::Subtract(m_PatrolNavPath[m_PatrolIndex], GetPosition()));
 
-		const XMFLOAT3 WorldUp{ 0.0f, 1.0f, 0.0f };
-
-		SetLook(m_MovingDirection);
-		SetRight(Vector3::CrossProduct(WorldUp, GetLook(), false));
-		SetUp(Vector3::CrossProduct(GetLook(), GetRight(), false));
+		UpdateLocalCoord(m_MovingDirection);
 	}
 	else
 	{

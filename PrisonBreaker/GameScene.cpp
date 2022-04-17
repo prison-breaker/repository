@@ -142,7 +142,7 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 				Guard->UpdateTransform(Matrix4x4::Identity());
 				Guard->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
 				Guard->SetTargetPosition(TargetPosition);
-				//Guard->FindPatrolNavPath(m_NavMesh);
+				Guard->FindPatrolNavPath(m_NavMesh);
 				Guard->Initialize();
 
 				m_GameObjects[ObjectType].push_back(Guard);
@@ -648,13 +648,51 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 
 void CGameScene::Animate(float ElapsedTime)
 {
+	XMFLOAT3 PlayerPosition{ m_GameObjects[OBJECT_TYPE_PLAYER].back()->GetPosition() };
+
 	for (const auto& GameObject : m_GameObjects[OBJECT_TYPE_NPC])
 	{
 		shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(GameObject) };
 
 		if (Guard)
 		{
+			// Idle, Patrol, Return 상태일 때는 시야각을 통해 플레이어를 감지한다.
+			if (Guard->GetStateMachine()->IsInState(CGuardIdleState::GetInstance()) ||
+				Guard->GetStateMachine()->IsInState(CGuardPatrolState::GetInstance()) ||
+				Guard->GetStateMachine()->IsInState(CGuardReturnState::GetInstance()))
+			{
+				if (Guard->IsFoundPlayer(PlayerPosition))
+				{
+					Guard->FindNavPath(m_NavMesh, PlayerPosition, m_GameObjects);
+					Guard->GetStateMachine()->ChangeState(CGuardChaseState::GetInstance());
+				}
+			}
+			else if (Guard->GetStateMachine()->IsInState(CGuardChaseState::GetInstance()))
+			{
+				XMFLOAT3 Direction{};
 
+				// 플레이어가 시야각에서 보이지 않는다면 ReturnState로 전이하여 원래 순찰하는 위치로 돌아간다.
+				if (!Guard->IsFoundPlayer(PlayerPosition) && Guard->GetRecentTransition())
+				{
+					Guard->FindNavPath(m_NavMesh, Guard->GetPatrolNavPath()[Guard->GetPatrolIndex()], m_GameObjects);
+					Guard->GetStateMachine()->ChangeState(CGuardReturnState::GetInstance());
+				}
+				// 플레이어와 일정거리 이하가 되면 총을 쏜다.
+				else if (Math::Distance(PlayerPosition, Guard->GetPosition()) < 10.0f)
+				{
+					Direction = Vector3::Normalize(Vector3::Subtract(PlayerPosition, Guard->GetPosition()));
+					Guard->UpdateLocalCoord(Direction);
+					Guard->GetStateMachine()->ChangeState(CGuardShootingState::GetInstance());
+				}
+				// 3초에 한번씩 혹은 NavPath가 비었을 경우 NavPath를 갱신한다.
+				else if (Guard->GetElapsedTime() >= Guard->GetUpdateTargetTime() || Guard->GetNavPath().empty())
+				{
+					Guard->FindNavPath(m_NavMesh, PlayerPosition, m_GameObjects);
+					Direction = Vector3::Normalize(Vector3::Subtract(Guard->GetNavPath().back(), Guard->GetPosition()));
+					Guard->UpdateLocalCoord(Direction);
+					Guard->SetElapsedTime(0.0f);
+				}
+			}
 		}
 	}
 

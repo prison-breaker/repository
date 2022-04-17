@@ -12,7 +12,14 @@ private:
 
 	shared_ptr<CStateMachine<CGuard>> m_StateMachine{};
 
+	bool							  m_RecentTransition{};
+
+	float							  m_ElapsedTime{};
+	const float						  m_ToIdleEntryTime{ rand() % 5 + 3.0f };
+	const float						  m_UpdateTargetTime{ 4.0f };
+
 	XMFLOAT3					      m_TargetPosition{};
+
 	vector<XMFLOAT3>                  m_NavPath{};
 	vector<XMFLOAT3>				  m_PatrolNavPath{};
 	UINT							  m_PatrolIndex{};
@@ -36,8 +43,22 @@ public:
 
 	CStateMachine<CGuard>* GetStateMachine() const;
 
+	void SetRecentTransition(bool RecentTransition);
+	bool GetRecentTransition() const;
+
+	void SetElapsedTime(float ElapsedTime);
+	float GetElapsedTime() const;
+
+	float GetToIdleEntryTime() const;
+	float GetUpdateTargetTime() const;
+
 	void SetTargetPosition(const XMFLOAT3& TargetPosition);
 	const XMFLOAT3& GetTargetPosition() const;
+
+	vector<XMFLOAT3>& GetNavPath();
+	vector<XMFLOAT3>& GetPatrolNavPath();
+
+	UINT GetPatrolIndex() const;
 
 	bool IsFoundPlayer(const XMFLOAT3& Position);
 
