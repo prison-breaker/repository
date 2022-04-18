@@ -42,7 +42,7 @@ public:
 	void AcquirePistol();
 	bool SwapWeapon(WEAPON_TYPE WeaponType);
 
-	void Rotate(float Pitch, float Yaw, float Roll, float ElapsedTime);
+	void Rotate(float Pitch, float Yaw, float Roll, float ElapsedTime, float NearestHitDistance);
 
 	void ProcessInput(UINT InputMask, float ElapsedTime, const shared_ptr<CNavMesh>& NavMesh);
 };

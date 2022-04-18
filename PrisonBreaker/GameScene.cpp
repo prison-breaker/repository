@@ -510,7 +510,25 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	//return;
 
 	// 3ÀÎÄª ¸ðµå
-	Player->Rotate(Delta.y, Delta.x, 0.0f, ElapsedTime);
+	shared_ptr<CGameObject> NearestIntersectedObject{};
+	float NearestHitDistance{ FLT_MAX };
+	float HitDistance{};
+
+	for (const auto& GameObject : m_GameObjects[OBJECT_TYPE_STRUCTURE])
+	{
+		if (GameObject)
+		{
+			shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(Player->GetCamera()->GetPosition(),Vector3::Inverse(Player->GetCamera()->GetLook()), HitDistance, false) };
+
+			if (IntersectedObject && (HitDistance < NearestHitDistance))
+			{
+				NearestIntersectedObject = IntersectedObject;
+				NearestHitDistance = HitDistance;
+			}
+		}
+	}
+
+	Player->Rotate(Delta.y, Delta.x, 0.0f, ElapsedTime, NearestHitDistance);
 
 	UINT InputMask{};
 
@@ -536,6 +554,9 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 
 	if (GetAsyncKeyState('F') & 0x0001)
 	{
+		NearestIntersectedObject = nullptr;
+		NearestHitDistance = FLT_MAX;
+
 		XMFLOAT3 Position{ Player->GetPosition() };
 		XMFLOAT3 LookDirection{ Player->GetLook() };
 

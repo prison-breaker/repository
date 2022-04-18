@@ -183,14 +183,35 @@ void CCamera::Rotate(float Pitch, float Yaw, float Roll)
 	RegenerateViewMatrix();
 }
 
-void CCamera::Rotate(const XMFLOAT4X4& WorldMatrix, float ElapsedTime)
+void CCamera::Rotate(const XMFLOAT4X4& WorldMatrix, float ElapsedTime, float NearestHitDistance)
 {
+	// 플레이어와 오브젝트
+	//if (NearestHitDistance <= 0.0f)
+	//{
+	//	m_Offset.z = clamp(-(NearestHitDistance + 3.0f), -3.0f, -1.8f);
+	//}
+	//else
+	//{
+	//	m_Offset.z = -3.0f;
+	//}
+
+	// 카메라와 오브젝트
+	if (NearestHitDistance < 3.0f)
+	{
+		m_Offset.z = clamp(-NearestHitDistance, -3.0f, -1.8f);
+	}
+	else
+	{
+		m_Offset.z = -3.0f;
+	}
+
 	XMFLOAT4X4 RotationMatrix{
 		WorldMatrix._11, WorldMatrix._12, WorldMatrix._13, 0.0f,
 		WorldMatrix._21, WorldMatrix._22, WorldMatrix._23, 0.0f,
 		WorldMatrix._31, WorldMatrix._32, WorldMatrix._33, 0.0f,
 				   0.0f,			0.0f,			 0.0f, 1.0f
 	};
+
 	XMFLOAT3 Position{ WorldMatrix._41, WorldMatrix._42 + 4.5f, WorldMatrix._43 };
 	XMFLOAT3 ZoomDirection{ Vector3::Add(XMFLOAT3(WorldMatrix._11, WorldMatrix._12, WorldMatrix._13), XMFLOAT3(WorldMatrix._31, WorldMatrix._32, WorldMatrix._33)) };
 	

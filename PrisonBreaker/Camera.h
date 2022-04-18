@@ -70,5 +70,5 @@ public:
 
 	void Move(const XMFLOAT3& Shift);
 	void Rotate(float Pitch, float Yaw, float Roll);
-	void Rotate(const XMFLOAT4X4& WorldMatrix, float ElapsedTime);
+	void Rotate(const XMFLOAT4X4& WorldMatrix, float ElapsedTime, float NearestHitDistance);
 };

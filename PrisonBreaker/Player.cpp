@@ -99,7 +99,7 @@ bool CPlayer::SwapWeapon(WEAPON_TYPE WeaponType)
 	return IsSwapped;
 }
 
-void CPlayer::Rotate(float Pitch, float Yaw, float Roll, float ElapsedTime)
+void CPlayer::Rotate(float Pitch, float Yaw, float Roll, float ElapsedTime, float NearestHitDistance)
 {
 	if (!Math::IsZero(Yaw))
 	{
@@ -116,7 +116,7 @@ void CPlayer::Rotate(float Pitch, float Yaw, float Roll, float ElapsedTime)
 		}
 	}
 
-	m_Camera->Rotate(GetWorldMatrix(), ElapsedTime);
+	m_Camera->Rotate(GetWorldMatrix(), ElapsedTime, NearestHitDistance);
 
 	if (!Math::IsZero(Yaw))
 	{
