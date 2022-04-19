@@ -120,7 +120,7 @@ bool CGuard::IsFoundPlayer(const XMFLOAT3& Position)
 {
 	XMFLOAT3 ToPlayer{ Vector3::Subtract(Position, GetPosition()) };
 
-	if (Vector3::Length(ToPlayer) <= 30.0f)
+	if (Vector3::Length(ToPlayer) < 30.0f)
 	{
 		float BetweenDegree{ Vector3::Angle(Vector3::Normalize(GetLook()), Vector3::Normalize(ToPlayer)) };
 
@@ -214,7 +214,6 @@ void CGuard::FindRayCastingNavPath(const vector<vector<shared_ptr<CGameObject>>>
 {
 	vector<XMFLOAT3> RayCastingNavPath{};
 
-	shared_ptr<CGameObject> NearestIntersectedObject{};
 	UINT NavPathSize{ static_cast<UINT>(m_NavPath.size()) };
 
 	RayCastingNavPath.push_back(m_NavPath.front());
@@ -231,7 +230,7 @@ void CGuard::FindRayCastingNavPath(const vector<vector<shared_ptr<CGameObject>>>
 			SearchPosition.y = CheckPosition.y = 3.0f;
 
 			// Normalize 안하니까 터지지? 반대 방향은 왜 안되는지?
-			XMFLOAT3 LookDirection{ Vector3::Normalize(Vector3::Subtract(SearchPosition, CheckPosition)) }; 
+			XMFLOAT3 ToNextPosition{ Vector3::Subtract(SearchPosition, CheckPosition) }; 
 			float NearestHitDistance{ FLT_MAX };
 			float HitDistance{};
 
@@ -239,11 +238,10 @@ void CGuard::FindRayCastingNavPath(const vector<vector<shared_ptr<CGameObject>>>
 			{
 				if (GameObject)
 				{
-					shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(CheckPosition, LookDirection, HitDistance, false) };
+					shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(CheckPosition, Vector3::Normalize(ToNextPosition), HitDistance, Vector3::Length(ToNextPosition)) };
 
 					if (IntersectedObject && (HitDistance < NearestHitDistance))
 					{
-						NearestIntersectedObject = IntersectedObject;
 						NearestHitDistance = HitDistance;
 					}
 				}
@@ -257,7 +255,7 @@ void CGuard::FindRayCastingNavPath(const vector<vector<shared_ptr<CGameObject>>>
 
 			float Distance{ Math::Distance(CheckPosition, SearchPosition) };
 
-			if (Distance <= NearestHitDistance)
+			if (Distance < NearestHitDistance)
 			{
 				RayCastingNavPath.push_back(m_NavPath[CheckIndex]);
 				SearchIndex = CheckIndex - 1;

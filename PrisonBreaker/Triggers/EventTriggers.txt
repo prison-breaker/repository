@@ -2,7 +2,7 @@
 	<EventTrigger>
 		<Type> 0
 		<TriggerArea> 79.37 84.37 -163.92 -162.32
-		<ToTrigger> 0 0 -1
+		<ToTrigger> 0 0 1
 		<TargetRootIndex> 11
 		<TargetObject> 2 doors_3_1_t doors_3_3_t 
 	</EventTrigger>

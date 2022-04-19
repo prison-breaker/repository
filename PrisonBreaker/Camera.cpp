@@ -186,7 +186,8 @@ void CCamera::Rotate(float Pitch, float Yaw, float Roll)
 void CCamera::Rotate(const XMFLOAT4X4& WorldMatrix, float ElapsedTime, float NearestHitDistance)
 {
 	// 플레이어와 오브젝트
-	//if (NearestHitDistance <= 0.0f)
+	//if (NearestHitDistance 
+	//  0.0f)
 	//{
 	//	m_Offset.z = clamp(-(NearestHitDistance + 3.0f), -3.0f, -1.8f);
 	//}

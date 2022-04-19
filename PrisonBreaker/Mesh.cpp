@@ -533,7 +533,7 @@ bool CMesh::CheckRayIntersection(const XMFLOAT3& RayOrigin, const XMFLOAT3& RayD
 
 	for (UINT i = 0; i < SubMeshCount; ++i)
 	{
-		UINT PrimitiveCount{ static_cast<UINT>(m_Indices[i].size() / 3) };
+		UINT PrimitiveCount{ static_cast<UINT>(m_Indices[i].size()) };
 
 		for (UINT j = 0; j < PrimitiveCount; j += 3)
 		{

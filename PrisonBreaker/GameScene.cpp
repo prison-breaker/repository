@@ -461,7 +461,7 @@ void CGameScene::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, 
 
 void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 {
-	m_RayCasting = false;
+	m_IsShooting = false;
 
 	// 방향성 조명 방향 변경
 	static float Angle = XMConvertToRadians(90.0f);
@@ -510,19 +510,20 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	//return;
 
 	// 3인칭 모드
-	shared_ptr<CGameObject> NearestIntersectedObject{};
 	float NearestHitDistance{ FLT_MAX };
 	float HitDistance{};
+
+	XMFLOAT3 RayOrigin{ Player->GetPosition().x, Player->GetCamera()->GetPosition().y, Player->GetPosition().z };
+	XMFLOAT3 RayDirection{ Vector3::Inverse(Player->GetLook()) };
 
 	for (const auto& GameObject : m_GameObjects[OBJECT_TYPE_STRUCTURE])
 	{
 		if (GameObject)
 		{
-			shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(Player->GetCamera()->GetPosition(),Vector3::Inverse(Player->GetCamera()->GetLook()), HitDistance, false) };
+			shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(RayOrigin, RayDirection, HitDistance, 3.0f) };
 
 			if (IntersectedObject && (HitDistance < NearestHitDistance))
 			{
-				NearestIntersectedObject = IntersectedObject;
 				NearestHitDistance = HitDistance;
 			}
 		}
@@ -554,9 +555,6 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 
 	if (GetAsyncKeyState('F') & 0x0001)
 	{
-		NearestIntersectedObject = nullptr;
-		NearestHitDistance = FLT_MAX;
-
 		XMFLOAT3 Position{ Player->GetPosition() };
 		XMFLOAT3 LookDirection{ Player->GetLook() };
 
@@ -611,19 +609,21 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	if (GetAsyncKeyState(VK_RBUTTON) & 0x8000)
 	{
 		InputMask |= INPUT_MASK_RMB;
-		m_RayCasting = true;
+		m_IsShooting = true;
 	}
 
 	if (GetAsyncKeyState(VK_LBUTTON) & 0x0001)
 	{
 		InputMask |= INPUT_MASK_LMB;
 
-		if (m_RayCasting)
-		{
-			shared_ptr<CGameObject> NearestIntersectedObject{};
-			float NearestHitDistance = FLT_MAX;
-			float HitDistance{};
+		shared_ptr<CGameObject> NearestIntersectedObject{};
 
+		NearestHitDistance = FLT_MAX;
+		RayOrigin = Player->GetCamera()->GetPosition();
+		RayDirection = Player->GetCamera()->GetLook();
+
+		if (m_IsShooting)
+		{
 			for (UINT i = OBJECT_TYPE_NPC; i <= OBJECT_TYPE_STRUCTURE; ++i)
 			{
 				for (const auto& GameObject : m_GameObjects[i])
@@ -638,7 +638,7 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 							AnimationController->UpdateShaderVariables();
 						}
 
-						shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(Player->GetCamera()->GetPosition(),Player->GetCamera()->GetLook(), HitDistance, true) };
+						shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(RayOrigin, RayDirection, HitDistance, FLT_MAX) };
 
 						if (IntersectedObject)
 						{

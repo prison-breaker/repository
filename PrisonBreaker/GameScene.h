@@ -61,7 +61,7 @@ private:
 	ComPtr<ID3D12Resource>						m_D3D12Fog{};
 	CB_FOG*										m_MappedFog{};
 
-	bool										m_RayCasting{};
+	bool										m_IsShooting{};
 	bool										m_RenderBoundingBox{};
 
 public:
