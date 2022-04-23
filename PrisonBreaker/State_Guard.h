@@ -71,6 +71,23 @@ public:
 
 //=========================================================================================================================
 
+class CGuardAssembleState : public CState<CGuard>
+{
+private:
+	CGuardAssembleState() = default;
+	virtual ~CGuardAssembleState() = default;
+
+public:
+	static CGuardAssembleState* GetInstance();
+
+	virtual void Enter(const shared_ptr<CGuard>& Entity);
+	virtual void ProcessInput(const shared_ptr<CGuard>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask);
+	virtual void Update(const shared_ptr<CGuard>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime);
+	virtual void Exit(const shared_ptr<CGuard>& Entity);
+};
+
+//=========================================================================================================================
+
 class CGuardShootingState : public CState<CGuard>
 {
 private:

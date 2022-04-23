@@ -443,30 +443,7 @@ void CGameScene::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, 
 }
 
 void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
-{
-	// 방향성 조명 방향 변경
-	static float Angle = XMConvertToRadians(90.0f);
-
-	if (GetAsyncKeyState(VK_NEXT) & 0x8000)
-	{
-		Angle += ElapsedTime;
-
-		m_Lights[1].m_Position.x = 100.0f * cosf(Angle);
-		m_Lights[1].m_Position.z = 100.0f * sinf(Angle) + 50.0f;
-		m_Lights[1].m_Direction.x = cosf(Angle);
-		m_Lights[1].m_Direction.z = sinf(Angle);
-	}
-
-	if (GetAsyncKeyState(VK_PRIOR) & 0x8000)
-	{
-		Angle -= ElapsedTime;
-
-		m_Lights[1].m_Position.x = 100.0f * cosf(Angle);
-		m_Lights[1].m_Position.z = 100.0f * sinf(Angle) + 50.0f;
-		m_Lights[1].m_Direction.x = cosf(Angle);
-		m_Lights[1].m_Direction.z = sinf(Angle);
-	}
-
+{	
 	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER].back()) };
 
 	UpdatePerspective(hWnd, ElapsedTime, Player);
@@ -539,7 +516,7 @@ void CGameScene::Animate(float ElapsedTime)
 		for (const auto& GameObject : m_GameObjects[i])
 		{
 			if (GameObject)
-			{
+			{				
 				GameObject->Animate(m_GameObjects, m_NavMesh, ElapsedTime);
 			}
 		}
@@ -570,6 +547,8 @@ void CGameScene::Animate(float ElapsedTime)
 			}
 		}
 	}
+
+	InteractSpotLight(ElapsedTime);
 }
 
 void CGameScene::PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
@@ -910,14 +889,16 @@ void CGameScene::BuildLights()
 	Lights[1].m_IsActive = true;
 	Lights[1].m_ShadowMapping = true;
 	Lights[1].m_Type = LIGHT_TYPE_SPOT;
-	Lights[1].m_Position = XMFLOAT3(0.0f, 18.0f, 150.0f);
-	Lights[1].m_Direction = XMFLOAT3(0.0f, -1.0f, 1.0f);
-	Lights[1].m_Color = XMFLOAT4(0.05f, 0.05f, 0.01f, 0.0f);
-	Lights[1].m_Attenuation = XMFLOAT3(3.0f, 2.0f, 1.0f);
-	Lights[1].m_Falloff = 15.0f;
+	Lights[1].m_Position = XMFLOAT3(0.0f, 50.0f, 0.0f);
+
+	m_SpotLightAngle = XMConvertToRadians(90.0f);
+	Lights[1].m_Direction = Vector3::Normalize(XMFLOAT3(cosf(m_SpotLightAngle), -1.0f, sinf(m_SpotLightAngle)));
+	Lights[1].m_Color = XMFLOAT4(1.0f, 1.0f, 0.3f, 0.0f);
+	Lights[1].m_Attenuation = XMFLOAT3(0.5f, 0.01f, 0.0f);
+	Lights[1].m_Falloff = 1.0f;
 	Lights[1].m_Range = 500.0f;
-	Lights[1].m_Theta = cosf(XMConvertToRadians(30.0f));
-	Lights[1].m_Phi = cosf(XMConvertToRadians(60.0f));
+	Lights[1].m_Theta = cosf(XMConvertToRadians(5.0f));
+	Lights[1].m_Phi = cosf(XMConvertToRadians(10.0f));
 
 	m_Lights.reserve(MAX_LIGHTS);
 	m_Lights.push_back(Lights[0]);
@@ -998,8 +979,13 @@ void CGameScene::InteractTrigger()
 
 							if (Guard)
 							{
-								Guard->FindNavPath(m_NavMesh, m_GameObjects[OBJECT_TYPE_PLAYER].back()->GetPosition(), m_GameObjects);
-								Guard->GetStateMachine()->ChangeState(CGuardChaseState::GetInstance());
+								if (Guard->GetStateMachine()->IsInState(CGuardIdleState::GetInstance()) ||
+									Guard->GetStateMachine()->IsInState(CGuardPatrolState::GetInstance()) ||
+									Guard->GetStateMachine()->IsInState(CGuardReturnState::GetInstance()))
+								{
+									Guard->FindNavPath(m_NavMesh, Player->GetPosition(), m_GameObjects);
+									Guard->GetStateMachine()->ChangeState(CGuardAssembleState::GetInstance());
+								}
 							}
 						}
 					}
@@ -1025,3 +1011,72 @@ void CGameScene::InteractTrigger()
 	}
 }
 
+void CGameScene::InteractSpotLight(float ElapsedTime)
+{
+	// 광원 포지션과 방향벡터를 활용해 평면에 도달하는 중심점을 계산한다. 
+	float LightAngle{ Vector3::Angle(m_Lights[1].m_Direction, XMFLOAT3(0.0f, -1.0f, 0.0f)) };  // 빗변과 변의 각도 계산
+	float HypotenuseLength{ m_Lights[1].m_Position.y / cosf(XMConvertToRadians(LightAngle)) }; // 빗변의 길이 계산
+	float Radian{ HypotenuseLength * tanf(XMConvertToRadians(10.0f)) };                        // 광원이 쏘아지는 원의 반지름
+
+	// 평면에 도달하는 점 계산
+	XMFLOAT3 LightedPosition{ Vector3::Add(m_Lights[1].m_Position , Vector3::ScalarProduct(HypotenuseLength, m_Lights[1].m_Direction, false)) }; 
+
+	for (const auto& Player : m_GameObjects[OBJECT_TYPE_PLAYER])
+	{
+		if (Player)
+		{
+			if (Player->IsActive())
+			{
+				if (Math::Distance(Player->GetPosition(), LightedPosition) < Radian)
+				{
+					XMFLOAT3 Direction = Vector3::Normalize(Vector3::Subtract(Player->GetPosition(), m_Lights[1].m_Position));
+
+					shared_ptr<CGameObject> NearestIntersectedObject{};
+
+					float NearestHitDistance{ FLT_MAX };
+					float HitDistance{};
+					bool HitCheck{};
+
+					for (const auto& GameObject : m_GameObjects[OBJECT_TYPE_STRUCTURE])
+					{
+						if (GameObject)
+						{
+							shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(m_Lights[1].m_Position, Direction, HitDistance, HypotenuseLength) };
+
+							if (IntersectedObject && HitDistance < HypotenuseLength)
+							{
+								HitCheck = true;
+								break;
+							}
+						}
+					}
+
+					if (!HitCheck)
+					{
+						for (const auto& GameObject : m_GameObjects[OBJECT_TYPE_NPC])
+						{
+							shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(GameObject) };
+
+							// 스팟조명과 충돌 할 경우 주변 범위에 있는 경찰들이 플레이어를 쫒기 시작한다.
+							if (Math::Distance(LightedPosition, Guard->GetPosition()) < 300.0f)
+							{
+								if (Guard->GetStateMachine()->IsInState(CGuardIdleState::GetInstance()) ||
+									Guard->GetStateMachine()->IsInState(CGuardPatrolState::GetInstance()) ||
+									Guard->GetStateMachine()->IsInState(CGuardReturnState::GetInstance()))
+								{
+									Guard->FindNavPath(m_NavMesh, Player->GetPosition(), m_GameObjects);
+									Guard->GetStateMachine()->ChangeState(CGuardAssembleState::GetInstance());
+									cout << "스팟 조명으로 추적 시작" << endl;
+								}
+							}
+						}
+						return;
+					}
+				}
+			}
+		}		
+	}
+
+	m_SpotLightAngle += ElapsedTime;
+	m_Lights[1].m_Direction = Vector3::Normalize(XMFLOAT3(cosf(m_SpotLightAngle), -1.0f, sinf(m_SpotLightAngle)));
+}

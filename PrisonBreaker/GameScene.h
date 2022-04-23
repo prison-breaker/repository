@@ -65,6 +65,8 @@ private:
 
 	bool										m_RenderBoundingBox{};
 
+	float                                       m_SpotLightAngle{};
+
 public:
 	CGameScene() = default;
 	virtual ~CGameScene() = default;
@@ -106,4 +108,5 @@ public:
 	void UpdatePerspective(HWND hWnd, float ElapsedTime, const shared_ptr<CPlayer>& Player);
 
 	void InteractTrigger();
+	void InteractSpotLight(float ElapsedTime);
 };
