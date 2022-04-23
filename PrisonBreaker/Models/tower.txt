@@ -1,19 +1,12 @@
 <Hierarchy>
 	<Frame> tower
 		<TransformMatrix> 3 0 0 0 0 3 0 0 0 0 3 0 0 0 0 1 
-		<ChildCount> 7
+		<ChildCount> 6
 			<Frame> tower_1
 				<TransformMatrix> 1.5 0 0 0 0 1 0 0 0 0 1.5 0 0 0 0 1 
 				<Mesh> tower_1
 				<Materials> 1
 					<Material> tower_1 
-				<ChildCount> 0
-			</Frame>
-			<Frame> tower_border_1
-				<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 -4.768371E-07 -5.960464E-08 1 
-				<Mesh> tower_border_1
-				<Materials> 1
-					<Material> metal 
 				<ChildCount> 0
 			</Frame>
 			<Frame> tower_stairs_1
@@ -24,7 +17,7 @@
 				<ChildCount> 0
 			</Frame>
 			<Frame> spotlight_post_pr_1
-				<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 8.397992 0 1 
+				<TransformMatrix> 1.5 0 0 0 0 1.5 0 0 0 0 1.5 0 0 8.397992 0 1 
 				<Mesh> spotlight_post_pr_1
 				<Materials> 1
 					<Material> spotlight_post_pr_1 

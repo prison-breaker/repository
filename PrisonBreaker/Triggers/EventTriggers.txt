@@ -22,8 +22,8 @@
 	</EventTrigger>
 	<EventTrigger>
 		<Type> 2
-		<TriggerArea> 184.73 192.73 17.88 21.88
-		<ToTrigger> 0 0 -1
+		<TriggerArea> 174.76 176.76 19.22 23.22
+		<ToTrigger> 1 0 1.192093E-07
 		<TargetRootIndex> 15
 		<TargetObject> 0 
 	</EventTrigger>

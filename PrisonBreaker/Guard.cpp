@@ -145,7 +145,7 @@ shared_ptr<CGameObject> CGuard::IsFoundPlayer(const vector<vector<shared_ptr<CGa
 				{
 					float BetweenDegree{ Vector3::Angle(Vector3::Normalize(GetLook()), Vector3::Normalize(ToPlayer)) };
 
-					if (BetweenDegree < 100.0f)
+					if (BetweenDegree < 140.0f)
 					{
 						float NearestHitDistance{ FLT_MAX };
 						float HitDistance{};

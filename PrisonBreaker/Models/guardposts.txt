@@ -4,7 +4,7 @@
 		<ChildCount> 4
 			<Frame> guardpost
 				<TransformMatrix> -3 0 0 0 0 3 0 0 0 0 -3 0 410 -10 0 1 
-				<ChildCount> 4
+				<ChildCount> 11
 					<Frame> roof_5
 						<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 66.7 -0.3999999 -1 1 
 						<Mesh> roof_5
@@ -109,6 +109,80 @@
 									<Material> doors_frame_1 
 								<ChildCount> 0
 							</Frame>
+					</Frame>
+					<Frame> bench
+						<TransformMatrix> -1.333333 0 0 0 0 1 0 0 0 0 -1 0 76.77334 3.7 -10.07526 1 
+						<Mesh> bench
+						<Materials> 1
+							<Material> bench 
+						<ChildCount> 0
+					</Frame>
+					<Frame> bench
+						<TransformMatrix> -1.333333 0 0 0 0 1 0 0 0 0 -1 0 73.83 3.7 -10.07526 1 
+						<Mesh> bench
+						<Materials> 1
+							<Material> bench 
+						<ChildCount> 0
+					</Frame>
+					<Frame> table_3
+						<TransformMatrix> -1.192093E-07 0 1 0 0 1 0 0 -1 0 -1.192093E-07 0 75.29667 3.7 -5.063334 1 
+						<ChildCount> 4
+							<Frame> box_1
+								<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 -0.1816483 0.6210493 -0.341375 1 
+								<Mesh> box_1
+								<Materials> 1
+									<Material> table 
+								<ChildCount> 0
+							</Frame>
+							<Frame> box_2
+								<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 -0.1816483 0.4272843 -0.341375 1 
+								<Mesh> box_2
+								<Materials> 1
+									<Material> table 
+								<ChildCount> 0
+							</Frame>
+							<Frame> box_3
+								<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 -0.1816483 0.233519 -0.341375 1 
+								<Mesh> box_3
+								<Materials> 1
+									<Material> table 
+								<ChildCount> 0
+							</Frame>
+							<Frame> table
+								<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 
+								<Mesh> table
+								<Materials> 1
+									<Material> table 
+								<ChildCount> 0
+							</Frame>
+					</Frame>
+					<Frame> chair_pr_3
+						<TransformMatrix> 0.6856918 0 -0.7278919 0 0 1 0 0 0.7278919 0 0.6856918 0 74.98334 3.7 -5.96 1 
+						<Mesh> chair_pr_3
+						<Materials> 1
+							<Material> chair_pr_3 
+						<ChildCount> 0
+					</Frame>
+					<Frame> rack_pr_1
+						<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 72.52 3.7 -7.066667 1 
+						<Mesh> rack_pr_1
+						<Materials> 1
+							<Material> rack_pr_1 
+						<ChildCount> 0
+					</Frame>
+					<Frame> rack_pr_1
+						<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 72.52 3.7 -4.906667 1 
+						<Mesh> rack_pr_1
+						<Materials> 1
+							<Material> rack_pr_1 
+						<ChildCount> 0
+					</Frame>
+					<Frame> SM_FireAlarm
+						<TransformMatrix> -3.576279E-09 0 0.03 0 0 0.03 0 0 -0.03 0 -3.576279E-09 0 78.45873 5 -7 1 
+						<Mesh> SM_FireAlarm
+						<Materials> 1
+							<Material> SM_FireAlarmMat 
+						<ChildCount> 0
 					</Frame>
 			</Frame>
 			<Frame> guardpost

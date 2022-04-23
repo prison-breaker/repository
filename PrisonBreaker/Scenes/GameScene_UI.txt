@@ -106,7 +106,7 @@
 		<IsActive> 1
 		<TextureName> Textures/Key_UI.dds
 		<RectTransform> 1 199 1029 0 40 40 
-		<AlphaColor> 0.2352941
+		<AlphaColor> 0.5019608
 		<Animation>
 			<AnimationClips> 1
 				<AnimationClip> Activate 60 20 0.3333333

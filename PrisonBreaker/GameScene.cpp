@@ -437,7 +437,7 @@ void CGameScene::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, 
 		break;
 	case 'q': // 플레이어를 감옥 밖으로 이동
 	case 'Q':
-		Player->SetPosition(m_NavMesh->GetNavNodes()[500]->GetTriangle().m_Centroid);
+		Player->SetPosition(m_NavMesh->GetNavNodes()[750]->GetTriangle().m_Centroid);
 		break;
 	}
 }
@@ -1066,7 +1066,6 @@ void CGameScene::InteractSpotLight(float ElapsedTime)
 								{
 									Guard->FindNavPath(m_NavMesh, Player->GetPosition(), m_GameObjects);
 									Guard->GetStateMachine()->ChangeState(CGuardAssembleState::GetInstance());
-									cout << "스팟 조명으로 추적 시작" << endl;
 								}
 							}
 						}
