@@ -24,9 +24,6 @@ private:
 	shared_ptr<CNavNode>         m_Parent{};
 
 public:
-
-
-
 	void SetTriangle(const TRIANGLE& Triangle);
 	const TRIANGLE& GetTriangle() const;
 

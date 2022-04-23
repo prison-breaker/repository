@@ -18,6 +18,8 @@ public:
 	CEventTrigger() = default;
 	virtual ~CEventTrigger() = default;
 
+	virtual bool IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& LookDirection);
+
 	virtual void GenerateEventTrigger(float ElapsedTime);
 
 	void LoadEventTriggerFromFile(tifstream& InFile);
@@ -25,7 +27,7 @@ public:
 	void SetInteracted(bool IsInteracted);
 	bool IsInteracted() const;
 
-	bool IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& LookDirection);
+	void CalculateTriggerAreaByPoint(const XMFLOAT3& Position, float XWidth, float ZWidth);
 
 	void InsertEventObject(const shared_ptr<CGameObject>& EventObject);
 

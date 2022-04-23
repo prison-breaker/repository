@@ -10,20 +10,28 @@ void CGuard::Initialize()
 	m_StateMachine->SetCurrentState(CGuardIdleState::GetInstance());
 }
 
-void CGuard::Animate(float ElapsedTime)
+void CGuard::Animate(const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
 {
 	if (IsActive())
 	{
 		if (m_StateMachine)
 		{
-			m_StateMachine->Update(ElapsedTime);
+			m_StateMachine->Update(GameObjects, NavMesh, ElapsedTime);
 		}
 	}
 }
 
 void CGuard::SetHealth(UINT Health)
 {
-	m_Health = Health;
+	// UnderFlow
+	if (Health > 100)
+	{
+		m_Health = 0;
+	}
+	else
+	{
+		m_Health = Health;
+	}
 }
 
 UINT CGuard::GetHealth() const
@@ -91,14 +99,14 @@ float CGuard::GetUpdateTargetTime() const
 	return m_UpdateTargetTime;
 }
 
-void CGuard::SetTargetPosition(const XMFLOAT3& TargetPosition)
+void CGuard::SetTarget(const shared_ptr<CGameObject>& Target)
 {
-	m_TargetPosition = TargetPosition;
+	m_Target = Target;
 }
 
-const XMFLOAT3& CGuard::GetTargetPosition() const
+shared_ptr<CGameObject> CGuard::GetTarget() const
 {
-	return m_TargetPosition;
+	return m_Target;
 }
 
 vector<XMFLOAT3>& CGuard::GetNavPath()
@@ -116,21 +124,62 @@ UINT CGuard::GetPatrolIndex() const
 	return m_PatrolIndex;
 }
 
-bool CGuard::IsFoundPlayer(const XMFLOAT3& Position)
+shared_ptr<CGameObject> CGuard::IsFoundPlayer(const vector<vector<shared_ptr<CGameObject>>>& GameObjects)
 {
-	XMFLOAT3 ToPlayer{ Vector3::Subtract(Position, GetPosition()) };
+	shared_ptr<CGameObject> NearestPlayer{};
+	float NearestDistance{ FLT_MAX };
+	float Distance{};
 
-	if (Vector3::Length(ToPlayer) < 30.0f)
+	// 더 가까운 플레이어를 찾는다.
+	for (const auto& Player : GameObjects[OBJECT_TYPE_PLAYER])
 	{
-		float BetweenDegree{ Vector3::Angle(Vector3::Normalize(GetLook()), Vector3::Normalize(ToPlayer)) };
-
-		if (BetweenDegree < 100.0f)
+		if (Player)
 		{
-			return true;
+			if (Player->IsActive())
+			{
+				XMFLOAT3 ToPlayer{ Vector3::Subtract(Player->GetPosition(), GetPosition()) };
+
+				Distance = Vector3::Length(ToPlayer);
+
+				if (Distance < 30.0f)
+				{
+					float BetweenDegree{ Vector3::Angle(Vector3::Normalize(GetLook()), Vector3::Normalize(ToPlayer)) };
+
+					if (BetweenDegree < 100.0f)
+					{
+						float NearestHitDistance{ FLT_MAX };
+						float HitDistance{};
+						bool IsHit{};
+
+						for (const auto& GameObject : GameObjects[OBJECT_TYPE_STRUCTURE])
+						{
+							if (GameObject)
+							{
+								shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(GetPosition(), Vector3::Normalize(ToPlayer), HitDistance, 30.0f)};
+
+								if (IntersectedObject && HitDistance < 30.0f)
+								{
+									IsHit = true;
+									break;
+								}
+							}
+						}
+
+						if (!IsHit)
+						{
+							if (Distance < NearestDistance)
+							{
+								NearestPlayer = Player;
+								NearestDistance = Distance;
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 
-	return false;
+	return NearestPlayer;
 }
 
 void CGuard::FindNavPath(const shared_ptr<CNavMesh>& NavMesh, const XMFLOAT3& TargetPosition, const vector<vector<shared_ptr<CGameObject>>>& GameObjects)
@@ -231,31 +280,25 @@ void CGuard::FindRayCastingNavPath(const vector<vector<shared_ptr<CGameObject>>>
 
 			// Normalize 안하니까 터지지? 반대 방향은 왜 안되는지?
 			XMFLOAT3 ToNextPosition{ Vector3::Subtract(SearchPosition, CheckPosition) }; 
-			float NearestHitDistance{ FLT_MAX };
+			float Distance{ Vector3::Length(ToNextPosition) };
 			float HitDistance{};
+			bool IsHit{};
 
 			for (const auto& GameObject : GameObjects[OBJECT_TYPE_STRUCTURE])
 			{
 				if (GameObject)
 				{
-					shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(CheckPosition, Vector3::Normalize(ToNextPosition), HitDistance, Vector3::Length(ToNextPosition)) };
+					shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(CheckPosition, Vector3::Normalize(ToNextPosition), HitDistance, Distance) };
 
-					if (IntersectedObject && (HitDistance < NearestHitDistance))
+					if (IntersectedObject && (HitDistance < Distance))
 					{
-						NearestHitDistance = HitDistance;
+						IsHit = true;
+						break;
 					}
 				}
 			}
 
-			// 바운딩박스 내에 있어 음수가 나온 경우 기존 경로를 사용하도록 리턴한다.
-			if (NearestHitDistance < 0.0f)
-			{
-				return;
-			}
-
-			float Distance{ Math::Distance(CheckPosition, SearchPosition) };
-
-			if (Distance < NearestHitDistance)
+			if (!IsHit)
 			{
 				RayCastingNavPath.push_back(m_NavPath[CheckIndex]);
 				SearchIndex = CheckIndex - 1;
@@ -264,16 +307,23 @@ void CGuard::FindRayCastingNavPath(const vector<vector<shared_ptr<CGameObject>>>
 		}
 	}
 
-	m_NavPath.clear();
-	m_NavPath = RayCastingNavPath;
+	if (!RayCastingNavPath.empty())
+	{
+		m_NavPath.clear();
+		m_NavPath = RayCastingNavPath;
+	}
+	else
+	{
+		tcout << "터지는 이유" << endl;
+	}
 }
 
-void CGuard::FindPatrolNavPath(const shared_ptr<CNavMesh>& NavMesh)
+void CGuard::FindPatrolNavPath(const shared_ptr<CNavMesh>& NavMesh, const XMFLOAT3& TargetPosition)
 {
 	priority_queue<shared_ptr<CNavNode>, vector<shared_ptr<CNavNode>>, compare> NavNodeQueue{};
 
 	UINT StartNavNodeIndex{ NavMesh->GetNodeIndex(GetPosition()) };
-	UINT TargetNavNodeIndex{ NavMesh->GetNodeIndex(GetTargetPosition()) };
+	UINT TargetNavNodeIndex{ NavMesh->GetNodeIndex(TargetPosition) };
 
 	shared_ptr<CNavNode> StartNavNode{ NavMesh->GetNavNodes()[StartNavNodeIndex] };
 	shared_ptr<CNavNode> TargetNavNode{ NavMesh->GetNavNodes()[TargetNavNodeIndex] };
@@ -325,7 +375,7 @@ void CGuard::FindPatrolNavPath(const shared_ptr<CNavMesh>& NavMesh)
 	}
 
 	m_PatrolNavPath.clear();
-	m_PatrolNavPath.push_back(GetTargetPosition());
+	m_PatrolNavPath.push_back(TargetPosition);
 
 	while (true)
 	{

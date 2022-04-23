@@ -198,7 +198,7 @@ namespace Math
 
 	float Distance(const XMFLOAT3& Vector1, const XMFLOAT3& Vector2);
 
-	int GetTriangleSize(const XMFLOAT3& Vertex1, const XMFLOAT3& Vertex2, const XMFLOAT3& Vertex3);
+	UINT CalculateTriangleArea(const XMFLOAT3& Vertex1, const XMFLOAT3& Vertex2, const XMFLOAT3& Vertex3);
 	bool IsInTriangle(const XMFLOAT3& Vertex1, const XMFLOAT3& Vertex2, const XMFLOAT3& Vertex3, const XMFLOAT3& NewPosition);
 }
 

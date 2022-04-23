@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "State_Player.h"
 #include "Player.h"
+#include "Guard.h"
 
 CPlayerIdleState* CPlayerIdleState::GetInstance()
 {
@@ -16,7 +17,7 @@ void CPlayerIdleState::Enter(const shared_ptr<CPlayer>& Entity)
 	Entity->SetAnimationClip(0);
 }
 
-void CPlayerIdleState::ProcessInput(const shared_ptr<CPlayer>& Entity, UINT InputMask, float ElapsedTime)
+void CPlayerIdleState::ProcessInput(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
 {
 	if (InputMask & INPUT_MASK_LMB)
 	{
@@ -33,7 +34,7 @@ void CPlayerIdleState::ProcessInput(const shared_ptr<CPlayer>& Entity, UINT Inpu
 	}
 }
 
-void CPlayerIdleState::Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime)
+void CPlayerIdleState::Update(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
 {
 	Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
 }
@@ -57,7 +58,7 @@ void CPlayerWalkingState::Enter(const shared_ptr<CPlayer>& Entity)
 
 }
 
-void CPlayerWalkingState::ProcessInput(const shared_ptr<CPlayer>& Entity, UINT InputMask, float ElapsedTime)
+void CPlayerWalkingState::ProcessInput(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
 {
 	if (InputMask & INPUT_MASK_LMB)
 	{
@@ -126,7 +127,7 @@ void CPlayerWalkingState::ProcessInput(const shared_ptr<CPlayer>& Entity, UINT I
 	}
 }
 
-void CPlayerWalkingState::Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime)
+void CPlayerWalkingState::Update(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
 {
 	Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
 }
@@ -150,7 +151,7 @@ void CPlayerRunningState::Enter(const shared_ptr<CPlayer>& Entity)
 
 }
 
-void CPlayerRunningState::ProcessInput(const shared_ptr<CPlayer>& Entity, UINT InputMask, float ElapsedTime)
+void CPlayerRunningState::ProcessInput(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
 {
 	if (InputMask & INPUT_MASK_LMB)
 	{
@@ -219,10 +220,10 @@ void CPlayerRunningState::ProcessInput(const shared_ptr<CPlayer>& Entity, UINT I
 		break;
 	}
 
-	Entity->SetSpeed(Entity->GetSpeed());
+	Entity->SetSpeed(Entity->GetSpeed() * 4.0f);
 }
 
-void CPlayerRunningState::Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime)
+void CPlayerRunningState::Update(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
 {
 	Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
 }
@@ -248,12 +249,12 @@ void CPlayerPunchingState::Enter(const shared_ptr<CPlayer>& Entity)
 	Entity->SetAnimationClip(7);
 }
 
-void CPlayerPunchingState::ProcessInput(const shared_ptr<CPlayer>& Entity, UINT InputMask, float ElapsedTime)
+void CPlayerPunchingState::ProcessInput(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
 {
 
 }
 
-void CPlayerPunchingState::Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime)
+void CPlayerPunchingState::Update(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
 {
 	if (Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE))
 	{
@@ -282,13 +283,78 @@ void CPlayerShootingState::Enter(const shared_ptr<CPlayer>& Entity)
 	Entity->GetCamera()->SetZoomIn(true);
 }
 
-void CPlayerShootingState::ProcessInput(const shared_ptr<CPlayer>& Entity, UINT InputMask, float ElapsedTime)
+void CPlayerShootingState::ProcessInput(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
 {
 	switch (InputMask)
 	{
 	case INPUT_MASK_LMB | INPUT_MASK_RMB:
-		Entity->GetAnimationController()->SetAnimationClip(9);
-		break;
+	{
+		if (Entity->GetAnimationController()->GetAnimationClip() == 8)
+		{
+			shared_ptr<CGameObject> NearestIntersectedRootObject{};
+			shared_ptr<CGameObject> NearestIntersectedObject{};
+
+			float NearestHitDistance{ FLT_MAX };
+			float HitDistance{};
+			XMFLOAT3 RayOrigin{ Entity->GetCamera()->GetPosition() };
+			XMFLOAT3 RayDirection{ Entity->GetCamera()->GetLook() };
+
+			for (UINT i = OBJECT_TYPE_NPC; i <= OBJECT_TYPE_STRUCTURE; ++i)
+			{
+				for (const auto& GameObject : GameObjects[i])
+				{
+					if (GameObject)
+					{
+						if (GameObject->IsActive())
+						{
+							// 모델을 공유하기 때문에, 월드 변환 행렬을 객체마다 갱신시켜주어야 한다.
+							CAnimationController* AnimationController{ GameObject->GetAnimationController() };
+
+							if (AnimationController)
+							{
+								AnimationController->UpdateShaderVariables();
+							}
+
+							shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(RayOrigin, RayDirection, HitDistance, FLT_MAX) };
+
+							if (IntersectedObject)
+							{
+								tcout << TEXT("광선을 맞은 객체명 : ") << IntersectedObject->GetName() << TEXT(" (거리 : ") << HitDistance << TEXT(")") << endl;
+								tcout << TEXT("- 해당 객체의 위치 : ") << IntersectedObject->GetPosition().x << ", " << IntersectedObject->GetPosition().y << ", " << IntersectedObject->GetPosition().z << endl;
+								tcout << TEXT("- 해당 객체 중심까지의 거리 : ") << Vector3::Length(Vector3::Subtract(IntersectedObject->GetPosition(), Entity->GetCamera()->GetPosition())) << endl;
+							}
+
+							if (IntersectedObject && (HitDistance < NearestHitDistance))
+							{
+								NearestIntersectedRootObject = GameObject;
+								NearestIntersectedObject = IntersectedObject;
+								NearestHitDistance = HitDistance;
+							}
+						}
+					}
+				}
+			}
+
+			if (NearestIntersectedObject)
+			{
+				if (typeid(*NearestIntersectedRootObject) == typeid(CGuard))
+				{
+					shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(NearestIntersectedRootObject) };
+
+					if (!Guard->GetStateMachine()->IsInState(CGuardHitState::GetInstance()) &&
+						!Guard->GetStateMachine()->IsInState(CGuardDyingState::GetInstance()))
+					{
+						Guard->GetStateMachine()->ChangeState(CGuardHitState::GetInstance());
+					}
+				}
+
+				tcout << TEXT("★ 가장 먼저 광선을 맞은 객체명 : ") << NearestIntersectedObject->GetName() << TEXT(" (거리 : ") << NearestHitDistance << TEXT(")") << endl << endl;
+			}
+
+			Entity->GetAnimationController()->SetAnimationClip(9);
+			break;
+		}
+	}
 	}
 
 	if (InputMask & INPUT_MASK_RMB)
@@ -301,7 +367,7 @@ void CPlayerShootingState::ProcessInput(const shared_ptr<CPlayer>& Entity, UINT 
 	}
 }
 
-void CPlayerShootingState::Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime)
+void CPlayerShootingState::Update(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
 {
 	switch (Entity->GetAnimationController()->GetAnimationClip())
 	{
@@ -310,7 +376,7 @@ void CPlayerShootingState::Update(const shared_ptr<CPlayer>& Entity, float Elaps
 		break;
 	case 9:
 		if (Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE))
-		{ 
+		{
 			Entity->GetAnimationController()->SetAnimationClip(8);
 		}
 		break;
@@ -336,12 +402,12 @@ void CPlayerDyingState::Enter(const shared_ptr<CPlayer>& Entity)
 
 }
 
-void CPlayerDyingState::ProcessInput(const shared_ptr<CPlayer>& Entity, UINT InputMask, float ElapsedTime)
+void CPlayerDyingState::ProcessInput(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
 {
 
 }
 
-void CPlayerDyingState::Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime)
+void CPlayerDyingState::Update(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
 {
 
 }

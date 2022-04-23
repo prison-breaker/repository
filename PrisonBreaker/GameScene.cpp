@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "GameScene.h"
+#include "State_KeyUI.h"
 
 void CGameScene::OnCreate(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
@@ -141,8 +142,7 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 				Guard->SetTransformMatrix(TransformMatrix);
 				Guard->UpdateTransform(Matrix4x4::Identity());
 				Guard->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
-				Guard->SetTargetPosition(TargetPosition);
-				Guard->FindPatrolNavPath(m_NavMesh);
+				Guard->FindPatrolNavPath(m_NavMesh, TargetPosition);
 				Guard->Initialize();
 
 				m_GameObjects[ObjectType].push_back(Guard);
@@ -407,37 +407,25 @@ void CGameScene::ProcessMouseMessage(HWND hWnd, UINT Message, WPARAM wParam, LPA
 
 void CGameScene::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
+	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER].back()) };
+
 	switch (wParam)
 	{
-	case 'r': // 권총 획득
-	case 'R':
-		static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER].back())->AcquirePistol();
-		if (static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER].back())->SwapWeapon(WEAPON_TYPE_PISTOL))
-		{
-			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(false); // 4: Punch UI
-			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][5]->SetActive(true);	 // 5: Pistol UI
-			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(true);	 // 6: Bullet UI
-		}
-		break;
 	case '1': // 무기 스왑 - 펀치
-		if (static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER].back())->SwapWeapon(WEAPON_TYPE_PUNCH))
+		if (Player->SwapWeapon(WEAPON_TYPE_PUNCH))
 		{
 			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(true);  // 4: Punch UI
-			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][5]->SetActive(false); // 5: Pistol UI
-			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(false); // 6: Bullet UI
+			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(false); // 6: Pistol UI
+			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->SetActive(false); // 7: Bullet UI
 		}
 		break;
 	case '2': // 무기 스왑 - 권총
-		if (static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER].back())->SwapWeapon(WEAPON_TYPE_PISTOL))
+		if (Player->SwapWeapon(WEAPON_TYPE_PISTOL))
 		{
 			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(false); // 4: Punch UI
-			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][5]->SetActive(true);	 // 5: Pistol UI
-			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(true);	 // 6: Bullet UI
+			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(true);	 // 6: Pistol UI
+			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->SetActive(true);	 // 7: Bullet UI
 		}
-		break;
-	case '3': // 미션 UI 완료 디버깅
-		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(0, 1);
-		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(1, 5);
 		break;
 	case 'b': // 바운딩 박스 렌더링 ON/OFF
 	case 'B':
@@ -447,22 +435,15 @@ void CGameScene::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, 
 	case 'P':
 		(m_MappedFog->m_Fog.m_Density > 0.0f) ? m_MappedFog->m_Fog.m_Density = 0.0f : m_MappedFog->m_Fog.m_Density = 0.025f;
 		break;
-	case 'e': // 현재 플레이어가 있는 위치를 향해 길찾기 시작
-	case 'E':
-		static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][2])->GetStateMachine()->ChangeState(CGuardChaseState::GetInstance());
-		static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][2])->FindNavPath(m_NavMesh, m_GameObjects[OBJECT_TYPE_PLAYER].back()->GetPosition(), m_GameObjects);
-		break;
-	case 'q': // 플레이어를 감옥 밖으로 이동시키고 'e'키를 통해 길찾기를 하는 NPC를 운동장 근처로 소환
+	case 'q': // 플레이어를 감옥 밖으로 이동
 	case 'Q':
-		m_GameObjects[OBJECT_TYPE_PLAYER].back()->SetPosition(m_NavMesh->GetNavNodes()[500]->GetTriangle().m_Centroid);
+		Player->SetPosition(m_NavMesh->GetNavNodes()[500]->GetTriangle().m_Centroid);
 		break;
 	}
 }
 
 void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 {
-	m_IsShooting = false;
-
 	// 방향성 조명 방향 변경
 	static float Angle = XMConvertToRadians(90.0f);
 
@@ -486,50 +467,16 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 		m_Lights[1].m_Direction.z = sinf(Angle);
 	}
 
-	RECT Rect{};
+	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER].back()) };
 
-	GetWindowRect(hWnd, &Rect);
-
-	POINT NewCursorPos{};
-	POINT OldCursorPos{ Rect.right / 2, Rect.bottom / 2 };
-
-	GetCursorPos(&NewCursorPos);
-	SetCursorPos(OldCursorPos.x, OldCursorPos.y);
-
-	XMFLOAT2 Delta{ 10.0f * ElapsedTime * (NewCursorPos.x - OldCursorPos.x), 10.0f * ElapsedTime * (NewCursorPos.y - OldCursorPos.y) };
-	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][0]) };
+	UpdatePerspective(hWnd, ElapsedTime, Player);
 
 	// 1인칭 모드
-	//Player->GetCamera()->Rotate(Delta.y, Delta.x, 0.0f);
-
 	//if (GetAsyncKeyState('W') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(15.0f * ElapsedTime, Player->GetCamera()->GetLook(), false));
 	//if (GetAsyncKeyState('S') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(-15.0f * ElapsedTime, Player->GetCamera()->GetLook(), false));
 	//if (GetAsyncKeyState('A') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(-15.0f * ElapsedTime, Player->GetCamera()->GetRight(), false));
 	//if (GetAsyncKeyState('D') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(15.0f * ElapsedTime, Player->GetCamera()->GetRight(), false));
-
 	//return;
-
-	// 3인칭 모드
-	float NearestHitDistance{ FLT_MAX };
-	float HitDistance{};
-
-	XMFLOAT3 RayOrigin{ Player->GetPosition().x, Player->GetCamera()->GetPosition().y, Player->GetPosition().z };
-	XMFLOAT3 RayDirection{ Vector3::Inverse(Player->GetLook()) };
-
-	for (const auto& GameObject : m_GameObjects[OBJECT_TYPE_STRUCTURE])
-	{
-		if (GameObject)
-		{
-			shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(RayOrigin, RayDirection, HitDistance, 3.0f) };
-
-			if (IntersectedObject && (HitDistance < NearestHitDistance))
-			{
-				NearestHitDistance = HitDistance;
-			}
-		}
-	}
-
-	Player->Rotate(Delta.y, Delta.x, 0.0f, ElapsedTime, NearestHitDistance);
 
 	UINT InputMask{};
 
@@ -555,43 +502,7 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 
 	if (GetAsyncKeyState('F') & 0x0001)
 	{
-		XMFLOAT3 Position{ Player->GetPosition() };
-		XMFLOAT3 LookDirection{ Player->GetLook() };
-
-		for (const auto& EventTrigger : m_EventTriggers)
-		{
-			if (EventTrigger)
-			{
-				if (!EventTrigger->IsInteracted())
-				{
-					if (EventTrigger->IsInTriggerArea(Position, LookDirection))
-					{
-						EventTrigger->SetInteracted(true);
-
-						// 사이렌을 작동시킨다.
-						if (typeid(*EventTrigger) == typeid(CSirenEventTrigger))
-						{
-							tcout << TEXT("플레이어가 사이렌을 작동시켰습니다. 잠시 뒤 5명의 경찰이 이곳으로 올 것입니다!") << endl;
-
-							UINT GuardCount{ static_cast<UINT>(m_GameObjects[OBJECT_TYPE_NPC].size()) };
-
-							for (UINT i = 0; i < 5; ++i)
-							{
-								UINT Index{ rand() % GuardCount };
-								shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][Index]) };
-
-								if (Guard)
-								{
-									Guard->FindNavPath(m_NavMesh, m_GameObjects[OBJECT_TYPE_PLAYER].back()->GetPosition(), m_GameObjects);
-									Guard->GetStateMachine()->ChangeState(CGuardChaseState::GetInstance());
-								}
-							}
-						}
-						break;
-					}
-				}
-			}
-		}
+		InteractTrigger();
 	}
 
 	if (GetAsyncKeyState(VK_SHIFT) & 0x8000)
@@ -603,127 +514,33 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	if (GetAsyncKeyState(VK_TAB) & 0x0001)
 	{
 		InputMask |= INPUT_MASK_TAB;
-		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->GetStateMachine()->ProcessInput(INPUT_MASK_TAB, ElapsedTime);
+		static_pointer_cast<CMissionUI>(m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0])->GetStateMachine()->ProcessInput(m_GameObjects, m_NavMesh, ElapsedTime, INPUT_MASK_TAB);
 	}
 
 	if (GetAsyncKeyState(VK_RBUTTON) & 0x8000)
 	{
 		InputMask |= INPUT_MASK_RMB;
-		m_IsShooting = true;
+
 	}
 
 	if (GetAsyncKeyState(VK_LBUTTON) & 0x0001)
 	{
 		InputMask |= INPUT_MASK_LMB;
-
-		shared_ptr<CGameObject> NearestIntersectedObject{};
-
-		NearestHitDistance = FLT_MAX;
-		RayOrigin = Player->GetCamera()->GetPosition();
-		RayDirection = Player->GetCamera()->GetLook();
-
-		if (m_IsShooting)
-		{
-			for (UINT i = OBJECT_TYPE_NPC; i <= OBJECT_TYPE_STRUCTURE; ++i)
-			{
-				for (const auto& GameObject : m_GameObjects[i])
-				{
-					if (GameObject)
-					{
-						// 모델을 공유하기 때문에, 월드 변환 행렬을 객체마다 갱신시켜주어야 한다.
-						CAnimationController* AnimationController{ GameObject->GetAnimationController() };
-
-						if (AnimationController)
-						{
-							AnimationController->UpdateShaderVariables();
-						}
-
-						shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(RayOrigin, RayDirection, HitDistance, FLT_MAX) };
-
-						if (IntersectedObject)
-						{
-							tcout << TEXT("광선을 맞은 객체명 : ") << IntersectedObject->GetName() << TEXT(" (거리 : ") << HitDistance << TEXT(")") << endl;
-							tcout << TEXT("- 해당 객체의 위치 : ") << IntersectedObject->GetPosition().x << ", " << IntersectedObject->GetPosition().y << ", " << IntersectedObject->GetPosition().z << endl;
-							tcout << TEXT("- 해당 객체 중심까지의 거리 : ") << Vector3::Length(Vector3::Subtract(IntersectedObject->GetPosition(), Player->GetCamera()->GetPosition())) << endl;
-						}
-
-						if (IntersectedObject && (HitDistance < NearestHitDistance))
-						{
-							NearestIntersectedObject = IntersectedObject;
-							NearestHitDistance = HitDistance;
-						}
-					}
-				}
-			}
-
-			if (NearestIntersectedObject)
-			{
-				tcout << TEXT("★ 가장 먼저 광선을 맞은 객체명 : ") << NearestIntersectedObject->GetName() << TEXT(" (거리 : ") << NearestHitDistance << TEXT(")") << endl << endl;
-			}
-		}
 	}
 
-	Player->ProcessInput(InputMask, ElapsedTime, m_NavMesh);
-	(Player->GetCamera()->IsZoomIn()) ? m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->SetActive(true) : m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->SetActive(false);
+	Player->ProcessInput(m_GameObjects, m_NavMesh, ElapsedTime, InputMask);
+	(Player->GetCamera()->IsZoomIn()) ? m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][8]->SetActive(true) : m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][8]->SetActive(false);
 }
 
 void CGameScene::Animate(float ElapsedTime)
 {
-	XMFLOAT3 PlayerPosition{ m_GameObjects[OBJECT_TYPE_PLAYER].back()->GetPosition() };
-
-	for (const auto& GameObject : m_GameObjects[OBJECT_TYPE_NPC])
-	{
-		shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(GameObject) };
-
-		if (Guard)
-		{
-			// Idle, Patrol, Return 상태일 때는 시야각을 통해 플레이어를 감지한다.
-			if (Guard->GetStateMachine()->IsInState(CGuardIdleState::GetInstance()) ||
-				Guard->GetStateMachine()->IsInState(CGuardPatrolState::GetInstance()) ||
-				Guard->GetStateMachine()->IsInState(CGuardReturnState::GetInstance()))
-			{
-				if (Guard->IsFoundPlayer(PlayerPosition))
-				{
-					Guard->FindNavPath(m_NavMesh, PlayerPosition, m_GameObjects);
-					Guard->GetStateMachine()->ChangeState(CGuardChaseState::GetInstance());
-				}
-			}
-			else if (Guard->GetStateMachine()->IsInState(CGuardChaseState::GetInstance()))
-			{
-				XMFLOAT3 Direction{};
-
-				// 플레이어가 시야각에서 보이지 않는다면 ReturnState로 전이하여 원래 순찰하는 위치로 돌아간다.
-				if (!Guard->IsFoundPlayer(PlayerPosition) && Guard->GetRecentTransition())
-				{
-					Guard->FindNavPath(m_NavMesh, Guard->GetPatrolNavPath()[Guard->GetPatrolIndex()], m_GameObjects);
-					Guard->GetStateMachine()->ChangeState(CGuardReturnState::GetInstance());
-				}
-				// 플레이어와 일정거리 이하가 되면 총을 쏜다.
-				else if (Math::Distance(PlayerPosition, Guard->GetPosition()) < 10.0f)
-				{
-					Direction = Vector3::Normalize(Vector3::Subtract(PlayerPosition, Guard->GetPosition()));
-					Guard->UpdateLocalCoord(Direction);
-					Guard->GetStateMachine()->ChangeState(CGuardShootingState::GetInstance());
-				}
-				// 3초에 한번씩 혹은 NavPath가 비었을 경우 NavPath를 갱신한다.
-				else if (Guard->GetElapsedTime() >= Guard->GetUpdateTargetTime() || Guard->GetNavPath().empty())
-				{
-					Guard->FindNavPath(m_NavMesh, PlayerPosition, m_GameObjects);
-					Direction = Vector3::Normalize(Vector3::Subtract(Guard->GetNavPath().back(), Guard->GetPosition()));
-					Guard->UpdateLocalCoord(Direction);
-					Guard->SetElapsedTime(0.0f);
-				}
-			}
-		}
-	}
-
 	for (UINT i = OBJECT_TYPE_PLAYER; i <= OBJECT_TYPE_STRUCTURE; ++i)
 	{
 		for (const auto& GameObject : m_GameObjects[i])
 		{
 			if (GameObject)
 			{
-				GameObject->Animate(ElapsedTime);
+				GameObject->Animate(m_GameObjects, m_NavMesh, ElapsedTime);
 			}
 		}
 	}
@@ -734,12 +551,12 @@ void CGameScene::Animate(float ElapsedTime)
 		{
 			if (BilboardObject)
 			{
-				BilboardObject->Animate(ElapsedTime);
+				BilboardObject->Animate(m_GameObjects, m_NavMesh, ElapsedTime);
 			}
 		}
 	}
 
-	for (const auto& EventTrigger : m_EventTriggers)
+	for (const auto& EventTrigger : m_EventTriggers) //문열기, 감시탑열기+배전함끄기, 문열기, 사이렌울리기, 권총습득(5), 열쇠습득(2), 열쇠로 열고나가기 = 
 	{
 		if (EventTrigger)
 		{
@@ -962,6 +779,7 @@ void CGameScene::LoadMaterialCachesFromFile(ID3D12Device* D3D12Device, ID3D12Gra
 void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
 {
 	tstring Token{};
+	shared_ptr<CEventTrigger> EventTrigger{};
 
 	tcout << FileName << TEXT(" 로드 시작...") << endl;
 
@@ -984,7 +802,6 @@ void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
 			File::ReadStringFromFile(InFile, Token);
 
 			UINT TriggerType{File::ReadIntegerFromFile(InFile)};
-			shared_ptr<CEventTrigger> EventTrigger{};
 
 			switch (TriggerType)
 			{
@@ -1038,6 +855,36 @@ void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
 #endif
 	tcout << FileName << TEXT(" 로드 완료...") << endl << endl;
 
+	// 권총을 드롭하는 트리거를 추가한다.
+	// 권총은 임의의 인덱스 교도관(Index: 2 ~ 14) 중 5명이 보유하고 있다.
+	shared_ptr<bool[]> isVisited{ new bool[m_GameObjects[OBJECT_TYPE_NPC].size() - 2]{}, [](bool* p) { delete[] p; } };
+
+	for (UINT i = 0; i < 5;)
+	{
+		UINT RandomIndex{ static_cast<UINT>((rand() % 13) + 2) };
+
+		if (!isVisited[RandomIndex])
+		{
+			EventTrigger = make_shared<CGetPistolEventTrigger>();
+			EventTrigger->InsertEventObject(m_GameObjects[OBJECT_TYPE_NPC][RandomIndex]);
+			EventTrigger->InsertEventObject(m_GameObjects[OBJECT_TYPE_PLAYER].back());
+			m_EventTriggers.push_back(EventTrigger);
+
+			isVisited[RandomIndex] = true;
+			++i;
+		}
+	}
+
+	// 열쇠를 드롭하는 트리거를 추가한다.
+	// 열쇠는 외형이 다른 교도관(Index: 0, 1)이 보유하고 있다.
+	EventTrigger = make_shared<CGetKeyEventTrigger>();
+	EventTrigger->InsertEventObject(m_GameObjects[OBJECT_TYPE_NPC][0]);
+	m_EventTriggers.push_back(EventTrigger);
+
+	EventTrigger = make_shared<CGetKeyEventTrigger>();
+	EventTrigger->InsertEventObject(m_GameObjects[OBJECT_TYPE_NPC][1]);
+	m_EventTriggers.push_back(EventTrigger);
+
 	UINT TriggerCount{ static_cast<UINT>(m_EventTriggers.size()) };
 
 	for (const auto& EventTrigger : m_EventTriggers)
@@ -1082,3 +929,99 @@ void CGameScene::BuildFog()
 	m_MappedFog->m_Fog.m_Color = XMFLOAT4(0.0f, 0.015f, 0.03f, 1.0f);
 	m_MappedFog->m_Fog.m_Density = 0.025f;
 }
+
+void CGameScene::UpdatePerspective(HWND hWnd, float ElapsedTime, const shared_ptr<CPlayer>& Player)
+{
+	RECT Rect{};
+
+	GetWindowRect(hWnd, &Rect);
+
+	POINT NewCursorPos{};
+	POINT OldCursorPos{ Rect.right / 2, Rect.bottom / 2 };
+
+	GetCursorPos(&NewCursorPos);
+	SetCursorPos(OldCursorPos.x, OldCursorPos.y);
+
+	XMFLOAT2 Delta{ 10.0f * ElapsedTime * (NewCursorPos.x - OldCursorPos.x), 10.0f * ElapsedTime * (NewCursorPos.y - OldCursorPos.y) };
+
+	float NearestHitDistance{ FLT_MAX };
+	float HitDistance{};
+
+	XMFLOAT3 RayOrigin{ Player->GetPosition().x, Player->GetCamera()->GetPosition().y, Player->GetPosition().z };
+	XMFLOAT3 RayDirection{ Vector3::Inverse(Player->GetLook()) };
+
+	for (const auto& GameObject : m_GameObjects[OBJECT_TYPE_STRUCTURE])
+	{
+		if (GameObject)
+		{
+			shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(RayOrigin, RayDirection, HitDistance, 3.0f) };
+
+			if (IntersectedObject && (HitDistance < NearestHitDistance))
+			{
+				NearestHitDistance = HitDistance;
+			}
+		}
+	}
+
+	// 1인칭 모드
+	//Player->GetCamera()->Rotate(Delta.y, Delta.x, 0.0f);
+
+	Player->Rotate(Delta.y, Delta.x, 0.0f, ElapsedTime, NearestHitDistance);
+}
+
+void CGameScene::InteractTrigger()
+{
+	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER].back()) };
+	XMFLOAT3 Position{ Player->GetPosition() };
+	XMFLOAT3 LookDirection{ Player->GetLook() };
+
+	for (const auto& EventTrigger : m_EventTriggers)
+	{
+		if (EventTrigger)
+		{
+			if (!EventTrigger->IsInteracted())
+			{
+				if (EventTrigger->IsInTriggerArea(Position, LookDirection))
+				{
+					EventTrigger->SetInteracted(true);
+
+					if (typeid(*EventTrigger) == typeid(CSirenEventTrigger))
+					{
+						tcout << TEXT("플레이어가 사이렌을 작동시켰습니다. 잠시 뒤 5명의 경찰이 이곳으로 올 것입니다!") << endl;
+
+						UINT GuardCount{ static_cast<UINT>(m_GameObjects[OBJECT_TYPE_NPC].size()) };
+
+						for (UINT i = 0; i < 5; ++i)
+						{
+							UINT Index{ rand() % GuardCount };
+							shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][Index]) };
+
+							if (Guard)
+							{
+								Guard->FindNavPath(m_NavMesh, m_GameObjects[OBJECT_TYPE_PLAYER].back()->GetPosition(), m_GameObjects);
+								Guard->GetStateMachine()->ChangeState(CGuardChaseState::GetInstance());
+							}
+						}
+					}
+					else if (typeid(*EventTrigger) == typeid(CGetPistolEventTrigger))
+					{
+						// 권총을 획득한 경우, UI 또한 주먹에서 권총으로 변경시킨다.
+						m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(false); // 4: Punch UI
+						m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(true);	 // 6: Pistol UI
+						m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->SetActive(true);	 // 7: Bullet UI
+					}
+					else if (typeid(*EventTrigger) == typeid(CGetKeyEventTrigger))
+					{
+						// 열쇠 획득 애니메이션을 출력하도록 CKeyUIActivationState 상태로 전이한다.
+						static_pointer_cast<CKeyUI>(m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][5])->GetStateMachine()->SetCurrentState(CKeyUIActivationState::GetInstance());
+
+						// 열쇠 획득 미션UI를 완료상태로 변경
+						m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(1, 5);
+					}
+					break;
+				}
+			}
+		}
+	}
+}
+

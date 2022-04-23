@@ -5,7 +5,7 @@
 class CGuard : public CGameObject
 {
 private:
-	UINT							  m_Health{};
+	UINT							  m_Health{ 100 };
 
 	float							  m_Speed{};
 	XMFLOAT3						  m_MovingDirection{};
@@ -18,7 +18,7 @@ private:
 	const float						  m_ToIdleEntryTime{ rand() % 5 + 3.0f };
 	const float						  m_UpdateTargetTime{ 4.0f };
 
-	XMFLOAT3					      m_TargetPosition{};
+	shared_ptr<CGameObject>			  m_Target{};
 
 	vector<XMFLOAT3>                  m_NavPath{};
 	vector<XMFLOAT3>				  m_PatrolNavPath{};
@@ -30,7 +30,7 @@ public:
 
 	virtual void Initialize();
 
-	virtual void Animate(float ElapsedTime);
+	virtual void Animate(const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime);
 
 	void SetHealth(UINT Health);
 	UINT GetHealth() const;
@@ -52,20 +52,20 @@ public:
 	float GetToIdleEntryTime() const;
 	float GetUpdateTargetTime() const;
 
-	void SetTargetPosition(const XMFLOAT3& TargetPosition);
-	const XMFLOAT3& GetTargetPosition() const;
+	void SetTarget(const shared_ptr<CGameObject>& Target);
+	shared_ptr<CGameObject> GetTarget() const;
 
 	vector<XMFLOAT3>& GetNavPath();
 	vector<XMFLOAT3>& GetPatrolNavPath();
 
 	UINT GetPatrolIndex() const;
 
-	bool IsFoundPlayer(const XMFLOAT3& Position);
+	shared_ptr<CGameObject> IsFoundPlayer(const vector<vector<shared_ptr<CGameObject>>>& GameObjects);
 
 	void FindNavPath(const shared_ptr<CNavMesh>& NavMesh, const XMFLOAT3& TargetPosition, const vector<vector<shared_ptr<CGameObject>>>& GameObjects);
 	void FindRayCastingNavPath(const vector<vector<shared_ptr<CGameObject>>>& GameObjects);
 
-	void FindPatrolNavPath(const shared_ptr<CNavMesh>& NavMesh);
+	void FindPatrolNavPath(const shared_ptr<CNavMesh>& NavMesh, const XMFLOAT3& TargetPosition);
 
 	void MoveToNavPath(float ElapsedTime);
 	void Patrol(float ElapsedTime);

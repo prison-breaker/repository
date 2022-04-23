@@ -1,85 +1,186 @@
 <UI>
 	<UIObject>
+		<Type> 1
 		<IsActive> 1
 		<TextureName> Textures/Mission_UI.dds
 		<CellInfo> 3 2
 		<RectTransform> 2 159 289 0 240 104 159 419 4 240 104 
+		<AlphaColor> 1 1 
 		<Animation>
 			<AnimationClips> 1
 				<AnimationClip> Show 60 30 0.5
 					<RectTransform> 0.01666667 -118.535 289 0 240 104 -119.3181 419 4 240 104 
+					<AlphaColor> 0.01666667 1 1 
 					<RectTransform> 0.03333334 -111.48 289 0 240 104 -114.4567 419 4 240 104 
+					<AlphaColor> 0.03333334 1 1 
 					<RectTransform> 0.05 -100.345 289 0 240 104 -106.6921 419 4 240 104 
+					<AlphaColor> 0.05 1 1 
 					<RectTransform> 0.06666667 -85.64001 289 0 240 104 -96.30115 419 4 240 104 
+					<AlphaColor> 0.06666667 1 1 
 					<RectTransform> 0.08333334 -67.875 289 0 240 104 -83.56006 419 4 240 104 
+					<AlphaColor> 0.08333334 1 1 
 					<RectTransform> 0.1 -47.56 289 0 240 104 -68.74524 419 4 240 104 
+					<AlphaColor> 0.1 1 1 
 					<RectTransform> 0.1166667 -25.20502 289 0 240 104 -52.13342 419 4 240 104 
+					<AlphaColor> 0.1166667 1 1 
 					<RectTransform> 0.1333333 -1.320007 289 0 240 104 -34.00098 419 4 240 104 
+					<AlphaColor> 0.1333333 1 1 
 					<RectTransform> 0.15 23.58496 289 0 240 104 -14.62433 419 4 240 104 
+					<AlphaColor> 0.15 1 1 
 					<RectTransform> 0.1666667 49 289 0 240 104 5.719971 419 4 240 104 
+					<AlphaColor> 0.1666667 1 1 
 					<RectTransform> 0.1833333 74.41498 289 0 240 104 26.75555 419 4 240 104 
+					<AlphaColor> 0.1833333 1 1 
 					<RectTransform> 0.2 99.31995 289 0 240 104 48.20575 419 4 240 104 
+					<AlphaColor> 0.2 1 1 
 					<RectTransform> 0.2166667 123.205 289 0 240 104 69.79425 419 4 240 104 
+					<AlphaColor> 0.2166667 1 1 
 					<RectTransform> 0.2333333 145.5599 289 0 240 104 91.24451 419 4 240 104 
+					<AlphaColor> 0.2333333 1 1 
 					<RectTransform> 0.25 165.875 289 0 240 104 112.28 419 4 240 104 
+					<AlphaColor> 0.25 1 1 
 					<RectTransform> 0.2666667 183.64 289 0 240 104 132.6243 419 4 240 104 
+					<AlphaColor> 0.2666667 1 1 
 					<RectTransform> 0.2833334 198.345 289 0 240 104 152.001 419 4 240 104 
+					<AlphaColor> 0.2833334 1 1 
 					<RectTransform> 0.3 209.48 289 0 240 104 170.1335 419 4 240 104 
+					<AlphaColor> 0.3 1 1 
 					<RectTransform> 0.3166667 216.535 289 0 240 104 186.7454 419 4 240 104 
+					<AlphaColor> 0.3166667 1 1 
 					<RectTransform> 0.3333334 219 289 0 240 104 201.5601 419 4 240 104 
+					<AlphaColor> 0.3333334 1 1 
 					<RectTransform> 0.3500001 217.32 289 0 240 104 214.3012 419 4 240 104 
+					<AlphaColor> 0.3500001 1 1 
 					<RectTransform> 0.3666668 212.7599 289 0 240 104 224.6923 419 4 240 104 
+					<AlphaColor> 0.3666668 1 1 
 					<RectTransform> 0.3833334 206.04 289 0 240 104 232.4567 419 4 240 104 
+					<AlphaColor> 0.3833334 1 1 
 					<RectTransform> 0.4000001 197.8799 289 0 240 104 237.3181 419 4 240 104 
+					<AlphaColor> 0.4000001 1 1 
 					<RectTransform> 0.4166668 188.9999 289 0 240 104 239 419 4 240 104 
+					<AlphaColor> 0.4166668 1 1 
 					<RectTransform> 0.4333335 180.1199 289 0 240 104 230.6799 419 4 240 104 
+					<AlphaColor> 0.4333335 1 1 
 					<RectTransform> 0.4500002 171.9599 289 0 240 104 210.8398 419 4 240 104 
+					<AlphaColor> 0.4500002 1 1 
 					<RectTransform> 0.4666668 165.2399 289 0 240 104 187.1597 419 4 240 104 
+					<AlphaColor> 0.4666668 1 1 
 					<RectTransform> 0.4833335 160.68 289 0 240 104 167.3198 419 4 240 104 
+					<AlphaColor> 0.4833335 1 1 
 					<RectTransform> 0.5000002 159 289 0 240 104 159 419 4 240 104 
+					<AlphaColor> 0.5000002 1 1 
 				</AnimationClip>
 			</AnimationClips>
 		</Animation>
 	</UIObject>
 	<UIObject>
+		<Type> 0
 		<IsActive> 1
 		<TextureName> Textures/Portrait_UI.dds
 		<RectTransform> 1 99 979 0 120 120 
+		<AlphaColor> 1
 	</UIObject>
 	<UIObject>
+		<Type> 0
 		<IsActive> 1
 		<TextureName> Textures/Life_UI.dds
-		<RectTransform> 1 199 949 0 40 40 
+		<RectTransform> 1 199 929 0 40 40 
+		<AlphaColor> 1
 	</UIObject>
 	<UIObject>
+		<Type> 0
 		<IsActive> 1
 		<TextureName> Textures/Blood_UI.dds
-		<RectTransform> 10 249 949 0 15 24 269 949 0 15 24 289 949 0 15 24 309 949 0 15 24 329 949 0 15 24 349 949 0 15 24 369 949 0 15 24 389 949 0 15 24 409 949 0 15 24 429 949 0 15 24 
+		<RectTransform> 10 249 929 0 15 24 269 929 0 15 24 289 929 0 15 24 309 929 0 15 24 329 929 0 15 24 349 929 0 15 24 369 929 0 15 24 389 929 0 15 24 409 929 0 15 24 429 929 0 15 24 
+		<AlphaColor> 1 1 1 1 1 1 1 1 1 1 
 	</UIObject>
 	<UIObject>
+		<Type> 0
 		<IsActive> 1
 		<TextureName> Textures/Punch_UI.dds
-		<RectTransform> 1 199 1009 0 40 40 
+		<RectTransform> 1 199 979 0 40 40 
+		<AlphaColor> 1
 	</UIObject>
 	<UIObject>
+		<Type> 2
+		<IsActive> 1
+		<TextureName> Textures/Key_UI.dds
+		<RectTransform> 1 199 1029 0 40 40 
+		<AlphaColor> 0.2352941
+		<Animation>
+			<AnimationClips> 1
+				<AnimationClip> Activate 60 20 0.3333333
+					<RectTransform> 0.01666667 199 1029 0 40.50963 40.50963 
+					<AlphaColor> 0.01666667 0.2408382
+					<RectTransform> 0.03333334 199 1029 0 41.9437 41.9437 
+					<AlphaColor> 0.03333334 0.2567059
+					<RectTransform> 0.05 199 1029 0 44.16 44.16 
+					<AlphaColor> 0.05 0.28175
+					<RectTransform> 0.06666667 199 1029 0 47.0163 47.0163 
+					<AlphaColor> 0.06666667 0.3148235
+					<RectTransform> 0.08333334 199 1029 0 50.37037 50.37037 
+					<AlphaColor> 0.08333334 0.3547794
+					<RectTransform> 0.1 199 1029 0 54.08 54.08 
+					<AlphaColor> 0.1 0.4004706
+					<RectTransform> 0.1166667 199 1029 0 58.00296 58.00296 
+					<AlphaColor> 0.1166667 0.45075
+					<RectTransform> 0.1333333 199 1029 0 61.99704 61.99704 
+					<AlphaColor> 0.1333333 0.5044706
+					<RectTransform> 0.15 199 1029 0 65.92 65.92 
+					<AlphaColor> 0.15 0.5604853
+					<RectTransform> 0.1666667 199 1029 0 69.62963 69.62963 
+					<AlphaColor> 0.1666667 0.6176471
+					<RectTransform> 0.1833333 199 1029 0 72.9837 72.9837 
+					<AlphaColor> 0.1833333 0.6748088
+					<RectTransform> 0.2 199 1029 0 75.84 75.84 
+					<AlphaColor> 0.2 0.7308235
+					<RectTransform> 0.2166667 199 1029 0 78.0563 78.0563 
+					<AlphaColor> 0.2166667 0.7845441
+					<RectTransform> 0.2333333 199 1029 0 79.49037 79.49037 
+					<AlphaColor> 0.2333333 0.8348235
+					<RectTransform> 0.25 199 1029 0 80 80 
+					<AlphaColor> 0.25 0.8805146
+					<RectTransform> 0.2666667 199 1029 0 75.84 75.84 
+					<AlphaColor> 0.2666667 0.9204705
+					<RectTransform> 0.2833334 199 1029 0 65.91998 65.91998 
+					<AlphaColor> 0.2833334 0.9535441
+					<RectTransform> 0.3 199 1029 0 54.07998 54.07998 
+					<AlphaColor> 0.3 0.9785882
+					<RectTransform> 0.3166667 199 1029 0 44.15998 44.15998 
+					<AlphaColor> 0.3166667 0.9944559
+					<RectTransform> 0.3333334 199 1029 0 40 40 
+					<AlphaColor> 0.3333334 1
+				</AnimationClip>
+			</AnimationClips>
+		</Animation>
+	</UIObject>
+	<UIObject>
+		<Type> 0
 		<IsActive> 0
 		<TextureName> Textures/Pistol_UI.dds
-		<RectTransform> 1 199 1009 0 50 34 
+		<RectTransform> 1 199 979 0 50 34 
+		<AlphaColor> 1
 	</UIObject>
 	<UIObject>
+		<Type> 0
 		<IsActive> 0
 		<TextureName> Textures/Bullet_UI.dds
-		<RectTransform> 5 249 1009 0 8 32 269 1009 0 8 32 289 1009 0 8 32 309 1009 0 8 32 329 1009 0 8 32 
+		<RectTransform> 5 249 979 0 8 32 269 979 0 8 32 289 979 0 8 32 309 979 0 8 32 329 979 0 8 32 
+		<AlphaColor> 1 1 1 1 1 
 	</UIObject>
 	<UIObject>
+		<Type> 0
 		<IsActive> 0
 		<TextureName> Textures/Crosshair_UI.dds
 		<RectTransform> 1 959 539 0 32 32 
+		<AlphaColor> 1
 	</UIObject>
 	<UIObject>
+		<Type> 0
 		<IsActive> 0
 		<TextureName> Textures/Interaction_UI.dds
-		<CellInfo> 5 1
+		<CellInfo> 7 1
 		<RectTransform> 1 959 759 0 400 83 
+		<AlphaColor> 1
 	</UIObject>
 </UI>

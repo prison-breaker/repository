@@ -5,13 +5,14 @@ class CBilboardMesh
 private:
 	XMFLOAT3 m_Position{};
 	XMFLOAT2 m_Size{};
+	float	 m_AlphaColor{};
 	
 	XMUINT2  m_CellCount{};
 	UINT	 m_CellIndex{};
 
 public:
+	CBilboardMesh() = default;
 	CBilboardMesh(const XMFLOAT3& Position, const XMFLOAT2& Size);
-	CBilboardMesh(const XMFLOAT3& Position, const XMFLOAT2& Size, const XMUINT2& CellCount, UINT CellIndex);
 	~CBilboardMesh() = default;
 
 	// 이 클래스는 GPU의 가상주소로 사용되기 때문에 값을 읽는 연산(Get)은 매우 느리므로 사용을 자제하자!
@@ -21,6 +22,12 @@ public:
 
 	void SetSize(const XMFLOAT2& Size);
 	const XMFLOAT2& GetSize() const;
+
+	void SetAlphaColor(float AlphaColor);
+	float GetAlphaColor() const;
+
+	void SetCellCount(const XMUINT2& CellCount);
+	const XMUINT2& GetCellCount() const;
 
 	void SetCellIndex(UINT CellIndex);
 	UINT GetCellIndex() const;

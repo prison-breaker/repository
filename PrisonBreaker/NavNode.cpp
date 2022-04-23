@@ -125,5 +125,3 @@ void CNavNode::Reset()
 	m_H = m_G = m_F = 0;
 	m_Parent = nullptr;
 }
-
-

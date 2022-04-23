@@ -8,15 +8,6 @@ CBilboardMesh::CBilboardMesh(const XMFLOAT3& Position, const XMFLOAT2& Size) :
 
 }
 
-CBilboardMesh::CBilboardMesh(const XMFLOAT3& Position, const XMFLOAT2& Size, const XMUINT2& CellCount, UINT CellIndex) :
-	m_Position{ Position },
-	m_Size{ Size },
-	m_CellCount{ CellCount },
-	m_CellIndex{ CellIndex }
-{
-
-}
-
 void CBilboardMesh::SetPosition(const XMFLOAT3& Position)
 {
 	m_Position = Position;
@@ -35,6 +26,26 @@ void CBilboardMesh::SetSize(const XMFLOAT2& Size)
 const XMFLOAT2& CBilboardMesh::GetSize() const
 {
 	return m_Size;
+}
+
+void CBilboardMesh::SetAlphaColor(float AlphaColor)
+{
+	m_AlphaColor = AlphaColor;
+}
+
+float CBilboardMesh::GetAlphaColor() const
+{
+	return m_AlphaColor;
+}
+
+void CBilboardMesh::SetCellCount(const XMUINT2& CellCount)
+{
+	m_CellCount = CellCount;
+}
+
+const XMUINT2& CBilboardMesh::GetCellCount() const
+{
+	return m_CellCount;
 }
 
 void CBilboardMesh::SetCellIndex(UINT CellIndex)

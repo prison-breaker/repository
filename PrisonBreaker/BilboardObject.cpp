@@ -2,13 +2,16 @@
 #include "BilboardObject.h"
 #include "Material.h"
 #include "UIAnimationController.h"
-#include "State_MissionUI.h"
+#include "MissionUI.h"
+#include "KeyUI.h"
 
 shared_ptr<CBilboardObject> CBilboardObject::LoadObjectInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile)
 {
 	tstring Token{};
 
-	shared_ptr<CBilboardObject> NewObject{ make_shared<CBilboardObject>() };
+	shared_ptr<CBilboardObject> NewObject{};
+
+	UINT Type{};
 	XMUINT2 CellCount{};
 
 #ifdef READ_BINARY_FILE
@@ -16,7 +19,23 @@ shared_ptr<CBilboardObject> CBilboardObject::LoadObjectInfoFromFile(ID3D12Device
 	{
 		File::ReadStringFromFile(InFile, Token);
 
-		if (Token == TEXT("<IsActive>"))
+		if (Token == TEXT("<Type>"))
+		{
+			Type = File::ReadIntegerFromFile(InFile);
+
+			switch (Type)
+			{
+			case 1:
+				NewObject = make_shared<CMissionUI>();
+				break;
+			case 2:
+				NewObject = make_shared<CKeyUI>();
+				break;
+			default:
+				NewObject = make_shared<CBilboardObject>();
+			}
+		}
+		else if (Token == TEXT("<IsActive>"))
 		{
 			bool IsActive{ static_cast<bool>(File::ReadIntegerFromFile(InFile)) };
 
@@ -25,6 +44,8 @@ shared_ptr<CBilboardObject> CBilboardObject::LoadObjectInfoFromFile(ID3D12Device
 		else if (Token == TEXT("<TextureName>"))
 		{
 			File::ReadStringFromFile(InFile, Token);
+			
+			tcout << Token << endl;
 
 			shared_ptr<CMaterial> Material{ make_shared<CMaterial>() };
 			shared_ptr<CTexture> Texture{ make_shared<CTexture>() };
@@ -54,6 +75,7 @@ shared_ptr<CBilboardObject> CBilboardObject::LoadObjectInfoFromFile(ID3D12Device
 
 			for (UINT i = 0; i < NewObject->m_VertexCount; ++i)
 			{
+				CBilboardMesh* MappedInfo{ NewObject->m_MappedImageInfo + i };
 				XMFLOAT3 Position{};
 				XMFLOAT2 Size{};
 				float CellIndex{};
@@ -62,7 +84,22 @@ shared_ptr<CBilboardObject> CBilboardObject::LoadObjectInfoFromFile(ID3D12Device
 				InFile.read(reinterpret_cast<TCHAR*>(&CellIndex), sizeof(float));
 				InFile.read(reinterpret_cast<TCHAR*>(&Size), sizeof(XMFLOAT2));
 
-				*(NewObject->m_MappedImageInfo + i) = CBilboardMesh{ Position, Size, CellCount, static_cast<UINT>(CellIndex) };
+				MappedInfo->SetPosition(Position);
+				MappedInfo->SetSize(Size);
+				MappedInfo->SetCellCount(CellCount);
+				MappedInfo->SetCellIndex(static_cast<UINT>(CellIndex));
+			}
+		}
+		else if (Token == TEXT("<AlphaColor>"))
+		{
+			for (UINT i = 0; i < NewObject->m_VertexCount; ++i)
+			{
+				CBilboardMesh* MappedInfo{ NewObject->m_MappedImageInfo + i };
+				float AlphaColor{};
+
+				InFile.read(reinterpret_cast<TCHAR*>(&AlphaColor), sizeof(float));
+
+				MappedInfo->SetAlphaColor(AlphaColor);
 			}
 		}
 		else if (Token == TEXT("<Animation>"))
@@ -168,10 +205,7 @@ void CBilboardObject::LoadAnimationInfoFromFile(tifstream& InFile, const shared_
 				}
 
 				Model->m_UIAnimationController = make_shared<CUIAnimationController>(Model, UIAnimationClips);
-
-				// 애니메이션 동작을 임시로 확인해보기 위해서 작성한 코드(미션 애니메이션 SHOW/HIDE)
-				Model->m_StateMachine = make_shared<CStateMachine<CBilboardObject>>(Model);
-				Model->m_StateMachine->SetCurrentState(CBilboardObjectShowingState::GetInstance());
+				Model->Initialize();
 			}
 		}
 		else if (Token == TEXT("</AnimationClips>"))
@@ -218,12 +252,9 @@ void CBilboardObject::Initialize()
 	SetActive(true);
 }
 
-void CBilboardObject::Animate(float ElapsedTime)
+void CBilboardObject::Animate(const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
 {
-	if (m_StateMachine)
-	{
-		m_StateMachine->Update(ElapsedTime);
-	}
+
 }
 
 void CBilboardObject::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType)
@@ -301,6 +332,16 @@ void CBilboardObject::SetSize(UINT Index, const XMFLOAT2& Size)
 	m_MappedImageInfo[Index].SetSize(Size);
 }
 
+void CBilboardObject::SetAlphaColor(UINT Index, float AlphaColor)
+{
+	if (Index < 0 || Index > m_VertexCount)
+	{
+		return;
+	}
+
+	m_MappedImageInfo[Index].SetAlphaColor(AlphaColor);
+}
+
 void CBilboardObject::SetCellIndex(UINT Index, UINT CellIndex)
 {
 	if (Index < 0 || Index > m_VertexCount)
@@ -309,11 +350,6 @@ void CBilboardObject::SetCellIndex(UINT Index, UINT CellIndex)
 	}
 
 	m_MappedImageInfo[Index].SetCellIndex(CellIndex);
-}
-
-CStateMachine<CBilboardObject>* CBilboardObject::GetStateMachine() const
-{
-	return m_StateMachine.get();
 }
 
 CUIAnimationController* CBilboardObject::GetUIAnimationController() const

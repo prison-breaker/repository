@@ -33,9 +33,14 @@ public:
 		}
 	}
 
-	const CState<EntityType>* GetCurrentState() const
+	CState<EntityType>* GetCurrentState() const
 	{
 		return m_CurrentState;
+	}
+
+	CState<EntityType>* GetPreviousState() const
+	{
+		return m_PreviousState;
 	}
 
 	void ChangeState(CState<EntityType>* NewState)
@@ -54,19 +59,19 @@ public:
 		return typeid(*m_CurrentState) == typeid(*State);
 	}
 
-	void ProcessInput(UINT InputMask, float ElapsedTime)
+	void ProcessInput(const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
 	{
 		if (m_CurrentState)
 		{
-			m_CurrentState->ProcessInput(m_Owner, InputMask, ElapsedTime);
+			m_CurrentState->ProcessInput(m_Owner, GameObjects, NavMesh, ElapsedTime, InputMask);
 		}
 	}
 
-	void Update(float ElapsedTime)
+	void Update(const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
 	{
 		if (m_CurrentState)
 		{
-			m_CurrentState->Update(m_Owner, ElapsedTime);
+			m_CurrentState->Update(m_Owner, GameObjects, NavMesh, ElapsedTime);
 		}
 	}
 };

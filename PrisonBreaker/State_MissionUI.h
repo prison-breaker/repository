@@ -1,36 +1,36 @@
 #pragma once
 #include "State.h"
 
-class CBilboardObject;
+class CMissionUI;
 
-class CBilboardObjectShowingState : public CState<CBilboardObject>
+class CMissionUIShowingState : public CState<CMissionUI>
 {
 private:
-	CBilboardObjectShowingState() = default;
-	virtual ~CBilboardObjectShowingState() = default;
+	CMissionUIShowingState() = default;
+	virtual ~CMissionUIShowingState() = default;
 
 public:
-	static CBilboardObjectShowingState* GetInstance();
+	static CMissionUIShowingState* GetInstance();
 
-	virtual void Enter(const shared_ptr<CBilboardObject>& Entity);
-	virtual void ProcessInput(const shared_ptr<CBilboardObject>& Entity, UINT InputMask, float ElapsedTime);
-	virtual void Update(const shared_ptr<CBilboardObject>& Entity, float ElapsedTime);
-	virtual void Exit(const shared_ptr<CBilboardObject>& Entity);
+	virtual void Enter(const shared_ptr<CMissionUI>& Entity);
+	virtual void ProcessInput(const shared_ptr<CMissionUI>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask);
+	virtual void Update(const shared_ptr<CMissionUI>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime);
+	virtual void Exit(const shared_ptr<CMissionUI>& Entity);
 };
 
 //=========================================================================================================================
 
-class CBilboardObjectHidingState : public CState<CBilboardObject>
+class CMissionUIHidingState : public CState<CMissionUI>
 {
 private:
-	CBilboardObjectHidingState() = default;
-	virtual ~CBilboardObjectHidingState() = default;
+	CMissionUIHidingState() = default;
+	virtual ~CMissionUIHidingState() = default;
 
 public:
-	static CBilboardObjectHidingState* GetInstance();
+	static CMissionUIHidingState* GetInstance();
 
-	virtual void Enter(const shared_ptr<CBilboardObject>& Entity);
-	virtual void ProcessInput(const shared_ptr<CBilboardObject>& Entity, UINT InputMask, float ElapsedTime);
-	virtual void Update(const shared_ptr<CBilboardObject>& Entity, float ElapsedTime);
-	virtual void Exit(const shared_ptr<CBilboardObject>& Entity);
+	virtual void Enter(const shared_ptr<CMissionUI>& Entity);
+	virtual void ProcessInput(const shared_ptr<CMissionUI>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask);
+	virtual void Update(const shared_ptr<CMissionUI>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime);
+	virtual void Exit(const shared_ptr<CMissionUI>& Entity);
 };

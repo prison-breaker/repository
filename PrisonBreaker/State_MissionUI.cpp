@@ -1,65 +1,65 @@
 #include "stdafx.h"
 #include "State_MissionUI.h"
-#include "BilboardObject.h"
+#include "MissionUI.h"
 
-CBilboardObjectShowingState* CBilboardObjectShowingState::GetInstance()
+CMissionUIShowingState* CMissionUIShowingState::GetInstance()
 {
-	static CBilboardObjectShowingState Instance{};
+	static CMissionUIShowingState Instance{};
 
 	return &Instance;
 }
 
-void CBilboardObjectShowingState::Enter(const shared_ptr<CBilboardObject>& Entity)
+void CMissionUIShowingState::Enter(const shared_ptr<CMissionUI>& Entity)
 {
 
 }
 
-void CBilboardObjectShowingState::ProcessInput(const shared_ptr<CBilboardObject>& Entity, UINT InputMask, float ElapsedTime)
+void CMissionUIShowingState::ProcessInput(const shared_ptr<CMissionUI>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
 {
 	if (InputMask & INPUT_MASK_TAB)
 	{
-		Entity->GetStateMachine()->ChangeState(CBilboardObjectHidingState::GetInstance());
+		Entity->GetStateMachine()->ChangeState(CMissionUIHidingState::GetInstance());
 	}
 }
 
-void CBilboardObjectShowingState::Update(const shared_ptr<CBilboardObject>& Entity, float ElapsedTime)
+void CMissionUIShowingState::Update(const shared_ptr<CMissionUI>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
 {
 	Entity->GetUIAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE);
 }
 
-void CBilboardObjectShowingState::Exit(const shared_ptr<CBilboardObject>& Entity)
+void CMissionUIShowingState::Exit(const shared_ptr<CMissionUI>& Entity)
 {
 
 }
 
 //=========================================================================================================================
 
-CBilboardObjectHidingState* CBilboardObjectHidingState::GetInstance()
+CMissionUIHidingState* CMissionUIHidingState::GetInstance()
 {
-	static CBilboardObjectHidingState Instance{};
+	static CMissionUIHidingState Instance{};
 
 	return &Instance;
 }
 
-void CBilboardObjectHidingState::Enter(const shared_ptr<CBilboardObject>& Entity)
+void CMissionUIHidingState::Enter(const shared_ptr<CMissionUI>& Entity)
 {
 
 }
 
-void CBilboardObjectHidingState::ProcessInput(const shared_ptr<CBilboardObject>& Entity, UINT InputMask, float ElapsedTime)
+void CMissionUIHidingState::ProcessInput(const shared_ptr<CMissionUI>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
 {
 	if (InputMask & INPUT_MASK_TAB)
 	{
-		Entity->GetStateMachine()->ChangeState(CBilboardObjectShowingState::GetInstance());
+		Entity->GetStateMachine()->ChangeState(CMissionUIShowingState::GetInstance());
 	}
 }
 
-void CBilboardObjectHidingState::Update(const shared_ptr<CBilboardObject>& Entity, float ElapsedTime)
+void CMissionUIHidingState::Update(const shared_ptr<CMissionUI>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
 {
 	Entity->GetUIAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE_REVERSE);
 }
 
-void CBilboardObjectHidingState::Exit(const shared_ptr<CBilboardObject>& Entity)
+void CMissionUIHidingState::Exit(const shared_ptr<CMissionUI>& Entity)
 {
 
 }

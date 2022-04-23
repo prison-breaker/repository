@@ -6,6 +6,8 @@ void CUIAnimationClip::LoadAnimationClipInfoFromFile(ifstream& InFile, UINT Vert
 {
 	tstring Token{};
 
+	UINT Count{};
+
 #ifdef READ_BINARY_FILE
 	while (true)
 	{
@@ -19,6 +21,11 @@ void CUIAnimationClip::LoadAnimationClipInfoFromFile(ifstream& InFile, UINT Vert
 			m_KeyFrameTime = File::ReadFloatFromFile(InFile);
 
 			m_TransformData.resize(VertexCount);
+
+			for (UINT i = 0; i < VertexCount; ++i)
+			{
+				m_TransformData[i].reserve(m_KeyFrameCount);
+			}
 		}
 		else if (Token == TEXT("<RectTransform>"))
 		{
@@ -29,15 +36,36 @@ void CUIAnimationClip::LoadAnimationClipInfoFromFile(ifstream& InFile, UINT Vert
 			{
 				XMFLOAT3 Position{};
 				XMFLOAT2 Size{};
-				XMUINT2 CellCount{};
 				float CellIndex{};
 
 				InFile.read(reinterpret_cast<TCHAR*>(&Position), sizeof(XMFLOAT2));
 				InFile.read(reinterpret_cast<TCHAR*>(&CellIndex), sizeof(float));
 				InFile.read(reinterpret_cast<TCHAR*>(&Size), sizeof(XMFLOAT2));
 
-				m_TransformData[i].emplace_back(Position, Size, CellCount, static_cast<UINT>(CellIndex));
+				CBilboardMesh BilboardMesh{};
+
+				BilboardMesh.SetPosition(Position);
+				BilboardMesh.SetSize(Size);
+				BilboardMesh.SetCellIndex(static_cast<UINT>(CellIndex));
+
+				m_TransformData[i].push_back(BilboardMesh);
 			}
+		}
+		else if (Token == TEXT("<AlphaColor>"))
+		{
+			// Current KeyFrameTime
+			File::ReadFloatFromFile(InFile);
+
+			for (UINT i = 0; i < VertexCount; ++i)
+			{
+				float AlphaColor{};
+
+				InFile.read(reinterpret_cast<TCHAR*>(&AlphaColor), sizeof(float));
+
+				m_TransformData[i][Count].SetAlphaColor(AlphaColor);
+			}
+
+			++Count;
 		}
 		else if (Token == TEXT("</AnimationClip>"))
 		{
@@ -128,6 +156,7 @@ bool CUIAnimationController::UpdateAnimationClip(ANIMATION_TYPE AnimationType)
 		// CBilboardMesh의 Get 함수는 유일하게 GPU의 가상주소로 사용되지 않는 곳에서만 사용해야한다!!
 		m_Owner->SetPosition(i, m_AnimationClips[m_ClipNum]->m_TransformData[i][m_KeyFrameIndex].GetPosition());
 		m_Owner->SetSize(i, m_AnimationClips[m_ClipNum]->m_TransformData[i][m_KeyFrameIndex].GetSize());
+		m_Owner->SetAlphaColor(i, m_AnimationClips[m_ClipNum]->m_TransformData[i][m_KeyFrameIndex].GetAlphaColor());
 	}
 
 	bool IsFinished{};

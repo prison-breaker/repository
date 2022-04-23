@@ -221,21 +221,21 @@ namespace Math
 		return sqrtf(powf(Vector2.x - Vector1.x, 2) + powf(Vector2.y - Vector1.y, 2) + powf(Vector2.z - Vector1.z, 2));
 	}
 
-	int GetTriangleSize(const XMFLOAT3& Vertex1, const XMFLOAT3& Vertex2, const XMFLOAT3& Vertex3)
+	UINT CalculateTriangleArea(const XMFLOAT3& Vertex1, const XMFLOAT3& Vertex2, const XMFLOAT3& Vertex3)
 	{
-		int Size{ static_cast<int>(abs((Vertex1.x * (Vertex2.z - Vertex3.z)) + (Vertex2.x * (Vertex3.z - Vertex1.z)) + (Vertex3.x * (Vertex1.z - Vertex2.z)))) };
+		UINT Area{ static_cast<UINT>(abs((Vertex1.x * (Vertex2.z - Vertex3.z)) + (Vertex2.x * (Vertex3.z - Vertex1.z)) + (Vertex3.x * (Vertex1.z - Vertex2.z)))) };
 		
-		return Size;
+		return Area;
 	}
 
 	bool IsInTriangle(const XMFLOAT3& Vertex1, const XMFLOAT3& Vertex2, const XMFLOAT3& Vertex3, const XMFLOAT3& NewPosition)
 	{
-		int TotalSize{ GetTriangleSize(Vertex1, Vertex2, Vertex3) };
-		int Size1{ GetTriangleSize(NewPosition, Vertex2, Vertex3) };
-		int Size2{ GetTriangleSize(Vertex1, NewPosition, Vertex3) };
-		int Size3{ GetTriangleSize(Vertex1, Vertex2, NewPosition) };
+		UINT TotalArea{ CalculateTriangleArea(Vertex1, Vertex2, Vertex3) };
+		UINT Area1{ CalculateTriangleArea(NewPosition, Vertex2, Vertex3) };
+		UINT Area2{ CalculateTriangleArea(Vertex1, NewPosition, Vertex3) };
+		UINT Area3{ CalculateTriangleArea(Vertex1, Vertex2, NewPosition) };
 
-		return TotalSize >= Size1 + Size2 + Size3;
+		return TotalArea >= (Area1 + Area2 + Area3);
 	}
 }
 

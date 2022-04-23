@@ -21,13 +21,13 @@ void CPlayer::Initialize()
 	FindFrame(TEXT("gun_pr_1"))->SetActive(false);
 }
 
-void CPlayer::Animate(float ElapsedTime)
+void CPlayer::Animate(const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
 {
 	if (IsActive())
 	{
 		if (m_StateMachine)
 		{
-			m_StateMachine->Update(ElapsedTime);
+			m_StateMachine->Update(GameObjects, NavMesh, ElapsedTime);
 		}
 	}
 }
@@ -75,6 +75,11 @@ CStateMachine<CPlayer>* CPlayer::GetStateMachine() const
 void CPlayer::AcquirePistol()
 {
 	m_PistolFrame = FindFrame(TEXT("gun_pr_1"));
+}
+
+bool CPlayer::HasPistol() const
+{
+	return (m_PistolFrame) ? true : false;
 }
 
 bool CPlayer::SwapWeapon(WEAPON_TYPE WeaponType)
@@ -129,11 +134,11 @@ void CPlayer::Rotate(float Pitch, float Yaw, float Roll, float ElapsedTime, floa
 	CGameObject::UpdateLocalCoord(Vector3::Normalize(GetLook()));
 }
 
-void CPlayer::ProcessInput(UINT InputMask, float ElapsedTime, const shared_ptr<CNavMesh>& NavMesh)
+void CPlayer::ProcessInput(const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
 {
 	if (m_StateMachine)
 	{
-		m_StateMachine->ProcessInput(InputMask, ElapsedTime);
+		m_StateMachine->ProcessInput(GameObjects, NavMesh, ElapsedTime, InputMask);
 	}
 
 	XMFLOAT3 NewPosition{ Vector3::Add(GetPosition(), Vector3::ScalarProduct(m_Speed * ElapsedTime, m_MovingDirection, false)) };

@@ -7,7 +7,7 @@ class CPlayer : public CGameObject
 private:
 	XMFLOAT3						   m_Rotation{};
 
-	UINT							   m_Health{};
+	UINT							   m_Health{ 100 };
 
 	float							   m_Speed{};
 	XMFLOAT3						   m_MovingDirection{};
@@ -24,7 +24,7 @@ public:
 
 	virtual void Initialize();
 
-	virtual void Animate(float ElapsedTime);
+	virtual void Animate(const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime);
 
 	void SetHealth(UINT Health);
 	UINT GetHealth() const;
@@ -40,9 +40,11 @@ public:
 	CStateMachine<CPlayer>* GetStateMachine() const;
 
 	void AcquirePistol();
+	bool HasPistol() const;
+
 	bool SwapWeapon(WEAPON_TYPE WeaponType);
 
 	void Rotate(float Pitch, float Yaw, float Roll, float ElapsedTime, float NearestHitDistance);
 
-	void ProcessInput(UINT InputMask, float ElapsedTime, const shared_ptr<CNavMesh>& NavMesh);
+	void ProcessInput(const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask);
 };

@@ -2,45 +2,45 @@
 	<GameObject>
 		<Name> Models/prisoner_4.txt
 		<Type> 0
-		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 -66 1.202297 -121 1 
+		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 -66 1.2 -121 1 
 	</GameObject>
 	<GameObject>
 		<Name> Models/guards_6.txt
 		<Type> 1
-		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 -170 1.202297 35 1 
-			<TargetPosition> -90 1.202297 6
-		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 -150 1.202297 180 1 
-			<TargetPosition> -90 1.202297 170
+		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 -170 1 35 1 
+			<TargetPosition> -90 1 6
+		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 -150 1 180 1 
+			<TargetPosition> -90 1 170
 	</GameObject>
 	<GameObject>
 		<Name> Models/guards_3.txt
 		<Type> 1
-		<TransformMatrix> 0.5614088 0 0.8275386 0 0 1 0 0 -0.8275386 0 0.5614088 0 -50 1.202297 -95 1 
-			<TargetPosition> -90 1.202297 -63
-		<TransformMatrix> -0.5000001 0 -0.8660253 0 0 1 0 0 0.8660253 0 -0.5000001 0 25 1.202297 -73 1 
-			<TargetPosition> 68 1.202297 -85
-		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 -100 1.202297 -9 1 
-			<TargetPosition> -180 1.202297 -31
-		<TransformMatrix> -0.7645882 0 0.6445193 0 0 1 0 0 -0.6445193 0 -0.7645882 0 5.81 1.202297 -1.13 1 
-			<TargetPosition> 0 1.202297 25
-		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 180 1.202297 -60 1 
-			<TargetPosition> 118 1.202297 -26
-		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 -45 1.202297 80 1 
-			<TargetPosition> -43 1.202297 38
-		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 60 1.202297 40 1 
-			<TargetPosition> 29 1.202297 63
-		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 120 1.202297 0 1 
-			<TargetPosition> 120 1.202297 48
-		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 -190 1.202297 135 1 
-			<TargetPosition> -145 1.202297 80
-		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 -40 1.202297 130 1 
-			<TargetPosition> -105 1.202297 130
-		<TransformMatrix> -1.192093E-07 0 1 0 0 1 0 0 -1 0 -1.192093E-07 0 80 1.202297 113 1 
-			<TargetPosition> 147 1.202297 85
-		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 65 1.202297 190 1 
-			<TargetPosition> -12 1.202297 150
-		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 190 1.202297 140 1 
-			<TargetPosition> 102 1.202297 185
+		<TransformMatrix> 0.5735761 0 0.8191524 0 0 1 0 0 -0.8191524 0 0.5735761 0 -50 1 -95 1 
+			<TargetPosition> -90 1 -63
+		<TransformMatrix> -0.5000001 0 -0.8660253 0 0 1 0 0 0.8660253 0 -0.5000001 0 25 1 -73 1 
+			<TargetPosition> 68 1 -85
+		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 -100 1 -9 1 
+			<TargetPosition> -180 1 -31
+		<TransformMatrix> -0.7660446 0 0.6427876 0 0 1 0 0 -0.6427876 0 -0.7660446 0 5.81 1 -1.13 1 
+			<TargetPosition> 0 1 25
+		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 180 1 -60 1 
+			<TargetPosition> 118 1 -26
+		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 -45 1 80 1 
+			<TargetPosition> -43 1 38
+		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 60 1 40 1 
+			<TargetPosition> 29 1 63
+		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 120 1 0 1 
+			<TargetPosition> 120 1 48
+		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 -190 1 135 1 
+			<TargetPosition> -145 1 80
+		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 -40 1 130 1 
+			<TargetPosition> -105 1 130
+		<TransformMatrix> -1.192093E-07 0 1 0 0 1 0 0 -1 0 -1.192093E-07 0 80 1 113 1 
+			<TargetPosition> 147 1 85
+		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 65 1 190 1 
+			<TargetPosition> -12 1 150
+		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 190 1 140 1 
+			<TargetPosition> 102 1 185
 	</GameObject>
 	<GameObject>
 		<Name> Models/terrain.txt

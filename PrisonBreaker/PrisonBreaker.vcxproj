@@ -150,12 +150,15 @@
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="GameScene.cpp" />
     <ClCompile Include="Guard.cpp" />
+    <ClCompile Include="KeyUI.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="MissionUI.cpp" />
     <ClCompile Include="NavMesh.cpp" />
     <ClCompile Include="NavNode.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="State_Guard.cpp" />
+    <ClCompile Include="State_KeyUI.cpp" />
     <ClCompile Include="State_MissionUI.cpp" />
     <ClCompile Include="State_Player.cpp" />
     <ClCompile Include="Scene.cpp" />
@@ -190,8 +193,10 @@
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameScene.h" />
     <ClInclude Include="Guard.h" />
+    <ClInclude Include="KeyUI.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="Mesh.h" />
+    <ClInclude Include="MissionUI.h" />
     <ClInclude Include="NavMesh.h" />
     <ClInclude Include="NavNode.h" />
     <ClInclude Include="Player.h" />
@@ -208,6 +213,7 @@
     <ClInclude Include="State.h" />
     <ClInclude Include="StateMachine.h" />
     <ClInclude Include="State_Guard.h" />
+    <ClInclude Include="State_KeyUI.h" />
     <ClInclude Include="State_MissionUI.h" />
     <ClInclude Include="State_Player.h" />
     <ClInclude Include="stdafx.h" />
@@ -224,7 +230,7 @@
       <DisableOptimizations Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DisableOptimizations>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>
   </ItemGroup>

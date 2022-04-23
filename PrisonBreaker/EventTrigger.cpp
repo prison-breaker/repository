@@ -2,6 +2,35 @@
 #include "EventTrigger.h"
 #include "BilboardObject.h"
 
+bool CEventTrigger::IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& LookDirection)
+{
+	float XMin{ m_TriggerArea.x };
+	float XMax{ m_TriggerArea.y };
+	float ZMin{ m_TriggerArea.z };
+	float ZMax{ m_TriggerArea.w };
+
+	if ((Position.x > XMin) && (Position.x < XMax) && (Position.z > ZMin) && (Position.z < ZMax) &&
+		Vector3::Angle(LookDirection, m_ToTrigger) >= 120.0f)
+	{
+		if (!IsInteracted())
+		{
+			if (m_InteractionUI)
+			{
+				m_InteractionUI->SetActive(true);
+			}
+		}
+
+		return true;
+	}
+
+	if (m_InteractionUI)
+	{
+		m_InteractionUI->SetActive(false);
+	}
+
+	return false;
+}
+
 void CEventTrigger::GenerateEventTrigger(float ElapsedTime)
 {
 
@@ -40,33 +69,12 @@ bool CEventTrigger::IsInteracted() const
 	return m_IsInteracted;
 }
 
-bool CEventTrigger::IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& LookDirection)
+void CEventTrigger::CalculateTriggerAreaByPoint(const XMFLOAT3& Position, float XWidth, float ZWidth)
 {
-	float XMin{ m_TriggerArea.x };
-	float XMax{ m_TriggerArea.y };
-	float ZMin{ m_TriggerArea.z };
-	float ZMax{ m_TriggerArea.w };
-
-	if ((Position.x > XMin) && (Position.x < XMax) && (Position.z > ZMin) && (Position.z < ZMax) &&
-		Vector3::Angle(LookDirection, m_ToTrigger) >= 120.0f)
-	{
-		if (!IsInteracted())
-		{
-			if (m_InteractionUI)
-			{
-				m_InteractionUI->SetActive(true);
-			}
-		}
-
-		return true;
-	}
-
-	if (m_InteractionUI)
-	{
-		m_InteractionUI->SetActive(false);
-	}
-
-	return false;
+	m_TriggerArea.x = Position.x - 0.5f * XWidth;
+	m_TriggerArea.y = Position.x + 0.5f * XWidth;
+	m_TriggerArea.z = Position.z - 0.5f * ZWidth;
+	m_TriggerArea.w = Position.z + 0.5f * ZWidth;
 }
 
 void CEventTrigger::InsertEventObject(const shared_ptr<CGameObject>& EventObject)

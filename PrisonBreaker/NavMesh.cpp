@@ -67,11 +67,11 @@ void CNavMesh::InsertNode(const shared_ptr<CNavNode>& NewNavNode)
 
 			for (UINT i = 0; i < 3; ++i)
 			{
-				XMFLOAT3 Vertex1{ NavNode->GetTriangle().m_Vertices[i] };
+				XMFLOAT3 Vertex1{ NavNode->m_Triangle.m_Vertices[i]};
 
 				for (UINT j = 0; j < 3; ++j)
 				{
-					XMFLOAT3 Vertex2{ NewNavNode->GetTriangle().m_Vertices[j] };
+					XMFLOAT3 Vertex2{ NewNavNode->m_Triangle.m_Vertices[j] };
 
 					if (Vector3::IsEqual(Vertex1, Vertex2))
 					{
@@ -104,5 +104,21 @@ UINT CNavMesh::GetNodeIndex(const XMFLOAT3& Position)
 		}
 	}
 
-	return UINT_MAX;
+	// 포지션이 NavMesh위에 없을 경우 제일 인접한 Index를 반환한다.
+	float NearestDistance{ FLT_MAX };
+	float Distance{};
+	UINT Index{};
+
+	for (UINT i = 0; i < NavNodeSize; ++i)
+	{
+		Distance = Math::Distance(m_NavNodes[i]->GetTriangle().m_Centroid, Position);
+
+		if (Distance < NearestDistance)
+		{
+			NearestDistance = Distance;
+			Index = i;
+		}
+	}
+
+	return Index;
 }

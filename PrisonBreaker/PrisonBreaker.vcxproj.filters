@@ -204,6 +204,15 @@
     <ClCompile Include="EventTriggers.cpp">
       <Filter>소스 파일\Event</Filter>
     </ClCompile>
+    <ClCompile Include="MissionUI.cpp">
+      <Filter>소스 파일\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="KeyUI.cpp">
+      <Filter>소스 파일\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="State_KeyUI.cpp">
+      <Filter>소스 파일\State</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -313,6 +322,15 @@
     </ClInclude>
     <ClInclude Include="EventTriggers.h">
       <Filter>헤더 파일\Event</Filter>
+    </ClInclude>
+    <ClInclude Include="MissionUI.h">
+      <Filter>헤더 파일\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="KeyUI.h">
+      <Filter>헤더 파일\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="State_KeyUI.h">
+      <Filter>헤더 파일\State</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

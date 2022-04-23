@@ -5,6 +5,8 @@
 #include "UIShader.h"
 #include "DebugShader.h"
 #include "EventTriggers.h"
+#include "MissionUI.h"
+#include "KeyUI.h"
 
 struct FOG
 {
@@ -61,7 +63,6 @@ private:
 	ComPtr<ID3D12Resource>						m_D3D12Fog{};
 	CB_FOG*										m_MappedFog{};
 
-	bool										m_IsShooting{};
 	bool										m_RenderBoundingBox{};
 
 public:
@@ -101,4 +102,8 @@ public:
 
 	void BuildLights();
 	void BuildFog();
+
+	void UpdatePerspective(HWND hWnd, float ElapsedTime, const shared_ptr<CPlayer>& Player);
+
+	void InteractTrigger();
 };

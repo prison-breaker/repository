@@ -156,7 +156,7 @@ float4 SpotLight(int Index, float3 Position, float3 Normal, float3 ToCamera)
 		ToLight /= Distance;
 
 		float AlbedoFactor = dot(ToLight, Normal);
-		float Alpha = max(dot(-ToLight, Lights[Index].m_Direction), 0.0f);
+        float Alpha = max(dot(-ToLight, Lights[Index].m_Direction), 0.0f);
 		float SpotFactor = pow(max((Alpha - Lights[Index].m_Phi) / (Lights[Index].m_Theta - Lights[Index].m_Phi), 0.0f), Lights[Index].m_Falloff);
 		float AttenuationFactor = 1.0f / dot(Lights[Index].m_Attenuation, float3(1.0f, Distance, Distance * Distance));
 
@@ -404,24 +404,27 @@ float4 PS_SkyBox(GS_OUTPUT_SKYBOX Input) : SV_TARGET
 
 struct VS_INPUT_IMAGE
 {
-	float3 m_PositionS : POSITION;
-	float2 m_SizeS     : SIZE;
-	uint2  m_CellCount : CELLCOUNT;
-	uint   m_CellIndex : CELLINDEX;
+	float3 m_PositionS  : POSITION;
+	float2 m_SizeS      : SIZE;
+    float  m_AlphaColor : ALPHACOLOR;
+	uint2  m_CellCount  : CELLCOUNT;
+	uint   m_CellIndex  : CELLINDEX;
 };
 
 struct VS_OUTPUT_IMAGE
 {
-	float3 m_CenterS   : POSITION;
-	float2 m_SizeS     : SIZE;
-	uint2  m_CellCount : CELLCOUNT;
-	uint   m_CellIndex : CELLINDEX;
+	float3 m_CenterS    : POSITION;
+	float2 m_SizeS      : SIZE;
+    float  m_AlphaColor : ALPHACOLOR;
+	uint2  m_CellCount  : CELLCOUNT;
+	uint   m_CellIndex  : CELLINDEX;
 };
 
 struct GS_OUTPUT_IMAGE
 {
-	float4 m_Position : SV_POSITION;
-	float2 m_TexCoord : TEXCOORD;
+	float4 m_Position   : SV_POSITION;
+	float2 m_TexCoord   : TEXCOORD;
+    float  m_AlphaColor : ALPHACOLOR;
 };
 
 float3 TransScreenToCamera(float Xpos, float Ypos)
@@ -436,6 +439,7 @@ VS_OUTPUT_IMAGE VS_Image(VS_INPUT_IMAGE Input)
 
 	Output.m_CenterS = Input.m_PositionS;
 	Output.m_SizeS = Input.m_SizeS;
+    Output.m_AlphaColor = Input.m_AlphaColor;
 	Output.m_CellCount = Input.m_CellCount;
 	Output.m_CellIndex = Input.m_CellIndex;
 
@@ -479,6 +483,7 @@ void GS_Image(point VS_OUTPUT_IMAGE Input[1], inout TriangleStream<GS_OUTPUT_IMA
 	{
 		Output.m_Position = Vertices[j];
 		Output.m_TexCoord = TexCoords[j];
+        Output.m_AlphaColor = Input[0].m_AlphaColor;
 
 		OutStream.Append(Output);
 	}
@@ -486,7 +491,11 @@ void GS_Image(point VS_OUTPUT_IMAGE Input[1], inout TriangleStream<GS_OUTPUT_IMA
 
 float4 PS_Image(GS_OUTPUT_IMAGE Input) : SV_TARGET
 {
-	return  AlbedoMapTexture.Sample(Sampler, Input.m_TexCoord);
+    float4 Color = AlbedoMapTexture.Sample(Sampler, Input.m_TexCoord);
+	
+    Color *= Input.m_AlphaColor;
+	
+    return Color;
 }
 
 // ====================================== STANDARD DEPTH WRITE SHADER ======================================

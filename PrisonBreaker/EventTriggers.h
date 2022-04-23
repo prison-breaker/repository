@@ -51,3 +51,34 @@ public:
 
 	virtual void GenerateEventTrigger(float ElapsedTime);
 };
+
+//=========================================================================================================================
+
+class CGetPistolEventTrigger : public CEventTrigger
+{
+public:
+	CGetPistolEventTrigger() = default;
+	virtual ~CGetPistolEventTrigger() = default;
+
+	virtual bool IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& LookDirection);
+
+	virtual void GenerateEventTrigger(float ElapsedTime);
+};
+
+//=========================================================================================================================
+
+class CGetKeyEventTrigger : public CEventTrigger
+{
+private:
+	shared_ptr<CBilboardObject> m_KeyUIFrmae{};
+
+public:
+	CGetKeyEventTrigger() = default;
+	virtual ~CGetKeyEventTrigger() = default;
+
+	virtual bool IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& LookDirection);
+
+	virtual void GenerateEventTrigger(float ElapsedTime);
+
+	void SetKeyUIFrame(const shared_ptr<CBilboardObject>& KeyUIFrame);
+};

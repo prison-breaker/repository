@@ -13,8 +13,8 @@ public:
 	static CPlayerIdleState* GetInstance();
 
 	virtual void Enter(const shared_ptr<CPlayer>& Entity);
-	virtual void ProcessInput(const shared_ptr<CPlayer>& Entity, UINT InputMask, float ElapsedTime);
-	virtual void Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime);
+	virtual void ProcessInput(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask);
+	virtual void Update(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime);
 	virtual void Exit(const shared_ptr<CPlayer>& Entity);
 };
 
@@ -30,8 +30,8 @@ public:
 	static CPlayerWalkingState* GetInstance();
 
 	virtual void Enter(const shared_ptr<CPlayer>& Entity);
-	virtual void ProcessInput(const shared_ptr<CPlayer>& Entity, UINT InputMask, float ElapsedTime);
-	virtual void Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime);
+	virtual void ProcessInput(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask);
+	virtual void Update(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime);
 	virtual void Exit(const shared_ptr<CPlayer>& Entity);
 };
 
@@ -47,8 +47,8 @@ public:
 	static CPlayerRunningState* GetInstance();
 
 	virtual void Enter(const shared_ptr<CPlayer>& Entity);
-	virtual void ProcessInput(const shared_ptr<CPlayer>& Entity, UINT InputMask, float ElapsedTime);
-	virtual void Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime);
+	virtual void ProcessInput(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask);
+	virtual void Update(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime);
 	virtual void Exit(const shared_ptr<CPlayer>& Entity);
 };
 
@@ -64,8 +64,8 @@ public:
 	static CPlayerPunchingState* GetInstance();
 
 	virtual void Enter(const shared_ptr<CPlayer>& Entity);
-	virtual void ProcessInput(const shared_ptr<CPlayer>& Entity, UINT InputMask, float ElapsedTime);
-	virtual void Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime);
+	virtual void ProcessInput(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask);
+	virtual void Update(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime);
 	virtual void Exit(const shared_ptr<CPlayer>& Entity);
 };
 
@@ -81,8 +81,8 @@ public:
 	static CPlayerShootingState* GetInstance();
 
 	virtual void Enter(const shared_ptr<CPlayer>& Entity);
-	virtual void ProcessInput(const shared_ptr<CPlayer>& Entity, UINT InputMask, float ElapsedTime);
-	virtual void Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime);
+	virtual void ProcessInput(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask);
+	virtual void Update(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime);
 	virtual void Exit(const shared_ptr<CPlayer>& Entity);
 };
 
@@ -98,7 +98,7 @@ public:
 	static CPlayerDyingState* GetInstance();
 
 	virtual void Enter(const shared_ptr<CPlayer>& Entity);
-	virtual void ProcessInput(const shared_ptr<CPlayer>& Entity, UINT InputMask, float ElapsedTime);
-	virtual void Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime);
+	virtual void ProcessInput(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask);
+	virtual void Update(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime);
 	virtual void Exit(const shared_ptr<CPlayer>& Entity);
 };

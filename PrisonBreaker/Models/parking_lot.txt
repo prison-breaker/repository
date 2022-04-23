@@ -37,53 +37,53 @@
 					<Material> police_car 
 				<ChildCount> 0
 			</Frame>
+			<Frame> police_car
+				<TransformMatrix> -0.170296 0 -3.495855 0 -3.495855 0 0.1702958 0 0 3.5 0 0 85.35 4.742403 38.1 1 
+				<Mesh> Ford_Raptor_BASE
+				<Materials> 1
+					<Material> police_car 
+				<ChildCount> 0
+			</Frame>
 			<Frame> traffic_cone
 				<TransformMatrix> 0.5 0 0 0 0 1.2 0 0 0 0 0.5 0 100 1.027839 -48 1 
-				<Mesh> default
+				<Mesh> traffic_cone
 				<Materials> 1
 					<Material> cone 
 				<ChildCount> 0
 			</Frame>
 			<Frame> traffic_cone
 				<TransformMatrix> 0.5 0 0 0 0 1.2 0 0 0 0 0.5 0 120 1.027839 -48 1 
-				<Mesh> default
+				<Mesh> traffic_cone
 				<Materials> 1
 					<Material> cone 
 				<ChildCount> 0
 			</Frame>
 			<Frame> traffic_cone
 				<TransformMatrix> 0.5 0 0 0 0 1.2 0 0 0 0 0.5 0 140 1.027839 -48 1 
-				<Mesh> default
+				<Mesh> traffic_cone
 				<Materials> 1
 					<Material> cone 
 				<ChildCount> 0
 			</Frame>
 			<Frame> traffic_cone
 				<TransformMatrix> 0.5 0 0 0 0 1.2 0 0 0 0 0.5 0 160 1.027839 -48 1 
-				<Mesh> default
+				<Mesh> traffic_cone
 				<Materials> 1
 					<Material> cone 
 				<ChildCount> 0
 			</Frame>
 			<Frame> traffic_cone
 				<TransformMatrix> 0.5 0 0 0 0 1.2 0 0 0 0 0.5 0 180 1.027839 -48 1 
-				<Mesh> default
+				<Mesh> traffic_cone
 				<Materials> 1
 					<Material> cone 
 				<ChildCount> 0
 			</Frame>
 			<Frame> traffic_cone
 				<TransformMatrix> 0.5 0 0 0 0 1.2 0 0 0 0 0.5 0 80 1.027839 -48 1 
-				<Mesh> default
+				<Mesh> traffic_cone
 				<Materials> 1
 					<Material> cone 
-				<ChildCount> 0
-			</Frame>
-			<Frame> police_car
-				<TransformMatrix> -0.170296 0 -3.495855 0 -3.495855 0 0.1702958 0 0 3.5 0 0 85.35 4.742403 38.1 1 
-				<Mesh> Ford_Raptor_BASE
-				<Materials> 1
-					<Material> police_car 
 				<ChildCount> 0
 			</Frame>
 	</Frame>
