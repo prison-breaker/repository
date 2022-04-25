@@ -160,11 +160,6 @@ typedef basic_stringstream<TCHAR>  tstringstream;
 typedef basic_istringstream<TCHAR> tistringstream;
 typedef basic_ostringstream<TCHAR> tostringstream;
 
-// Managers
-#include "SceneManager.h"
-#include "TextureManager.h"
-#include "ShaderManager.h"
-
 namespace DX
 {
 	void ThrowIfFailed(HRESULT Result);
@@ -251,3 +246,8 @@ namespace Matrix4x4
 	XMFLOAT4X4 LookAtLH(const XMFLOAT3& Position, const XMFLOAT3& FocusPosition, const XMFLOAT3& UpDirection);
 	XMFLOAT4X4 LookToLH(const XMFLOAT3& Position, const XMFLOAT3& Look, const XMFLOAT3& WorldUp);
 }
+
+// Managers
+#include "SceneManager.h"
+#include "TextureManager.h"
+#include "ShaderManager.h"

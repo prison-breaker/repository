@@ -52,6 +52,7 @@ class CGameScene : public CScene
 private:
 	vector<vector<shared_ptr<CGameObject>>>     m_GameObjects{};
 	vector<vector<shared_ptr<CBilboardObject>>> m_BilboardObjects{};
+
 	vector<shared_ptr<CEventTrigger>>			m_EventTriggers{};
 
 	shared_ptr<CNavMesh>					    m_NavMesh{};
@@ -65,7 +66,7 @@ private:
 
 	bool										m_RenderBoundingBox{};
 
-	float                                       m_SpotLightAngle{};
+	float                                       m_SpotLightAngle{ XMConvertToRadians(90.0f) };
 
 public:
 	CGameScene() = default;
@@ -97,6 +98,13 @@ public:
 	virtual void PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 	virtual void PostRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
+
+	vector<vector<shared_ptr<CGameObject>>>& GetGameObjects();
+	vector<vector<shared_ptr<CBilboardObject>>>& GetBilboardObjects();
+
+	vector<shared_ptr<CEventTrigger>>& GetEventTriggers();
+
+	shared_ptr<CNavMesh>& GetNavMesh();
 
 	void LoadMeshCachesFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName, unordered_map<tstring, shared_ptr<CMesh>>& MeshCaches);
 	void LoadMaterialCachesFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName, unordered_map<tstring, shared_ptr<CMaterial>>& MaterialCaches);

@@ -8,11 +8,11 @@ void CMissionUI::Initialize()
 	m_StateMachine->SetCurrentState(CMissionUIShowingState::GetInstance());
 }
 
-void CMissionUI::Animate(const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
+void CMissionUI::Animate(float ElapsedTime)
 {
 	if (m_StateMachine)
 	{
-		m_StateMachine->Update(GameObjects, NavMesh, ElapsedTime);
+		m_StateMachine->Update(ElapsedTime);
 	}
 }
 

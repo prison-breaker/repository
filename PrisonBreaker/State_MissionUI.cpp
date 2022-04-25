@@ -14,7 +14,7 @@ void CMissionUIShowingState::Enter(const shared_ptr<CMissionUI>& Entity)
 
 }
 
-void CMissionUIShowingState::ProcessInput(const shared_ptr<CMissionUI>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
+void CMissionUIShowingState::ProcessInput(const shared_ptr<CMissionUI>& Entity, float ElapsedTime, UINT InputMask)
 {
 	if (InputMask & INPUT_MASK_TAB)
 	{
@@ -22,7 +22,7 @@ void CMissionUIShowingState::ProcessInput(const shared_ptr<CMissionUI>& Entity, 
 	}
 }
 
-void CMissionUIShowingState::Update(const shared_ptr<CMissionUI>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
+void CMissionUIShowingState::Update(const shared_ptr<CMissionUI>& Entity, float ElapsedTime)
 {
 	Entity->GetUIAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE);
 }
@@ -46,7 +46,7 @@ void CMissionUIHidingState::Enter(const shared_ptr<CMissionUI>& Entity)
 
 }
 
-void CMissionUIHidingState::ProcessInput(const shared_ptr<CMissionUI>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
+void CMissionUIHidingState::ProcessInput(const shared_ptr<CMissionUI>& Entity, float ElapsedTime, UINT InputMask)
 {
 	if (InputMask & INPUT_MASK_TAB)
 	{
@@ -54,7 +54,7 @@ void CMissionUIHidingState::ProcessInput(const shared_ptr<CMissionUI>& Entity, c
 	}
 }
 
-void CMissionUIHidingState::Update(const shared_ptr<CMissionUI>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
+void CMissionUIHidingState::Update(const shared_ptr<CMissionUI>& Entity, float ElapsedTime)
 {
 	Entity->GetUIAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE_REVERSE);
 }

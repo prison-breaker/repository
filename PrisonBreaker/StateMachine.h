@@ -59,19 +59,19 @@ public:
 		return typeid(*m_CurrentState) == typeid(*State);
 	}
 
-	void ProcessInput(const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
+	void ProcessInput(float ElapsedTime, UINT InputMask)
 	{
 		if (m_CurrentState)
 		{
-			m_CurrentState->ProcessInput(m_Owner, GameObjects, NavMesh, ElapsedTime, InputMask);
+			m_CurrentState->ProcessInput(m_Owner, ElapsedTime, InputMask);
 		}
 	}
 
-	void Update(const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
+	void Update(float ElapsedTime)
 	{
 		if (m_CurrentState)
 		{
-			m_CurrentState->Update(m_Owner, GameObjects, NavMesh, ElapsedTime);
+			m_CurrentState->Update(m_Owner, ElapsedTime);
 		}
 	}
 };

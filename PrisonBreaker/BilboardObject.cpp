@@ -64,7 +64,7 @@ shared_ptr<CBilboardObject> CBilboardObject::LoadObjectInfoFromFile(ID3D12Device
 		}
 		else if (Token == TEXT("<RectTransform>"))
 		{
-			NewObject->m_VertexCount = File::ReadIntegerFromFile(InFile);
+			NewObject->m_MaxVertexCount = NewObject->m_VertexCount = File::ReadIntegerFromFile(InFile);
 
 			NewObject->m_D3D12VertexBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, nullptr, sizeof(CBilboardMesh) * NewObject->m_VertexCount, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, nullptr);
 			DX::ThrowIfFailed(NewObject->m_D3D12VertexBuffer->Map(0, nullptr, reinterpret_cast<void**>(&NewObject->m_MappedImageInfo)));
@@ -141,7 +141,9 @@ shared_ptr<CBilboardObject> CBilboardObject::LoadObjectInfoFromFile(ID3D12Device
 		}
 		else if (Token == TEXT("<RectTransform>"))
 		{
-			InFile >> NewObject->m_VertexCount;
+			InFile >> NewObject->m_MaxVertexCount;
+
+			NewObject->m_VertexCount = NewObject->m_MaxVertexCount;
 
 			NewObject->m_D3D12VertexBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, nullptr, sizeof(CBilboardMesh) * NewObject->m_VertexCount, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, nullptr);
 			DX::ThrowIfFailed(NewObject->m_D3D12VertexBuffer->Map(0, nullptr, reinterpret_cast<void**>(&NewObject->m_MappedImageInfo)));
@@ -252,7 +254,7 @@ void CBilboardObject::Initialize()
 	SetActive(true);
 }
 
-void CBilboardObject::Animate(const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
+void CBilboardObject::Animate(float ElapsedTime)
 {
 
 }
@@ -305,6 +307,21 @@ void CBilboardObject::SetMaterial(const shared_ptr<CMaterial>& Material)
 	{
 		m_Materials.push_back(Material);
 	}
+}
+
+UINT CBilboardObject::GetMaxVertexCount() const
+{
+	return m_MaxVertexCount;
+}
+
+void CBilboardObject::SetVertexCount(UINT VertexCount)
+{
+	if (VertexCount < 0 || VertexCount > m_MaxVertexCount)
+	{
+		return;
+	}
+
+	m_VertexCount = VertexCount;
 }
 
 UINT CBilboardObject::GetVertexCount() const

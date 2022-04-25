@@ -9,15 +9,11 @@ bool CEventTrigger::IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& Lo
 	float ZMin{ m_TriggerArea.z };
 	float ZMax{ m_TriggerArea.w };
 
-	if ((Position.x > XMin) && (Position.x < XMax) && (Position.z > ZMin) && (Position.z < ZMax) &&
-		Vector3::Angle(LookDirection, m_ToTrigger) >= 120.0f)
+	if ((Position.x > XMin) && (Position.x < XMax) && (Position.z > ZMin) && (Position.z < ZMax))
 	{
 		if (!IsInteracted())
 		{
-			if (m_InteractionUI)
-			{
-				m_InteractionUI->SetActive(true);
-			}
+			ActivateInteractionUI();
 		}
 
 		return true;
@@ -29,6 +25,14 @@ bool CEventTrigger::IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& Lo
 	}
 
 	return false;
+}
+
+void CEventTrigger::ActivateInteractionUI()
+{
+	if (m_InteractionUI)
+	{
+		m_InteractionUI->SetActive(true);
+	}
 }
 
 void CEventTrigger::GenerateEventTrigger(float ElapsedTime)
@@ -85,6 +89,16 @@ void CEventTrigger::InsertEventObject(const shared_ptr<CGameObject>& EventObject
 	}
 }
 
+shared_ptr<CGameObject> CEventTrigger::GetEventObject(UINT Index)
+{
+	if (Index < 0 || Index >= m_EventObjects.size())
+	{
+		return nullptr;
+	}
+
+	return m_EventObjects[Index];
+}
+
 void CEventTrigger::SetInteractionUI(const shared_ptr<CBilboardObject>& InteractionUI)
 {
 	if (InteractionUI)
@@ -93,7 +107,7 @@ void CEventTrigger::SetInteractionUI(const shared_ptr<CBilboardObject>& Interact
 	}
 }
 
-CBilboardObject* CEventTrigger::GetInteractionUI() const
+shared_ptr<CBilboardObject> CEventTrigger::GetInteractionUI() const
 {
-	return m_InteractionUI.get();
+	return m_InteractionUI;
 }

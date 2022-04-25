@@ -12,7 +12,8 @@ protected:
 	bool				               m_IsActive{};
 								       
 	vector<shared_ptr<CMaterial>>      m_Materials{};
-								       
+	
+	UINT						       m_MaxVertexCount{};
 	UINT						       m_VertexCount{};
 								       
 	ComPtr<ID3D12Resource>	           m_D3D12VertexBuffer{};
@@ -32,7 +33,7 @@ public:
 
 	virtual void Initialize();
 
-	virtual void Animate(const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime);
+	virtual void Animate(float ElapsedTime);
 
 	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType);
 
@@ -43,6 +44,9 @@ public:
 
 	void SetMaterial(const shared_ptr<CMaterial>& Material);
 
+	UINT GetMaxVertexCount() const;
+
+	void SetVertexCount(UINT VertexCount);
 	UINT GetVertexCount() const;
 
 	void SetPosition(UINT Index, const XMFLOAT3& Position);

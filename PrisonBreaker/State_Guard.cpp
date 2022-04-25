@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "State_Guard.h"
-#include "Guard.h"
+#include "GameScene.h"
 
 CGuardIdleState* CGuardIdleState::GetInstance()
 {
@@ -15,13 +15,17 @@ void CGuardIdleState::Enter(const shared_ptr<CGuard>& Entity)
 	Entity->SetAnimationClip(0);
 }
 
-void CGuardIdleState::ProcessInput(const shared_ptr<CGuard>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
+void CGuardIdleState::ProcessInput(const shared_ptr<CGuard>& Entity, float ElapsedTime, UINT InputMask)
 {
 
 }
 
-void CGuardIdleState::Update(const shared_ptr<CGuard>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
+void CGuardIdleState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTime)
 {
+	auto GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
+	auto GameObjects{ GameScene->GetGameObjects() };
+	auto NavMesh{ GameScene->GetNavMesh() };
+
 	shared_ptr<CGameObject> NearestPlayer{ Entity->IsFoundPlayer(GameObjects) };
 
 	if (NearestPlayer)
@@ -65,13 +69,17 @@ void CGuardPatrolState::Enter(const shared_ptr<CGuard>& Entity)
 	Entity->SetSpeed(5.0f);
 }
 
-void CGuardPatrolState::ProcessInput(const shared_ptr<CGuard>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
+void CGuardPatrolState::ProcessInput(const shared_ptr<CGuard>& Entity, float ElapsedTime, UINT InputMask)
 {
 
 }
 
-void CGuardPatrolState::Update(const shared_ptr<CGuard>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
+void CGuardPatrolState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTime)
 {
+	auto GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
+	auto GameObjects{ GameScene->GetGameObjects() };
+	auto NavMesh{ GameScene->GetNavMesh() };
+
 	shared_ptr<CGameObject> NearestPlayer{ Entity->IsFoundPlayer(GameObjects) };
 
 	if (NearestPlayer)
@@ -122,13 +130,17 @@ void CGuardChaseState::Enter(const shared_ptr<CGuard>& Entity)
 	Entity->SetSpeed(13.0f);
 }
 
-void CGuardChaseState::ProcessInput(const shared_ptr<CGuard>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
+void CGuardChaseState::ProcessInput(const shared_ptr<CGuard>& Entity, float ElapsedTime, UINT InputMask)
 {
 
 }
 
-void CGuardChaseState::Update(const shared_ptr<CGuard>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
+void CGuardChaseState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTime)
 {
+	auto GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
+	auto GameObjects{ GameScene->GetGameObjects() };
+	auto NavMesh{ GameScene->GetNavMesh() };
+
 	shared_ptr<CGameObject> NearestPlayer{ Entity->IsFoundPlayer(GameObjects) };
 	XMFLOAT3 Direction{};
 
@@ -221,13 +233,17 @@ void CGuardReturnState::Enter(const shared_ptr<CGuard>& Entity)
 	Entity->SetSpeed(5.0f);
 }
 
-void CGuardReturnState::ProcessInput(const shared_ptr<CGuard>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
+void CGuardReturnState::ProcessInput(const shared_ptr<CGuard>& Entity, float ElapsedTime, UINT InputMask)
 {
 
 }
 
-void CGuardReturnState::Update(const shared_ptr<CGuard>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
+void CGuardReturnState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTime)
 {
+	auto GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
+	auto GameObjects{ GameScene->GetGameObjects() };
+	auto NavMesh{ GameScene->GetNavMesh() };
+
 	shared_ptr<CGameObject> NearestPlayer{ Entity->IsFoundPlayer(GameObjects) };
 
 	if (NearestPlayer)
@@ -277,13 +293,17 @@ void CGuardAssembleState::Enter(const shared_ptr<CGuard>& Entity)
 	Entity->SetSpeed(13.0f);
 }
 
-void CGuardAssembleState::ProcessInput(const shared_ptr<CGuard>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
+void CGuardAssembleState::ProcessInput(const shared_ptr<CGuard>& Entity, float ElapsedTime, UINT InputMask)
 {
 
 }
 
-void CGuardAssembleState::Update(const shared_ptr<CGuard>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
+void CGuardAssembleState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTime)
 {
+	auto GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
+	auto GameObjects{ GameScene->GetGameObjects() };
+	auto NavMesh{ GameScene->GetNavMesh() };
+
 	shared_ptr<CGameObject> NearestPlayer{ Entity->IsFoundPlayer(GameObjects) };
 
 	if (NearestPlayer)
@@ -330,13 +350,15 @@ void CGuardShootingState::Enter(const shared_ptr<CGuard>& Entity)
 	Entity->SetSpeed(0.0f);
 }
 
-void CGuardShootingState::ProcessInput(const shared_ptr<CGuard>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
+void CGuardShootingState::ProcessInput(const shared_ptr<CGuard>& Entity, float ElapsedTime, UINT InputMask)
 {
 
 }
 
-void CGuardShootingState::Update(const shared_ptr<CGuard>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
+void CGuardShootingState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTime)
 {	
+	auto GameObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetGameObjects() };
+
 	// 총을 쏘면 다시 ChaseState로 전이한다.
 	if (Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE))
 	{
@@ -400,12 +422,12 @@ void CGuardHitState::Enter(const shared_ptr<CGuard>& Entity)
 	Entity->SetHealth(Entity->GetHealth() - 35);
 }
 
-void CGuardHitState::ProcessInput(const shared_ptr<CGuard>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
+void CGuardHitState::ProcessInput(const shared_ptr<CGuard>& Entity, float ElapsedTime, UINT InputMask)
 {
 
 }
 
-void CGuardHitState::Update(const shared_ptr<CGuard>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
+void CGuardHitState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTime)
 {
 	if (Entity->GetHealth() <= 0)
 	{
@@ -439,20 +461,35 @@ void CGuardDyingState::Enter(const shared_ptr<CGuard>& Entity)
 	Entity->SetRecentTransition(false);
 	Entity->SetAnimationClip(5);
 	Entity->SetSpeed(0.0f);
+
+	auto EventTriggers{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetEventTriggers() };
+
+	for (const auto& EventTrigger : EventTriggers)
+	{
+		if (EventTrigger)
+		{
+			// Entity를 이벤트 객체로 갖고 있는 트리거를 찾아 교도관이 사망한 위치에 트리거가 형성되도록 위치를 설정해준다.
+			if (EventTrigger->GetEventObject(0) == Entity)
+			{
+				EventTrigger->CalculateTriggerAreaByPoint(Entity->GetPosition(), 6.0f, 6.0f);
+				break;
+			}
+		}
+	}
 }
 
-void CGuardDyingState::ProcessInput(const shared_ptr<CGuard>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
+void CGuardDyingState::ProcessInput(const shared_ptr<CGuard>& Entity, float ElapsedTime, UINT InputMask)
 {
 
 }
 
-void CGuardDyingState::Update(const shared_ptr<CGuard>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
+void CGuardDyingState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTime)
 {
 	// 교도관이 사망하면 오브젝트를 비활성화한다.
 	if (Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE))
 	{
 		Entity->SetElapsedTime(Entity->GetElapsedTime() + ElapsedTime);
-
+		
 		if (Entity->GetElapsedTime() > 10.0f)
 		{
 			Entity->SetActive(false);

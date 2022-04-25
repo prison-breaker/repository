@@ -12,7 +12,7 @@ public:
 
 	virtual void Initialize();
 
-	virtual void Animate(const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime);
+	virtual void Animate(float ElapsedTime);
 
 	CStateMachine<CMissionUI>* GetStateMachine() const;
 };

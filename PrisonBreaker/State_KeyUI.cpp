@@ -14,12 +14,12 @@ void CKeyUIActivationState::Enter(const shared_ptr<CKeyUI>& Entity)
 
 }
 
-void CKeyUIActivationState::ProcessInput(const shared_ptr<CKeyUI>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
+void CKeyUIActivationState::ProcessInput(const shared_ptr<CKeyUI>& Entity, float ElapsedTime, UINT InputMask)
 {
 
 }
 
-void CKeyUIActivationState::Update(const shared_ptr<CKeyUI>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
+void CKeyUIActivationState::Update(const shared_ptr<CKeyUI>& Entity, float ElapsedTime)
 {
 	Entity->GetUIAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE);
 }

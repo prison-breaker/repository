@@ -1,8 +1,15 @@
 #include "stdafx.h"
 #include "EventTriggers.h"
-#include "Player.h"
-#include "Guard.h"
-#include "BilboardObject.h"
+#include "GameScene.h"
+
+void COpenDoorEventTrigger::ActivateInteractionUI()
+{
+	if (m_InteractionUI)
+	{
+		m_InteractionUI->SetActive(true);
+		m_InteractionUI->SetCellIndex(0, 0);
+	}
+}
 
 void COpenDoorEventTrigger::GenerateEventTrigger(float ElapsedTime)
 {
@@ -17,16 +24,28 @@ void COpenDoorEventTrigger::GenerateEventTrigger(float ElapsedTime)
 			m_DoorAngle += 45.0f * ElapsedTime;
 		}
 	}
-	else
-	{
-		if (m_InteractionUI)
-		{
-			m_InteractionUI->SetCellIndex(0, 0);
-		}
-	}
 }
 
 //=========================================================================================================================
+
+void CPowerDownEventTrigger::ActivateInteractionUI()
+{
+	if (m_InteractionUI)
+	{
+		m_InteractionUI->SetActive(true);
+
+		if (m_PanelAngle <= 0.0f)
+		{
+			m_InteractionUI->SetCellIndex(0, 1);
+			m_PanelAngle;
+		}
+		else if (m_PanelAngle <= 120.0f)
+		{
+			m_InteractionUI->SetCellIndex(0, 2);
+			m_PanelAngle;
+		}
+	}
+}
 
 void CPowerDownEventTrigger::GenerateEventTrigger(float ElapsedTime)
 {
@@ -39,41 +58,50 @@ void CPowerDownEventTrigger::GenerateEventTrigger(float ElapsedTime)
 			m_EventObjects[0]->Rotate(WorldUp, -20.0f * ElapsedTime);
 			m_PanelAngle += 20.0f * ElapsedTime;
 		}
-	}
-	else
-	{
-		if (m_InteractionUI)
+		else
 		{
-			if (m_PanelAngle <= 0.0f)
+			if (!m_IsOpened)
 			{
-				m_InteractionUI->SetCellIndex(0, 1);
-			}
-			else if (m_PanelAngle < 120.0f)
-			{
-				m_InteractionUI->SetCellIndex(0, 2);
+				m_IsOpened = true;
+				m_PanelAngle = 120.0f;
+
+				SetInteracted(false);
 			}
 		}
 	}
 }
 
+bool CPowerDownEventTrigger::IsOpened() const
+{
+	return m_IsOpened;
+}
+
 //=========================================================================================================================
+
+void CSirenEventTrigger::ActivateInteractionUI()
+{
+	if (m_InteractionUI)
+	{
+		m_InteractionUI->SetActive(true);
+		m_InteractionUI->SetCellIndex(0, 3);
+	}
+}
 
 void CSirenEventTrigger::GenerateEventTrigger(float ElapsedTime)
 {
-	if (IsInteracted())
-	{
 
-	}
-	else
-	{
-		if (m_InteractionUI)
-		{
-			m_InteractionUI->SetCellIndex(0, 3);
-		}
-	}
 }
 
 //=========================================================================================================================
+
+void COpenGateEventTrigger::ActivateInteractionUI()
+{
+	if (m_InteractionUI)
+	{
+		m_InteractionUI->SetActive(true);
+		m_InteractionUI->SetCellIndex(0, 6);
+	}
+}
 
 void COpenGateEventTrigger::GenerateEventTrigger(float ElapsedTime)
 {
@@ -86,13 +114,6 @@ void COpenGateEventTrigger::GenerateEventTrigger(float ElapsedTime)
 			m_EventObjects[0]->Rotate(WorldUp, -20.0f * ElapsedTime);
 			m_EventObjects[1]->Rotate(WorldUp, 20.0f * ElapsedTime);
 			m_DoorAngle += 20.0f * ElapsedTime;
-		}
-	}
-	else
-	{
-		if (m_InteractionUI)
-		{
-			m_InteractionUI->SetCellIndex(0, 6);
 		}
 	}
 }
@@ -115,18 +136,10 @@ bool CGetPistolEventTrigger::IsInTriggerArea(const XMFLOAT3& Position, const XMF
 		{
 			if (!IsInteracted())
 			{
-				if (m_InteractionUI)
-				{
-					m_InteractionUI->SetActive(true);
-				}
+				ActivateInteractionUI();
 			}
 
 			return true;
-		}
-		else
-		{
-			// 나중에 이 트리거를 this 처리하여 매 프레임마다 트리거 영역을 구하는 연산을 수행하는 것을 해결할 예정
-			CalculateTriggerAreaByPoint(Guard->GetPosition(), 5.0f, 5.0f);
 		}
 	}
 
@@ -138,24 +151,12 @@ bool CGetPistolEventTrigger::IsInTriggerArea(const XMFLOAT3& Position, const XMF
 	return false;
 }
 
-void CGetPistolEventTrigger::GenerateEventTrigger(float ElapsedTime)
+void  CGetPistolEventTrigger::ActivateInteractionUI()
 {
-	if (IsInteracted())
+	if (m_InteractionUI)
 	{
-		shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_EventObjects[1]) };
-
-		if (!Player->HasPistol())
-		{
-			Player->AcquirePistol();
-			Player->SwapWeapon(WEAPON_TYPE_PISTOL);
-		}
-	}
-	else
-	{
-		if (m_InteractionUI)
-		{
-			m_InteractionUI->SetCellIndex(0, 4);
-		}
+		m_InteractionUI->SetActive(true);
+		m_InteractionUI->SetCellIndex(0, 4);
 	}
 }
 
@@ -177,18 +178,10 @@ bool CGetKeyEventTrigger::IsInTriggerArea(const XMFLOAT3& Position, const XMFLOA
 		{
 			if (!IsInteracted())
 			{
-				if (m_InteractionUI)
-				{
-					m_InteractionUI->SetActive(true);
-				}
+				ActivateInteractionUI();
 
 				return true;
 			}
-		}
-		else
-		{
-			// 나중에 이 트리거를 this 처리하여 매 프레임마다 트리거 영역을 구하는 연산을 수행하는 것을 해결할 예정
-			CalculateTriggerAreaByPoint(Guard->GetPosition(), 5.0f, 5.0f);
 		}
 	}
 
@@ -200,17 +193,11 @@ bool CGetKeyEventTrigger::IsInTriggerArea(const XMFLOAT3& Position, const XMFLOA
 	return false;
 }
 
-void CGetKeyEventTrigger::GenerateEventTrigger(float ElapsedTime)
+void CGetKeyEventTrigger::ActivateInteractionUI()
 {
-	if (IsInteracted())
+	if (m_InteractionUI)
 	{
-
-	}
-	else
-	{
-		if (m_InteractionUI)
-		{
-			m_InteractionUI->SetCellIndex(0, 5);
-		}
+		m_InteractionUI->SetActive(true);
+		m_InteractionUI->SetCellIndex(0, 5);
 	}
 }

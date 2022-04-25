@@ -21,13 +21,13 @@ void CPlayer::Initialize()
 	FindFrame(TEXT("gun_pr_1"))->SetActive(false);
 }
 
-void CPlayer::Animate(const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
+void CPlayer::Animate(float ElapsedTime)
 {
 	if (IsActive())
 	{
 		if (m_StateMachine)
 		{
-			m_StateMachine->Update(GameObjects, NavMesh, ElapsedTime);
+			m_StateMachine->Update(ElapsedTime);
 		}
 	}
 }
@@ -82,6 +82,16 @@ bool CPlayer::HasPistol() const
 	return (m_PistolFrame) ? true : false;
 }
 
+bool CPlayer::IsEquippedPistol() const
+{
+	if (m_PistolFrame)
+	{
+		return m_PistolFrame->IsActive();
+	}
+
+	return false;
+}
+
 bool CPlayer::SwapWeapon(WEAPON_TYPE WeaponType)
 {
 	bool IsSwapped{};
@@ -106,6 +116,24 @@ bool CPlayer::SwapWeapon(WEAPON_TYPE WeaponType)
 
 void CPlayer::Rotate(float Pitch, float Yaw, float Roll, float ElapsedTime, float NearestHitDistance)
 {
+	if (!Math::IsZero(Pitch))
+	{
+		m_Rotation.x += Pitch;
+
+		if (m_Rotation.x > 15.0f)
+		{
+			Pitch -= (Pitch - 15.0f);
+			m_Rotation.x = 15.0f;
+
+		}
+
+		if (m_Rotation.x < -15.0f)
+		{
+			Pitch -= (Pitch + 15.0f);
+			m_Rotation.x = -15.0f;
+		}
+	}
+
 	if (!Math::IsZero(Yaw))
 	{
 		m_Rotation.y += Yaw;
@@ -121,8 +149,6 @@ void CPlayer::Rotate(float Pitch, float Yaw, float Roll, float ElapsedTime, floa
 		}
 	}
 
-	m_Camera->Rotate(GetWorldMatrix(), ElapsedTime, NearestHitDistance);
-
 	if (!Math::IsZero(Yaw))
 	{
 		XMFLOAT4X4 RotationMatrix{ Matrix4x4::RotationAxis(GetUp(), Yaw) };
@@ -132,13 +158,17 @@ void CPlayer::Rotate(float Pitch, float Yaw, float Roll, float ElapsedTime, floa
 	}
 
 	CGameObject::UpdateLocalCoord(Vector3::Normalize(GetLook()));
+
+	XMFLOAT4X4 RotationMatrix{ Matrix4x4::Multiply(Matrix4x4::RotationYawPitchRoll(m_Rotation.x, 0.0f, 0.0f), GetWorldMatrix()) };
+	
+	m_Camera->Rotate(RotationMatrix, ElapsedTime, NearestHitDistance);
 }
 
 void CPlayer::ProcessInput(const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
 {
 	if (m_StateMachine)
 	{
-		m_StateMachine->ProcessInput(GameObjects, NavMesh, ElapsedTime, InputMask);
+		m_StateMachine->ProcessInput(ElapsedTime, InputMask);
 	}
 
 	XMFLOAT3 NewPosition{ Vector3::Add(GetPosition(), Vector3::ScalarProduct(m_Speed * ElapsedTime, m_MovingDirection, false)) };

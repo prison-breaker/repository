@@ -24,7 +24,7 @@ public:
 
 	virtual void Initialize();
 
-	virtual void Animate(const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime);
+	virtual void Animate(float ElapsedTime);
 
 	void SetHealth(UINT Health);
 	UINT GetHealth() const;
@@ -41,6 +41,7 @@ public:
 
 	void AcquirePistol();
 	bool HasPistol() const;
+	bool IsEquippedPistol() const;
 
 	bool SwapWeapon(WEAPON_TYPE WeaponType);
 

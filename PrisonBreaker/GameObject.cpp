@@ -401,7 +401,7 @@ void CGameObject::ReleaseUploadBuffers()
 	}
 }
 
-void CGameObject::Animate(const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
+void CGameObject::Animate(float ElapsedTime)
 {
 
 }

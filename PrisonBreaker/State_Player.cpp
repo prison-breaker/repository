@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "State_Player.h"
-#include "Player.h"
-#include "Guard.h"
+#include "GameScene.h"
 
 CPlayerIdleState* CPlayerIdleState::GetInstance()
 {
@@ -17,16 +16,22 @@ void CPlayerIdleState::Enter(const shared_ptr<CPlayer>& Entity)
 	Entity->SetAnimationClip(0);
 }
 
-void CPlayerIdleState::ProcessInput(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
+void CPlayerIdleState::ProcessInput(const shared_ptr<CPlayer>& Entity, float ElapsedTime, UINT InputMask)
 {
 	if (InputMask & INPUT_MASK_LMB)
 	{
-		Entity->GetStateMachine()->ChangeState(CPlayerPunchingState::GetInstance());
+		if (!Entity->IsEquippedPistol())
+		{
+			Entity->GetStateMachine()->ChangeState(CPlayerPunchingState::GetInstance());
+		}
 	}
 	else if (InputMask & INPUT_MASK_RMB)
 	{
-		Entity->SetAnimationClip(8);
-		Entity->GetStateMachine()->ChangeState(CPlayerShootingState::GetInstance());
+		if (Entity->IsEquippedPistol())
+		{
+			Entity->SetAnimationClip(8);
+			Entity->GetStateMachine()->ChangeState(CPlayerShootingState::GetInstance());
+		}
 	}
 	else if (InputMask & INPUT_MASK_W || InputMask & INPUT_MASK_S || InputMask & INPUT_MASK_A || InputMask & INPUT_MASK_D)
 	{
@@ -34,7 +39,7 @@ void CPlayerIdleState::ProcessInput(const shared_ptr<CPlayer>& Entity, const vec
 	}
 }
 
-void CPlayerIdleState::Update(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
+void CPlayerIdleState::Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime)
 {
 	Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
 }
@@ -58,18 +63,24 @@ void CPlayerWalkingState::Enter(const shared_ptr<CPlayer>& Entity)
 
 }
 
-void CPlayerWalkingState::ProcessInput(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
+void CPlayerWalkingState::ProcessInput(const shared_ptr<CPlayer>& Entity, float ElapsedTime, UINT InputMask)
 {
 	if (InputMask & INPUT_MASK_LMB)
 	{
-		Entity->GetStateMachine()->ChangeState(CPlayerPunchingState::GetInstance());
-		return;
+		if (!Entity->IsEquippedPistol())
+		{
+			Entity->GetStateMachine()->ChangeState(CPlayerPunchingState::GetInstance());
+			return;
+		}
 	}
 	else if (InputMask & INPUT_MASK_RMB)
 	{
-		Entity->SetAnimationClip(8);
-		Entity->GetStateMachine()->ChangeState(CPlayerShootingState::GetInstance());
-		return;
+		if (Entity->IsEquippedPistol())
+		{
+			Entity->SetAnimationClip(8);
+			Entity->GetStateMachine()->ChangeState(CPlayerShootingState::GetInstance());
+			return;
+		}
 	}
 	else if (InputMask & INPUT_MASK_SHIFT)
 	{
@@ -127,7 +138,7 @@ void CPlayerWalkingState::ProcessInput(const shared_ptr<CPlayer>& Entity, const 
 	}
 }
 
-void CPlayerWalkingState::Update(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
+void CPlayerWalkingState::Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime)
 {
 	Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
 }
@@ -151,18 +162,24 @@ void CPlayerRunningState::Enter(const shared_ptr<CPlayer>& Entity)
 
 }
 
-void CPlayerRunningState::ProcessInput(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
+void CPlayerRunningState::ProcessInput(const shared_ptr<CPlayer>& Entity, float ElapsedTime, UINT InputMask)
 {
 	if (InputMask & INPUT_MASK_LMB)
 	{
-		Entity->GetStateMachine()->ChangeState(CPlayerPunchingState::GetInstance());
-		return;
+		if (!Entity->IsEquippedPistol())
+		{
+			Entity->GetStateMachine()->ChangeState(CPlayerPunchingState::GetInstance());
+			return;
+		}
 	}
 	else if (InputMask & INPUT_MASK_RMB)
 	{
-		Entity->SetAnimationClip(8);
-		Entity->GetStateMachine()->ChangeState(CPlayerShootingState::GetInstance());
-		return;
+		if (Entity->IsEquippedPistol())
+		{
+			Entity->SetAnimationClip(8);
+			Entity->GetStateMachine()->ChangeState(CPlayerShootingState::GetInstance());
+			return;
+		}
 	}
 	else if (!(InputMask & INPUT_MASK_SHIFT))
 	{
@@ -220,10 +237,10 @@ void CPlayerRunningState::ProcessInput(const shared_ptr<CPlayer>& Entity, const 
 		break;
 	}
 
-	Entity->SetSpeed(Entity->GetSpeed() * 4.0f);
+	Entity->SetSpeed(Entity->GetSpeed());
 }
 
-void CPlayerRunningState::Update(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
+void CPlayerRunningState::Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime)
 {
 	Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
 }
@@ -247,14 +264,29 @@ void CPlayerPunchingState::Enter(const shared_ptr<CPlayer>& Entity)
 	Entity->SetSpeed(0.0f);
 	Entity->SetMovingDirection(XMFLOAT3(0.0f, 0.0f, 0.0f));
 	Entity->SetAnimationClip(7);
+
+	auto GameObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetGameObjects() };
+
+	for (const auto& Guard : GameObjects[OBJECT_TYPE_NPC])
+	{
+		if (Guard)
+		{
+			XMFLOAT3 ToGuard{ Vector3::Subtract(Guard->GetPosition(), Entity->GetPosition()) };
+
+			if ((Vector3::Length(ToGuard) < 3.0f) && (Vector3::Angle(Entity->GetLook(), Vector3::Normalize(ToGuard)) < 80.0f))
+			{
+				static_pointer_cast<CGuard>(Guard)->GetStateMachine()->ChangeState(CGuardHitState::GetInstance());
+			}
+		}
+	}
 }
 
-void CPlayerPunchingState::ProcessInput(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
+void CPlayerPunchingState::ProcessInput(const shared_ptr<CPlayer>& Entity, float ElapsedTime, UINT InputMask)
 {
 
 }
 
-void CPlayerPunchingState::Update(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
+void CPlayerPunchingState::Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime)
 {
 	if (Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE))
 	{
@@ -283,13 +315,18 @@ void CPlayerShootingState::Enter(const shared_ptr<CPlayer>& Entity)
 	Entity->GetCamera()->SetZoomIn(true);
 }
 
-void CPlayerShootingState::ProcessInput(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
+void CPlayerShootingState::ProcessInput(const shared_ptr<CPlayer>& Entity, float ElapsedTime, UINT InputMask)
 {
 	switch (InputMask)
 	{
 	case INPUT_MASK_LMB | INPUT_MASK_RMB:
 	{
-		if (Entity->GetAnimationController()->GetAnimationClip() == 8)
+		auto GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
+		auto GameObjects{ GameScene->GetGameObjects() };
+		auto BilboardObjects{ GameScene->GetBilboardObjects() };
+
+		// 줌 애니메이션을 하는 상태이고, 보유한 총알이 1발 이상 존재해야 쏠 수 있다.
+		if (Entity->GetAnimationController()->GetAnimationClip() == 8 && BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->GetVertexCount() > 0)
 		{
 			shared_ptr<CGameObject> NearestIntersectedRootObject{};
 			shared_ptr<CGameObject> NearestIntersectedObject{};
@@ -352,6 +389,9 @@ void CPlayerShootingState::ProcessInput(const shared_ptr<CPlayer>& Entity, const
 			}
 
 			Entity->GetAnimationController()->SetAnimationClip(9);
+
+			// 총알 UI의 총알 개수를 한 개 감소시킨다.
+			BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->SetVertexCount(BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->GetVertexCount() - 1);
 			break;
 		}
 	}
@@ -367,7 +407,7 @@ void CPlayerShootingState::ProcessInput(const shared_ptr<CPlayer>& Entity, const
 	}
 }
 
-void CPlayerShootingState::Update(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
+void CPlayerShootingState::Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime)
 {
 	switch (Entity->GetAnimationController()->GetAnimationClip())
 	{
@@ -402,12 +442,12 @@ void CPlayerDyingState::Enter(const shared_ptr<CPlayer>& Entity)
 
 }
 
-void CPlayerDyingState::ProcessInput(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
+void CPlayerDyingState::ProcessInput(const shared_ptr<CPlayer>& Entity, float ElapsedTime, UINT InputMask)
 {
 
 }
 
-void CPlayerDyingState::Update(const shared_ptr<CPlayer>& Entity, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
+void CPlayerDyingState::Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime)
 {
 
 }

@@ -9,6 +9,11 @@ CSceneManager* CSceneManager::GetInstance()
 	return &Instance;
 }
 
+shared_ptr<CScene> CSceneManager::GetCurrentScene() const
+{
+	return m_CurrentScene;
+}
+
 void CSceneManager::RegisterScene(const tstring& SceneName, const shared_ptr<CScene>& Scene)
 {
 	if (Scene)

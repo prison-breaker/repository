@@ -10,6 +10,8 @@ public:
 	COpenDoorEventTrigger() = default;
 	virtual ~COpenDoorEventTrigger() = default;
 
+	virtual void ActivateInteractionUI();
+
 	virtual void GenerateEventTrigger(float ElapsedTime);
 };
 
@@ -18,13 +20,19 @@ public:
 class CPowerDownEventTrigger : public CEventTrigger
 {
 private:
+	bool  m_IsOpened{};
+
 	float m_PanelAngle{};
 
 public:
 	CPowerDownEventTrigger() = default;
 	virtual ~CPowerDownEventTrigger() = default;
 
+	virtual void ActivateInteractionUI();
+
 	virtual void GenerateEventTrigger(float ElapsedTime);
+
+	bool IsOpened() const;
 };
 
 //=========================================================================================================================
@@ -34,6 +42,8 @@ class CSirenEventTrigger : public CEventTrigger
 public:
 	CSirenEventTrigger() = default;
 	virtual ~CSirenEventTrigger() = default;
+
+	virtual void ActivateInteractionUI();
 
 	virtual void GenerateEventTrigger(float ElapsedTime);
 };
@@ -49,6 +59,8 @@ public:
 	COpenGateEventTrigger() = default;
 	virtual ~COpenGateEventTrigger() = default;
 
+	virtual void ActivateInteractionUI();
+
 	virtual void GenerateEventTrigger(float ElapsedTime);
 };
 
@@ -62,7 +74,7 @@ public:
 
 	virtual bool IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& LookDirection);
 
-	virtual void GenerateEventTrigger(float ElapsedTime);
+	virtual void ActivateInteractionUI();
 };
 
 //=========================================================================================================================
@@ -78,7 +90,5 @@ public:
 
 	virtual bool IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& LookDirection);
 
-	virtual void GenerateEventTrigger(float ElapsedTime);
-
-	void SetKeyUIFrame(const shared_ptr<CBilboardObject>& KeyUIFrame);
+	virtual void ActivateInteractionUI();
 };

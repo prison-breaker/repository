@@ -20,6 +20,8 @@ public:
 
 	virtual bool IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& LookDirection);
 
+	virtual void ActivateInteractionUI();
+
 	virtual void GenerateEventTrigger(float ElapsedTime);
 
 	void LoadEventTriggerFromFile(tifstream& InFile);
@@ -30,7 +32,8 @@ public:
 	void CalculateTriggerAreaByPoint(const XMFLOAT3& Position, float XWidth, float ZWidth);
 
 	void InsertEventObject(const shared_ptr<CGameObject>& EventObject);
+	shared_ptr<CGameObject> GetEventObject(UINT Index);
 
 	void SetInteractionUI(const shared_ptr<CBilboardObject>& InteractionUI);
-	CBilboardObject* GetInteractionUI() const;
+	shared_ptr<CBilboardObject> GetInteractionUI() const;
 };

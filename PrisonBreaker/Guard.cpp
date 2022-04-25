@@ -7,16 +7,16 @@ void CGuard::Initialize()
 
 	// 상태머신 객체를 생성한다.
 	m_StateMachine = make_shared<CStateMachine<CGuard>>(static_pointer_cast<CGuard>(shared_from_this()));
-	m_StateMachine->SetCurrentState(CGuardIdleState::GetInstance());
+	m_StateMachine->SetCurrentState(CGuardPatrolState::GetInstance());
 }
 
-void CGuard::Animate(const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime)
+void CGuard::Animate(float ElapsedTime)
 {
 	if (IsActive())
 	{
 		if (m_StateMachine)
 		{
-			m_StateMachine->Update(GameObjects, NavMesh, ElapsedTime);
+			m_StateMachine->Update(ElapsedTime);
 		}
 	}
 }

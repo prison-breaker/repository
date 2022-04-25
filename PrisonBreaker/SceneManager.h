@@ -16,6 +16,8 @@ private:
 public:
 	static CSceneManager* GetInstance();
 
+	shared_ptr<CScene> GetCurrentScene() const;
+
 	void RegisterScene(const tstring& SceneName, const shared_ptr<CScene>& Scene);
 	void ReserveChangeScene(const tstring& SceneName);
 	void ChangeScene(const tstring& SceneName);
