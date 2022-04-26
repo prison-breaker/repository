@@ -4,6 +4,7 @@
 #include "UIAnimationController.h"
 #include "MissionUI.h"
 #include "KeyUI.h"
+#include "HitUI.h"
 
 shared_ptr<CBilboardObject> CBilboardObject::LoadObjectInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile)
 {
@@ -30,6 +31,9 @@ shared_ptr<CBilboardObject> CBilboardObject::LoadObjectInfoFromFile(ID3D12Device
 				break;
 			case 2:
 				NewObject = make_shared<CKeyUI>();
+				break;
+			case 3:
+				NewObject = make_shared<CHitUI>();
 				break;
 			default:
 				NewObject = make_shared<CBilboardObject>();
@@ -382,10 +386,10 @@ void CBilboardObject::SetAnimationClip(UINT ClipNum)
 	}
 }
 
-void CBilboardObject::SetKeyFrameIndex(UINT ClipNum, UINT KeyFrameIndex)
+void CBilboardObject::SetKeyFrameIndex(UINT KeyFrameIndex)
 {
 	if (m_UIAnimationController)
 	{
-		m_UIAnimationController->SetKeyFrameIndex(ClipNum, KeyFrameIndex);
+		m_UIAnimationController->SetKeyFrameIndex(KeyFrameIndex);
 	}
 }

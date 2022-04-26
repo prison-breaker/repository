@@ -134,35 +134,32 @@ void CUIAnimationController::SetAnimationClip(UINT ClipNum)
 	m_ClipNum = ClipNum;
 }
 
-void CUIAnimationController::SetKeyFrameIndex(UINT ClipNum, UINT KeyFrameIndex)
+void CUIAnimationController::SetKeyFrameIndex(UINT KeyFrameIndex)
 {
-	if (m_AnimationClips[ClipNum])
+	if (KeyFrameIndex < 0 || KeyFrameIndex >= m_AnimationClips[m_ClipNum]->m_KeyFrameCount)
 	{
-		if (KeyFrameIndex < 0 || KeyFrameIndex >= m_AnimationClips[ClipNum]->m_KeyFrameCount)
-		{
-			return;
-		}
-
-		m_KeyFrameIndex = KeyFrameIndex;
+		return;
 	}
+
+	m_KeyFrameIndex = KeyFrameIndex;
 }
 
 bool CUIAnimationController::UpdateAnimationClip(ANIMATION_TYPE AnimationType)
 {
-	UINT VertexCount{ m_Owner->GetVertexCount() };
-
-	for (UINT i = 0; i < VertexCount; ++i)
-	{
-		// CBilboardMesh의 Get 함수는 유일하게 GPU의 가상주소로 사용되지 않는 곳에서만 사용해야한다!!
-		m_Owner->SetPosition(i, m_AnimationClips[m_ClipNum]->m_TransformData[i][m_KeyFrameIndex].GetPosition());
-		m_Owner->SetSize(i, m_AnimationClips[m_ClipNum]->m_TransformData[i][m_KeyFrameIndex].GetSize());
-		m_Owner->SetAlphaColor(i, m_AnimationClips[m_ClipNum]->m_TransformData[i][m_KeyFrameIndex].GetAlphaColor());
-	}
-
 	bool IsFinished{};
 
 	if (IsActive())
 	{
+		UINT VertexCount{ m_Owner->GetVertexCount() };
+
+		for (UINT i = 0; i < VertexCount; ++i)
+		{
+			// CBilboardMesh의 Get 함수는 유일하게 GPU의 가상주소로 사용되지 않는 곳에서만 사용해야한다!!
+			m_Owner->SetPosition(i, m_AnimationClips[m_ClipNum]->m_TransformData[i][m_KeyFrameIndex].GetPosition());
+			m_Owner->SetSize(i, m_AnimationClips[m_ClipNum]->m_TransformData[i][m_KeyFrameIndex].GetSize());
+			m_Owner->SetAlphaColor(i, m_AnimationClips[m_ClipNum]->m_TransformData[i][m_KeyFrameIndex].GetAlphaColor());
+		}
+
 		switch (AnimationType)
 		{
 		case ANIMATION_TYPE_LOOP:

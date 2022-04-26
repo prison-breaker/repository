@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Guard.h"
+#include "Player.h"
 
 void CGuard::Initialize()
 {
@@ -23,7 +24,7 @@ void CGuard::Animate(float ElapsedTime)
 
 void CGuard::SetHealth(UINT Health)
 {
-	// UnderFlow
+	// UINT UnderFlow
 	if (Health > 100)
 	{
 		m_Health = 0;
@@ -131,11 +132,13 @@ shared_ptr<CGameObject> CGuard::IsFoundPlayer(const vector<vector<shared_ptr<CGa
 	float Distance{};
 
 	// 더 가까운 플레이어를 찾는다.
-	for (const auto& Player : GameObjects[OBJECT_TYPE_PLAYER])
+	for (const auto& GameObject : GameObjects[OBJECT_TYPE_PLAYER])
 	{
-		if (Player)
+		if (GameObject)
 		{
-			if (Player->IsActive())
+			auto Player{ static_pointer_cast<CPlayer>(GameObject) };
+
+			if (Player->GetHealth() > 0)
 			{
 				XMFLOAT3 ToPlayer{ Vector3::Subtract(Player->GetPosition(), GetPosition()) };
 
@@ -155,7 +158,10 @@ shared_ptr<CGameObject> CGuard::IsFoundPlayer(const vector<vector<shared_ptr<CGa
 						{
 							if (GameObject)
 							{
-								shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(GetPosition(), Vector3::Normalize(ToPlayer), HitDistance, 30.0f)};
+								XMFLOAT3 RayOrigin{ GetPosition() };
+								RayOrigin.y = 3.0f;
+
+								shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(RayOrigin, Vector3::Normalize(ToPlayer), HitDistance, 30.0f)};
 
 								if (IntersectedObject && HitDistance < 30.0f)
 								{

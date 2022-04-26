@@ -7,6 +7,7 @@
 #include "EventTriggers.h"
 #include "MissionUI.h"
 #include "KeyUI.h"
+#include "HitUI.h"
 
 struct FOG
 {

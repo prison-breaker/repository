@@ -57,5 +57,5 @@ public:
 	CUIAnimationController* GetUIAnimationController() const;
 
 	void SetAnimationClip(UINT ClipNum);
-	void SetKeyFrameIndex(UINT ClipNum, UINT KeyFrameIndex);
+	void SetKeyFrameIndex(UINT KeyFrameIndex);
 };

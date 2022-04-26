@@ -150,6 +150,7 @@
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="GameScene.cpp" />
     <ClCompile Include="Guard.cpp" />
+    <ClCompile Include="HitUI.cpp" />
     <ClCompile Include="KeyUI.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="Mesh.cpp" />
@@ -158,6 +159,7 @@
     <ClCompile Include="NavNode.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="State_Guard.cpp" />
+    <ClCompile Include="State_HitUI.cpp" />
     <ClCompile Include="State_KeyUI.cpp" />
     <ClCompile Include="State_MissionUI.cpp" />
     <ClCompile Include="State_Player.cpp" />
@@ -193,6 +195,7 @@
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameScene.h" />
     <ClInclude Include="Guard.h" />
+    <ClInclude Include="HitUI.h" />
     <ClInclude Include="KeyUI.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="Mesh.h" />
@@ -213,6 +216,7 @@
     <ClInclude Include="State.h" />
     <ClInclude Include="StateMachine.h" />
     <ClInclude Include="State_Guard.h" />
+    <ClInclude Include="State_HitUI.h" />
     <ClInclude Include="State_KeyUI.h" />
     <ClInclude Include="State_MissionUI.h" />
     <ClInclude Include="State_Player.h" />

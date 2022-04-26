@@ -1,5 +1,6 @@
 #pragma once
 #include "BilboardObject.h"
+#include "State_KeyUI.h"
 
 class CKeyUI : public CBilboardObject
 {

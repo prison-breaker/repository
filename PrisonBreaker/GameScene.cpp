@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "GameScene.h"
-#include "State_KeyUI.h"
 
 void CGameScene::OnCreate(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
@@ -588,6 +587,11 @@ void CGameScene::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 		{
 			if (GameObject)
 			{
+				if (!GameObject->GetAnimationController())
+				{
+					GameObject->UpdateTransform(Matrix4x4::Identity());
+				}
+
 				GameObject->Render(D3D12GraphicsCommandList, Player->GetCamera(), RENDER_TYPE_STANDARD);
 			}
 		}
@@ -899,7 +903,7 @@ void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
 	{
 		if (EventTrigger)
 		{
-			EventTrigger->SetInteractionUI(m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI].back());
+			EventTrigger->SetInteractionUI(m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][9]);
 		}
 	}
 }
@@ -951,31 +955,40 @@ void CGameScene::UpdatePerspective(HWND hWnd, float ElapsedTime, const shared_pt
 	GetCursorPos(&NewCursorPos);
 	SetCursorPos(OldCursorPos.x, OldCursorPos.y);
 
-	XMFLOAT2 Delta{ 10.0f * ElapsedTime * (NewCursorPos.x - OldCursorPos.x), 10.0f * ElapsedTime * (NewCursorPos.y - OldCursorPos.y) };
-
-	float NearestHitDistance{ FLT_MAX };
-	float HitDistance{};
-
-	XMFLOAT3 RayOrigin{ Player->GetPosition().x, Player->GetCamera()->GetPosition().y, Player->GetPosition().z };
-	XMFLOAT3 RayDirection{ Vector3::Inverse(Player->GetLook()) };
-
-	for (const auto& GameObject : m_GameObjects[OBJECT_TYPE_STRUCTURE])
+	if (Player->GetHealth() > 0)
 	{
-		if (GameObject)
-		{
-			shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(RayOrigin, RayDirection, HitDistance, 3.0f) };
+		XMFLOAT2 Delta{ 10.0f * ElapsedTime * (NewCursorPos.x - OldCursorPos.x), 10.0f * ElapsedTime * (NewCursorPos.y - OldCursorPos.y) };
 
-			if (IntersectedObject && (HitDistance < NearestHitDistance))
+		float NearestHitDistance{ FLT_MAX };
+		float HitDistance{};
+
+		XMFLOAT3 RayOrigin{ Player->GetPosition().x, Player->GetCamera()->GetPosition().y, Player->GetPosition().z };
+		XMFLOAT3 RayDirection{ Vector3::Inverse(Player->GetLook()) };
+
+		for (const auto& GameObject : m_GameObjects[OBJECT_TYPE_STRUCTURE])
+		{
+			if (GameObject)
 			{
-				NearestHitDistance = HitDistance;
+				shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(RayOrigin, RayDirection, HitDistance, 3.0f) };
+
+				if (IntersectedObject && (HitDistance < NearestHitDistance))
+				{
+					NearestHitDistance = HitDistance;
+				}
 			}
 		}
+
+		// 1ÀÎÄª ¸ðµå
+		//Player->GetCamera()->Rotate(Delta.y, Delta.x, 0.0f);
+
+		Player->Rotate(Delta.y, Delta.x, 0.0f, ElapsedTime, NearestHitDistance);
 	}
+	else
+	{
+		XMFLOAT3 Direction{ Vector3::Inverse(Player->GetCamera()->GetLook()) };
 
-	// 1ÀÎÄª ¸ðµå
-	//Player->GetCamera()->Rotate(Delta.y, Delta.x, 0.0f);
-
-	Player->Rotate(Delta.y, Delta.x, 0.0f, ElapsedTime, NearestHitDistance);
+		Player->GetCamera()->Move(Vector3::ScalarProduct(2.5f * ElapsedTime, XMFLOAT3(Direction.x, 0.3f, Direction.z), false));
+	}
 }
 
 void CGameScene::InteractTrigger()
@@ -1087,8 +1100,6 @@ void CGameScene::InteractSpotLight(float ElapsedTime)
 					if (Math::Distance(Player->GetPosition(), LightedPosition) < Radian)
 					{
 						XMFLOAT3 Direction = Vector3::Normalize(Vector3::Subtract(Player->GetPosition(), m_Lights[1].m_Position));
-
-						shared_ptr<CGameObject> NearestIntersectedObject{};
 
 						float NearestHitDistance{ FLT_MAX };
 						float HitDistance{};

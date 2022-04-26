@@ -267,15 +267,20 @@ void CPlayerPunchingState::Enter(const shared_ptr<CPlayer>& Entity)
 
 	auto GameObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetGameObjects() };
 
-	for (const auto& Guard : GameObjects[OBJECT_TYPE_NPC])
+	for (const auto& GameObject : GameObjects[OBJECT_TYPE_NPC])
 	{
-		if (Guard)
+		if (GameObject)
 		{
-			XMFLOAT3 ToGuard{ Vector3::Subtract(Guard->GetPosition(), Entity->GetPosition()) };
+			auto Guard{ static_pointer_cast<CGuard>(GameObject) };
 
-			if ((Vector3::Length(ToGuard) < 3.0f) && (Vector3::Angle(Entity->GetLook(), Vector3::Normalize(ToGuard)) < 80.0f))
+			if (Guard->GetHealth() > 0)
 			{
-				static_pointer_cast<CGuard>(Guard)->GetStateMachine()->ChangeState(CGuardHitState::GetInstance());
+				XMFLOAT3 ToGuard{ Vector3::Subtract(Guard->GetPosition(), Entity->GetPosition()) };
+
+				if ((Vector3::Length(ToGuard) < 3.0f) && (Vector3::Angle(Entity->GetLook(), Vector3::Normalize(ToGuard)) < 80.0f))
+				{
+					static_pointer_cast<CGuard>(Guard)->GetStateMachine()->ChangeState(CGuardHitState::GetInstance());
+				}
 			}
 		}
 	}
@@ -354,12 +359,12 @@ void CPlayerShootingState::ProcessInput(const shared_ptr<CPlayer>& Entity, float
 
 							shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(RayOrigin, RayDirection, HitDistance, FLT_MAX) };
 
-							if (IntersectedObject)
-							{
-								tcout << TEXT("광선을 맞은 객체명 : ") << IntersectedObject->GetName() << TEXT(" (거리 : ") << HitDistance << TEXT(")") << endl;
-								tcout << TEXT("- 해당 객체의 위치 : ") << IntersectedObject->GetPosition().x << ", " << IntersectedObject->GetPosition().y << ", " << IntersectedObject->GetPosition().z << endl;
-								tcout << TEXT("- 해당 객체 중심까지의 거리 : ") << Vector3::Length(Vector3::Subtract(IntersectedObject->GetPosition(), Entity->GetCamera()->GetPosition())) << endl;
-							}
+							//if (IntersectedObject)
+							//{
+							//	tcout << TEXT("광선을 맞은 객체명 : ") << IntersectedObject->GetName() << TEXT(" (거리 : ") << HitDistance << TEXT(")") << endl;
+							//	tcout << TEXT("- 해당 객체의 위치 : ") << IntersectedObject->GetPosition().x << ", " << IntersectedObject->GetPosition().y << ", " << IntersectedObject->GetPosition().z << endl;
+							//	tcout << TEXT("- 해당 객체 중심까지의 거리 : ") << Vector3::Length(Vector3::Subtract(IntersectedObject->GetPosition(), Entity->GetCamera()->GetPosition())) << endl;
+							//}
 
 							if (IntersectedObject && (HitDistance < NearestHitDistance))
 							{
@@ -385,7 +390,7 @@ void CPlayerShootingState::ProcessInput(const shared_ptr<CPlayer>& Entity, float
 					}
 				}
 
-				tcout << TEXT("★ 가장 먼저 광선을 맞은 객체명 : ") << NearestIntersectedObject->GetName() << TEXT(" (거리 : ") << NearestHitDistance << TEXT(")") << endl << endl;
+				//tcout << TEXT("★ 가장 먼저 광선을 맞은 객체명 : ") << NearestIntersectedObject->GetName() << TEXT(" (거리 : ") << NearestHitDistance << TEXT(")") << endl << endl;
 			}
 
 			Entity->GetAnimationController()->SetAnimationClip(9);
@@ -439,7 +444,9 @@ CPlayerDyingState* CPlayerDyingState::GetInstance()
 
 void CPlayerDyingState::Enter(const shared_ptr<CPlayer>& Entity)
 {
-
+	Entity->SetSpeed(0.0f);
+	Entity->SetMovingDirection(XMFLOAT3(0.0f, 0.0f, 0.0f));
+	Entity->SetAnimationClip(10);
 }
 
 void CPlayerDyingState::ProcessInput(const shared_ptr<CPlayer>& Entity, float ElapsedTime, UINT InputMask)
@@ -449,7 +456,7 @@ void CPlayerDyingState::ProcessInput(const shared_ptr<CPlayer>& Entity, float El
 
 void CPlayerDyingState::Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime)
 {
-
+	Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE);
 }
 
 void CPlayerDyingState::Exit(const shared_ptr<CPlayer>& Entity)

@@ -11,7 +11,7 @@ CKeyUIActivationState* CKeyUIActivationState::GetInstance()
 
 void CKeyUIActivationState::Enter(const shared_ptr<CKeyUI>& Entity)
 {
-
+	Entity->GetUIAnimationController()->SetActive(true);
 }
 
 void CKeyUIActivationState::ProcessInput(const shared_ptr<CKeyUI>& Entity, float ElapsedTime, UINT InputMask)

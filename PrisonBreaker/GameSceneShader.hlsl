@@ -466,7 +466,7 @@ void GS_Image(point VS_OUTPUT_IMAGE Input[1], inout TriangleStream<GS_OUTPUT_IMA
 		float2(1.0f, 0.0f)
 	};
 
-	if (Input[0].m_CellCount.x != 0 || Input[0].m_CellCount.y != 0)
+	if (Input[0].m_CellCount.x > 0 && Input[0].m_CellCount.y > 0)
 	{
 		float2 CellSize = float2(1.0f / Input[0].m_CellCount.y, 1.0f / Input[0].m_CellCount.x);
 
@@ -493,7 +493,7 @@ float4 PS_Image(GS_OUTPUT_IMAGE Input) : SV_TARGET
 {
     float4 Color = AlbedoMapTexture.Sample(Sampler, Input.m_TexCoord);
 	
-    Color *= Input.m_AlphaColor;
+    Color.a *= Input.m_AlphaColor;
 	
     return Color;
 }
@@ -525,7 +525,7 @@ PS_OUTPUT_DEPTH PS_DepthWrite(float4 Input : SV_POSITION)
 struct VS_INPUT_DEPTH_SKINNING
 {
 	float3 m_Position    : POSITION;
-	uint4 m_BoneIndices  : BONEINDEX;
+	uint4  m_BoneIndices : BONEINDEX;
 	float4 m_BoneWeights : BONEWEIGHT;
 };
 

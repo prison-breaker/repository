@@ -168,9 +168,6 @@
     <ClCompile Include="ShaderManager.cpp">
       <Filter>소스 파일\Manager</Filter>
     </ClCompile>
-    <ClCompile Include="UIShader.cpp">
-      <Filter>소스 파일\Shader</Filter>
-    </ClCompile>
     <ClCompile Include="UIAnimationController.cpp">
       <Filter>소스 파일\Animation</Filter>
     </ClCompile>
@@ -212,6 +209,15 @@
     </ClCompile>
     <ClCompile Include="State_KeyUI.cpp">
       <Filter>소스 파일\State</Filter>
+    </ClCompile>
+    <ClCompile Include="HitUI.cpp">
+      <Filter>소스 파일\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="State_HitUI.cpp">
+      <Filter>소스 파일\State</Filter>
+    </ClCompile>
+    <ClCompile Include="UIShader.cpp">
+      <Filter>소스 파일\Shader</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -330,6 +336,12 @@
       <Filter>헤더 파일\Object</Filter>
     </ClInclude>
     <ClInclude Include="State_KeyUI.h">
+      <Filter>헤더 파일\State</Filter>
+    </ClInclude>
+    <ClInclude Include="HitUI.h">
+      <Filter>헤더 파일\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="State_HitUI.h">
       <Filter>헤더 파일\State</Filter>
     </ClInclude>
   </ItemGroup>

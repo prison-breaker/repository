@@ -183,4 +183,57 @@
 		<RectTransform> 1 959 759 0 400 83 
 		<AlphaColor> 1
 	</UIObject>
+	<UIObject>
+		<Type> 3
+		<IsActive> 0
+		<TextureName> Textures/Hit_UI.dds
+		<RectTransform> 1 959 539 0 1920 1080 
+		<AlphaColor> 0.2
+		<Animation>
+			<AnimationClips> 1
+				<AnimationClip> Fade 60 20 0.3333333
+					<RectTransform> 0.01666667 959 539 0 1920 1080 
+					<AlphaColor> 0.01666667 0.2084
+					<RectTransform> 0.03333334 959 539 0 1920 1080 
+					<AlphaColor> 0.03333334 0.2312
+					<RectTransform> 0.05 959 539 0 1920 1080 
+					<AlphaColor> 0.05 0.2648
+					<RectTransform> 0.06666667 959 539 0 1920 1080 
+					<AlphaColor> 0.06666667 0.3056
+					<RectTransform> 0.08333334 959 539 0 1920 1080 
+					<AlphaColor> 0.08333334 0.35
+					<RectTransform> 0.1 959 539 0 1920 1080 
+					<AlphaColor> 0.1 0.3944
+					<RectTransform> 0.1166667 959 539 0 1920 1080 
+					<AlphaColor> 0.1166667 0.4352
+					<RectTransform> 0.1333333 959 539 0 1920 1080 
+					<AlphaColor> 0.1333333 0.4688
+					<RectTransform> 0.15 959 539 0 1920 1080 
+					<AlphaColor> 0.15 0.4916
+					<RectTransform> 0.1666667 959 539 0 1920 1080 
+					<AlphaColor> 0.1666667 0.5
+					<RectTransform> 0.1833333 959 539 0 1920 1080 
+					<AlphaColor> 0.1833333 0.4916
+					<RectTransform> 0.2 959 539 0 1920 1080 
+					<AlphaColor> 0.2 0.4688
+					<RectTransform> 0.2166667 959 539 0 1920 1080 
+					<AlphaColor> 0.2166667 0.4352
+					<RectTransform> 0.2333333 959 539 0 1920 1080 
+					<AlphaColor> 0.2333333 0.3944
+					<RectTransform> 0.25 959 539 0 1920 1080 
+					<AlphaColor> 0.25 0.35
+					<RectTransform> 0.2666667 959 539 0 1920 1080 
+					<AlphaColor> 0.2666667 0.3056
+					<RectTransform> 0.2833334 959 539 0 1920 1080 
+					<AlphaColor> 0.2833334 0.2648
+					<RectTransform> 0.3 959 539 0 1920 1080 
+					<AlphaColor> 0.3 0.2311999
+					<RectTransform> 0.3166667 959 539 0 1920 1080 
+					<AlphaColor> 0.3166667 0.2084
+					<RectTransform> 0.3333334 959 539 0 1920 1080 
+					<AlphaColor> 0.3333334 0.2
+				</AnimationClip>
+			</AnimationClips>
+		</Animation>
+	</UIObject>
 </UI>

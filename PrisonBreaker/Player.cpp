@@ -34,7 +34,15 @@ void CPlayer::Animate(float ElapsedTime)
 
 void CPlayer::SetHealth(UINT Health)
 {
-	m_Health = Health;
+	// UINT UnderFlow
+	if (Health > 100)
+	{
+		m_Health = 0;
+	}
+	else
+	{
+		m_Health = Health;
+	}
 }
 
 UINT CPlayer::GetHealth() const
@@ -166,15 +174,18 @@ void CPlayer::Rotate(float Pitch, float Yaw, float Roll, float ElapsedTime, floa
 
 void CPlayer::ProcessInput(const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
 {
-	if (m_StateMachine)
+	if (IsActive())
 	{
-		m_StateMachine->ProcessInput(ElapsedTime, InputMask);
-	}
+		if (m_StateMachine)
+		{
+			m_StateMachine->ProcessInput(ElapsedTime, InputMask);
+		}
 
-	XMFLOAT3 NewPosition{ Vector3::Add(GetPosition(), Vector3::ScalarProduct(m_Speed * ElapsedTime, m_MovingDirection, false)) };
+		XMFLOAT3 NewPosition{ Vector3::Add(GetPosition(), Vector3::ScalarProduct(m_Speed * ElapsedTime, m_MovingDirection, false)) };
 
-	if (IsInNavMesh(NavMesh, NewPosition))
-	{
-		SetPosition(NewPosition);
+		if (IsInNavMesh(NavMesh, NewPosition))
+		{
+			SetPosition(NewPosition);
+		}
 	}
 }

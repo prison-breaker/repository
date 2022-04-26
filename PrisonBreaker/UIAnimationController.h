@@ -45,7 +45,7 @@ public:
 	bool IsActive() const;
 
 	void SetAnimationClip(UINT ClipNum);
-	void SetKeyFrameIndex(UINT ClipNum, UINT KeyFrameIndex);
+	void SetKeyFrameIndex(UINT KeyFrameIndex);
 
 	bool UpdateAnimationClip(ANIMATION_TYPE AnimationType);
 };

@@ -10,9 +10,12 @@ void CMissionUI::Initialize()
 
 void CMissionUI::Animate(float ElapsedTime)
 {
-	if (m_StateMachine)
+	if (IsActive())
 	{
-		m_StateMachine->Update(ElapsedTime);
+		if (m_StateMachine)
+		{
+			m_StateMachine->Update(ElapsedTime);
+		}
 	}
 }
 

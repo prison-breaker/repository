@@ -8,7 +8,7 @@ D3D12_INPUT_LAYOUT_DESC CUIShader::CreateInputLayout(UINT StateNum)
 
 	D3D12InputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
 	D3D12InputElementDescs[1] = { "SIZE", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	D3D12InputElementDescs[2] = { "ALPHACOLOR", 0, DXGI_FORMAT_R32_UINT, 0, 20, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	D3D12InputElementDescs[2] = { "ALPHACOLOR", 0, DXGI_FORMAT_R32_FLOAT, 0, 20, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
 	D3D12InputElementDescs[3] = { "CELLCOUNT", 0, DXGI_FORMAT_R32G32_UINT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
 	D3D12InputElementDescs[4] = { "CELLINDEX", 0, DXGI_FORMAT_R32_UINT, 0, 32, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
 
@@ -24,7 +24,7 @@ D3D12_BLEND_DESC CUIShader::CreateBlendState(UINT StateNum)
 {
 	D3D12_BLEND_DESC D3D12BlendDesc{};
 
-	D3D12BlendDesc.AlphaToCoverageEnable = true;
+	D3D12BlendDesc.AlphaToCoverageEnable = false;
 	D3D12BlendDesc.IndependentBlendEnable = false;
 	D3D12BlendDesc.RenderTarget[0].BlendEnable = true;
 	D3D12BlendDesc.RenderTarget[0].LogicOpEnable = false;
@@ -38,6 +38,28 @@ D3D12_BLEND_DESC CUIShader::CreateBlendState(UINT StateNum)
 	D3D12BlendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
 
 	return D3D12BlendDesc;
+}
+
+D3D12_DEPTH_STENCIL_DESC CUIShader::CreateDepthStencilState(UINT StateNum)
+{
+	D3D12_DEPTH_STENCIL_DESC D3D12DepthStencilDesc{};
+
+	D3D12DepthStencilDesc.DepthEnable = false;;
+	D3D12DepthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+	D3D12DepthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+	D3D12DepthStencilDesc.StencilEnable = false;
+	D3D12DepthStencilDesc.StencilReadMask = 0xff;
+	D3D12DepthStencilDesc.StencilWriteMask = 0xff;
+	D3D12DepthStencilDesc.FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
+	D3D12DepthStencilDesc.FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
+	D3D12DepthStencilDesc.FrontFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
+	D3D12DepthStencilDesc.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_NEVER;
+	D3D12DepthStencilDesc.BackFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
+	D3D12DepthStencilDesc.BackFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
+	D3D12DepthStencilDesc.BackFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
+	D3D12DepthStencilDesc.BackFace.StencilFunc = D3D12_COMPARISON_FUNC_NEVER;
+
+	return D3D12DepthStencilDesc;
 }
 
 D3D12_SHADER_BYTECODE CUIShader::CreateVertexShader(ID3DBlob* D3D12ShaderBlob, UINT StateNum)
