@@ -174,16 +174,30 @@ void CPlayer::Rotate(float Pitch, float Yaw, float Roll, float ElapsedTime, floa
 
 void CPlayer::ProcessInput(const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
 {
-	if (IsActive())
+	if (m_StateMachine)
 	{
-		if (m_StateMachine)
+		m_StateMachine->ProcessInput(ElapsedTime, InputMask);
+	}
+
+	XMFLOAT3 NewPosition{ Vector3::Add(GetPosition(), Vector3::ScalarProduct(m_Speed * ElapsedTime, m_MovingDirection, false)) };
+
+	if (IsInNavMesh(NavMesh, NewPosition))
+	{
+		bool IsCollision{};
+
+		for (const auto& Guard : GameObjects[OBJECT_TYPE_NPC])
 		{
-			m_StateMachine->ProcessInput(ElapsedTime, InputMask);
+			if (Guard->IsActive())
+			{
+				if (Math::Distance(Guard->GetPosition(), NewPosition) < 2.0f)
+				{
+					IsCollision = true;
+					break;
+				}
+			}
 		}
 
-		XMFLOAT3 NewPosition{ Vector3::Add(GetPosition(), Vector3::ScalarProduct(m_Speed * ElapsedTime, m_MovingDirection, false)) };
-
-		if (IsInNavMesh(NavMesh, NewPosition))
+		if (!IsCollision)
 		{
 			SetPosition(NewPosition);
 		}

@@ -61,7 +61,7 @@ CGuardPatrolState* CGuardPatrolState::GetInstance()
 
 void CGuardPatrolState::Enter(const shared_ptr<CGuard>& Entity)
 {
-	XMFLOAT3 Direction{ Vector3::Normalize(Vector3::Subtract(Entity->GetPatrolNavPath().back(), Entity->GetPosition())) };
+	XMFLOAT3 Direction{ Vector3::Normalize(Vector3::Subtract(Entity->GetPatrolNavPath()[Entity->GetPatrolIndex()], Entity->GetPosition())) };
 
 	Entity->UpdateLocalCoord(Direction);
 	Entity->SetElapsedTime(0.0f);
