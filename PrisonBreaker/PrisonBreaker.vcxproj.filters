@@ -219,6 +219,9 @@
     <ClCompile Include="UIs.cpp">
       <Filter>소스 파일\UI &amp; SkyBox</Filter>
     </ClCompile>
+    <ClCompile Include="SoundManager.cpp">
+      <Filter>소스 파일\Manager</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -343,6 +346,9 @@
     </ClInclude>
     <ClInclude Include="SkyBox.h">
       <Filter>헤더 파일\UI &amp; SkyBox</Filter>
+    </ClInclude>
+    <ClInclude Include="SoundManager.h">
+      <Filter>헤더 파일\Manager</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

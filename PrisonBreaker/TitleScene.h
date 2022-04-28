@@ -12,6 +12,7 @@ private:
 
 	vector<shared_ptr<CBilboardObject>> m_BilboardObjects{};
 
+	bool								m_ButtonOver{};
 	XMFLOAT4							m_ButtonArea[3]{};
 
 public:

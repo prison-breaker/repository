@@ -10,10 +10,11 @@ private:
 	shared_ptr<CShader>                        m_SetShader{}; // 현재 Set된 셰이더
 	UINT									   m_StateNum{};  // 현재 Set된 셰이더의 PipelineState 번호
 
-public:
+private:
 	CShaderManager() = default;
 	~CShaderManager() = default;
 
+public:
 	static CShaderManager* GetInstance();
 
 	void RegisterShader(const tstring& ShaderName, const shared_ptr<CShader>& Shader);

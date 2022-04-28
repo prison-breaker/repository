@@ -42,6 +42,8 @@ void CFramework::OnCreate(HINSTANCE hInstance, HWND hWnd)
 	CreateRootSignature();
 
 	BuildObjects();
+
+	CSoundManager::GetInstance()->Initialize();
 }
 
 void CFramework::OnDestroy()
@@ -484,4 +486,6 @@ void CFramework::FrameAdvance()
 
 	MoveToNextFrame();
 	UpdateWindowTitle();
+
+	CSoundManager::GetInstance()->Update();
 }

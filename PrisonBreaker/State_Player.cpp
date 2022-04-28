@@ -237,7 +237,7 @@ void CPlayerRunningState::ProcessInput(const shared_ptr<CPlayer>& Entity, float 
 		break;
 	}
 
-	Entity->SetSpeed(3.0f * Entity->GetSpeed());
+	Entity->SetSpeed(Entity->GetSpeed());
 }
 
 void CPlayerRunningState::Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime)

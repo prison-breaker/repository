@@ -152,6 +152,13 @@ void CTitleScene::ProcessInput(HWND hWnd, float ElapsedTime)
 		{
 			m_BilboardObjects[2]->SetCellIndex(i, 2 * i + 1);
 
+			if (!m_ButtonOver)
+			{
+				m_ButtonOver = true;
+
+				CSoundManager::GetInstance()->Play(SOUND_TYPE_BUTTON_OVER, 1.0f);
+			}
+
 			if (GetAsyncKeyState(VK_LBUTTON) & 0x8000)
 			{
 				switch (i)
@@ -171,6 +178,8 @@ void CTitleScene::ProcessInput(HWND hWnd, float ElapsedTime)
 
 					// GameStart Button
 					CSceneManager::GetInstance()->ReserveChangeScene(TEXT("GameScene"));
+					CSoundManager::GetInstance()->Stop(SOUND_TYPE_TITLE_BGM);
+					CSoundManager::GetInstance()->Play(SOUND_TYPE_INGAME_BGM, 0.6f);
 				}
 					break;
 				case 1:
@@ -182,10 +191,16 @@ void CTitleScene::ProcessInput(HWND hWnd, float ElapsedTime)
 					break;
 				}
 			}
+			return;
 		}
 		else
 		{
 			m_BilboardObjects[2]->SetCellIndex(i, 2 * i);
+
+			if (i == 2)
+			{
+				m_ButtonOver = false;
+			}
 		}
 	}
 }

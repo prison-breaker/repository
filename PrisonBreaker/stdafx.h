@@ -103,6 +103,14 @@ enum TEXTURE_TYPE
 	TEXTURE_TYPE_SHADOW_MAP,
 };
 
+enum SOUND_TYPE
+{
+	SOUND_TYPE_TITLE_BGM,
+	SOUND_TYPE_INGAME_BGM,
+
+	SOUND_TYPE_BUTTON_OVER
+};
+
 // C Header
 #include <windows.h>
 #include <SDKDDKVer.h>
@@ -254,3 +262,4 @@ namespace Matrix4x4
 #include "SceneManager.h"
 #include "TextureManager.h"
 #include "ShaderManager.h"
+#include "SoundManager.h"
