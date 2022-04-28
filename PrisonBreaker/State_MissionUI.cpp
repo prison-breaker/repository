@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "State_MissionUI.h"
-#include "MissionUI.h"
+#include "UIs.h"
 
 CMissionUIShowingState* CMissionUIShowingState::GetInstance()
 {

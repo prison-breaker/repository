@@ -1,13 +1,11 @@
 #pragma once
 #include "Scene.h"
+#include "UIs.h"
+#include "EventTriggers.h"
 #include "ShadowMapShader.h"
 #include "SkyBoxShader.h"
 #include "UIShader.h"
 #include "DebugShader.h"
-#include "EventTriggers.h"
-#include "MissionUI.h"
-#include "KeyUI.h"
-#include "HitUI.h"
 
 struct FOG
 {
@@ -73,16 +71,14 @@ public:
 	CGameScene() = default;
 	virtual ~CGameScene() = default;
 
-	virtual void OnCreate(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
+	virtual void OnCreate(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, ID3D12RootSignature* D3D12RootSignature);
 	virtual void OnDestroy();
 
-	virtual void BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
+	virtual void BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, ID3D12RootSignature* D3D12RootSignature);
 	virtual void ReleaseObjects();
 
 	virtual void LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName);
 	virtual void LoadUIInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName);
-
-	virtual void CreateRootSignature(ID3D12Device* D3D12Device);
 
 	virtual void CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);

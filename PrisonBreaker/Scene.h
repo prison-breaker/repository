@@ -2,23 +2,18 @@
 
 class CScene
 {
-protected:
-	ComPtr<ID3D12RootSignature> m_D3D12RootSignature{};
-
 public:
 	CScene() = default;
 	virtual ~CScene() = default;
 
-	virtual void OnCreate(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList) = 0;
+	virtual void OnCreate(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, ID3D12RootSignature* D3D12RootSignature) = 0;
 	virtual void OnDestroy() = 0;
 
-	virtual void BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList) = 0;
+	virtual void BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, ID3D12RootSignature* D3D12RootSignature) = 0;
 	virtual void ReleaseObjects() = 0;
 
 	virtual void LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName) = 0;
 	virtual void LoadUIInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName) = 0;
-
-	virtual void CreateRootSignature(ID3D12Device* D3D12Device) = 0;
 
 	virtual void CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList) = 0;
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList) = 0;

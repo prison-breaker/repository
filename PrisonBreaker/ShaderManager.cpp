@@ -48,3 +48,9 @@ bool CShaderManager::SetPipelineState(const tstring& ShaderName, UINT StateNum)
 
 	return false;
 }
+
+void CShaderManager::ResetShaderAndStateNum()
+{
+	m_SetShader = nullptr;
+	m_StateNum = 0;
+}

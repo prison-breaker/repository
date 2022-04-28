@@ -19,7 +19,7 @@ public:
 
 	~CStateMachine() = default;
 
-	void SetOwner(shared_ptr<EntityType> Owner)
+	void SetOwner(const shared_ptr<EntityType>& Owner)
 	{
 		m_Owner = Owner;
 	}

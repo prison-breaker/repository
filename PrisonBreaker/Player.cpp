@@ -70,14 +70,14 @@ const XMFLOAT3& CPlayer::GetMovingDirection() const
 	return m_MovingDirection;
 }
 
-CCamera* CPlayer::GetCamera() const
+shared_ptr<CCamera> CPlayer::GetCamera() const
 {
-	return m_Camera.get();
+	return m_Camera;
 }
 
-CStateMachine<CPlayer>* CPlayer::GetStateMachine() const
+shared_ptr<CStateMachine<CPlayer>> CPlayer::GetStateMachine() const
 {
-	return m_StateMachine.get();
+	return m_StateMachine;
 }
 
 void CPlayer::AcquirePistol()

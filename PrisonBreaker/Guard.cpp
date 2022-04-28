@@ -60,9 +60,9 @@ const XMFLOAT3& CGuard::GetMovingDirection() const
 	return m_MovingDirection;
 }
 
-CStateMachine<CGuard>* CGuard::GetStateMachine() const
+shared_ptr<CStateMachine<CGuard>> CGuard::GetStateMachine() const
 {
-	return m_StateMachine.get();
+	return m_StateMachine;
 }
 
 void CGuard::SetRecentTransition(bool RecentTransition)
@@ -125,7 +125,7 @@ UINT CGuard::GetPatrolIndex() const
 	return m_PatrolIndex;
 }
 
-shared_ptr<CGameObject> CGuard::IsFoundPlayer(const vector<vector<shared_ptr<CGameObject>>>& GameObjects)
+shared_ptr<CGameObject> CGuard::IsFoundPlayer(const vector<vector<shared_ptr<CGameObject>>>& GameObjects) const
 {
 	shared_ptr<CGameObject> NearestPlayer{};
 	float NearestDistance{ FLT_MAX };

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "State_KeyUI.h"
-#include "KeyUI.h"
+#include "UIs.h"
 
 CKeyUIActivationState* CKeyUIActivationState::GetInstance()
 {

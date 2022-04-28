@@ -35,9 +35,9 @@ public:
 	void SetMovingDirection(const XMFLOAT3& MovingDirection);
 	const XMFLOAT3& GetMovingDirection() const;
 
-	CCamera* GetCamera() const;
+	shared_ptr<CCamera> GetCamera() const;
 
-	CStateMachine<CPlayer>* GetStateMachine() const;
+	shared_ptr<CStateMachine<CPlayer>> GetStateMachine() const;
 
 	void AcquirePistol();
 	bool HasPistol() const;

@@ -20,4 +20,5 @@ public:
 	shared_ptr<CShader> GetShader(const tstring& ShaderName);
 
 	bool SetPipelineState(const tstring& ShaderName, UINT StateNum);
+	void ResetShaderAndStateNum();
 };

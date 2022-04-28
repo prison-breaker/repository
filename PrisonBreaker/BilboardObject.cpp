@@ -2,9 +2,7 @@
 #include "BilboardObject.h"
 #include "Material.h"
 #include "UIAnimationController.h"
-#include "MissionUI.h"
-#include "KeyUI.h"
-#include "HitUI.h"
+#include "UIs.h"
 
 shared_ptr<CBilboardObject> CBilboardObject::LoadObjectInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile)
 {
@@ -27,12 +25,15 @@ shared_ptr<CBilboardObject> CBilboardObject::LoadObjectInfoFromFile(ID3D12Device
 			switch (Type)
 			{
 			case 1:
-				NewObject = make_shared<CMissionUI>();
+				NewObject = make_shared<CBackgroundUI>();
 				break;
 			case 2:
-				NewObject = make_shared<CKeyUI>();
+				NewObject = make_shared<CMissionUI>();
 				break;
 			case 3:
+				NewObject = make_shared<CKeyUI>();
+				break;
+			case 4:
 				NewObject = make_shared<CHitUI>();
 				break;
 			default:
@@ -49,8 +50,6 @@ shared_ptr<CBilboardObject> CBilboardObject::LoadObjectInfoFromFile(ID3D12Device
 		{
 			File::ReadStringFromFile(InFile, Token);
 			
-			tcout << Token << endl;
-
 			shared_ptr<CMaterial> Material{ make_shared<CMaterial>() };
 			shared_ptr<CTexture> Texture{ make_shared<CTexture>() };
 			shared_ptr<CShader> Shader{ CShaderManager::GetInstance()->GetShader("UIShader") };
@@ -343,6 +342,11 @@ void CBilboardObject::SetPosition(UINT Index, const XMFLOAT3& Position)
 	m_MappedImageInfo[Index].SetPosition(Position);
 }
 
+const XMFLOAT3& CBilboardObject::GetPosition(UINT Index) const
+{
+	return m_MappedImageInfo[Index].GetPosition();
+}
+
 void CBilboardObject::SetSize(UINT Index, const XMFLOAT2& Size)
 {
 	if (Index < 0 || Index > m_VertexCount)
@@ -351,6 +355,11 @@ void CBilboardObject::SetSize(UINT Index, const XMFLOAT2& Size)
 	}
 
 	m_MappedImageInfo[Index].SetSize(Size);
+}
+
+const XMFLOAT2& CBilboardObject::GetSize(UINT Index) const
+{
+	return m_MappedImageInfo[Index].GetSize();
 }
 
 void CBilboardObject::SetAlphaColor(UINT Index, float AlphaColor)
@@ -363,6 +372,11 @@ void CBilboardObject::SetAlphaColor(UINT Index, float AlphaColor)
 	m_MappedImageInfo[Index].SetAlphaColor(AlphaColor);
 }
 
+float CBilboardObject::GetAlphaColor(UINT Index) const
+{
+	return m_MappedImageInfo[Index].GetAlphaColor();
+}
+
 void CBilboardObject::SetCellIndex(UINT Index, UINT CellIndex)
 {
 	if (Index < 0 || Index > m_VertexCount)
@@ -373,9 +387,14 @@ void CBilboardObject::SetCellIndex(UINT Index, UINT CellIndex)
 	m_MappedImageInfo[Index].SetCellIndex(CellIndex);
 }
 
-CUIAnimationController* CBilboardObject::GetUIAnimationController() const
+UINT CBilboardObject::GetCellIndex(UINT Index) const
 {
-	return m_UIAnimationController.get();
+	return m_MappedImageInfo[Index].GetCellIndex();
+}
+
+shared_ptr<CUIAnimationController> CBilboardObject::GetUIAnimationController() const
+{
+	return m_UIAnimationController;
 }
 
 void CBilboardObject::SetAnimationClip(UINT ClipNum)

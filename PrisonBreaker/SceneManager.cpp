@@ -9,6 +9,14 @@ CSceneManager* CSceneManager::GetInstance()
 	return &Instance;
 }
 
+void CSceneManager::ReleaseUploadBuffers()
+{
+	for (const auto& Scene : m_Scenes)
+	{
+		Scene.second->ReleaseUploadBuffers();
+	}
+}
+
 shared_ptr<CScene> CSceneManager::GetCurrentScene() const
 {
 	return m_CurrentScene;

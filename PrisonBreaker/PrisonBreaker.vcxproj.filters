@@ -37,9 +37,6 @@
     <Filter Include="소스 파일\Material">
       <UniqueIdentifier>{58956089-ea42-4e47-8689-4522397255cb}</UniqueIdentifier>
     </Filter>
-    <Filter Include="소스 파일\Material\Texture">
-      <UniqueIdentifier>{70a69a67-d819-49b8-be8f-685de605652d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="소스 파일\Animation">
       <UniqueIdentifier>{2084b59f-feb2-4849-87a5-e09b637e7065}</UniqueIdentifier>
     </Filter>
@@ -55,12 +52,6 @@
     <Filter Include="헤더 파일\Material">
       <UniqueIdentifier>{23e5b0bd-27f6-461f-8538-b4c4747396ff}</UniqueIdentifier>
     </Filter>
-    <Filter Include="헤더 파일\Material\Texture">
-      <UniqueIdentifier>{123ef2b9-2cfa-4fb1-bd4e-b60e317a3ef2}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="소스 파일\Object">
-      <UniqueIdentifier>{925d8140-55d6-42bb-83df-c1ed190af1d5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="소스 파일\Scene">
       <UniqueIdentifier>{8c32ea8f-03e7-4460-8f3b-53f835fd2b37}</UniqueIdentifier>
     </Filter>
@@ -69,9 +60,6 @@
     </Filter>
     <Filter Include="헤더 파일\Manager">
       <UniqueIdentifier>{dccf2aa2-28ce-429f-b098-4bdd48df99f5}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="헤더 파일\Object">
-      <UniqueIdentifier>{c3e7e4c0-5e26-4772-b11f-3e77fc2719e0}</UniqueIdentifier>
     </Filter>
     <Filter Include="헤더 파일\Scene">
       <UniqueIdentifier>{b57e65c4-1832-4f91-91fe-49bbe3b8b30e}</UniqueIdentifier>
@@ -93,6 +81,18 @@
     </Filter>
     <Filter Include="헤더 파일\Event">
       <UniqueIdentifier>{c2c38898-6902-4ad4-80f9-2edadc1a04d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Entity">
+      <UniqueIdentifier>{925d8140-55d6-42bb-83df-c1ed190af1d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Entity">
+      <UniqueIdentifier>{c3e7e4c0-5e26-4772-b11f-3e77fc2719e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\UI &amp; SkyBox">
+      <UniqueIdentifier>{885e37f3-c910-4ea3-8f02-8f764b0bbcfd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\UI &amp; SkyBox">
+      <UniqueIdentifier>{d9bee6e8-5b9c-474c-9df4-83a30240bb20}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -121,16 +121,13 @@
       <Filter>소스 파일\Shader</Filter>
     </ClCompile>
     <ClCompile Include="GameObject.cpp">
-      <Filter>소스 파일\Object</Filter>
+      <Filter>소스 파일\Entity</Filter>
     </ClCompile>
     <ClCompile Include="Player.cpp">
-      <Filter>소스 파일\Object</Filter>
+      <Filter>소스 파일\Entity</Filter>
     </ClCompile>
     <ClCompile Include="Camera.cpp">
       <Filter>소스 파일\Camera</Filter>
-    </ClCompile>
-    <ClCompile Include="Texture.cpp">
-      <Filter>소스 파일\Material\Texture</Filter>
     </ClCompile>
     <ClCompile Include="SceneManager.cpp">
       <Filter>소스 파일\Manager</Filter>
@@ -143,12 +140,6 @@
     </ClCompile>
     <ClCompile Include="SkyBoxShader.cpp">
       <Filter>소스 파일\Shader</Filter>
-    </ClCompile>
-    <ClCompile Include="SkyBox.cpp">
-      <Filter>소스 파일\Object</Filter>
-    </ClCompile>
-    <ClCompile Include="BilboardObject.cpp">
-      <Filter>소스 파일\Object</Filter>
     </ClCompile>
     <ClCompile Include="ShadowMapShader.cpp">
       <Filter>소스 파일\Shader</Filter>
@@ -181,7 +172,7 @@
       <Filter>소스 파일\State</Filter>
     </ClCompile>
     <ClCompile Include="Guard.cpp">
-      <Filter>소스 파일\Object</Filter>
+      <Filter>소스 파일\Entity</Filter>
     </ClCompile>
     <ClCompile Include="State_Guard.cpp">
       <Filter>소스 파일\State</Filter>
@@ -201,23 +192,32 @@
     <ClCompile Include="EventTriggers.cpp">
       <Filter>소스 파일\Event</Filter>
     </ClCompile>
-    <ClCompile Include="MissionUI.cpp">
-      <Filter>소스 파일\Object</Filter>
-    </ClCompile>
-    <ClCompile Include="KeyUI.cpp">
-      <Filter>소스 파일\Object</Filter>
-    </ClCompile>
     <ClCompile Include="State_KeyUI.cpp">
       <Filter>소스 파일\State</Filter>
-    </ClCompile>
-    <ClCompile Include="HitUI.cpp">
-      <Filter>소스 파일\Object</Filter>
     </ClCompile>
     <ClCompile Include="State_HitUI.cpp">
       <Filter>소스 파일\State</Filter>
     </ClCompile>
     <ClCompile Include="UIShader.cpp">
       <Filter>소스 파일\Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="TitleScene.cpp">
+      <Filter>소스 파일\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="State_Background.cpp">
+      <Filter>소스 파일\State</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture.cpp">
+      <Filter>소스 파일\Material</Filter>
+    </ClCompile>
+    <ClCompile Include="BilboardObject.cpp">
+      <Filter>소스 파일\UI &amp; SkyBox</Filter>
+    </ClCompile>
+    <ClCompile Include="SkyBox.cpp">
+      <Filter>소스 파일\UI &amp; SkyBox</Filter>
+    </ClCompile>
+    <ClCompile Include="UIs.cpp">
+      <Filter>소스 파일\UI &amp; SkyBox</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -246,19 +246,16 @@
       <Filter>헤더 파일\Shader</Filter>
     </ClInclude>
     <ClInclude Include="GameObject.h">
-      <Filter>헤더 파일\Object</Filter>
+      <Filter>헤더 파일\Entity</Filter>
     </ClInclude>
     <ClInclude Include="Mesh.h">
       <Filter>헤더 파일\Mesh</Filter>
     </ClInclude>
     <ClInclude Include="Player.h">
-      <Filter>헤더 파일\Object</Filter>
+      <Filter>헤더 파일\Entity</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h">
       <Filter>헤더 파일\Camera</Filter>
-    </ClInclude>
-    <ClInclude Include="Texture.h">
-      <Filter>헤더 파일\Material\Texture</Filter>
     </ClInclude>
     <ClInclude Include="SceneManager.h">
       <Filter>헤더 파일\Manager</Filter>
@@ -271,12 +268,6 @@
     </ClInclude>
     <ClInclude Include="SkyBoxShader.h">
       <Filter>헤더 파일\Shader</Filter>
-    </ClInclude>
-    <ClInclude Include="SkyBox.h">
-      <Filter>헤더 파일\Object</Filter>
-    </ClInclude>
-    <ClInclude Include="BilboardObject.h">
-      <Filter>헤더 파일\Object</Filter>
     </ClInclude>
     <ClInclude Include="ShadowMapShader.h">
       <Filter>헤더 파일\Shader</Filter>
@@ -309,7 +300,7 @@
       <Filter>헤더 파일\State</Filter>
     </ClInclude>
     <ClInclude Include="Guard.h">
-      <Filter>헤더 파일\Object</Filter>
+      <Filter>헤더 파일\Entity</Filter>
     </ClInclude>
     <ClInclude Include="State_Guard.h">
       <Filter>헤더 파일\State</Filter>
@@ -329,20 +320,29 @@
     <ClInclude Include="EventTriggers.h">
       <Filter>헤더 파일\Event</Filter>
     </ClInclude>
-    <ClInclude Include="MissionUI.h">
-      <Filter>헤더 파일\Object</Filter>
-    </ClInclude>
-    <ClInclude Include="KeyUI.h">
-      <Filter>헤더 파일\Object</Filter>
-    </ClInclude>
     <ClInclude Include="State_KeyUI.h">
       <Filter>헤더 파일\State</Filter>
     </ClInclude>
-    <ClInclude Include="HitUI.h">
-      <Filter>헤더 파일\Object</Filter>
-    </ClInclude>
     <ClInclude Include="State_HitUI.h">
       <Filter>헤더 파일\State</Filter>
+    </ClInclude>
+    <ClInclude Include="TitleScene.h">
+      <Filter>헤더 파일\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="State_Background.h">
+      <Filter>헤더 파일\State</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>헤더 파일\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="BilboardObject.h">
+      <Filter>헤더 파일\UI &amp; SkyBox</Filter>
+    </ClInclude>
+    <ClInclude Include="UIs.h">
+      <Filter>헤더 파일\UI &amp; SkyBox</Filter>
+    </ClInclude>
+    <ClInclude Include="SkyBox.h">
+      <Filter>헤더 파일\UI &amp; SkyBox</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

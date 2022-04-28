@@ -1,6 +1,5 @@
 #pragma once
 #include "BilboardMesh.h"
-#include "StateMachine.h"
 #include "UIAnimationController.h"
 
 class CCamera;
@@ -50,11 +49,18 @@ public:
 	UINT GetVertexCount() const;
 
 	void SetPosition(UINT Index, const XMFLOAT3& Position);
-	void SetSize(UINT Index, const XMFLOAT2& Size);
-	void SetAlphaColor(UINT Index, float AlphaColor);
-	void SetCellIndex(UINT Index, UINT CellIndex);
+	const XMFLOAT3& GetPosition(UINT Index) const;
 
-	CUIAnimationController* GetUIAnimationController() const;
+	void SetSize(UINT Index, const XMFLOAT2& Size);
+	const XMFLOAT2& GetSize(UINT Index) const;
+
+	void SetAlphaColor(UINT Index, float AlphaColor);
+	float GetAlphaColor(UINT Index) const;
+
+	void SetCellIndex(UINT Index, UINT CellIndex);
+	UINT GetCellIndex(UINT Index) const;
+
+	shared_ptr<CUIAnimationController> GetUIAnimationController() const;
 
 	void SetAnimationClip(UINT ClipNum);
 	void SetKeyFrameIndex(UINT KeyFrameIndex);

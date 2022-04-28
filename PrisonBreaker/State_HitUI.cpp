@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "State_HitUI.h"
-#include "HitUI.h"
+#include "UIs.h"
 
 CHitUIActivationState* CHitUIActivationState::GetInstance()
 {

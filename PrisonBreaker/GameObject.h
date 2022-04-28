@@ -22,18 +22,18 @@ class CGameObject : public enable_shared_from_this<CGameObject>
 {
 protected:
 	bool				             m_IsActive{};
-	
+									 
 	tstring					         m_FrameName{};
-		
+									 
 	XMFLOAT4X4		                 m_WorldMatrix{ Matrix4x4::Identity() };
 	XMFLOAT4X4				         m_TransformMatrix{ Matrix4x4::Identity() };
-							     
+							     	 
 	shared_ptr<CMesh>	             m_Mesh{};
 	vector<shared_ptr<CMaterial>>    m_Materials{};
 	shared_ptr<CAnimationController> m_AnimationController{};
-
+									 
 	shared_ptr<BoundingBox>			 m_BoundingBox{};
-
+									 
 	vector<shared_ptr<CGameObject>>  m_ChildObjects{};
 
 public:
@@ -91,13 +91,13 @@ public:
 	void SetMaterial(const shared_ptr<CMaterial>& Material);
 
 	void SetAnimationController(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const shared_ptr<LOADED_MODEL_INFO>& ModelInfo);
-	CAnimationController* GetAnimationController() const;
+	shared_ptr<CAnimationController> GetAnimationController() const;
 
 	void SetAnimationClip(UINT ClipNum);
 	UINT GetAnimationClip() const;
 
 	void SetBoundingBox(const shared_ptr<BoundingBox>& BoundingBox);
-	BoundingBox* GetBoundingBox();
+	shared_ptr<BoundingBox> GetBoundingBox() const;
 
 	void SetChild(const shared_ptr<CGameObject>& ChildObject);
 

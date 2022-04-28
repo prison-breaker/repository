@@ -41,7 +41,7 @@ public:
 	void SetMovingDirection(const XMFLOAT3& MovingDirection);
 	const XMFLOAT3& GetMovingDirection() const;
 
-	CStateMachine<CGuard>* GetStateMachine() const;
+	shared_ptr<CStateMachine<CGuard>> GetStateMachine() const;
 
 	void SetRecentTransition(bool RecentTransition);
 	bool GetRecentTransition() const;
@@ -60,7 +60,7 @@ public:
 
 	UINT GetPatrolIndex() const;
 
-	shared_ptr<CGameObject> IsFoundPlayer(const vector<vector<shared_ptr<CGameObject>>>& GameObjects);
+	shared_ptr<CGameObject> IsFoundPlayer(const vector<vector<shared_ptr<CGameObject>>>& GameObjects) const;
 
 	void FindNavPath(const shared_ptr<CNavMesh>& NavMesh, const XMFLOAT3& TargetPosition, const vector<vector<shared_ptr<CGameObject>>>& GameObjects);
 	void FindRayCastingNavPath(const vector<vector<shared_ptr<CGameObject>>>& GameObjects);

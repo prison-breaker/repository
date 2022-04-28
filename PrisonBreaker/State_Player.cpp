@@ -237,7 +237,7 @@ void CPlayerRunningState::ProcessInput(const shared_ptr<CPlayer>& Entity, float 
 		break;
 	}
 
-	Entity->SetSpeed(Entity->GetSpeed());
+	Entity->SetSpeed(3.0f * Entity->GetSpeed());
 }
 
 void CPlayerRunningState::Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime)
@@ -350,7 +350,7 @@ void CPlayerShootingState::ProcessInput(const shared_ptr<CPlayer>& Entity, float
 						if (GameObject->IsActive())
 						{
 							// 모델을 공유하기 때문에, 월드 변환 행렬을 객체마다 갱신시켜주어야 한다.
-							CAnimationController* AnimationController{ GameObject->GetAnimationController() };
+							shared_ptr<CAnimationController> AnimationController{ GameObject->GetAnimationController() };
 
 							if (AnimationController)
 							{

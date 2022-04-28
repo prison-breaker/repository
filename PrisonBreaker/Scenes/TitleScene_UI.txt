@@ -1,0 +1,150 @@
+<UI>
+	<UIObject>
+		<Type> 1
+		<IsActive> 1
+		<TextureName> Textures/TS_Background_UI.dds
+		<RectTransform> 1 959 539 0 1920 1080 
+		<AlphaColor> 1
+		<Animation>
+			<AnimationClips> 1
+				<AnimationClip> Fade 60 60 1
+					<RectTransform> 0.01666667 959 539 0 1920 1080 
+					<AlphaColor> 0.01666667 0.9983703
+					<RectTransform> 0.03333334 959 539 0 1920 1080 
+					<AlphaColor> 0.03333334 0.9936296
+					<RectTransform> 0.05 959 539 0 1920 1080 
+					<AlphaColor> 0.05 0.986
+					<RectTransform> 0.06666667 959 539 0 1920 1080 
+					<AlphaColor> 0.06666667 0.9757037
+					<RectTransform> 0.08333334 959 539 0 1920 1080 
+					<AlphaColor> 0.08333334 0.962963
+					<RectTransform> 0.1 959 539 0 1920 1080 
+					<AlphaColor> 0.1 0.948
+					<RectTransform> 0.1166667 959 539 0 1920 1080 
+					<AlphaColor> 0.1166667 0.9310371
+					<RectTransform> 0.1333333 959 539 0 1920 1080 
+					<AlphaColor> 0.1333333 0.9122963
+					<RectTransform> 0.15 959 539 0 1920 1080 
+					<AlphaColor> 0.15 0.892
+					<RectTransform> 0.1666667 959 539 0 1920 1080 
+					<AlphaColor> 0.1666667 0.8703704
+					<RectTransform> 0.1833333 959 539 0 1920 1080 
+					<AlphaColor> 0.1833333 0.8476296
+					<RectTransform> 0.2 959 539 0 1920 1080 
+					<AlphaColor> 0.2 0.824
+					<RectTransform> 0.2166667 959 539 0 1920 1080 
+					<AlphaColor> 0.2166667 0.7997037
+					<RectTransform> 0.2333333 959 539 0 1920 1080 
+					<AlphaColor> 0.2333333 0.774963
+					<RectTransform> 0.25 959 539 0 1920 1080 
+					<AlphaColor> 0.25 0.75
+					<RectTransform> 0.2666667 959 539 0 1920 1080 
+					<AlphaColor> 0.2666667 0.725037
+					<RectTransform> 0.2833334 959 539 0 1920 1080 
+					<AlphaColor> 0.2833334 0.7002963
+					<RectTransform> 0.3 959 539 0 1920 1080 
+					<AlphaColor> 0.3 0.6759999
+					<RectTransform> 0.3166667 959 539 0 1920 1080 
+					<AlphaColor> 0.3166667 0.6523703
+					<RectTransform> 0.3333334 959 539 0 1920 1080 
+					<AlphaColor> 0.3333334 0.6296295
+					<RectTransform> 0.3500001 959 539 0 1920 1080 
+					<AlphaColor> 0.3500001 0.6079999
+					<RectTransform> 0.3666668 959 539 0 1920 1080 
+					<AlphaColor> 0.3666668 0.5877036
+					<RectTransform> 0.3833334 959 539 0 1920 1080 
+					<AlphaColor> 0.3833334 0.5689628
+					<RectTransform> 0.4000001 959 539 0 1920 1080 
+					<AlphaColor> 0.4000001 0.5519999
+					<RectTransform> 0.4166668 959 539 0 1920 1080 
+					<AlphaColor> 0.4166668 0.5370369
+					<RectTransform> 0.4333335 959 539 0 1920 1080 
+					<AlphaColor> 0.4333335 0.5242962
+					<RectTransform> 0.4500002 959 539 0 1920 1080 
+					<AlphaColor> 0.4500002 0.5139999
+					<RectTransform> 0.4666668 959 539 0 1920 1080 
+					<AlphaColor> 0.4666668 0.5063703
+					<RectTransform> 0.4833335 959 539 0 1920 1080 
+					<AlphaColor> 0.4833335 0.5016296
+					<RectTransform> 0.5000002 959 539 0 1920 1080 
+					<AlphaColor> 0.5000002 0.5
+					<RectTransform> 0.5166668 959 539 0 1920 1080 
+					<AlphaColor> 0.5166668 0.5016297
+					<RectTransform> 0.5333335 959 539 0 1920 1080 
+					<AlphaColor> 0.5333335 0.5063704
+					<RectTransform> 0.5500001 959 539 0 1920 1080 
+					<AlphaColor> 0.5500001 0.5140001
+					<RectTransform> 0.5666668 959 539 0 1920 1080 
+					<AlphaColor> 0.5666668 0.5242964
+					<RectTransform> 0.5833334 959 539 0 1920 1080 
+					<AlphaColor> 0.5833334 0.5370371
+					<RectTransform> 0.6000001 959 539 0 1920 1080 
+					<AlphaColor> 0.6000001 0.552
+					<RectTransform> 0.6166667 959 539 0 1920 1080 
+					<AlphaColor> 0.6166667 0.5689631
+					<RectTransform> 0.6333334 959 539 0 1920 1080 
+					<AlphaColor> 0.6333334 0.5877038
+					<RectTransform> 0.65 959 539 0 1920 1080 
+					<AlphaColor> 0.65 0.608
+					<RectTransform> 0.6666667 959 539 0 1920 1080 
+					<AlphaColor> 0.6666667 0.6296297
+					<RectTransform> 0.6833333 959 539 0 1920 1080 
+					<AlphaColor> 0.6833333 0.6523704
+					<RectTransform> 0.7 959 539 0 1920 1080 
+					<AlphaColor> 0.7 0.676
+					<RectTransform> 0.7166666 959 539 0 1920 1080 
+					<AlphaColor> 0.7166666 0.7002963
+					<RectTransform> 0.7333333 959 539 0 1920 1080 
+					<AlphaColor> 0.7333333 0.725037
+					<RectTransform> 0.7499999 959 539 0 1920 1080 
+					<AlphaColor> 0.7499999 0.7499999
+					<RectTransform> 0.7666666 959 539 0 1920 1080 
+					<AlphaColor> 0.7666666 0.7749628
+					<RectTransform> 0.7833332 959 539 0 1920 1080 
+					<AlphaColor> 0.7833332 0.7997036
+					<RectTransform> 0.7999999 959 539 0 1920 1080 
+					<AlphaColor> 0.7999999 0.8239999
+					<RectTransform> 0.8166665 959 539 0 1920 1080 
+					<AlphaColor> 0.8166665 0.8476294
+					<RectTransform> 0.8333332 959 539 0 1920 1080 
+					<AlphaColor> 0.8333332 0.8703701
+					<RectTransform> 0.8499998 959 539 0 1920 1080 
+					<AlphaColor> 0.8499998 0.8919998
+					<RectTransform> 0.8666665 959 539 0 1920 1080 
+					<AlphaColor> 0.8666665 0.9122961
+					<RectTransform> 0.8833331 959 539 0 1920 1080 
+					<AlphaColor> 0.8833331 0.9310368
+					<RectTransform> 0.8999998 959 539 0 1920 1080 
+					<AlphaColor> 0.8999998 0.9479998
+					<RectTransform> 0.9166664 959 539 0 1920 1080 
+					<AlphaColor> 0.9166664 0.9629628
+					<RectTransform> 0.9333331 959 539 0 1920 1080 
+					<AlphaColor> 0.9333331 0.9757035
+					<RectTransform> 0.9499997 959 539 0 1920 1080 
+					<AlphaColor> 0.9499997 0.9859998
+					<RectTransform> 0.9666664 959 539 0 1920 1080 
+					<AlphaColor> 0.9666664 0.9936295
+					<RectTransform> 0.9833331 959 539 0 1920 1080 
+					<AlphaColor> 0.9833331 0.9983703
+					<RectTransform> 0.9999997 959 539 0 1920 1080 
+					<AlphaColor> 0.9999997 1
+				</AnimationClip>
+			</AnimationClips>
+		</Animation>
+	</UIObject>
+	<UIObject>
+		<Type> 0
+		<IsActive> 1
+		<TextureName> Textures/Title_UI.dds
+		<RectTransform> 1 1139 349 0 900 90 
+		<AlphaColor> 1
+	</UIObject>
+	<UIObject>
+		<Type> 0
+		<IsActive> 1
+		<TextureName> Textures/Buttons_UI.dds
+		<CellInfo> 3 2
+		<RectTransform> 3 369 669 0 343 52 369 769 2 343 52 369 869 4 343 52 
+		<AlphaColor> 1 1 1 
+	</UIObject>
+</UI>

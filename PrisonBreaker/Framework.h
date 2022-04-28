@@ -3,8 +3,8 @@
 
 struct CB_FRAMEWORKINFO
 {
-	float							  m_TotalTime{};
-	float							  m_ElapsedTime{};
+	float m_TotalTime{};
+	float m_ElapsedTime{};
 };
 
 class CFramework
@@ -45,6 +45,8 @@ private:
 	UINT64							  m_FenceValues[m_SwapChainBufferCount]{};
 	HANDLE							  m_FenceEvent{};
 
+	ComPtr<ID3D12RootSignature>		  m_D3D12RootSignature{};
+
 	ComPtr<ID3D12Resource>			  m_D3D12FrameworkInfo{};
 	CB_FRAMEWORKINFO*				  m_MappedFrameworkInfo{};
 				
@@ -69,6 +71,7 @@ public:
 	void CreateRtvAndDsvDescriptorHeaps();
 	void CreateRenderTargetViews();
 	void CreateDepthStencilView();
+	void CreateRootSignature();
 
 	void CreateShaderVariables();
 	void UpdateShaderVariables();

@@ -1,12 +1,11 @@
 #include "stdafx.h"
 #include "GameScene.h"
 
-void CGameScene::OnCreate(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
+void CGameScene::OnCreate(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, ID3D12RootSignature* D3D12RootSignature)
 {
-	CreateRootSignature(D3D12Device);
-
+	BuildObjects(D3D12Device, D3D12GraphicsCommandList, D3D12RootSignature);
 	BuildLights();
-	BuildObjects(D3D12Device, D3D12GraphicsCommandList);
+	BuildFog();
 }
 
 void CGameScene::OnDestroy()
@@ -14,7 +13,7 @@ void CGameScene::OnDestroy()
 
 }
 	
-void CGameScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
+void CGameScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, ID3D12RootSignature* D3D12RootSignature)
 {
 	// NavMesh 객체를 생성한다.
 	m_NavMesh = make_shared<CNavMesh>();
@@ -23,23 +22,23 @@ void CGameScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandLi
 	// 렌더링에 필요한 셰이더 객체(PSO)를 생성한다.
 	shared_ptr<CGraphicsShader> Shader{ make_shared<CDepthWriteShader>(D3D12Device, D3D12GraphicsCommandList) };
 
-	Shader->CreatePipelineState(D3D12Device, m_D3D12RootSignature.Get(), 2);
+	Shader->CreatePipelineState(D3D12Device, D3D12RootSignature, 2);
 	CShaderManager::GetInstance()->RegisterShader(TEXT("DepthWriteShader"), Shader);
 
 	Shader = make_shared<CShadowMapShader>();
-	Shader->CreatePipelineState(D3D12Device, m_D3D12RootSignature.Get(), 2);
+	Shader->CreatePipelineState(D3D12Device, D3D12RootSignature, 2);
 	CShaderManager::GetInstance()->RegisterShader(TEXT("ShadowMapShader"), Shader);
 
 	Shader = make_shared<CSkyBoxShader>();
-	Shader->CreatePipelineState(D3D12Device, m_D3D12RootSignature.Get(), 0);
+	Shader->CreatePipelineState(D3D12Device, D3D12RootSignature, 0);
 	CShaderManager::GetInstance()->RegisterShader(TEXT("SkyBoxShader"), Shader);
 
-	Shader = make_shared<CUIShader>();
-	Shader->CreatePipelineState(D3D12Device, m_D3D12RootSignature.Get(), 0);
-	CShaderManager::GetInstance()->RegisterShader(TEXT("UIShader"), Shader);
+	//Shader = make_shared<CUIShader>();
+	//Shader->CreatePipelineState(D3D12Device, D3D12RootSignature, 0);
+	//CShaderManager::GetInstance()->RegisterShader(TEXT("UIShader"), Shader);
 
 	Shader = make_shared<CDebugShader>();
-	Shader->CreatePipelineState(D3D12Device, m_D3D12RootSignature.Get(), 0);
+	Shader->CreatePipelineState(D3D12Device, D3D12RootSignature, 0);
 	CShaderManager::GetInstance()->RegisterShader(TEXT("DebugShader"), Shader);
 
 	// 타입 수만큼 각 벡터의 크기를 재할당한다.
@@ -303,47 +302,6 @@ void CGameScene::LoadUIInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCom
 	LoadEventTriggerFromFile(TEXT("Triggers/EventTriggers.bin"));
 }
 
-void CGameScene::CreateRootSignature(ID3D12Device* D3D12Device)
-{
-	CD3DX12_DESCRIPTOR_RANGE D3D12DescriptorRanges[4]{};
-
-	D3D12DescriptorRanges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
-	D3D12DescriptorRanges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);
-	D3D12DescriptorRanges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2);
-	D3D12DescriptorRanges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3);
-
-	CD3DX12_ROOT_PARAMETER D3D12RootParameters[11]{};
-
-	D3D12RootParameters[ROOT_PARAMETER_TYPE_FRAMEWORK_INFO].InitAsConstantBufferView(0);					   // 프레임워크 정보(b0)
-	D3D12RootParameters[ROOT_PARAMETER_TYPE_CAMERA].InitAsConstantBufferView(1);							   // 카메라 정보(b1)
-	D3D12RootParameters[ROOT_PARAMETER_TYPE_LIGHT].InitAsConstantBufferView(2);							       // 조명 정보(b2)
-	D3D12RootParameters[ROOT_PARAMETER_TYPE_FOG].InitAsConstantBufferView(3);								   // 안개 정보(b3)
-	D3D12RootParameters[ROOT_PARAMETER_TYPE_OBJECT].InitAsConstants(23, 4);								       // 오브젝트 정보(b4)
-	D3D12RootParameters[ROOT_PARAMETER_TYPE_BONE_OFFSET].InitAsConstantBufferView(5);						   // 스키닝 애니메이션(오프셋 행렬) 정보(b5)
-	D3D12RootParameters[ROOT_PARAMETER_TYPE_BONE_TRANSFORM].InitAsConstantBufferView(6);					   // 스키닝 애니메이션(변환된 뼈들의 행렬) 정보(b6)
-	D3D12RootParameters[ROOT_PARAMETER_TYPE_ALBEDO_MAP].InitAsDescriptorTable(1, &D3D12DescriptorRanges[0]);   // 텍스처 정보(AlbedoMap : t0)
-	D3D12RootParameters[ROOT_PARAMETER_TYPE_METALLIC_MAP].InitAsDescriptorTable(1, &D3D12DescriptorRanges[1]); // 텍스처 정보(MetallicMap : t1)
-	D3D12RootParameters[ROOT_PARAMETER_TYPE_NORMAL_MAP].InitAsDescriptorTable(1, &D3D12DescriptorRanges[2]);   // 텍스처 정보(NormalMap : t2)
-	D3D12RootParameters[ROOT_PARAMETER_TYPE_SHADOW_MAP].InitAsDescriptorTable(1, &D3D12DescriptorRanges[3]);   // 텍스처 정보(ShadowMap : t3)
-	
-	D3D12_ROOT_SIGNATURE_FLAGS D3D12RootSignatureFlags{ D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT | D3D12_ROOT_SIGNATURE_FLAG_ALLOW_STREAM_OUTPUT }; // IA단계를 허용, 스트림 출력 단계를 허용
-	CD3DX12_STATIC_SAMPLER_DESC D3D12SamplerDesc[2]{};
-
-	D3D12SamplerDesc[0].Init(0, D3D12_FILTER_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_WRAP, D3D12_TEXTURE_ADDRESS_MODE_WRAP, D3D12_TEXTURE_ADDRESS_MODE_WRAP,
-		0.0f, 1, D3D12_COMPARISON_FUNC_ALWAYS, D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE, 0.0f, D3D12_FLOAT32_MAX, D3D12_SHADER_VISIBILITY_PIXEL, 0);
-	D3D12SamplerDesc[1].Init(1, D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT, D3D12_TEXTURE_ADDRESS_MODE_BORDER, D3D12_TEXTURE_ADDRESS_MODE_BORDER, D3D12_TEXTURE_ADDRESS_MODE_BORDER,
-		0.0f, 1, D3D12_COMPARISON_FUNC_LESS_EQUAL, D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE, 0.0f, D3D12_FLOAT32_MAX, D3D12_SHADER_VISIBILITY_PIXEL, 0);
-
-	CD3DX12_ROOT_SIGNATURE_DESC D3D12RootSignatureDesc{};
-
-	D3D12RootSignatureDesc.Init(_countof(D3D12RootParameters), D3D12RootParameters, _countof(D3D12SamplerDesc), D3D12SamplerDesc, D3D12RootSignatureFlags);
-
-	ComPtr<ID3DBlob> D3D12SignatureBlob{}, D3D12ErrorBlob{};
-
-	DX::ThrowIfFailed(D3D12SerializeRootSignature(&D3D12RootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, D3D12SignatureBlob.GetAddressOf(), D3D12ErrorBlob.GetAddressOf()));
-	DX::ThrowIfFailed(D3D12Device->CreateRootSignature(0, D3D12SignatureBlob->GetBufferPointer(), D3D12SignatureBlob->GetBufferSize(), __uuidof(ID3D12RootSignature), reinterpret_cast<void**>(m_D3D12RootSignature.GetAddressOf())));
-}
-
 void CGameScene::CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
 	UINT Bytes{ (sizeof(CB_LIGHT) + 255) & ~255 };
@@ -355,13 +313,12 @@ void CGameScene::CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12Graphics
 
 	m_D3D12Fog = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, nullptr, Bytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, nullptr);
 	DX::ThrowIfFailed(m_D3D12Fog->Map(0, nullptr, reinterpret_cast<void**>(&m_MappedFog)));
-
-	BuildFog();
 }
 
 void CGameScene::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
 	memcpy(m_MappedLights->m_Lights, m_Lights.data(), sizeof(CB_LIGHT) * (UINT)m_Lights.size());
+
 	D3D12GraphicsCommandList->SetGraphicsRootConstantBufferView(ROOT_PARAMETER_TYPE_LIGHT, m_D3D12Lights->GetGPUVirtualAddress());
 	D3D12GraphicsCommandList->SetGraphicsRootConstantBufferView(ROOT_PARAMETER_TYPE_FOG, m_D3D12Fog->GetGPUVirtualAddress());
 }
@@ -490,18 +447,18 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	if (GetAsyncKeyState(VK_TAB) & 0x0001)
 	{
 		InputMask |= INPUT_MASK_TAB;
-		static_pointer_cast<CMissionUI>(m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0])->GetStateMachine()->ProcessInput(ElapsedTime, INPUT_MASK_TAB);
-	}
 
-	if (GetAsyncKeyState(VK_RBUTTON) & 0x8000)
-	{
-		InputMask |= INPUT_MASK_RMB;
-
+		static_pointer_cast<CMissionUI>(m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0])->GetStateMachine()->ProcessInput(ElapsedTime, InputMask);
 	}
 
 	if (GetAsyncKeyState(VK_LBUTTON) & 0x0001)
 	{
 		InputMask |= INPUT_MASK_LMB;
+	}
+
+	if (GetAsyncKeyState(VK_RBUTTON) & 0x8000)
+	{
+		InputMask |= INPUT_MASK_RMB;
 	}
 
 	Player->ProcessInput(m_GameObjects, m_NavMesh, ElapsedTime, InputMask);
@@ -561,11 +518,6 @@ void CGameScene::Animate(float ElapsedTime)
 
 void CGameScene::PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
-	if (m_D3D12RootSignature)
-	{
-		D3D12GraphicsCommandList->SetGraphicsRootSignature(m_D3D12RootSignature.Get());
-	}
-
 	CTextureManager::GetInstance()->SetDescriptorHeap(D3D12GraphicsCommandList);
 	static_pointer_cast<CDepthWriteShader>(CShaderManager::GetInstance()->GetShader(TEXT("DepthWriteShader")))->PrepareShadowMap(D3D12GraphicsCommandList, m_Lights, m_GameObjects);
 
@@ -592,7 +544,7 @@ void CGameScene::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 					GameObject->UpdateTransform(Matrix4x4::Identity());
 				}
 
-				GameObject->Render(D3D12GraphicsCommandList, Player->GetCamera(), RENDER_TYPE_STANDARD);
+				GameObject->Render(D3D12GraphicsCommandList, Player->GetCamera().get(), RENDER_TYPE_STANDARD);
 			}
 		}
 	}
@@ -603,14 +555,14 @@ void CGameScene::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 		{
 			if (BilboardObject)
 			{
-				BilboardObject->Render(D3D12GraphicsCommandList, Player->GetCamera(), RENDER_TYPE_STANDARD);
+				BilboardObject->Render(D3D12GraphicsCommandList, Player->GetCamera().get(), RENDER_TYPE_STANDARD);
 			}
 		}
 	}
 
 	if (m_RenderBoundingBox)
 	{
-		static_pointer_cast<CDebugShader>(CShaderManager::GetInstance()->GetShader(TEXT("DebugShader")))->Render(D3D12GraphicsCommandList, Player->GetCamera(), m_GameObjects, 0);
+		static_pointer_cast<CDebugShader>(CShaderManager::GetInstance()->GetShader(TEXT("DebugShader")))->Render(D3D12GraphicsCommandList, Player->GetCamera().get(), m_GameObjects, 0);
 	}
 }
 

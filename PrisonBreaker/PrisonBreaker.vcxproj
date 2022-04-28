@@ -150,14 +150,12 @@
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="GameScene.cpp" />
     <ClCompile Include="Guard.cpp" />
-    <ClCompile Include="HitUI.cpp" />
-    <ClCompile Include="KeyUI.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="Mesh.cpp" />
-    <ClCompile Include="MissionUI.cpp" />
     <ClCompile Include="NavMesh.cpp" />
     <ClCompile Include="NavNode.cpp" />
     <ClCompile Include="Player.cpp" />
+    <ClCompile Include="State_Background.cpp" />
     <ClCompile Include="State_Guard.cpp" />
     <ClCompile Include="State_HitUI.cpp" />
     <ClCompile Include="State_KeyUI.cpp" />
@@ -182,7 +180,9 @@
     <ClCompile Include="TextureManager.cpp" />
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="EventTrigger.cpp" />
+    <ClCompile Include="TitleScene.cpp" />
     <ClCompile Include="UIAnimationController.cpp" />
+    <ClCompile Include="UIs.cpp" />
     <ClCompile Include="UIShader.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -195,11 +195,8 @@
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameScene.h" />
     <ClInclude Include="Guard.h" />
-    <ClInclude Include="HitUI.h" />
-    <ClInclude Include="KeyUI.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="Mesh.h" />
-    <ClInclude Include="MissionUI.h" />
     <ClInclude Include="NavMesh.h" />
     <ClInclude Include="NavNode.h" />
     <ClInclude Include="Player.h" />
@@ -215,6 +212,7 @@
     <ClInclude Include="SkyBoxShader.h" />
     <ClInclude Include="State.h" />
     <ClInclude Include="StateMachine.h" />
+    <ClInclude Include="State_Background.h" />
     <ClInclude Include="State_Guard.h" />
     <ClInclude Include="State_HitUI.h" />
     <ClInclude Include="State_KeyUI.h" />
@@ -225,7 +223,9 @@
     <ClInclude Include="TextureManager.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="EventTrigger.h" />
+    <ClInclude Include="TitleScene.h" />
     <ClInclude Include="UIAnimationController.h" />
+    <ClInclude Include="UIs.h" />
     <ClInclude Include="UIShader.h" />
   </ItemGroup>
   <ItemGroup>

@@ -182,9 +182,10 @@ bool CUIAnimationController::UpdateAnimationClip(ANIMATION_TYPE AnimationType)
 		case ANIMATION_TYPE_ONCE_REVERSE:
 			m_KeyFrameIndex -= 1;
 
-			if (m_KeyFrameIndex < 1)
+			// UINT UnderFlow
+			if (m_KeyFrameIndex >= m_AnimationClips[m_ClipNum]->m_KeyFrameCount)
 			{
-				m_KeyFrameIndex = 1;
+				m_KeyFrameIndex = 0;
 				IsFinished = true;
 			}
 			break;

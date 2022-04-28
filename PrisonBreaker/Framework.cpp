@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Framework.h"
+#include "TitleScene.h"
 #include "GameScene.h"
 
 CFramework::CFramework()
@@ -38,20 +39,9 @@ void CFramework::OnCreate(HINSTANCE hInstance, HWND hWnd)
 	CreateRenderTargetViews();
 	CreateDepthStencilView();
 	CreateShaderVariables();
+	CreateRootSignature();
+
 	BuildObjects();
-
-	//==========================================================================
-	// 게임시작시 커서가 중앙에 위치하도록 하여 카메라가 돌아가지 않도록 한다.
-	// 나중에 이 코드는 옮겨야 한다.
-	RECT Rect{};
-
-	GetWindowRect(hWnd, &Rect);
-
-	POINT OldCursorPos{ Rect.right / 2, Rect.bottom / 2 };
-
-	SetCursorPos(OldCursorPos.x, OldCursorPos.y);
-	ShowCursor(FALSE);
-	//==========================================================================
 }
 
 void CFramework::OnDestroy()
@@ -67,11 +57,17 @@ void CFramework::BuildObjects()
 {
 	DX::ThrowIfFailed(m_D3D12GraphicsCommandList->Reset(m_D3D12CommandAllocator.Get(), nullptr));
 
-	shared_ptr<CScene> GameScene{ make_shared<CGameScene>() };
+	// 타이틀 씬과 게임 씬의 데이터를 모두 로드해서 SceneManager에 추가한다.
+	shared_ptr<CScene> Scene{ make_shared<CTitleScene>() };
 
-	GameScene->OnCreate(m_D3D12Device.Get(), m_D3D12GraphicsCommandList.Get());
-	CSceneManager::GetInstance()->RegisterScene(TEXT("GameScene"), GameScene);
-	CSceneManager::GetInstance()->ChangeScene(TEXT("GameScene"));
+	Scene->OnCreate(m_D3D12Device.Get(), m_D3D12GraphicsCommandList.Get(), m_D3D12RootSignature.Get());
+	CSceneManager::GetInstance()->RegisterScene(TEXT("TitleScene"), Scene);
+	CSceneManager::GetInstance()->ChangeScene(TEXT("TitleScene"));
+
+	Scene = make_shared<CGameScene>();
+
+	Scene->OnCreate(m_D3D12Device.Get(), m_D3D12GraphicsCommandList.Get(), m_D3D12RootSignature.Get());
+	CSceneManager::GetInstance()->RegisterScene(TEXT("GameScene"), Scene);
 
 	DX::ThrowIfFailed(m_D3D12GraphicsCommandList->Close());
 
@@ -81,7 +77,7 @@ void CFramework::BuildObjects()
 
 	WaitForGpuComplete();
 
-	GameScene->ReleaseUploadBuffers();
+	CSceneManager::GetInstance()->ReleaseUploadBuffers();
 	CTextureManager::GetInstance()->ReleaseUploadBuffers();
 
 	m_Timer->Reset();
@@ -266,6 +262,47 @@ void CFramework::CreateDepthStencilView()
 	m_D3D12Device->CreateDepthStencilView(m_D3D12DepthStencilBuffer.Get(), nullptr, D3D12DsvCPUDescriptorHandle);
 }
 
+void CFramework::CreateRootSignature()
+{
+	CD3DX12_DESCRIPTOR_RANGE D3D12DescriptorRanges[4]{};
+
+	D3D12DescriptorRanges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+	D3D12DescriptorRanges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);
+	D3D12DescriptorRanges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2);
+	D3D12DescriptorRanges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3);
+
+	CD3DX12_ROOT_PARAMETER D3D12RootParameters[11]{};
+
+	D3D12RootParameters[ROOT_PARAMETER_TYPE_FRAMEWORK_INFO].InitAsConstantBufferView(0);					   // 프레임워크 정보(b0)
+	D3D12RootParameters[ROOT_PARAMETER_TYPE_CAMERA].InitAsConstantBufferView(1);							   // 카메라 정보(b1)
+	D3D12RootParameters[ROOT_PARAMETER_TYPE_LIGHT].InitAsConstantBufferView(2);							       // 조명 정보(b2)
+	D3D12RootParameters[ROOT_PARAMETER_TYPE_FOG].InitAsConstantBufferView(3);								   // 안개 정보(b3)
+	D3D12RootParameters[ROOT_PARAMETER_TYPE_OBJECT].InitAsConstants(23, 4);								       // 오브젝트 정보(b4)
+	D3D12RootParameters[ROOT_PARAMETER_TYPE_BONE_OFFSET].InitAsConstantBufferView(5);						   // 스키닝 애니메이션(오프셋 행렬) 정보(b5)
+	D3D12RootParameters[ROOT_PARAMETER_TYPE_BONE_TRANSFORM].InitAsConstantBufferView(6);					   // 스키닝 애니메이션(변환된 뼈들의 행렬) 정보(b6)
+	D3D12RootParameters[ROOT_PARAMETER_TYPE_ALBEDO_MAP].InitAsDescriptorTable(1, &D3D12DescriptorRanges[0]);   // 텍스처 정보(AlbedoMap : t0)
+	D3D12RootParameters[ROOT_PARAMETER_TYPE_METALLIC_MAP].InitAsDescriptorTable(1, &D3D12DescriptorRanges[1]); // 텍스처 정보(MetallicMap : t1)
+	D3D12RootParameters[ROOT_PARAMETER_TYPE_NORMAL_MAP].InitAsDescriptorTable(1, &D3D12DescriptorRanges[2]);   // 텍스처 정보(NormalMap : t2)
+	D3D12RootParameters[ROOT_PARAMETER_TYPE_SHADOW_MAP].InitAsDescriptorTable(1, &D3D12DescriptorRanges[3]);   // 텍스처 정보(ShadowMap : t3)
+
+	D3D12_ROOT_SIGNATURE_FLAGS D3D12RootSignatureFlags{ D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT | D3D12_ROOT_SIGNATURE_FLAG_ALLOW_STREAM_OUTPUT }; // IA단계를 허용, 스트림 출력 단계를 허용
+	CD3DX12_STATIC_SAMPLER_DESC D3D12SamplerDesc[2]{};
+
+	D3D12SamplerDesc[0].Init(0, D3D12_FILTER_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_WRAP, D3D12_TEXTURE_ADDRESS_MODE_WRAP, D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+		0.0f, 1, D3D12_COMPARISON_FUNC_ALWAYS, D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE, 0.0f, D3D12_FLOAT32_MAX, D3D12_SHADER_VISIBILITY_PIXEL, 0);
+	D3D12SamplerDesc[1].Init(1, D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT, D3D12_TEXTURE_ADDRESS_MODE_BORDER, D3D12_TEXTURE_ADDRESS_MODE_BORDER, D3D12_TEXTURE_ADDRESS_MODE_BORDER,
+		0.0f, 1, D3D12_COMPARISON_FUNC_LESS_EQUAL, D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE, 0.0f, D3D12_FLOAT32_MAX, D3D12_SHADER_VISIBILITY_PIXEL, 0);
+
+	CD3DX12_ROOT_SIGNATURE_DESC D3D12RootSignatureDesc{};
+
+	D3D12RootSignatureDesc.Init(_countof(D3D12RootParameters), D3D12RootParameters, _countof(D3D12SamplerDesc), D3D12SamplerDesc, D3D12RootSignatureFlags);
+
+	ComPtr<ID3DBlob> D3D12SignatureBlob{}, D3D12ErrorBlob{};
+
+	DX::ThrowIfFailed(D3D12SerializeRootSignature(&D3D12RootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, D3D12SignatureBlob.GetAddressOf(), D3D12ErrorBlob.GetAddressOf()));
+	DX::ThrowIfFailed(m_D3D12Device->CreateRootSignature(0, D3D12SignatureBlob->GetBufferPointer(), D3D12SignatureBlob->GetBufferSize(), __uuidof(ID3D12RootSignature), reinterpret_cast<void**>(m_D3D12RootSignature.GetAddressOf())));
+}
+
 void CFramework::CreateShaderVariables()
 {
 	UINT Bytes{ (sizeof(CB_FRAMEWORKINFO) + 255) & ~255 };
@@ -279,6 +316,7 @@ void CFramework::UpdateShaderVariables()
 	m_MappedFrameworkInfo->m_TotalTime += m_Timer->GetElapsedTime();
 	m_MappedFrameworkInfo->m_ElapsedTime = m_Timer->GetElapsedTime();
 
+	m_D3D12GraphicsCommandList->SetGraphicsRootSignature(m_D3D12RootSignature.Get());
 	m_D3D12GraphicsCommandList->SetGraphicsRootConstantBufferView(ROOT_PARAMETER_TYPE_FRAMEWORK_INFO, m_D3D12FrameworkInfo->GetGPUVirtualAddress());
 }
 
@@ -345,6 +383,12 @@ void CFramework::MoveToNextFrame()
 	m_SwapChainBufferIndex = m_DXGISwapChain->GetCurrentBackBufferIndex();
 
 	WaitForGpuComplete();
+
+	// TitleScene의 경우 Set된 Shader를 다시 사용해야하기 때문에, Reset해준다.
+	CShaderManager::GetInstance()->ResetShaderAndStateNum();
+
+	// 예약된 씬이 있다면 전환한다.
+	CSceneManager::GetInstance()->ChangeToReservedScene();
 }
 
 void CFramework::ProcessMouseMessage(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
@@ -402,8 +446,8 @@ void CFramework::PostRender()
 void CFramework::PopulateCommandList()
 {
 	ResetCommandAllocatorAndList();
-	PreRender();
 	UpdateShaderVariables();
+	PreRender();
 
 	DX::ResourceTransition(m_D3D12GraphicsCommandList.Get(), m_D3D12RenderTargetBuffers[m_SwapChainBufferIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 

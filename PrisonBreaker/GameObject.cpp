@@ -691,9 +691,9 @@ void CGameObject::SetAnimationController(ID3D12Device* D3D12Device, ID3D12Graphi
 	}
 }
 
-CAnimationController* CGameObject::GetAnimationController() const
+shared_ptr<CAnimationController> CGameObject::GetAnimationController() const
 {
-	return m_AnimationController.get();
+	return m_AnimationController;
 }
 
 void CGameObject::SetAnimationClip(UINT ClipNum)
@@ -722,9 +722,9 @@ void CGameObject::SetBoundingBox(const shared_ptr<BoundingBox>& BoundingBox)
 	}
 }
 
-BoundingBox* CGameObject::GetBoundingBox()
+shared_ptr<BoundingBox> CGameObject::GetBoundingBox() const
 {
-	return m_BoundingBox.get();
+	return m_BoundingBox;
 }
 
 void CGameObject::SetChild(const shared_ptr<CGameObject>& ChildObject)
