@@ -237,6 +237,30 @@ namespace Math
 
 		return TotalArea >= (Area1 + Area2 + Area3);
 	}
+
+	int CounterClockWise(const XMFLOAT3& Vertex1, const XMFLOAT3& Vertex2, const XMFLOAT3& Vertex3)
+	{
+		float Cross_Product{ (Vertex2.x - Vertex1.x) * (Vertex3.z - Vertex1.z) - (Vertex3.x - Vertex1.x) * (Vertex2.z - Vertex1.z) };
+
+		if (Cross_Product > 0.0f)
+		{
+			return 1;
+		}
+		else if (Cross_Product < 0.0f)
+		{
+			return -1;
+		}
+		
+		return 0;
+	}
+
+	bool LineIntersection(const XMFLOAT3& L1V1, const XMFLOAT3& L1V2, const XMFLOAT3& L2V1, const XMFLOAT3& L2V2)
+	{
+		int L1_L2{ CounterClockWise(L1V1, L1V2, L2V1) * CounterClockWise(L1V1, L1V2, L2V2) };
+		int L2_L1{ CounterClockWise(L2V1, L2V2, L1V1) * CounterClockWise(L2V1, L2V2, L1V2) };
+
+		return (L1_L2 <= 0) && (L2_L1 <= 0);
+	}
 }
 
 namespace Vector3

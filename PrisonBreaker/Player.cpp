@@ -181,7 +181,64 @@ void CPlayer::ProcessInput(const vector<vector<shared_ptr<CGameObject>>>& GameOb
 
 	XMFLOAT3 NewPosition{ Vector3::Add(GetPosition(), Vector3::ScalarProduct(m_Speed * ElapsedTime, m_MovingDirection, false)) };
 
-	if (IsInNavMesh(NavMesh, NewPosition))
+	if (!IsInNavMesh(NavMesh, NewPosition))
+	{
+		XMFLOAT3 SlidingVector{};
+		shared_ptr<CNavNode> NavNode{ NavMesh->GetNavNodes()[NavMesh->GetNodeIndex(GetPosition())] };
+
+		XMFLOAT3 Vertices[3]{ NavNode->GetTriangle().m_Vertices[0], NavNode->GetTriangle().m_Vertices[1], NavNode->GetTriangle().m_Vertices[2] };
+		XMFLOAT3 Edge{};
+		XMFLOAT3 ContactNormal{};
+
+		XMFLOAT3 Shift{ Vector3::Subtract(NewPosition, GetPosition()) };
+
+		if (Math::LineIntersection(Vertices[1], Vertices[0], NewPosition, GetPosition()))
+		{
+			Edge = Vector3::Subtract(Vertices[1], Vertices[0]);
+			ContactNormal = Vector3::Normalize(Vector3::TransformNormal(Edge, Matrix4x4::RotationYawPitchRoll(0.0f, 90.0f, 0.0f)));
+
+			SlidingVector = Vector3::Subtract(Shift, Vector3::ScalarProduct(Vector3::DotProduct(Shift, ContactNormal), ContactNormal, false));
+		}
+		else if (Math::LineIntersection(Vertices[2], Vertices[1], NewPosition, GetPosition()))
+		{
+			Edge = Vector3::Subtract(Vertices[2], Vertices[1]);
+			ContactNormal = Vector3::Normalize(Vector3::TransformNormal(Edge, Matrix4x4::RotationYawPitchRoll(0.0f, 90.0f, 0.0f)));
+
+			SlidingVector = Vector3::Subtract(Shift, Vector3::ScalarProduct(Vector3::DotProduct(Shift, ContactNormal), ContactNormal, false));
+		}
+		else if (Math::LineIntersection(Vertices[0], Vertices[2], NewPosition, GetPosition()))
+		{
+			Edge = Vector3::Subtract(Vertices[0], Vertices[2]);
+			ContactNormal = Vector3::Normalize(Vector3::TransformNormal(Edge, Matrix4x4::RotationYawPitchRoll(0.0f, 90.0f, 0.0f)));
+
+			SlidingVector = Vector3::Subtract(Shift, Vector3::ScalarProduct(Vector3::DotProduct(Shift, ContactNormal), ContactNormal, false));
+		}
+
+		NewPosition = Vector3::Add(GetPosition(), SlidingVector);
+
+		if (IsInNavMesh(NavMesh, NewPosition))
+		{
+			bool IsCollision{};
+
+			for (const auto& Guard : GameObjects[OBJECT_TYPE_NPC])
+			{
+				if (Guard->IsActive())
+				{
+					if (Math::Distance(Guard->GetPosition(), NewPosition) < 2.0f)
+					{
+						IsCollision = true;
+						break;
+					}
+				}
+			}
+
+			if (!IsCollision)
+			{
+				SetPosition(NewPosition);
+			}
+		}
+	}
+	else
 	{
 		bool IsCollision{};
 
@@ -201,5 +258,5 @@ void CPlayer::ProcessInput(const vector<vector<shared_ptr<CGameObject>>>& GameOb
 		{
 			SetPosition(NewPosition);
 		}
-	}
+	}	
 }
