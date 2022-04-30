@@ -461,7 +461,7 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 		InputMask |= INPUT_MASK_RMB;
 	}
 
-	Player->ProcessInput(m_GameObjects, m_NavMesh, ElapsedTime, InputMask);
+	Player->ProcessInput(ElapsedTime, InputMask);
 	(Player->GetCamera()->IsZoomIn()) ? m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][8]->SetActive(true) : m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][8]->SetActive(false);
 }
 
@@ -489,21 +489,6 @@ void CGameScene::Animate(float ElapsedTime)
 		}
 	}
 
-	XMFLOAT3 Position{ m_GameObjects[OBJECT_TYPE_PLAYER].back()->GetPosition() };
-	XMFLOAT3 LookDirection{ m_GameObjects[OBJECT_TYPE_PLAYER].back()->GetLook() };
-
-	// 플레이어가 트리거의 영역에 있다면 상호작용 UI를 활성화시킨다.
-	for (const auto& EventTrigger : m_EventTriggers) 
-	{
-		if (EventTrigger)
-		{
-			if (EventTrigger->IsInTriggerArea(Position, LookDirection))
-			{
-				break;
-			}
-		}
-	}
-
 	// 상호작용이 일어난 모든 트리거의 작업을 수행한다.
 	for (const auto& EventTrigger : m_EventTriggers)
 	{
@@ -519,6 +504,7 @@ void CGameScene::Animate(float ElapsedTime)
 void CGameScene::PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
 	CTextureManager::GetInstance()->SetDescriptorHeap(D3D12GraphicsCommandList);
+	
 	static_pointer_cast<CDepthWriteShader>(CShaderManager::GetInstance()->GetShader(TEXT("DepthWriteShader")))->PrepareShadowMap(D3D12GraphicsCommandList, m_Lights, m_GameObjects);
 
 	UpdateShaderVariables(D3D12GraphicsCommandList);
@@ -548,7 +534,8 @@ void CGameScene::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 			}
 		}
 	}
-	
+
+
 	for (UINT i = BILBOARD_OBJECT_TYPE_SKYBOX; i <= BILBOARD_OBJECT_TYPE_UI; ++i)
 	{
 		for (const auto& BilboardObject : m_BilboardObjects[i])
@@ -955,77 +942,74 @@ void CGameScene::InteractTrigger()
 
 		if (EventTrigger)
 		{
-			if (!EventTrigger->IsInteracted())
+			if (EventTrigger->IsInTriggerArea(Position, LookDirection))
 			{
-				if (EventTrigger->IsInTriggerArea(Position, LookDirection))
+				EventTrigger->SetInteracted(true);
+
+				if (typeid(*EventTrigger) == typeid(CSirenEventTrigger))
 				{
-					EventTrigger->SetInteracted(true);
+					tcout << TEXT("플레이어가 사이렌을 작동시켰습니다. 잠시 뒤 5명의 경찰이 이곳으로 올 것입니다!") << endl;
 
-					if (typeid(*EventTrigger) == typeid(CSirenEventTrigger))
+					UINT GuardCount{ static_cast<UINT>(m_GameObjects[OBJECT_TYPE_NPC].size()) };
+
+					for (UINT i = 0; i < 5; ++i)
 					{
-						tcout << TEXT("플레이어가 사이렌을 작동시켰습니다. 잠시 뒤 5명의 경찰이 이곳으로 올 것입니다!") << endl;
+						UINT Index{ rand() % GuardCount };
+						shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][Index]) };
 
-						UINT GuardCount{ static_cast<UINT>(m_GameObjects[OBJECT_TYPE_NPC].size()) };
-
-						for (UINT i = 0; i < 5; ++i)
+						if (Guard)
 						{
-							UINT Index{ rand() % GuardCount };
-							shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][Index]) };
-
-							if (Guard)
+							if (Guard->GetStateMachine()->IsInState(CGuardIdleState::GetInstance()) ||
+								Guard->GetStateMachine()->IsInState(CGuardPatrolState::GetInstance()) ||
+								Guard->GetStateMachine()->IsInState(CGuardReturnState::GetInstance()))
 							{
-								if (Guard->GetStateMachine()->IsInState(CGuardIdleState::GetInstance()) ||
-									Guard->GetStateMachine()->IsInState(CGuardPatrolState::GetInstance()) ||
-									Guard->GetStateMachine()->IsInState(CGuardReturnState::GetInstance()))
-								{
-									Guard->FindNavPath(m_NavMesh, Player->GetPosition(), m_GameObjects);
-									Guard->GetStateMachine()->ChangeState(CGuardAssembleState::GetInstance());
-								}
+								Guard->FindNavPath(m_NavMesh, Player->GetPosition(), m_GameObjects);
+								Guard->GetStateMachine()->ChangeState(CGuardAssembleState::GetInstance());
 							}
 						}
-
-						m_EventTriggers.erase(iter);
 					}
-					else if (typeid(*EventTrigger) == typeid(CPowerDownEventTrigger))
-					{
-						// 감시탑의 조명을 끈다.
-						if (static_pointer_cast<CPowerDownEventTrigger>(EventTrigger)->IsOpened())
-						{
-							m_Lights[1].m_IsActive = false;
-							m_EventTriggers.erase(iter);
-						}
-					}
-					else if (typeid(*EventTrigger) == typeid(CGetPistolEventTrigger))
-					{
-						// 권총을 획득한 경우, 권총으로 무기를 교체하고 UI 또한 주먹에서 권총으로 변경시킨다.
-						shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER].back()) };
 
-						if (!Player->HasPistol())
-						{
-							Player->AcquirePistol();
-						}
-
-						Player->SwapWeapon(WEAPON_TYPE_PISTOL);
-
-						m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(false); // 4: Punch UI
-						m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(true);	 // 6: Pistol UI
-						m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->SetActive(true);	 // 7: Bullet UI
-						m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->SetVertexCount(5);
-
-						m_EventTriggers.erase(iter);
-					}
-					else if (typeid(*EventTrigger) == typeid(CGetKeyEventTrigger))
-					{
-						// 열쇠 획득 애니메이션을 출력하도록 CKeyUIActivationState 상태로 전이한다.
-						static_pointer_cast<CKeyUI>(m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][5])->GetStateMachine()->SetCurrentState(CKeyUIActivationState::GetInstance());
-
-						// 열쇠 획득 미션UI를 완료상태로 변경한다.
-						m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(1, 5);
-
-						m_EventTriggers.erase(iter);
-					}
-					break;
+					m_EventTriggers.erase(iter);
 				}
+				else if (typeid(*EventTrigger) == typeid(CPowerDownEventTrigger))
+				{
+					// 감시탑의 조명을 끈다.
+					if (static_pointer_cast<CPowerDownEventTrigger>(EventTrigger)->IsOpened())
+					{
+						m_Lights[1].m_IsActive = false;
+						m_EventTriggers.erase(iter);
+					}
+				}
+				else if (typeid(*EventTrigger) == typeid(CGetPistolEventTrigger))
+				{
+					// 권총을 획득한 경우, 권총으로 무기를 교체하고 UI 또한 주먹에서 권총으로 변경시킨다.
+					shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER].back()) };
+
+					if (!Player->HasPistol())
+					{
+						Player->AcquirePistol();
+					}
+
+					Player->SwapWeapon(WEAPON_TYPE_PISTOL);
+
+					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(false); // 4: Punch UI
+					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(true);	 // 6: Pistol UI
+					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->SetActive(true);	 // 7: Bullet UI
+					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->SetVertexCount(5);
+
+					m_EventTriggers.erase(iter);
+				}
+				else if (typeid(*EventTrigger) == typeid(CGetKeyEventTrigger))
+				{
+					// 열쇠 획득 애니메이션을 출력하도록 CKeyUIActivationState 상태로 전이한다.
+					static_pointer_cast<CKeyUI>(m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][5])->GetStateMachine()->SetCurrentState(CKeyUIActivationState::GetInstance());
+
+					// 열쇠 획득 미션UI를 완료상태로 변경한다.
+					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(1, 5);
+
+					m_EventTriggers.erase(iter);
+				}
+				break;
 			}
 		}
 	}

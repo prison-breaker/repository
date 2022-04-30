@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Player.h"
+#include "GameScene.h"
 
 CPlayer::CPlayer(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
@@ -122,6 +123,43 @@ bool CPlayer::SwapWeapon(WEAPON_TYPE WeaponType)
 	return IsSwapped;
 }
 
+void CPlayer::ApplySlidingVectorToPosition(const shared_ptr<CNavMesh>& NavMesh, XMFLOAT3& NewPosition)
+{
+	XMFLOAT3 Shift{ Vector3::Subtract(NewPosition, GetPosition()) };
+
+	shared_ptr<CNavNode> NavNode{ NavMesh->GetNavNodes()[NavMesh->GetNodeIndex(GetPosition())] };
+
+	XMFLOAT3 SlidingVector{};
+	XMFLOAT3 Vertices[3]{ NavNode->GetTriangle().m_Vertices[0], NavNode->GetTriangle().m_Vertices[1], NavNode->GetTriangle().m_Vertices[2] };
+	XMFLOAT3 Edge{};
+	XMFLOAT3 ContactNormal{};
+
+	if (Math::LineIntersection(Vertices[0], Vertices[1], NewPosition, GetPosition()))
+	{
+		Edge = Vector3::Subtract(Vertices[0], Vertices[1]);
+		ContactNormal = Vector3::Normalize(Vector3::TransformNormal(Edge, Matrix4x4::RotationYawPitchRoll(0.0f, 90.0f, 0.0f)));
+
+		SlidingVector = Vector3::Subtract(Shift, Vector3::ScalarProduct(Vector3::DotProduct(Shift, ContactNormal), ContactNormal, false));
+		NewPosition = Vector3::Add(GetPosition(), SlidingVector);
+	}
+	else if (Math::LineIntersection(Vertices[1], Vertices[2], NewPosition, GetPosition()))
+	{
+		Edge = Vector3::Subtract(Vertices[1], Vertices[2]);
+		ContactNormal = Vector3::Normalize(Vector3::TransformNormal(Edge, Matrix4x4::RotationYawPitchRoll(0.0f, 90.0f, 0.0f)));
+
+		SlidingVector = Vector3::Subtract(Shift, Vector3::ScalarProduct(Vector3::DotProduct(Shift, ContactNormal), ContactNormal, false));
+		NewPosition = Vector3::Add(GetPosition(), SlidingVector);
+	}
+	else if (Math::LineIntersection(Vertices[2], Vertices[0], NewPosition, GetPosition()))
+	{
+		Edge = Vector3::Subtract(Vertices[2], Vertices[0]);
+		ContactNormal = Vector3::Normalize(Vector3::TransformNormal(Edge, Matrix4x4::RotationYawPitchRoll(0.0f, 90.0f, 0.0f)));
+
+		SlidingVector = Vector3::Subtract(Shift, Vector3::ScalarProduct(Vector3::DotProduct(Shift, ContactNormal), ContactNormal, false));
+		NewPosition = Vector3::Add(GetPosition(), SlidingVector);
+	}
+}
+
 void CPlayer::Rotate(float Pitch, float Yaw, float Roll, float ElapsedTime, float NearestHitDistance)
 {
 	if (!Math::IsZero(Pitch))
@@ -172,91 +210,94 @@ void CPlayer::Rotate(float Pitch, float Yaw, float Roll, float ElapsedTime, floa
 	m_Camera->Rotate(RotationMatrix, ElapsedTime, NearestHitDistance);
 }
 
-void CPlayer::ProcessInput(const vector<vector<shared_ptr<CGameObject>>>& GameObjects, const shared_ptr<CNavMesh>& NavMesh, float ElapsedTime, UINT InputMask)
+bool CPlayer::CheckCollisionByGuard(const XMFLOAT3& NewPosition)
+{
+	auto Guards{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetGameObjects()[OBJECT_TYPE_NPC] };
+
+	for (const auto& Guard : Guards)
+	{
+		if (Guard)
+		{
+			if (Guard->IsActive())
+			{
+				if (Math::Distance(Guard->GetPosition(), NewPosition) < 2.0f)
+				{
+					return true;
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
+void CPlayer::CheckCollisionByEventTrigger()
+{
+	// 모든 트리거는 상호작용 UI(m_InteractionUI)를 공유하여 사용한다.
+	auto EventTriggers{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetEventTriggers() };
+	UINT TriggerCount{ static_cast<UINT>(EventTriggers.size()) };
+
+	for (UINT i = 0; i < TriggerCount; ++i)
+	{
+		if (EventTriggers[i])
+		{
+			if (EventTriggers[i]->IsInTriggerArea(GetPosition(), GetLook()))
+			{
+				// 플레이어가 트리거 영역안에 있다면 상호작용 UI를 렌더링하도록 만든다.
+				EventTriggers[i]->ShowInteractionUI();
+				break;
+			}
+
+			// 반복문을 모두 돌았다면, 플레이어는 트리거 영역안에 없는 것이므로 상호작용 UI를 렌더링되지 않도록 만든다.
+			if (i == TriggerCount - 1)
+			{
+				EventTriggers[i]->HideInteractionUI();
+			}
+		}
+	}
+}
+
+void CPlayer::ProcessInput(float ElapsedTime, UINT InputMask)
 {
 	if (m_StateMachine)
 	{
 		m_StateMachine->ProcessInput(ElapsedTime, InputMask);
 	}
 
+	auto GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
+	auto NavMesh{ GameScene->GetNavMesh() };
+
 	XMFLOAT3 NewPosition{ Vector3::Add(GetPosition(), Vector3::ScalarProduct(m_Speed * ElapsedTime, m_MovingDirection, false)) };
 
-	if (!IsInNavMesh(NavMesh, NewPosition))
+	if (IsInNavMesh(NavMesh, NewPosition))
 	{
-		XMFLOAT3 SlidingVector{};
-		shared_ptr<CNavNode> NavNode{ NavMesh->GetNavNodes()[NavMesh->GetNodeIndex(GetPosition())] };
-
-		XMFLOAT3 Vertices[3]{ NavNode->GetTriangle().m_Vertices[0], NavNode->GetTriangle().m_Vertices[1], NavNode->GetTriangle().m_Vertices[2] };
-		XMFLOAT3 Edge{};
-		XMFLOAT3 ContactNormal{};
-
-		XMFLOAT3 Shift{ Vector3::Subtract(NewPosition, GetPosition()) };
-
-		if (Math::LineIntersection(Vertices[1], Vertices[0], NewPosition, GetPosition()))
+		// NewPosition으로 이동 시, 교도관과 충돌하지 않았다면 이동한다.
+		if (!CheckCollisionByGuard(NewPosition))
 		{
-			Edge = Vector3::Subtract(Vertices[1], Vertices[0]);
-			ContactNormal = Vector3::Normalize(Vector3::TransformNormal(Edge, Matrix4x4::RotationYawPitchRoll(0.0f, 90.0f, 0.0f)));
-
-			SlidingVector = Vector3::Subtract(Shift, Vector3::ScalarProduct(Vector3::DotProduct(Shift, ContactNormal), ContactNormal, false));
-		}
-		else if (Math::LineIntersection(Vertices[2], Vertices[1], NewPosition, GetPosition()))
-		{
-			Edge = Vector3::Subtract(Vertices[2], Vertices[1]);
-			ContactNormal = Vector3::Normalize(Vector3::TransformNormal(Edge, Matrix4x4::RotationYawPitchRoll(0.0f, 90.0f, 0.0f)));
-
-			SlidingVector = Vector3::Subtract(Shift, Vector3::ScalarProduct(Vector3::DotProduct(Shift, ContactNormal), ContactNormal, false));
-		}
-		else if (Math::LineIntersection(Vertices[0], Vertices[2], NewPosition, GetPosition()))
-		{
-			Edge = Vector3::Subtract(Vertices[0], Vertices[2]);
-			ContactNormal = Vector3::Normalize(Vector3::TransformNormal(Edge, Matrix4x4::RotationYawPitchRoll(0.0f, 90.0f, 0.0f)));
-
-			SlidingVector = Vector3::Subtract(Shift, Vector3::ScalarProduct(Vector3::DotProduct(Shift, ContactNormal), ContactNormal, false));
-		}
-
-		NewPosition = Vector3::Add(GetPosition(), SlidingVector);
-
-		if (IsInNavMesh(NavMesh, NewPosition))
-		{
-			bool IsCollision{};
-
-			for (const auto& Guard : GameObjects[OBJECT_TYPE_NPC])
-			{
-				if (Guard->IsActive())
-				{
-					if (Math::Distance(Guard->GetPosition(), NewPosition) < 2.0f)
-					{
-						IsCollision = true;
-						break;
-					}
-				}
-			}
-
-			if (!IsCollision)
-			{
-				SetPosition(NewPosition);
-			}
+			SetPosition(NewPosition);
 		}
 	}
 	else
 	{
-		bool IsCollision{};
+		// SlidingVector를 이용하여 NewPosition의 값을 보정한다.
+		ApplySlidingVectorToPosition(NavMesh, NewPosition);
 
-		for (const auto& Guard : GameObjects[OBJECT_TYPE_NPC])
+		// 슬라이딩 벡터로 보정된 NewPosition이 NavMesh 안에 있는지 한번 더 검사한다.
+		if (IsInNavMesh(NavMesh, NewPosition))
 		{
-			if (Guard->IsActive())
+			// NewPosition으로 이동 시, 교도관과 충돌하지 않았다면 이동한다.
+			if (!CheckCollisionByGuard(NewPosition))
 			{
-				if (Math::Distance(Guard->GetPosition(), NewPosition) < 2.0f)
-				{
-					IsCollision = true;
-					break;
-				}
+				SetPosition(NewPosition);
 			}
 		}
-
-		if (!IsCollision)
+		else
 		{
-			SetPosition(NewPosition);
+			// Why?
+			tcout << TEXT("Not in NavMesh!") << endl;
 		}
-	}	
+	}
+
+	// 플레이어의 Position 갱신 이후, 트리거와의 충돌을 검사하고 상호작용 UI를 출력시킬 것인지 결정한다.
+	CheckCollisionByEventTrigger();
 }

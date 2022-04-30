@@ -500,20 +500,20 @@ void CGuardDyingState::Enter(const shared_ptr<CGuard>& Entity)
 	Entity->SetAnimationClip(5);
 	Entity->SetSpeed(0.0f);
 
-	auto EventTriggers{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetEventTriggers() };
+	//auto EventTriggers{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetEventTriggers() };
 
-	for (const auto& EventTrigger : EventTriggers)
-	{
-		if (EventTrigger)
-		{
-			// Entity를 이벤트 객체로 갖고 있는 트리거를 찾아 교도관이 사망한 위치에 트리거가 형성되도록 위치를 설정해준다.
-			if (EventTrigger->GetEventObject(0) == Entity)
-			{
-				EventTrigger->CalculateTriggerAreaByPoint(Entity->GetPosition(), 6.0f, 6.0f);
-				break;
-			}
-		}
-	}
+	//for (const auto& EventTrigger : EventTriggers)
+	//{
+	//	if (EventTrigger)
+	//	{
+	//		// Entity를 이벤트 객체로 갖고 있는 트리거를 찾아 교도관이 사망한 위치에 트리거가 형성되도록 위치를 설정해준다.
+	//		if (EventTrigger->GetEventObject(0) == Entity)
+	//		{
+	//			EventTrigger->CalculateTriggerAreaByPoint(Entity->GetPosition(), 6.0f, 6.0f);
+	//			break;
+	//		}
+	//	}
+	//}
 }
 
 void CGuardDyingState::ProcessInput(const shared_ptr<CGuard>& Entity, float ElapsedTime, UINT InputMask)

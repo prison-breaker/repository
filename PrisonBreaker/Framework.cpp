@@ -391,6 +391,8 @@ void CFramework::MoveToNextFrame()
 
 	// 예약된 씬이 있다면 전환한다.
 	CSceneManager::GetInstance()->ChangeToReservedScene();
+
+	CSoundManager::GetInstance()->Update();
 }
 
 void CFramework::ProcessMouseMessage(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
@@ -486,6 +488,4 @@ void CFramework::FrameAdvance()
 
 	MoveToNextFrame();
 	UpdateWindowTitle();
-
-	CSoundManager::GetInstance()->Update();
 }

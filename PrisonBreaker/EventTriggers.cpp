@@ -2,7 +2,7 @@
 #include "EventTriggers.h"
 #include "GameScene.h"
 
-void COpenDoorEventTrigger::ActivateInteractionUI()
+void COpenDoorEventTrigger::ShowInteractionUI()
 {
 	if (m_InteractionUI)
 	{
@@ -28,7 +28,7 @@ void COpenDoorEventTrigger::GenerateEventTrigger(float ElapsedTime)
 
 //=========================================================================================================================
 
-void CPowerDownEventTrigger::ActivateInteractionUI()
+void CPowerDownEventTrigger::ShowInteractionUI()
 {
 	if (m_InteractionUI)
 	{
@@ -78,7 +78,7 @@ bool CPowerDownEventTrigger::IsOpened() const
 
 //=========================================================================================================================
 
-void CSirenEventTrigger::ActivateInteractionUI()
+void CSirenEventTrigger::ShowInteractionUI()
 {
 	if (m_InteractionUI)
 	{
@@ -94,7 +94,7 @@ void CSirenEventTrigger::GenerateEventTrigger(float ElapsedTime)
 
 //=========================================================================================================================
 
-void COpenGateEventTrigger::ActivateInteractionUI()
+void COpenGateEventTrigger::ShowInteractionUI()
 {
 	if (m_InteractionUI)
 	{
@@ -127,31 +127,19 @@ bool CGetPistolEventTrigger::IsInTriggerArea(const XMFLOAT3& Position, const XMF
 
 	if (Guard->GetHealth() == 0 && Guard->GetElapsedTime() < 10.0f)
 	{
-		float XMin{ m_TriggerArea.x };
-		float XMax{ m_TriggerArea.y };
-		float ZMin{ m_TriggerArea.z };
-		float ZMax{ m_TriggerArea.w };
-
-		if ((Position.x > XMin) && (Position.x < XMax) && (Position.z > ZMin) && (Position.z < ZMax))
+		for (UINT i = 0; i < 2; ++i)
 		{
-			if (!IsInteracted())
+			if (Math::IsInTriangle(m_TriggerAreas[i], m_TriggerAreas[i + 1], m_TriggerAreas[i + 2], Position))
 			{
-				ActivateInteractionUI();
+				return true;
 			}
-
-			return true;
 		}
-	}
-
-	if (m_InteractionUI)
-	{
-		m_InteractionUI->SetActive(false);
 	}
 
 	return false;
 }
 
-void  CGetPistolEventTrigger::ActivateInteractionUI()
+void  CGetPistolEventTrigger::ShowInteractionUI()
 {
 	if (m_InteractionUI)
 	{
@@ -169,31 +157,19 @@ bool CGetKeyEventTrigger::IsInTriggerArea(const XMFLOAT3& Position, const XMFLOA
 
 	if (Guard->GetHealth() == 0)
 	{
-		float XMin{ m_TriggerArea.x };
-		float XMax{ m_TriggerArea.y };
-		float ZMin{ m_TriggerArea.z };
-		float ZMax{ m_TriggerArea.w };
-
-		if ((Position.x > XMin) && (Position.x < XMax) && (Position.z > ZMin) && (Position.z < ZMax))
+		for (UINT i = 0; i < 2; ++i)
 		{
-			if (!IsInteracted())
+			if (Math::IsInTriangle(m_TriggerAreas[i], m_TriggerAreas[i + 1], m_TriggerAreas[i + 2], Position))
 			{
-				ActivateInteractionUI();
-
 				return true;
 			}
 		}
 	}
 
-	if (m_InteractionUI)
-	{
-		m_InteractionUI->SetActive(false);
-	}
-
 	return false;
 }
 
-void CGetKeyEventTrigger::ActivateInteractionUI()
+void CGetKeyEventTrigger::ShowInteractionUI()
 {
 	if (m_InteractionUI)
 	{

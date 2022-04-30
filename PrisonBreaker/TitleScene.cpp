@@ -142,6 +142,7 @@ void CTitleScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	POINT CursorPos{};
 
 	GetCursorPos(&CursorPos);
+	ScreenToClient(hWnd, &CursorPos);
 
 	UINT VertexCount{ static_cast<UINT>(m_BilboardObjects[2]->GetVertexCount()) };
 
@@ -156,7 +157,7 @@ void CTitleScene::ProcessInput(HWND hWnd, float ElapsedTime)
 			{
 				m_ButtonOver = true;
 
-				CSoundManager::GetInstance()->Play(SOUND_TYPE_BUTTON_OVER, 1.0f);
+				CSoundManager::GetInstance()->Play(SOUND_TYPE_BUTTON_OVER, 0.7f);
 			}
 
 			if (GetAsyncKeyState(VK_LBUTTON) & 0x8000)

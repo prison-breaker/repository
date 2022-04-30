@@ -4,30 +4,22 @@
 
 bool CEventTrigger::IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& LookDirection)
 {
-	float XMin{ m_TriggerArea.x };
-	float XMax{ m_TriggerArea.y };
-	float ZMin{ m_TriggerArea.z };
-	float ZMax{ m_TriggerArea.w };
-
-	if ((Position.x > XMin) && (Position.x < XMax) && (Position.z > ZMin) && (Position.z < ZMax))
+	if (!IsInteracted())
 	{
-		if (!IsInteracted())
+		for (UINT i = 0; i < 2; ++i)
 		{
-			ActivateInteractionUI();
+			if (Math::IsInTriangle(m_TriggerAreas[0], m_TriggerAreas[i + 1], m_TriggerAreas[i + 2], Position) &&
+				Vector3::Angle(LookDirection, m_ToTrigger) <= 80.0f)
+			{
+				return true;
+			}
 		}
-
-		return true;
-	}
-
-	if (m_InteractionUI)
-	{
-		m_InteractionUI->SetActive(false);
 	}
 
 	return false;
 }
 
-void CEventTrigger::ActivateInteractionUI()
+void CEventTrigger::ShowInteractionUI()
 {
 	if (m_InteractionUI)
 	{
@@ -49,9 +41,9 @@ void CEventTrigger::LoadEventTriggerFromFile(tifstream& InFile)
 	{
 		File::ReadStringFromFile(InFile, Token);
 
-		if (Token == TEXT("<TriggerArea>"))
+		if (Token == TEXT("<TriggerAreas>"))
 		{
-			InFile.read(reinterpret_cast<TCHAR*>(&m_TriggerArea), sizeof(XMFLOAT4));
+			InFile.read(reinterpret_cast<TCHAR*>(m_TriggerAreas), 4 * sizeof(XMFLOAT3));
 		}
 		else if (Token == TEXT("<ToTrigger>"))
 		{
@@ -71,14 +63,6 @@ void CEventTrigger::SetInteracted(bool IsInteracted)
 bool CEventTrigger::IsInteracted() const
 {
 	return m_IsInteracted;
-}
-
-void CEventTrigger::CalculateTriggerAreaByPoint(const XMFLOAT3& Position, float XWidth, float ZWidth)
-{
-	m_TriggerArea.x = Position.x - 0.5f * XWidth;
-	m_TriggerArea.y = Position.x + 0.5f * XWidth;
-	m_TriggerArea.z = Position.z - 0.5f * ZWidth;
-	m_TriggerArea.w = Position.z + 0.5f * ZWidth;
 }
 
 void CEventTrigger::InsertEventObject(const shared_ptr<CGameObject>& EventObject)
@@ -110,4 +94,12 @@ void CEventTrigger::SetInteractionUI(const shared_ptr<CBilboardObject>& Interact
 shared_ptr<CBilboardObject> CEventTrigger::GetInteractionUI() const
 {
 	return m_InteractionUI;
+}
+
+void CEventTrigger::HideInteractionUI()
+{
+	if (m_InteractionUI)
+	{
+		m_InteractionUI->SetActive(false);
+	}
 }

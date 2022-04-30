@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include "DDSTextureLoader12.h"
 
+// To measure algorithm time.
+steady_clock::time_point BeginTime{};
+
 namespace DX
 {
 	void ThrowIfFailed(HRESULT Result)
@@ -161,6 +164,21 @@ namespace DX
 	}
 }
 
+namespace Time
+{
+	void MesureStart()
+	{
+		BeginTime = steady_clock::now();
+		
+		tcout << TEXT("========== 지금부터 알고리즘의 진행 시간을 측정합니다. ==========") << endl;
+	}
+
+	void MesureEnd()
+	{
+		tcout << TEXT("========== 측정을 종료합니다.(경과 시간(초): " << duration_cast<milliseconds>(steady_clock::now() - BeginTime).count() << "s ==========") << endl;
+	}
+}
+
 namespace File
 {
 	UINT ReadIntegerFromFile(tifstream& InFile)
@@ -230,25 +248,31 @@ namespace Math
 
 	bool IsInTriangle(const XMFLOAT3& Vertex1, const XMFLOAT3& Vertex2, const XMFLOAT3& Vertex3, const XMFLOAT3& NewPosition)
 	{
-		UINT TotalArea{ CalculateTriangleArea(Vertex1, Vertex2, Vertex3) };
-		UINT Area1{ CalculateTriangleArea(NewPosition, Vertex2, Vertex3) };
-		UINT Area2{ CalculateTriangleArea(Vertex1, NewPosition, Vertex3) };
-		UINT Area3{ CalculateTriangleArea(Vertex1, Vertex2, NewPosition) };
+		XMFLOAT3 Vertex1ToPosition{ Vector3::Subtract(NewPosition, Vertex1) };
+		XMFLOAT3 Vertex2ToPosition{ Vector3::Subtract(NewPosition, Vertex2) };
+		XMFLOAT3 Vertex3ToPosition{ Vector3::Subtract(NewPosition, Vertex3) };
 
-		return TotalArea >= (Area1 + Area2 + Area3);
+		XMFLOAT3 Vertex1ToVertex2{ Vector3::Subtract(Vertex2, Vertex1) };
+		XMFLOAT3 Vertex2ToVertex3{ Vector3::Subtract(Vertex3, Vertex2) };
+		XMFLOAT3 Vertex3ToVertex1{ Vector3::Subtract(Vertex1, Vertex3) };
+
+		return (Vector3::CrossProduct(Vertex1ToVertex2, Vertex1ToPosition, false).y > 0.0f) &&
+			   (Vector3::CrossProduct(Vertex2ToVertex3, Vertex2ToPosition, false).y > 0.0f) &&
+			   (Vector3::CrossProduct(Vertex3ToVertex1, Vertex3ToPosition, false).y > 0.0f);
 	}
 
 	int CounterClockWise(const XMFLOAT3& Vertex1, const XMFLOAT3& Vertex2, const XMFLOAT3& Vertex3)
 	{
-		float Cross_Product{ (Vertex2.x - Vertex1.x) * (Vertex3.z - Vertex1.z) - (Vertex3.x - Vertex1.x) * (Vertex2.z - Vertex1.z) };
+		// Vertex1과 Vertex2를 이은 선분과, Vertex1과 Vertex3을 이은 선분의 기울기를 구하고 양변 모두 분모를 없앤 후 좌변으로 이항하면 아래와 같이 CCW를 판별할 수 있는 공식이 나온다.
+		float GradientDiff{ (Vertex2.x - Vertex1.x) * (Vertex3.z - Vertex1.z) - (Vertex3.x - Vertex1.x) * (Vertex2.z - Vertex1.z) };
 
-		if (Cross_Product > 0.0f)
-		{
-			return 1;
-		}
-		else if (Cross_Product < 0.0f)
+		if (GradientDiff < 0.0f)
 		{
 			return -1;
+		}
+		else if (GradientDiff > 0.0f)
+		{
+			return 1;
 		}
 		
 		return 0;
@@ -260,6 +284,11 @@ namespace Math
 		int L2_L1{ CounterClockWise(L2V1, L2V2, L1V1) * CounterClockWise(L2V1, L2V2, L1V2) };
 
 		return (L1_L2 <= 0) && (L2_L1 <= 0);
+	}
+
+	int Discriminant(const XMFLOAT3& Vertex1, const XMFLOAT3& Vertex2, const XMFLOAT3& NewPosition)
+	{
+		return static_cast<int>((Vertex2.z - Vertex1.z) * NewPosition.x + (Vertex2.x - Vertex1.x) * NewPosition.z + Vertex1.x * Vertex2.z - Vertex2.x * Vertex1.z);
 	}
 }
 

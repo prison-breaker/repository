@@ -10,7 +10,7 @@ public:
 	COpenDoorEventTrigger() = default;
 	virtual ~COpenDoorEventTrigger() = default;
 
-	virtual void ActivateInteractionUI();
+	virtual void ShowInteractionUI();
 
 	virtual void GenerateEventTrigger(float ElapsedTime);
 };
@@ -28,7 +28,7 @@ public:
 	CPowerDownEventTrigger() = default;
 	virtual ~CPowerDownEventTrigger() = default;
 
-	virtual void ActivateInteractionUI();
+	virtual void ShowInteractionUI();
 
 	virtual void GenerateEventTrigger(float ElapsedTime);
 
@@ -43,7 +43,7 @@ public:
 	CSirenEventTrigger() = default;
 	virtual ~CSirenEventTrigger() = default;
 
-	virtual void ActivateInteractionUI();
+	virtual void ShowInteractionUI();
 
 	virtual void GenerateEventTrigger(float ElapsedTime);
 };
@@ -59,7 +59,7 @@ public:
 	COpenGateEventTrigger() = default;
 	virtual ~COpenGateEventTrigger() = default;
 
-	virtual void ActivateInteractionUI();
+	virtual void ShowInteractionUI();
 
 	virtual void GenerateEventTrigger(float ElapsedTime);
 };
@@ -74,7 +74,7 @@ public:
 
 	virtual bool IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& LookDirection);
 
-	virtual void ActivateInteractionUI();
+	virtual void ShowInteractionUI();
 };
 
 //=========================================================================================================================
@@ -90,5 +90,5 @@ public:
 
 	virtual bool IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& LookDirection);
 
-	virtual void ActivateInteractionUI();
+	virtual void ShowInteractionUI();
 };

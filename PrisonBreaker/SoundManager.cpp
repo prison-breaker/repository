@@ -26,23 +26,23 @@ void CSoundManager::Initialize()
 		return;
 	}
 
-	Result = m_System->createSound("Sounds/Beginning.mp3", FMOD_LOOP_NORMAL, 0, &m_Sounds[0]);
-	Result = m_System->createSound("Sounds/OnTheRun.mp3", FMOD_LOOP_NORMAL, 0, &m_Sounds[1]);
-	Result = m_System->createSound("Sounds/ButtonOver.wav", FMOD_LOOP_OFF, 0, &m_Sounds[2]);
+	Result = m_System->createSound("Sounds/Beginning.mp3", FMOD_LOOP_NORMAL, 0, &m_Sounds[SOUND_TYPE_TITLE_BGM]);
+	Result = m_System->createSound("Sounds/OnTheRun.mp3", FMOD_LOOP_NORMAL, 0, &m_Sounds[SOUND_TYPE_INGAME_BGM]);
+	Result = m_System->createSound("Sounds/ButtonOver.wav", FMOD_LOOP_OFF, 0, &m_Sounds[SOUND_TYPE_BUTTON_OVER]);
 
 	if (Result != FMOD_OK)
 	{
 		return;
 	}
 
-	Result = m_System->playSound(FMOD_CHANNEL_FREE, m_Sounds[0], false, &m_Channels[0]);
+	Result = m_System->playSound(FMOD_CHANNEL_FREE, m_Sounds[SOUND_TYPE_TITLE_BGM], false, &m_Channels[SOUND_TYPE_TITLE_BGM]);
 	
 	if (Result != FMOD_OK)
 	{
 		return;
 	}
 	
-	Result = m_Channels[0]->setVolume(0.75f);
+	Result = m_Channels[SOUND_TYPE_TITLE_BGM]->setVolume(0.75f);
 
 	if (Result != FMOD_OK)
 	{

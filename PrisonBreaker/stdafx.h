@@ -127,9 +127,10 @@ enum SOUND_TYPE
 #include <vector>
 #include <unordered_map>
 #include <queue>
-#include <iterator>
-#include <algorithm>
+#include <thread>
+#include <chrono>
 using namespace std;
+using namespace std::chrono;
 
 // DirectX Header
 #pragma comment(lib, "d3dcompiler.lib")
@@ -180,6 +181,12 @@ namespace DX
 	void ResourceTransition(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState);
 }
 
+namespace Time
+{
+	void MesureStart();
+	void MesureEnd();
+}
+
 namespace File
 {
 	UINT ReadIntegerFromFile(tifstream& InFile);
@@ -206,6 +213,8 @@ namespace Math
 
 	int CounterClockWise(const XMFLOAT3& Vertex1, const XMFLOAT3& Vertex2, const XMFLOAT3& Vertex3);
 	bool LineIntersection(const XMFLOAT3& L1V1, const XMFLOAT3& L1V2, const XMFLOAT3& L2V1, const XMFLOAT3& L2V2);
+
+	int Discriminant(const XMFLOAT3& Vertex1, const XMFLOAT3& Vertex2, const XMFLOAT3& NewPosition);
 }
 
 namespace Vector3

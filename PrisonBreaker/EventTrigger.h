@@ -9,7 +9,9 @@ protected:
 	bool							m_IsInteracted{};
 
 	XMFLOAT3						m_ToTrigger{};
-	XMFLOAT4						m_TriggerArea{};
+
+public:
+	XMFLOAT3						m_TriggerAreas[4]{}; // Vertice
 
 	vector<shared_ptr<CGameObject>> m_EventObjects{};
 	shared_ptr<CBilboardObject>		m_InteractionUI{};
@@ -20,7 +22,7 @@ public:
 
 	virtual bool IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& LookDirection);
 
-	virtual void ActivateInteractionUI();
+	virtual void ShowInteractionUI();
 
 	virtual void GenerateEventTrigger(float ElapsedTime);
 
@@ -29,11 +31,11 @@ public:
 	void SetInteracted(bool IsInteracted);
 	bool IsInteracted() const;
 
-	void CalculateTriggerAreaByPoint(const XMFLOAT3& Position, float XWidth, float ZWidth);
-
 	void InsertEventObject(const shared_ptr<CGameObject>& EventObject);
 	shared_ptr<CGameObject> GetEventObject(UINT Index);
 
 	void SetInteractionUI(const shared_ptr<CBilboardObject>& InteractionUI);
 	shared_ptr<CBilboardObject> GetInteractionUI() const;
+
+	void HideInteractionUI();
 };
