@@ -7,8 +7,10 @@ private:
 	float m_DoorAngle{};
 
 public:
-	COpenDoorEventTrigger() = default;
+	COpenDoorEventTrigger();
 	virtual ~COpenDoorEventTrigger() = default;
+
+	virtual bool CanPassTriggerArea(const XMFLOAT3& NewPosition);
 
 	virtual void ShowInteractionUI();
 
@@ -25,7 +27,7 @@ private:
 	float m_PanelAngle{};
 
 public:
-	CPowerDownEventTrigger() = default;
+	CPowerDownEventTrigger();
 	virtual ~CPowerDownEventTrigger() = default;
 
 	virtual void ShowInteractionUI();
@@ -40,7 +42,7 @@ public:
 class CSirenEventTrigger : public CEventTrigger
 {
 public:
-	CSirenEventTrigger() = default;
+	CSirenEventTrigger();
 	virtual ~CSirenEventTrigger() = default;
 
 	virtual void ShowInteractionUI();
@@ -53,11 +55,13 @@ public:
 class COpenGateEventTrigger : public CEventTrigger
 {
 private:
-	float m_DoorAngle{};
+	float m_GateAngle{};
 
 public:
-	COpenGateEventTrigger() = default;
+	COpenGateEventTrigger();
 	virtual ~COpenGateEventTrigger() = default;
+
+	virtual bool CanPassTriggerArea(const XMFLOAT3& NewPosition);
 
 	virtual void ShowInteractionUI();
 
@@ -72,8 +76,6 @@ public:
 	CGetPistolEventTrigger() = default;
 	virtual ~CGetPistolEventTrigger() = default;
 
-	virtual bool IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& LookDirection);
-
 	virtual void ShowInteractionUI();
 };
 
@@ -81,14 +83,9 @@ public:
 
 class CGetKeyEventTrigger : public CEventTrigger
 {
-private:
-	shared_ptr<CBilboardObject> m_KeyUIFrmae{};
-
 public:
 	CGetKeyEventTrigger() = default;
 	virtual ~CGetKeyEventTrigger() = default;
-
-	virtual bool IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& LookDirection);
 
 	virtual void ShowInteractionUI();
 };

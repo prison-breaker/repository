@@ -49,8 +49,8 @@ public:
 
 	void Rotate(float Pitch, float Yaw, float Roll, float ElapsedTime, float NearestHitDistance);
 
-	bool CheckCollisionByGuard(const XMFLOAT3& NewPosition);
-	void CheckCollisionByEventTrigger();
+	bool IsCollidedByGuard(const XMFLOAT3& NewPosition);
+	bool IsCollidedByEventTrigger(const XMFLOAT3& NewPosition);
 
 	void ProcessInput(float ElapsedTime, UINT InputMask);
 };

@@ -2,6 +2,8 @@
 #include "GameObject.h"
 #include "State_Guard.h"
 
+class CEventTrigger;
+
 class CGuard : public CGameObject
 {
 private:
@@ -19,6 +21,7 @@ private:
 	const float						  m_UpdateTargetTime{ 4.0f };
 
 	shared_ptr<CGameObject>			  m_Target{};
+	shared_ptr<CEventTrigger>		  m_EventTrigger{};
 
 	vector<XMFLOAT3>                  m_NavPath{};
 	vector<XMFLOAT3>				  m_PatrolNavPath{};
@@ -54,6 +57,9 @@ public:
 
 	void SetTarget(const shared_ptr<CGameObject>& Target);
 	shared_ptr<CGameObject> GetTarget() const;
+
+	void SetEventTrigger(const shared_ptr<CEventTrigger>& EventTrigger);
+	shared_ptr<CEventTrigger> GetEventTrigger();
 
 	vector<XMFLOAT3>& GetNavPath();
 	vector<XMFLOAT3>& GetPatrolNavPath();

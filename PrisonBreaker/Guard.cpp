@@ -110,6 +110,16 @@ shared_ptr<CGameObject> CGuard::GetTarget() const
 	return m_Target;
 }
 
+void CGuard::SetEventTrigger(const shared_ptr<CEventTrigger>& EventTrigger)
+{
+	m_EventTrigger = EventTrigger;
+}
+
+shared_ptr<CEventTrigger> CGuard::GetEventTrigger()
+{
+	return m_EventTrigger;
+}
+
 vector<XMFLOAT3>& CGuard::GetNavPath()
 {
 	return m_NavPath;

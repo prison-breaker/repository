@@ -6,11 +6,12 @@ class CBilboardObject;
 class CEventTrigger
 {
 protected:
+	bool							m_IsActive{};
 	bool							m_IsInteracted{};
 
 	XMFLOAT3						m_ToTrigger{};
+	float							m_ActiveFOV{};
 
-public:
 	XMFLOAT3						m_TriggerAreas[4]{}; // Vertice
 
 	vector<shared_ptr<CGameObject>> m_EventObjects{};
@@ -20,13 +21,16 @@ public:
 	CEventTrigger() = default;
 	virtual ~CEventTrigger() = default;
 
-	virtual bool IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& LookDirection);
+	virtual bool CanPassTriggerArea(const XMFLOAT3& NewPosition);
 
 	virtual void ShowInteractionUI();
 
 	virtual void GenerateEventTrigger(float ElapsedTime);
 
 	void LoadEventTriggerFromFile(tifstream& InFile);
+
+	void SetActive(bool IsActive);
+	bool IsActive() const;
 
 	void SetInteracted(bool IsInteracted);
 	bool IsInteracted() const;
@@ -36,6 +40,8 @@ public:
 
 	void SetInteractionUI(const shared_ptr<CBilboardObject>& InteractionUI);
 	shared_ptr<CBilboardObject> GetInteractionUI() const;
+
+	bool IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& LookDirection);
 
 	void HideInteractionUI();
 };

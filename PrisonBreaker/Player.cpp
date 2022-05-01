@@ -158,6 +158,14 @@ void CPlayer::ApplySlidingVectorToPosition(const shared_ptr<CNavMesh>& NavMesh, 
 		SlidingVector = Vector3::Subtract(Shift, Vector3::ScalarProduct(Vector3::DotProduct(Shift, ContactNormal), ContactNormal, false));
 		NewPosition = Vector3::Add(GetPosition(), SlidingVector);
 	}
+
+	// 보정된 NewPosition도 NavMesh 위에 없다면, 기존 위치로 설정한다.
+	if (!IsInNavMesh(NavMesh, NewPosition))
+	{
+		NewPosition = GetPosition();
+
+		tcout << TEXT("Not in NavMesh!") << endl;
+	}
 }
 
 void CPlayer::Rotate(float Pitch, float Yaw, float Roll, float ElapsedTime, float NearestHitDistance)
@@ -210,7 +218,7 @@ void CPlayer::Rotate(float Pitch, float Yaw, float Roll, float ElapsedTime, floa
 	m_Camera->Rotate(RotationMatrix, ElapsedTime, NearestHitDistance);
 }
 
-bool CPlayer::CheckCollisionByGuard(const XMFLOAT3& NewPosition)
+bool CPlayer::IsCollidedByGuard(const XMFLOAT3& NewPosition)
 {
 	auto Guards{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetGameObjects()[OBJECT_TYPE_NPC] };
 
@@ -220,7 +228,7 @@ bool CPlayer::CheckCollisionByGuard(const XMFLOAT3& NewPosition)
 		{
 			if (Guard->IsActive())
 			{
-				if (Math::Distance(Guard->GetPosition(), NewPosition) < 2.0f)
+				if (Math::Distance(Guard->GetPosition(), NewPosition) <= 2.0f)
 				{
 					return true;
 				}
@@ -231,30 +239,37 @@ bool CPlayer::CheckCollisionByGuard(const XMFLOAT3& NewPosition)
 	return false;
 }
 
-void CPlayer::CheckCollisionByEventTrigger()
+bool CPlayer::IsCollidedByEventTrigger(const XMFLOAT3& NewPosition)
 {
-	// 모든 트리거는 상호작용 UI(m_InteractionUI)를 공유하여 사용한다.
 	auto EventTriggers{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetEventTriggers() };
-	UINT TriggerCount{ static_cast<UINT>(EventTriggers.size()) };
 
-	for (UINT i = 0; i < TriggerCount; ++i)
+	for (const auto& EventTrigger : EventTriggers)
 	{
-		if (EventTriggers[i])
+		if (EventTrigger)
 		{
-			if (EventTriggers[i]->IsInTriggerArea(GetPosition(), GetLook()))
+			if (EventTrigger->IsInTriggerArea(NewPosition, GetLook()))
 			{
-				// 플레이어가 트리거 영역안에 있다면 상호작용 UI를 렌더링하도록 만든다.
-				EventTriggers[i]->ShowInteractionUI();
-				break;
-			}
+				return false;
 
-			// 반복문을 모두 돌았다면, 플레이어는 트리거 영역안에 없는 것이므로 상호작용 UI를 렌더링되지 않도록 만든다.
-			if (i == TriggerCount - 1)
-			{
-				EventTriggers[i]->HideInteractionUI();
+				// 트리거의 두 점을 이용하여 플레이어가 넘어가지 못하도록 하려고 한다.
+				// 왜 주석을 풀면 다음 프레임에는 IsInTriggerArea() 함수가 false만을 리턴할까...?
+				//if (EventTrigger->CanPassTriggerArea(NewPosition))
+				//{
+				//	return false;
+				//}
+				//else
+				//{
+				//	return true;
+				//}
 			}
 		}
 	}
+
+	// 반복문을 모두 돌았다면, 플레이어는 트리거 영역안에 없는 것이므로 상호작용 UI를 렌더링되지 않도록 만든다.
+	// 이때, 모든 트리거는 상호작용 UI(m_InteractionUI)를 공유하여 사용하므로 0번 트리거를 이용하여 함수를 호출하였다.
+	EventTriggers[0]->HideInteractionUI();
+
+	return false;
 }
 
 void CPlayer::ProcessInput(float ElapsedTime, UINT InputMask)
@@ -269,35 +284,15 @@ void CPlayer::ProcessInput(float ElapsedTime, UINT InputMask)
 
 	XMFLOAT3 NewPosition{ Vector3::Add(GetPosition(), Vector3::ScalarProduct(m_Speed * ElapsedTime, m_MovingDirection, false)) };
 
-	if (IsInNavMesh(NavMesh, NewPosition))
-	{
-		// NewPosition으로 이동 시, 교도관과 충돌하지 않았다면 이동한다.
-		if (!CheckCollisionByGuard(NewPosition))
-		{
-			SetPosition(NewPosition);
-		}
-	}
-	else
+	if (!IsInNavMesh(NavMesh, NewPosition))
 	{
 		// SlidingVector를 이용하여 NewPosition의 값을 보정한다.
 		ApplySlidingVectorToPosition(NavMesh, NewPosition);
-
-		// 슬라이딩 벡터로 보정된 NewPosition이 NavMesh 안에 있는지 한번 더 검사한다.
-		if (IsInNavMesh(NavMesh, NewPosition))
-		{
-			// NewPosition으로 이동 시, 교도관과 충돌하지 않았다면 이동한다.
-			if (!CheckCollisionByGuard(NewPosition))
-			{
-				SetPosition(NewPosition);
-			}
-		}
-		else
-		{
-			// Why?
-			tcout << TEXT("Not in NavMesh!") << endl;
-		}
 	}
 
-	// 플레이어의 Position 갱신 이후, 트리거와의 충돌을 검사하고 상호작용 UI를 출력시킬 것인지 결정한다.
-	CheckCollisionByEventTrigger();
+	// NewPosition으로 이동 시, 교도관과의 충돌, 트리거 내 움직임 제어 영향을 받지 않는다면 움직인다.
+	if (!IsCollidedByGuard(NewPosition) && !IsCollidedByEventTrigger(NewPosition))
+	{
+		SetPosition(NewPosition);
+	}
 }

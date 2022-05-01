@@ -1,22 +1,11 @@
 #include "stdafx.h"
 #include "EventTrigger.h"
 #include "BilboardObject.h"
+#include "GameObject.h"
 
-bool CEventTrigger::IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& LookDirection)
+bool CEventTrigger::CanPassTriggerArea(const XMFLOAT3& NewPosition)
 {
-	if (!IsInteracted())
-	{
-		for (UINT i = 0; i < 2; ++i)
-		{
-			if (Math::IsInTriangle(m_TriggerAreas[0], m_TriggerAreas[i + 1], m_TriggerAreas[i + 2], Position) &&
-				Vector3::Angle(LookDirection, m_ToTrigger) <= 80.0f)
-			{
-				return true;
-			}
-		}
-	}
-
-	return false;
+	return true;
 }
 
 void CEventTrigger::ShowInteractionUI()
@@ -53,6 +42,16 @@ void CEventTrigger::LoadEventTriggerFromFile(tifstream& InFile)
 	}
 #else
 #endif
+}
+
+void CEventTrigger::SetActive(bool IsActive)
+{
+	m_IsActive = IsActive;
+}
+
+bool CEventTrigger::IsActive() const
+{
+	return m_IsActive;
 }
 
 void CEventTrigger::SetInteracted(bool IsInteracted)
@@ -94,6 +93,28 @@ void CEventTrigger::SetInteractionUI(const shared_ptr<CBilboardObject>& Interact
 shared_ptr<CBilboardObject> CEventTrigger::GetInteractionUI() const
 {
 	return m_InteractionUI;
+}
+
+bool CEventTrigger::IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& LookDirection)
+{
+	if (IsActive() && !IsInteracted())
+	{
+		for (UINT i = 0; i < 2; ++i)
+		{
+			if (Math::IsInTriangle(m_TriggerAreas[0], m_TriggerAreas[i + 1], m_TriggerAreas[i + 2], Position))
+			{
+				if (Vector3::Angle(LookDirection, m_ToTrigger) <= m_ActiveFOV)
+				{
+					// 각도가 일정 범위안에 있다면 상호작용 UI를 렌더링하도록 만든다.
+					ShowInteractionUI();
+				}
+
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 void CEventTrigger::HideInteractionUI()

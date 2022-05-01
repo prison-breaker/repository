@@ -2,6 +2,28 @@
 #include "EventTriggers.h"
 #include "GameScene.h"
 
+COpenDoorEventTrigger::COpenDoorEventTrigger()
+{
+	m_IsActive = true;
+	m_ActiveFOV = 70.0f;
+}
+
+bool COpenDoorEventTrigger::CanPassTriggerArea(const XMFLOAT3& NewPosition)
+{
+	// 문이 모두 열리지 않은 상태에서는 문 너머로 갈 수 없다.
+	if (m_DoorAngle < 70.0f)
+	{
+		// 문 너머로 넘어가는 것을 계산하는 판별식(D > 0)
+		if (Math::Discriminant(m_TriggerAreas[0], m_TriggerAreas[3], NewPosition) > 0)
+		{
+			return false;
+		}
+	}
+
+	// 위 경우가 아니라면, 이동이 가능하다.
+	return true;
+}
+
 void COpenDoorEventTrigger::ShowInteractionUI()
 {
 	if (m_InteractionUI)
@@ -13,7 +35,7 @@ void COpenDoorEventTrigger::ShowInteractionUI()
 
 void COpenDoorEventTrigger::GenerateEventTrigger(float ElapsedTime)
 {
-	if (IsInteracted())
+	if (IsActive() && IsInteracted())
 	{
 		if (m_DoorAngle < 70.0f)
 		{
@@ -23,10 +45,20 @@ void COpenDoorEventTrigger::GenerateEventTrigger(float ElapsedTime)
 			m_EventObjects[1]->Rotate(WorldUp, -45.0f * ElapsedTime);
 			m_DoorAngle += 45.0f * ElapsedTime;
 		}
+		else
+		{
+			m_DoorAngle = 70.0f;
+		}
 	}
 }
 
 //=========================================================================================================================
+
+CPowerDownEventTrigger::CPowerDownEventTrigger()
+{
+	m_IsActive = true;
+	m_ActiveFOV = 40.0f;
+}
 
 void CPowerDownEventTrigger::ShowInteractionUI()
 {
@@ -49,7 +81,7 @@ void CPowerDownEventTrigger::ShowInteractionUI()
 
 void CPowerDownEventTrigger::GenerateEventTrigger(float ElapsedTime)
 {
-	if (IsInteracted())
+	if (IsActive() && IsInteracted())
 	{
 		if (m_PanelAngle < 120.0f)
 		{
@@ -78,6 +110,12 @@ bool CPowerDownEventTrigger::IsOpened() const
 
 //=========================================================================================================================
 
+CSirenEventTrigger::CSirenEventTrigger()
+{
+	m_IsActive = true;
+	m_ActiveFOV = 40.0f;
+}
+
 void CSirenEventTrigger::ShowInteractionUI()
 {
 	if (m_InteractionUI)
@@ -94,6 +132,28 @@ void CSirenEventTrigger::GenerateEventTrigger(float ElapsedTime)
 
 //=========================================================================================================================
 
+COpenGateEventTrigger::COpenGateEventTrigger()
+{
+	m_IsActive = true;
+	m_ActiveFOV = 70.0f;
+}
+
+bool COpenGateEventTrigger::CanPassTriggerArea(const XMFLOAT3& NewPosition)
+{
+	// 게이트가 모두 열리지 않은 상태에서는 게이트 너머로 갈 수 없다.
+	if (m_GateAngle < 120.0f)
+	{
+		// 게이트 너머로 넘어가는 것을 계산하는 판별식(D > 0)
+		if (Math::Discriminant(m_TriggerAreas[0], m_TriggerAreas[3], NewPosition) > 0)
+		{
+			return false;
+		}
+	}
+
+	// 위 경우가 아니라면, 이동이 가능하다.
+	return true;
+}
+
 void COpenGateEventTrigger::ShowInteractionUI()
 {
 	if (m_InteractionUI)
@@ -105,39 +165,20 @@ void COpenGateEventTrigger::ShowInteractionUI()
 
 void COpenGateEventTrigger::GenerateEventTrigger(float ElapsedTime)
 {
-	if (IsInteracted())
+	if (IsActive() && IsInteracted())
 	{
-		if (m_DoorAngle < 120.0f)
+		if (m_GateAngle < 120.0f)
 		{
 			const XMFLOAT3 WorldUp{ 0.0f, 1.0f, 0.0f };
 
 			m_EventObjects[0]->Rotate(WorldUp, -20.0f * ElapsedTime);
 			m_EventObjects[1]->Rotate(WorldUp, 20.0f * ElapsedTime);
-			m_DoorAngle += 20.0f * ElapsedTime;
+			m_GateAngle += 20.0f * ElapsedTime;
 		}
 	}
 }
 
 //=========================================================================================================================
-
-bool CGetPistolEventTrigger::IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& LookDirection)
-{
-	// 0: Guard
-	shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(m_EventObjects[0]) };
-
-	if (Guard->GetHealth() == 0 && Guard->GetElapsedTime() < 10.0f)
-	{
-		for (UINT i = 0; i < 2; ++i)
-		{
-			if (Math::IsInTriangle(m_TriggerAreas[i], m_TriggerAreas[i + 1], m_TriggerAreas[i + 2], Position))
-			{
-				return true;
-			}
-		}
-	}
-
-	return false;
-}
 
 void  CGetPistolEventTrigger::ShowInteractionUI()
 {
@@ -149,25 +190,6 @@ void  CGetPistolEventTrigger::ShowInteractionUI()
 }
 
 //=========================================================================================================================
-
-bool CGetKeyEventTrigger::IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& LookDirection)
-{
-	// 0: Guard
-	shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(m_EventObjects[0]) };
-
-	if (Guard->GetHealth() == 0)
-	{
-		for (UINT i = 0; i < 2; ++i)
-		{
-			if (Math::IsInTriangle(m_TriggerAreas[i], m_TriggerAreas[i + 1], m_TriggerAreas[i + 2], Position))
-			{
-				return true;
-			}
-		}
-	}
-
-	return false;
-}
 
 void CGetKeyEventTrigger::ShowInteractionUI()
 {

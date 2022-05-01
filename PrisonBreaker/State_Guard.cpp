@@ -363,6 +363,10 @@ void CGuardShootingState::ProcessInput(const shared_ptr<CGuard>& Entity, float E
 
 void CGuardShootingState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTime)
 {	
+	auto GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
+	auto GameObjects{ GameScene->GetGameObjects() };
+	auto NavMesh{ GameScene->GetNavMesh() };
+
 	// 총을 쏘면 다시 ChaseState로 전이한다.
 	if (Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE))
 	{
@@ -372,9 +376,6 @@ void CGuardShootingState::Update(const shared_ptr<CGuard>& Entity, float Elapsed
 		{ 
 			if (Math::Distance(Target->GetPosition(), Entity->GetPosition()) < 10.0f)
 			{
-				auto GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
-				auto GameObjects{ GameScene->GetGameObjects() };
-
 				// 플레이어와 일정거리 이하가 되면 RayCasting을 하여 차폐를 파악한 후 총을 쏜다.
 				XMFLOAT3 Direction{ Vector3::Normalize(Vector3::Subtract(Target->GetPosition(), Entity->GetPosition())) };
 
@@ -412,15 +413,16 @@ void CGuardShootingState::Update(const shared_ptr<CGuard>& Entity, float Elapsed
 					BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetVertexCount(BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->GetVertexCount() - 1);
 
 					auto Player{ static_pointer_cast<CPlayer>(Target) };
-
 					Player->SetHealth(Player->GetHealth() - 10);
+
+					CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_SHOT, 0.7f);
+					CSoundManager::GetInstance()->Play(SOUND_TYPE_GRUNT, 0.75f);
 
 					if (Player->GetHealth() <= 0)
 					{
-						auto NavMesh{ GameScene->GetNavMesh() };
-
 						Player->GetStateMachine()->ChangeState(CPlayerDyingState::GetInstance());
 
+						Entity->SetTarget(nullptr);
 						Entity->FindNavPath(NavMesh, Entity->GetPatrolNavPath()[Entity->GetPatrolIndex()], GameObjects);
 						Entity->GetStateMachine()->ChangeState(CGuardReturnState::GetInstance());
 						return;
@@ -433,7 +435,21 @@ void CGuardShootingState::Update(const shared_ptr<CGuard>& Entity, float Elapsed
 			}
 		}
 		
-		Entity->GetStateMachine()->ChangeState(CGuardChaseState::GetInstance());
+		shared_ptr<CGameObject> NearestPlayer{ Entity->IsFoundPlayer(GameObjects) };
+
+		if (NearestPlayer)
+		{
+			auto NavMesh{ GameScene->GetNavMesh() };
+
+			Entity->FindNavPath(NavMesh, NearestPlayer->GetPosition(), GameObjects);
+			Entity->SetTarget(NearestPlayer);
+			Entity->GetStateMachine()->ChangeState(CGuardChaseState::GetInstance());
+		}
+		else
+		{
+			Entity->FindNavPath(NavMesh, Entity->GetPatrolNavPath()[Entity->GetPatrolIndex()], GameObjects);
+			Entity->GetStateMachine()->ChangeState(CGuardReturnState::GetInstance());
+		}
 	}
 }
 
@@ -499,21 +515,6 @@ void CGuardDyingState::Enter(const shared_ptr<CGuard>& Entity)
 	Entity->SetRecentTransition(false);
 	Entity->SetAnimationClip(5);
 	Entity->SetSpeed(0.0f);
-
-	//auto EventTriggers{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetEventTriggers() };
-
-	//for (const auto& EventTrigger : EventTriggers)
-	//{
-	//	if (EventTrigger)
-	//	{
-	//		// Entity를 이벤트 객체로 갖고 있는 트리거를 찾아 교도관이 사망한 위치에 트리거가 형성되도록 위치를 설정해준다.
-	//		if (EventTrigger->GetEventObject(0) == Entity)
-	//		{
-	//			EventTrigger->CalculateTriggerAreaByPoint(Entity->GetPosition(), 6.0f, 6.0f);
-	//			break;
-	//		}
-	//	}
-	//}
 }
 
 void CGuardDyingState::ProcessInput(const shared_ptr<CGuard>& Entity, float ElapsedTime, UINT InputMask)

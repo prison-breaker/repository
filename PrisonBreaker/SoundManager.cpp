@@ -1,6 +1,14 @@
 #include "stdafx.h"
 #include "SoundManager.h"
 
+CSoundManager::~CSoundManager()
+{
+	if (m_System)
+	{
+		m_System->release();
+	}
+}
+
 CSoundManager* CSoundManager::GetInstance()
 {
 	static CSoundManager Instance{};
@@ -19,16 +27,25 @@ void CSoundManager::Initialize()
 		return;
 	}
 
-	Result = m_System->init(3, FMOD_INIT_NORMAL, nullptr);
+	Result = m_System->init(9, FMOD_INIT_NORMAL, nullptr);
 
 	if (Result != FMOD_OK)
 	{
 		return;
 	}
 
-	Result = m_System->createSound("Sounds/Beginning.mp3", FMOD_LOOP_NORMAL, 0, &m_Sounds[SOUND_TYPE_TITLE_BGM]);
-	Result = m_System->createSound("Sounds/OnTheRun.mp3", FMOD_LOOP_NORMAL, 0, &m_Sounds[SOUND_TYPE_INGAME_BGM]);
-	Result = m_System->createSound("Sounds/ButtonOver.wav", FMOD_LOOP_OFF, 0, &m_Sounds[SOUND_TYPE_BUTTON_OVER]);
+	// BGM
+	Result = m_System->createSound("Sounds/Beginning.mp3", FMOD_LOOP_NORMAL, nullptr, &m_Sounds[SOUND_TYPE_TITLE_BGM]);
+	Result = m_System->createSound("Sounds/OnTheRun.mp3", FMOD_LOOP_NORMAL, nullptr, &m_Sounds[SOUND_TYPE_INGAME_BGM]);
+
+	// SFX
+	Result = m_System->createSound("Sounds/ButtonOver.wav", FMOD_LOOP_OFF, nullptr, &m_Sounds[SOUND_TYPE_BUTTON_OVER]);
+	Result = m_System->createSound("Sounds/OpenDoor.wav", FMOD_LOOP_OFF, nullptr, &m_Sounds[SOUND_TYPE_OPEN_DOOR]);
+	Result = m_System->createSound("Sounds/OpenElectricalPanel.wav", FMOD_LOOP_OFF, nullptr, &m_Sounds[SOUND_TYPE_OPEN_EP]);
+	Result = m_System->createSound("Sounds/GruntsMale.wav", FMOD_LOOP_OFF, nullptr, &m_Sounds[SOUND_TYPE_GRUNT]);
+	Result = m_System->createSound("Sounds/PistolShot.wav", FMOD_LOOP_OFF, nullptr, &m_Sounds[SOUND_TYPE_PISTOL_SHOT]);
+	Result = m_System->createSound("Sounds/PistolDryFire.wav", FMOD_LOOP_OFF, nullptr, &m_Sounds[SOUND_TYPE_PISTOL_EMPTY]);
+	Result = m_System->createSound("Sounds/EvacuationSiren.wav", FMOD_LOOP_NORMAL, nullptr, &m_Sounds[SOUND_TYPE_SIREN]);
 
 	if (Result != FMOD_OK)
 	{
@@ -52,7 +69,7 @@ void CSoundManager::Initialize()
 
 void CSoundManager::Play(SOUND_TYPE SoundType, float Volume)
 {
-	if (SoundType < 0 || SoundType > SOUND_TYPE_BUTTON_OVER)
+	if (SoundType < 0)
 	{
 		return;
 	}
@@ -63,7 +80,7 @@ void CSoundManager::Play(SOUND_TYPE SoundType, float Volume)
 
 void CSoundManager::Stop(SOUND_TYPE SoundType)
 {
-	if (SoundType < 0 || SoundType > SOUND_TYPE_BUTTON_OVER)
+	if (SoundType < 0)
 	{
 		return;
 	}
@@ -73,7 +90,7 @@ void CSoundManager::Stop(SOUND_TYPE SoundType)
 
 void CSoundManager::Pause(SOUND_TYPE SoundType)
 {
-	if (SoundType < 0 || SoundType > SOUND_TYPE_BUTTON_OVER)
+	if (SoundType < 0)
 	{
 		return;
 	}
@@ -83,7 +100,7 @@ void CSoundManager::Pause(SOUND_TYPE SoundType)
 
 void CSoundManager::Resume(SOUND_TYPE SoundType)
 {
-	if (SoundType < 0 || SoundType > SOUND_TYPE_BUTTON_OVER)
+	if (SoundType < 0)
 	{
 		return;
 	}

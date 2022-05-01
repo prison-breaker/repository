@@ -807,7 +807,7 @@ void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
 	tcout << FileName << TEXT(" 로드 완료...") << endl << endl;
 
 	// 권총을 드롭하는 트리거를 추가한다.
-	// 권총은 임의의 인덱스 교도관(Index: 2 ~ 14) 중 5명이 보유하고 있다.
+	// 권총은 열쇠를 갖지 않은 임의의 교도관(Index: 2 ~ 14) 중 5명이 보유하고 있다.
 	shared_ptr<bool[]> isVisited{ new bool[m_GameObjects[OBJECT_TYPE_NPC].size() - 2]{}, [](bool* p) { delete[] p; } };
 
 	for (UINT i = 0; i < 5;)
@@ -816,9 +816,16 @@ void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
 
 		if (!isVisited[RandomIndex])
 		{
+			shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][RandomIndex]) };
+
 			EventTrigger = make_shared<CGetPistolEventTrigger>();
-			EventTrigger->InsertEventObject(m_GameObjects[OBJECT_TYPE_NPC][RandomIndex]);
+			EventTrigger->InsertEventObject(Guard);
 			EventTrigger->InsertEventObject(m_GameObjects[OBJECT_TYPE_PLAYER].back());
+
+			// 교도관 또한 트리거 객체를 멤버로 갖는다.
+			// * 교도관과 트리거 객체는 서로 상호참조 하기 때문에 delete하려면 한 쪽에서 제거 되기 전에 nullptr로 Set 해줘야 한다.
+			Guard->SetEventTrigger(EventTrigger);
+
 			m_EventTriggers.push_back(EventTrigger);
 
 			isVisited[RandomIndex] = true;
@@ -828,14 +835,20 @@ void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
 
 	// 열쇠를 드롭하는 트리거를 추가한다.
 	// 열쇠는 외형이 다른 교도관(Index: 0, 1)이 보유하고 있다.
-	EventTrigger = make_shared<CGetKeyEventTrigger>();
-	EventTrigger->InsertEventObject(m_GameObjects[OBJECT_TYPE_NPC][0]);
-	m_EventTriggers.push_back(EventTrigger);
+	shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][0]) };
 
 	EventTrigger = make_shared<CGetKeyEventTrigger>();
-	EventTrigger->InsertEventObject(m_GameObjects[OBJECT_TYPE_NPC][1]);
+	Guard->SetEventTrigger(EventTrigger);
+
 	m_EventTriggers.push_back(EventTrigger);
 
+	Guard = static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][1]);
+	EventTrigger = make_shared<CGetKeyEventTrigger>();
+	Guard->SetEventTrigger(EventTrigger);
+
+	m_EventTriggers.push_back(EventTrigger);
+
+	// 모든 트리거 객체는 상호작용 UI 객체를 공유한다.
 	UINT TriggerCount{ static_cast<UINT>(m_EventTriggers.size()) };
 
 	for (const auto& EventTrigger : m_EventTriggers)
@@ -948,8 +961,6 @@ void CGameScene::InteractTrigger()
 
 				if (typeid(*EventTrigger) == typeid(CSirenEventTrigger))
 				{
-					tcout << TEXT("플레이어가 사이렌을 작동시켰습니다. 잠시 뒤 5명의 경찰이 이곳으로 올 것입니다!") << endl;
-
 					UINT GuardCount{ static_cast<UINT>(m_GameObjects[OBJECT_TYPE_NPC].size()) };
 
 					for (UINT i = 0; i < 5; ++i)
@@ -969,6 +980,7 @@ void CGameScene::InteractTrigger()
 						}
 					}
 
+					CSoundManager::GetInstance()->Play(SOUND_TYPE_SIREN, 0.55f);
 					m_EventTriggers.erase(iter);
 				}
 				else if (typeid(*EventTrigger) == typeid(CPowerDownEventTrigger))
