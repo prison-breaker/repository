@@ -3,7 +3,7 @@
 #include "BilboardObject.h"
 #include "GameObject.h"
 
-bool CEventTrigger::CanPassTriggerArea(const XMFLOAT3& NewPosition)
+bool CEventTrigger::CanPassTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& NewPosition)
 {
 	return true;
 }
@@ -14,6 +14,11 @@ void CEventTrigger::ShowInteractionUI()
 	{
 		m_InteractionUI->SetActive(true);
 	}
+}
+
+void CEventTrigger::InteractEventTrigger()
+{
+	SetInteracted(true);
 }
 
 void CEventTrigger::GenerateEventTrigger(float ElapsedTime)
@@ -64,6 +69,21 @@ bool CEventTrigger::IsInteracted() const
 	return m_IsInteracted;
 }
 
+void CEventTrigger::CalculateTriggerAreasByGuardPosition(const XMFLOAT3& Position)
+{
+	m_TriggerAreas[0].x = Position.x - 3.0f;
+	m_TriggerAreas[0].z = Position.z - 3.0f;
+
+	m_TriggerAreas[1].x = Position.x - 3.0f;
+	m_TriggerAreas[1].z = Position.z + 3.0f;
+
+	m_TriggerAreas[2].x = Position.x + 3.0f;
+	m_TriggerAreas[2].z = Position.z + 3.0f;
+
+	m_TriggerAreas[3].x = Position.x + 3.0f;
+	m_TriggerAreas[3].z = Position.z - 3.0f;
+}
+
 void CEventTrigger::InsertEventObject(const shared_ptr<CGameObject>& EventObject)
 {
 	if (EventObject)
@@ -107,6 +127,10 @@ bool CEventTrigger::IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& Lo
 				{
 					// 각도가 일정 범위안에 있다면 상호작용 UI를 렌더링하도록 만든다.
 					ShowInteractionUI();
+				}
+				else
+				{
+					HideInteractionUI();
 				}
 
 				return true;

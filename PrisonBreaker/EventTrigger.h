@@ -21,10 +21,11 @@ public:
 	CEventTrigger() = default;
 	virtual ~CEventTrigger() = default;
 
-	virtual bool CanPassTriggerArea(const XMFLOAT3& NewPosition);
+	virtual bool CanPassTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& NewPosition);
 
 	virtual void ShowInteractionUI();
 
+	virtual void InteractEventTrigger();
 	virtual void GenerateEventTrigger(float ElapsedTime);
 
 	void LoadEventTriggerFromFile(tifstream& InFile);
@@ -34,6 +35,8 @@ public:
 
 	void SetInteracted(bool IsInteracted);
 	bool IsInteracted() const;
+
+	void CalculateTriggerAreasByGuardPosition(const XMFLOAT3& Position);
 
 	void InsertEventObject(const shared_ptr<CGameObject>& EventObject);
 	shared_ptr<CGameObject> GetEventObject(UINT Index);

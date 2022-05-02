@@ -239,28 +239,32 @@ bool CPlayer::IsCollidedByGuard(const XMFLOAT3& NewPosition)
 	return false;
 }
 
-bool CPlayer::IsCollidedByEventTrigger(const XMFLOAT3& NewPosition)
+bool CPlayer::IsCollidedByEventTrigger(const XMFLOAT3& NewPosition, bool IsInteracted)
 {
 	auto EventTriggers{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetEventTriggers() };
 
-	for (const auto& EventTrigger : EventTriggers)
+	for (auto iter = EventTriggers.begin(); iter != EventTriggers.end(); ++iter)
 	{
+		auto EventTrigger = *iter;
+
 		if (EventTrigger)
 		{
-			if (EventTrigger->IsInTriggerArea(NewPosition, GetLook()))
+			if (EventTrigger->IsInTriggerArea(GetPosition(), GetLook()))
 			{
-				return false;
+				if (IsInteracted)
+				{
+					EventTrigger->InteractEventTrigger();
+					EventTriggers.erase(iter);
+				}
 
-				// 트리거의 두 점을 이용하여 플레이어가 넘어가지 못하도록 하려고 한다.
-				// 왜 주석을 풀면 다음 프레임에는 IsInTriggerArea() 함수가 false만을 리턴할까...?
-				//if (EventTrigger->CanPassTriggerArea(NewPosition))
-				//{
-				//	return false;
-				//}
-				//else
-				//{
-				//	return true;
-				//}
+				if (EventTrigger->CanPassTriggerArea(GetPosition(), NewPosition))
+				{
+					return false;
+				}
+				else
+				{
+					return true;
+				}
 			}
 		}
 	}
@@ -279,8 +283,7 @@ void CPlayer::ProcessInput(float ElapsedTime, UINT InputMask)
 		m_StateMachine->ProcessInput(ElapsedTime, InputMask);
 	}
 
-	auto GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
-	auto NavMesh{ GameScene->GetNavMesh() };
+	auto NavMesh{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetNavMesh() };
 
 	XMFLOAT3 NewPosition{ Vector3::Add(GetPosition(), Vector3::ScalarProduct(m_Speed * ElapsedTime, m_MovingDirection, false)) };
 
@@ -290,8 +293,8 @@ void CPlayer::ProcessInput(float ElapsedTime, UINT InputMask)
 		ApplySlidingVectorToPosition(NavMesh, NewPosition);
 	}
 
-	// NewPosition으로 이동 시, 교도관과의 충돌, 트리거 내 움직임 제어 영향을 받지 않는다면 움직인다.
-	if (!IsCollidedByGuard(NewPosition) && !IsCollidedByEventTrigger(NewPosition))
+	// NewPosition으로 이동 시, 교도관과의 충돌, 트리거 내 상호작용을 처리하거나, 움직임 제어 영향을 받지 않는다면 움직이도록 만든다.
+	if (!IsCollidedByGuard(NewPosition) && !IsCollidedByEventTrigger(NewPosition, (InputMask & INPUT_MASK_F) ? true : false))
 	{
 		SetPosition(NewPosition);
 	}

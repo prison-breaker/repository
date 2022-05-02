@@ -285,11 +285,6 @@ namespace Math
 
 		return (L1_L2 <= 0) && (L2_L1 <= 0);
 	}
-
-	int Discriminant(const XMFLOAT3& Vertex1, const XMFLOAT3& Vertex2, const XMFLOAT3& NewPosition)
-	{
-		return static_cast<int>((Vertex2.z - Vertex1.z) * NewPosition.x + (Vertex2.x - Vertex1.x) * NewPosition.z + Vertex1.x * Vertex2.z - Vertex2.x * Vertex1.z);
-	}
 }
 
 namespace Vector3

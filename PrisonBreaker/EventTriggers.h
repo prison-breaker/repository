@@ -10,10 +10,11 @@ public:
 	COpenDoorEventTrigger();
 	virtual ~COpenDoorEventTrigger() = default;
 
-	virtual bool CanPassTriggerArea(const XMFLOAT3& NewPosition);
+	virtual bool CanPassTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& NewPosition);
 
 	virtual void ShowInteractionUI();
 
+	virtual void InteractEventTrigger();
 	virtual void GenerateEventTrigger(float ElapsedTime);
 };
 
@@ -32,6 +33,7 @@ public:
 
 	virtual void ShowInteractionUI();
 
+	virtual void InteractEventTrigger();
 	virtual void GenerateEventTrigger(float ElapsedTime);
 
 	bool IsOpened() const;
@@ -47,6 +49,7 @@ public:
 
 	virtual void ShowInteractionUI();
 
+	virtual void InteractEventTrigger();
 	virtual void GenerateEventTrigger(float ElapsedTime);
 };
 
@@ -61,10 +64,11 @@ public:
 	COpenGateEventTrigger();
 	virtual ~COpenGateEventTrigger() = default;
 
-	virtual bool CanPassTriggerArea(const XMFLOAT3& NewPosition);
+	virtual bool CanPassTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& NewPosition);
 
 	virtual void ShowInteractionUI();
 
+	virtual void InteractEventTrigger();
 	virtual void GenerateEventTrigger(float ElapsedTime);
 };
 
@@ -73,10 +77,12 @@ public:
 class CGetPistolEventTrigger : public CEventTrigger
 {
 public:
-	CGetPistolEventTrigger() = default;
+	CGetPistolEventTrigger();
 	virtual ~CGetPistolEventTrigger() = default;
 
 	virtual void ShowInteractionUI();
+
+	virtual void InteractEventTrigger();
 };
 
 //=========================================================================================================================
@@ -84,8 +90,10 @@ public:
 class CGetKeyEventTrigger : public CEventTrigger
 {
 public:
-	CGetKeyEventTrigger() = default;
+	CGetKeyEventTrigger();
 	virtual ~CGetKeyEventTrigger() = default;
 
 	virtual void ShowInteractionUI();
+
+	virtual void InteractEventTrigger();
 };

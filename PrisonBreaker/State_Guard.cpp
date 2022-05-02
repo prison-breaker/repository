@@ -176,7 +176,7 @@ void CGuardChaseState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTim
 				if (GameObject)
 				{
 					XMFLOAT3 RayOrigin{ Entity->GetPosition() };
-					RayOrigin.y = 3.0f;
+					RayOrigin.y = 4.0f;
 
 					shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(RayOrigin, Direction, HitDistance, 10.0f) };
 
@@ -388,7 +388,7 @@ void CGuardShootingState::Update(const shared_ptr<CGuard>& Entity, float Elapsed
 					if (GameObject)
 					{
 						XMFLOAT3 RayOrigin{ Entity->GetPosition() };
-						RayOrigin.y = 3.0f;
+						RayOrigin.y = 4.0f;
 
 						shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(RayOrigin, Direction, HitDistance, 10.0f) };
 
@@ -415,8 +415,8 @@ void CGuardShootingState::Update(const shared_ptr<CGuard>& Entity, float Elapsed
 					auto Player{ static_pointer_cast<CPlayer>(Target) };
 					Player->SetHealth(Player->GetHealth() - 10);
 
-					CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_SHOT, 0.7f);
-					CSoundManager::GetInstance()->Play(SOUND_TYPE_GRUNT, 0.75f);
+					CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_SHOT, 0.6f);
+					CSoundManager::GetInstance()->Play(SOUND_TYPE_GRUNT, 0.6f);
 
 					if (Player->GetHealth() <= 0)
 					{
@@ -515,6 +515,14 @@ void CGuardDyingState::Enter(const shared_ptr<CGuard>& Entity)
 	Entity->SetRecentTransition(false);
 	Entity->SetAnimationClip(5);
 	Entity->SetSpeed(0.0f);
+
+	auto EventTrigger{ Entity->GetEventTrigger() };
+
+	if (EventTrigger)
+	{
+		EventTrigger->SetActive(true);
+		EventTrigger->CalculateTriggerAreasByGuardPosition(Entity->GetPosition());
+	}
 }
 
 void CGuardDyingState::ProcessInput(const shared_ptr<CGuard>& Entity, float ElapsedTime, UINT InputMask)

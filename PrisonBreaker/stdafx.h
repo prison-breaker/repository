@@ -19,15 +19,16 @@
 #define PLANE_WIDTH			      400
 #define PLANE_HEIGHT		      400
 
-#define INPUT_MASK_NONE			  0x00
-#define INPUT_MASK_W	          0x01
-#define INPUT_MASK_S              0x02
-#define INPUT_MASK_A              0x04
-#define INPUT_MASK_D              0x08
-#define INPUT_MASK_SHIFT          0x10
-#define INPUT_MASK_TAB            0x20
-#define INPUT_MASK_LMB            0x40
-#define INPUT_MASK_RMB            0x80
+#define INPUT_MASK_NONE			  0x0000
+#define INPUT_MASK_W	          0x0001
+#define INPUT_MASK_S              0x0002
+#define INPUT_MASK_A              0x0004
+#define INPUT_MASK_D              0x0008
+#define INPUT_MASK_F			  0x0010
+#define INPUT_MASK_SHIFT          0x0020
+#define INPUT_MASK_TAB            0x0040
+#define INPUT_MASK_LMB            0x0080
+#define INPUT_MASK_RMB            0x0100
 
 #define TEXTURE_MASK_ALBEDO_MAP   0x01
 #define TEXTURE_MASK_METALLIC_MAP 0x02
@@ -221,8 +222,6 @@ namespace Math
 
 	int CounterClockWise(const XMFLOAT3& Vertex1, const XMFLOAT3& Vertex2, const XMFLOAT3& Vertex3);
 	bool LineIntersection(const XMFLOAT3& L1V1, const XMFLOAT3& L1V2, const XMFLOAT3& L2V1, const XMFLOAT3& L2V2);
-
-	int Discriminant(const XMFLOAT3& Vertex1, const XMFLOAT3& Vertex2, const XMFLOAT3& NewPosition);
 }
 
 namespace Vector3

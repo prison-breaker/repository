@@ -331,77 +331,85 @@ void CPlayerShootingState::ProcessInput(const shared_ptr<CPlayer>& Entity, float
 		auto BilboardObjects{ GameScene->GetBilboardObjects() };
 
 		// 줌 애니메이션을 하는 상태이고, 보유한 총알이 1발 이상 존재해야 쏠 수 있다.
-		if (Entity->GetAnimationController()->GetAnimationClip() == 8 && BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->GetVertexCount() > 0)
+		if (Entity->GetAnimationController()->GetAnimationClip() == 8)
 		{
-			shared_ptr<CGameObject> NearestIntersectedRootObject{};
-			shared_ptr<CGameObject> NearestIntersectedObject{};
-
-			float NearestHitDistance{ FLT_MAX };
-			float HitDistance{};
-			XMFLOAT3 RayOrigin{ Entity->GetCamera()->GetPosition() };
-			XMFLOAT3 RayDirection{ Entity->GetCamera()->GetLook() };
-
-			for (UINT i = OBJECT_TYPE_NPC; i <= OBJECT_TYPE_STRUCTURE; ++i)
+			if (BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->GetVertexCount() > 0)
 			{
-				for (const auto& GameObject : GameObjects[i])
+				shared_ptr<CGameObject> NearestIntersectedRootObject{};
+				shared_ptr<CGameObject> NearestIntersectedObject{};
+
+				float NearestHitDistance{ FLT_MAX };
+				float HitDistance{};
+				XMFLOAT3 RayOrigin{ Entity->GetCamera()->GetPosition() };
+				XMFLOAT3 RayDirection{ Entity->GetCamera()->GetLook() };
+
+				for (UINT i = OBJECT_TYPE_NPC; i <= OBJECT_TYPE_STRUCTURE; ++i)
 				{
-					if (GameObject)
+					for (const auto& GameObject : GameObjects[i])
 					{
-						if (GameObject->IsActive())
+						if (GameObject)
 						{
-							// 모델을 공유하기 때문에, 월드 변환 행렬을 객체마다 갱신시켜주어야 한다.
-							shared_ptr<CAnimationController> AnimationController{ GameObject->GetAnimationController() };
-
-							if (AnimationController)
+							if (GameObject->IsActive())
 							{
-								AnimationController->UpdateShaderVariables();
-							}
+								// 모델을 공유하기 때문에, 월드 변환 행렬을 객체마다 갱신시켜주어야 한다.
+								shared_ptr<CAnimationController> AnimationController{ GameObject->GetAnimationController() };
 
-							shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(RayOrigin, RayDirection, HitDistance, FLT_MAX) };
+								if (AnimationController)
+								{
+									AnimationController->UpdateShaderVariables();
+								}
 
-							//if (IntersectedObject)
-							//{
-							//	tcout << TEXT("광선을 맞은 객체명 : ") << IntersectedObject->GetName() << TEXT(" (거리 : ") << HitDistance << TEXT(")") << endl;
-							//	tcout << TEXT("- 해당 객체의 위치 : ") << IntersectedObject->GetPosition().x << ", " << IntersectedObject->GetPosition().y << ", " << IntersectedObject->GetPosition().z << endl;
-							//	tcout << TEXT("- 해당 객체 중심까지의 거리 : ") << Vector3::Length(Vector3::Subtract(IntersectedObject->GetPosition(), Entity->GetCamera()->GetPosition())) << endl;
-							//}
+								shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(RayOrigin, RayDirection, HitDistance, FLT_MAX) };
 
-							if (IntersectedObject && (HitDistance < NearestHitDistance))
-							{
-								NearestIntersectedRootObject = GameObject;
-								NearestIntersectedObject = IntersectedObject;
-								NearestHitDistance = HitDistance;
+								//if (IntersectedObject)
+								//{
+								//	tcout << TEXT("광선을 맞은 객체명 : ") << IntersectedObject->GetName() << TEXT(" (거리 : ") << HitDistance << TEXT(")") << endl;
+								//	tcout << TEXT("- 해당 객체의 위치 : ") << IntersectedObject->GetPosition().x << ", " << IntersectedObject->GetPosition().y << ", " << IntersectedObject->GetPosition().z << endl;
+								//	tcout << TEXT("- 해당 객체 중심까지의 거리 : ") << Vector3::Length(Vector3::Subtract(IntersectedObject->GetPosition(), Entity->GetCamera()->GetPosition())) << endl;
+								//}
+
+								if (IntersectedObject && (HitDistance < NearestHitDistance))
+								{
+									NearestIntersectedRootObject = GameObject;
+									NearestIntersectedObject = IntersectedObject;
+									NearestHitDistance = HitDistance;
+								}
 							}
 						}
 					}
 				}
-			}
 
-			if (NearestIntersectedObject)
-			{
-				if (typeid(*NearestIntersectedRootObject) == typeid(CGuard))
+				if (NearestIntersectedObject)
 				{
-					shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(NearestIntersectedRootObject) };
-
-					if (!Guard->GetStateMachine()->IsInState(CGuardHitState::GetInstance()) &&
-						!Guard->GetStateMachine()->IsInState(CGuardDyingState::GetInstance()))
+					if (typeid(*NearestIntersectedRootObject) == typeid(CGuard))
 					{
-						Guard->GetStateMachine()->ChangeState(CGuardHitState::GetInstance());
+						shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(NearestIntersectedRootObject) };
+
+						if (!Guard->GetStateMachine()->IsInState(CGuardHitState::GetInstance()) &&
+							!Guard->GetStateMachine()->IsInState(CGuardDyingState::GetInstance()))
+						{
+							Guard->GetStateMachine()->ChangeState(CGuardHitState::GetInstance());
+						}
 					}
+
+					//tcout << TEXT("★ 가장 먼저 광선을 맞은 객체명 : ") << NearestIntersectedObject->GetName() << TEXT(" (거리 : ") << NearestHitDistance << TEXT(")") << endl << endl;
 				}
 
-				//tcout << TEXT("★ 가장 먼저 광선을 맞은 객체명 : ") << NearestIntersectedObject->GetName() << TEXT(" (거리 : ") << NearestHitDistance << TEXT(")") << endl << endl;
+				Entity->GetAnimationController()->SetAnimationClip(9);
+
+				// 총알 UI의 총알 개수를 한 개 감소시킨다.
+				BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->SetVertexCount(BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->GetVertexCount() - 1);
+
+				CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_SHOT, 0.6f);
+				break;
 			}
-
-			Entity->GetAnimationController()->SetAnimationClip(9);
-
-			// 총알 UI의 총알 개수를 한 개 감소시킨다.
-			BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->SetVertexCount(BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->GetVertexCount() - 1);
-			break;
+			else
+			{
+				CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_EMPTY, 0.6f);
+			}
 		}
 	}
 	}
-
 	if (InputMask & INPUT_MASK_RMB)
 	{
 		Entity->GetCamera()->IncreaseZoomFactor(ElapsedTime);

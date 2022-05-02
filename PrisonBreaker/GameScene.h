@@ -101,6 +101,8 @@ public:
 
 	vector<shared_ptr<CEventTrigger>>& GetEventTriggers();
 
+	vector<LIGHT>& GetLights();
+
 	shared_ptr<CNavMesh>& GetNavMesh();
 
 	void LoadMeshCachesFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName, unordered_map<tstring, shared_ptr<CMesh>>& MeshCaches);
@@ -112,6 +114,5 @@ public:
 
 	void UpdatePerspective(HWND hWnd, float ElapsedTime, const shared_ptr<CPlayer>& Player);
 
-	void InteractTrigger();
 	void InteractSpotLight(float ElapsedTime);
 };
