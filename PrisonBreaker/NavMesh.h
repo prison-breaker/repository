@@ -10,7 +10,7 @@ public:
 	CNavMesh() = default;
 	~CNavMesh() = default;
 
-	void LoadNavNodeFromFile(const tstring& FileName);
+	void LoadNavMeshFromFile(const tstring& FileName);
 
 	vector<shared_ptr<CNavNode>>& GetNavNodes();
 

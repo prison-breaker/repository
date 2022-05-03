@@ -1,49 +1,63 @@
 #include "stdafx.h"
 #include "NavMesh.h"
 
-void CNavMesh::LoadNavNodeFromFile(const tstring& FileName)
+void CNavMesh::LoadNavMeshFromFile(const tstring& FileName)
 {
-	tifstream InFile{ FileName };
 	tstring Token{};
-
 	vector<XMFLOAT3> Vertices{};
 
 	tcout << FileName << TEXT(" 로드 시작...") << endl;
 
-	while (InFile >> Token)
+#ifdef READ_BINARY_FILE
+	tifstream InFile{ FileName, ios::binary };
+
+	while (true)
 	{
-		shared_ptr<CNavNode> NewNavNode{ make_shared<CNavNode>() };
+		File::ReadStringFromFile(InFile, Token);
 
-		if (Token == TEXT("v"))
+		if (Token == TEXT("<Positions>"))
 		{
-			XMFLOAT3 Vertex{};
-
-			InFile >> Vertex.x >> Vertex.y >> Vertex.z;
-
-			Vertices.push_back(Vertex);
-		}
-		else if (Token == TEXT("f"))
-		{
-			TRIANGLE Triangle{};
-
-			for (UINT i = 0; i < 3; ++i)
+			UINT VertexCount{ File::ReadIntegerFromFile(InFile) };
+			
+			if (VertexCount > 0)
 			{
-				InFile >> Token;
+				Vertices.resize(VertexCount);
 
-				size_t Location{ Token.find('/') };
-
-				Token = Token.substr(0, Location);
-
-				UINT Index{ static_cast<UINT>(stoi(Token) - 1) };
-
-				Triangle.m_Vertices[i] = Vertices[Index];
+				InFile.read(reinterpret_cast<TCHAR*>(Vertices.data()), VertexCount * sizeof(XMFLOAT3));
 			}
+		}
+		else if (Token == TEXT("<Indices>"))
+		{
+			vector<UINT> Indices{};
+			UINT IndexCount{ File::ReadIntegerFromFile(InFile) };
 
-			NewNavNode->SetTriangle(Triangle);
-			InsertNode(NewNavNode);
+			if (IndexCount > 0)
+			{
+				Indices.resize(IndexCount);
+
+				InFile.read(reinterpret_cast<TCHAR*>(Indices.data()), IndexCount * sizeof(UINT));
+
+				for (UINT i = 0; i < IndexCount; i += 3)
+				{
+					shared_ptr<CNavNode> NewNavNode{ make_shared<CNavNode>() };
+					TRIANGLE Triangle{};
+
+					Triangle.m_Vertices[0] = Vertices[Indices[i] - 1];
+					Triangle.m_Vertices[1] = Vertices[Indices[i + 1] - 1];
+					Triangle.m_Vertices[2] = Vertices[Indices[i + 2] - 1];
+
+					NewNavNode->SetTriangle(Triangle);
+					InsertNode(NewNavNode);
+				}
+			}
+		}
+		else if (Token == TEXT("</NavMesh>"))
+		{
+			break;
 		}
 	}
-
+#else
+#endif
 	tcout << FileName << TEXT(" 로드 완료...(정점 수: ") << m_NavNodes.size() << ")" << endl << endl;
 }
 
