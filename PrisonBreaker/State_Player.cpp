@@ -388,6 +388,7 @@ void CPlayerShootingState::ProcessInput(const shared_ptr<CPlayer>& Entity, float
 						if (!Guard->GetStateMachine()->IsInState(CGuardHitState::GetInstance()) &&
 							!Guard->GetStateMachine()->IsInState(CGuardDyingState::GetInstance()))
 						{
+							Guard->SetTarget(Entity);
 							Guard->GetStateMachine()->ChangeState(CGuardHitState::GetInstance());
 						}
 					}
