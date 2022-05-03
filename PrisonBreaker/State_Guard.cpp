@@ -12,7 +12,9 @@ CGuardIdleState* CGuardIdleState::GetInstance()
 void CGuardIdleState::Enter(const shared_ptr<CGuard>& Entity)
 {
 	Entity->SetElapsedTime(0.0f);
+	Entity->SetRecentTransition(false);
 	Entity->SetAnimationClip(0);
+	Entity->SetSpeed(0.0f);
 }
 
 void CGuardIdleState::ProcessInput(const shared_ptr<CGuard>& Entity, float ElapsedTime, UINT InputMask)
@@ -31,7 +33,6 @@ void CGuardIdleState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTime
 	{
 		auto NavMesh{ GameScene->GetNavMesh() };
 
-		Entity->FindNavPath(NavMesh, NearestPlayer->GetPosition(), GameObjects);
 		Entity->SetTarget(NearestPlayer);
 		Entity->GetStateMachine()->ChangeState(CGuardChaseState::GetInstance());
 	}
@@ -86,7 +87,6 @@ void CGuardPatrolState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTi
 	{
 		auto NavMesh{ GameScene->GetNavMesh() };
 
-		Entity->FindNavPath(NavMesh, NearestPlayer->GetPosition(), GameObjects);
 		Entity->SetTarget(NearestPlayer);
 		Entity->GetStateMachine()->ChangeState(CGuardChaseState::GetInstance());
 	}
@@ -123,6 +123,14 @@ CGuardChaseState* CGuardChaseState::GetInstance()
 
 void CGuardChaseState::Enter(const shared_ptr<CGuard>& Entity)
 {
+	auto GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
+	auto GameObjects{ GameScene->GetGameObjects() };
+	auto NavMesh{ GameScene->GetNavMesh() };
+
+	shared_ptr<CGameObject> Target{ Entity->GetTarget() };
+
+	Entity->FindNavPath(NavMesh, Target->GetPosition(), GameObjects);
+
 	XMFLOAT3 Direction{ Vector3::Normalize(Vector3::Subtract(Entity->GetNavPath().back(), Entity->GetPosition())) };
 
 	Entity->UpdateLocalCoord(Direction);
@@ -156,14 +164,13 @@ void CGuardChaseState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTim
 	if (!NearestPlayer && Entity->GetRecentTransition())
 	{
 		// 플레이어가 시야각에서 보이지 않는다면 ReturnState로 전이하여 원래 순찰하는 위치로 돌아간다.
-		Entity->FindNavPath(NavMesh, Entity->GetPatrolNavPath()[Entity->GetPatrolIndex()], GameObjects);
 		Entity->GetStateMachine()->ChangeState(CGuardReturnState::GetInstance());
 		return;
 	}
 	else if (Target)
 	{
 		if (Math::Distance(Target->GetPosition(), Entity->GetPosition()) < 10.0f)
-		{ 
+		{
 			// 플레이어와 일정거리 이하가 되면 RayCasting을 하여 차폐를 파악한 후 총을 쏜다.
 			Direction = Vector3::Normalize(Vector3::Subtract(Target->GetPosition(), Entity->GetPosition()));
 
@@ -229,6 +236,12 @@ CGuardReturnState* CGuardReturnState::GetInstance()
 
 void CGuardReturnState::Enter(const shared_ptr<CGuard>& Entity)
 {
+	auto GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
+	auto GameObjects{ GameScene->GetGameObjects() };
+	auto NavMesh{ GameScene->GetNavMesh() };
+
+	Entity->FindNavPath(NavMesh, Entity->GetPatrolNavPath()[Entity->GetPatrolIndex()], GameObjects);
+
 	XMFLOAT3 Direction{ Vector3::Normalize(Vector3::Subtract(Entity->GetNavPath().back(), Entity->GetPosition())) };
 
 	Entity->UpdateLocalCoord(Direction);
@@ -254,7 +267,6 @@ void CGuardReturnState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTi
 	{
 		auto NavMesh{ GameScene->GetNavMesh() };
 
-		Entity->FindNavPath(NavMesh, NearestPlayer->GetPosition(), GameObjects);
 		Entity->SetTarget(NearestPlayer);
 		Entity->GetStateMachine()->ChangeState(CGuardChaseState::GetInstance());
 	}
@@ -314,7 +326,6 @@ void CGuardAssembleState::Update(const shared_ptr<CGuard>& Entity, float Elapsed
 
 	if (NearestPlayer)
 	{
-		Entity->FindNavPath(NavMesh, NearestPlayer->GetPosition(), GameObjects);
 		Entity->SetTarget(NearestPlayer);
 		Entity->GetStateMachine()->ChangeState(CGuardChaseState::GetInstance());
 	}
@@ -324,7 +335,6 @@ void CGuardAssembleState::Update(const shared_ptr<CGuard>& Entity, float Elapsed
 
 		if (Entity->GetNavPath().empty())
 		{
-			Entity->FindNavPath(NavMesh, Entity->GetPatrolNavPath()[Entity->GetPatrolIndex()], GameObjects);
 			Entity->GetStateMachine()->ChangeState(CGuardReturnState::GetInstance());
 		}
 		else
@@ -354,6 +364,23 @@ void CGuardShootingState::Enter(const shared_ptr<CGuard>& Entity)
 	Entity->SetRecentTransition(false);
 	Entity->SetAnimationClip(3);
 	Entity->SetSpeed(0.0f);
+
+	auto BilboardObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetBilboardObjects() };
+
+	// 피격 UI 애니메이션을 재생시키고, UI 체력을 1감소시킨다.
+	static_pointer_cast<CHitUI>(BilboardObjects[BILBOARD_OBJECT_TYPE_UI][10])->GetStateMachine()->SetCurrentState(CHitUIActivationState::GetInstance());
+	BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetVertexCount(BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->GetVertexCount() - 1);
+
+	auto Player{ static_pointer_cast<CPlayer>(Entity->GetTarget()) };
+	Player->SetHealth(Player->GetHealth() - 10);
+
+	if (Player->GetHealth() <= 0)
+	{
+		Player->GetStateMachine()->ChangeState(CPlayerDyingState::GetInstance());
+	}
+
+	CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_SHOT, 0.6f);
+	CSoundManager::GetInstance()->Play(SOUND_TYPE_GRUNT, 0.6f);	
 }
 
 void CGuardShootingState::ProcessInput(const shared_ptr<CGuard>& Entity, float ElapsedTime, UINT InputMask)
@@ -362,22 +389,19 @@ void CGuardShootingState::ProcessInput(const shared_ptr<CGuard>& Entity, float E
 }
 
 void CGuardShootingState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTime)
-{	
-	auto GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
-	auto GameObjects{ GameScene->GetGameObjects() };
-	auto NavMesh{ GameScene->GetNavMesh() };
-
+{
 	// 총을 쏘면 다시 ChaseState로 전이한다.
 	if (Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE))
 	{
-		shared_ptr<CGameObject> Target{ Entity->GetTarget() };
+		auto GameObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetGameObjects() };
+		auto Player{ static_pointer_cast<CPlayer>(Entity->GetTarget()) };
 
-		if (Target->IsActive())
-		{ 
-			if (Math::Distance(Target->GetPosition(), Entity->GetPosition()) < 10.0f)
+		if (Player->GetHealth() > 0)
+		{
+			if (Math::Distance(Player->GetPosition(), Entity->GetPosition()) < 10.0f)
 			{
 				// 플레이어와 일정거리 이하가 되면 RayCasting을 하여 차폐를 파악한 후 총을 쏜다.
-				XMFLOAT3 Direction{ Vector3::Normalize(Vector3::Subtract(Target->GetPosition(), Entity->GetPosition())) };
+				XMFLOAT3 Direction{ Vector3::Normalize(Vector3::Subtract(Player->GetPosition(), Entity->GetPosition())) };
 
 				float NearestHitDistance{ FLT_MAX };
 				float HitDistance{};
@@ -405,49 +429,21 @@ void CGuardShootingState::Update(const shared_ptr<CGuard>& Entity, float Elapsed
 					// RayCasting 이후 또 맞았다면 방향을 다시 설정한 후 슈팅 애니메이션을 하도록 컨트롤러의 인덱스를 0으로 만든다.
 					Entity->UpdateLocalCoord(Direction);
 					Entity->GetAnimationController()->SetKeyFrameIndex(0);
-
-					auto BilboardObjects{ GameScene->GetBilboardObjects() };
-
-					// 피격 UI 애니메이션을 재생시키고, UI 체력을 1감소시킨다.
-					static_pointer_cast<CHitUI>(BilboardObjects[BILBOARD_OBJECT_TYPE_UI][10])->GetStateMachine()->SetCurrentState(CHitUIActivationState::GetInstance());
-					BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetVertexCount(BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->GetVertexCount() - 1);
-
-					auto Player{ static_pointer_cast<CPlayer>(Target) };
-					Player->SetHealth(Player->GetHealth() - 10);
-
-					CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_SHOT, 0.6f);
-					CSoundManager::GetInstance()->Play(SOUND_TYPE_GRUNT, 0.6f);
-
-					if (Player->GetHealth() <= 0)
-					{
-						Player->GetStateMachine()->ChangeState(CPlayerDyingState::GetInstance());
-
-						Entity->SetTarget(nullptr);
-						Entity->FindNavPath(NavMesh, Entity->GetPatrolNavPath()[Entity->GetPatrolIndex()], GameObjects);
-						Entity->GetStateMachine()->ChangeState(CGuardReturnState::GetInstance());
-						return;
-					}
-					else
-					{
-						return;
-					}
+					Entity->GetStateMachine()->GetCurrentState()->Enter(Entity);
+					return;
 				}
 			}
 		}
-		
+
 		shared_ptr<CGameObject> NearestPlayer{ Entity->IsFoundPlayer(GameObjects) };
 
 		if (NearestPlayer)
 		{
-			auto NavMesh{ GameScene->GetNavMesh() };
-
-			Entity->FindNavPath(NavMesh, NearestPlayer->GetPosition(), GameObjects);
 			Entity->SetTarget(NearestPlayer);
 			Entity->GetStateMachine()->ChangeState(CGuardChaseState::GetInstance());
 		}
 		else
 		{
-			Entity->FindNavPath(NavMesh, Entity->GetPatrolNavPath()[Entity->GetPatrolIndex()], GameObjects);
 			Entity->GetStateMachine()->ChangeState(CGuardReturnState::GetInstance());
 		}
 	}
@@ -469,6 +465,9 @@ CGuardHitState* CGuardHitState::GetInstance()
 
 void CGuardHitState::Enter(const shared_ptr<CGuard>& Entity)
 {
+	XMFLOAT3 Direction{ Vector3::Normalize(Vector3::Subtract(Entity->GetTarget()->GetPosition(), Entity->GetPosition()))};
+
+	Entity->UpdateLocalCoord(Direction);
 	Entity->SetElapsedTime(0.0f);
 	Entity->SetRecentTransition(false);
 	Entity->SetAnimationClip(4);
@@ -491,7 +490,7 @@ void CGuardHitState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTime)
 
 	if (Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE))
 	{
-		Entity->GetStateMachine()->ChangeState(Entity->GetStateMachine()->GetPreviousState());
+		Entity->GetStateMachine()->ChangeState(CGuardChaseState::GetInstance());
 	}
 }
 
@@ -536,7 +535,7 @@ void CGuardDyingState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTim
 	if (Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE))
 	{
 		Entity->SetElapsedTime(Entity->GetElapsedTime() + ElapsedTime);
-		
+
 		if (Entity->GetElapsedTime() > 10.0f)
 		{
 			Entity->SetActive(false);
