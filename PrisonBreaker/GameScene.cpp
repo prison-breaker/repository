@@ -494,7 +494,7 @@ void CGameScene::Animate(float ElapsedTime)
 	{
 		if (EventTrigger)
 		{
-			EventTrigger->GenerateEventTrigger(ElapsedTime);
+			EventTrigger->Update(ElapsedTime);
 		}
 	}
 
@@ -990,15 +990,18 @@ void CGameScene::InteractSpotLight(float ElapsedTime)
 							{
 								shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(GameObject) };
 
-								// 스팟조명과 충돌 할 경우 주변 범위에 있는 경찰들이 플레이어를 쫒기 시작한다.
-								if (Math::Distance(LightedPosition, Guard->GetPosition()) < 300.0f)
+								if (Guard->GetHealth() > 0)
 								{
-									if (Guard->GetStateMachine()->IsInState(CGuardIdleState::GetInstance()) ||
-										Guard->GetStateMachine()->IsInState(CGuardPatrolState::GetInstance()) ||
-										Guard->GetStateMachine()->IsInState(CGuardReturnState::GetInstance()))
+									// 스팟조명과 충돌 할 경우 주변 범위에 있는 경찰들이 플레이어를 쫒기 시작한다.
+									if (Math::Distance(LightedPosition, Guard->GetPosition()) <= 150.0f)
 									{
-										Guard->FindNavPath(m_NavMesh, Player->GetPosition(), m_GameObjects);
-										Guard->GetStateMachine()->ChangeState(CGuardAssembleState::GetInstance());
+										if (Guard->GetStateMachine()->IsInState(CGuardIdleState::GetInstance()) ||
+											Guard->GetStateMachine()->IsInState(CGuardPatrolState::GetInstance()) ||
+											Guard->GetStateMachine()->IsInState(CGuardReturnState::GetInstance()))
+										{
+											Guard->FindNavPath(m_NavMesh, Player->GetPosition(), m_GameObjects);
+											Guard->GetStateMachine()->ChangeState(CGuardAssembleState::GetInstance());
+										}
 									}
 								}
 							}

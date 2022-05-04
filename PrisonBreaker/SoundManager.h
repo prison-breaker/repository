@@ -6,8 +6,8 @@ class CSoundManager
 private:
 	FMOD::System*  m_System{};
 
-	FMOD::Channel* m_Channels[10]{};
-	FMOD::Sound*   m_Sounds[10]{};
+	FMOD::Channel* m_Channels[MAX_SOUNDS]{};
+	FMOD::Sound*   m_Sounds[MAX_SOUNDS]{};
 
 private:
 	CSoundManager() = default;

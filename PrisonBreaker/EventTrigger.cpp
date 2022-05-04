@@ -21,7 +21,7 @@ void CEventTrigger::InteractEventTrigger()
 	SetInteracted(true);
 }
 
-void CEventTrigger::GenerateEventTrigger(float ElapsedTime)
+void CEventTrigger::Update(float ElapsedTime)
 {
 
 }
@@ -37,7 +37,7 @@ void CEventTrigger::LoadEventTriggerFromFile(tifstream& InFile)
 
 		if (Token == TEXT("<TriggerAreas>"))
 		{
-			InFile.read(reinterpret_cast<TCHAR*>(m_TriggerAreas), 4 * sizeof(XMFLOAT3));
+			InFile.read(reinterpret_cast<TCHAR*>(m_TriggerArea), 4 * sizeof(XMFLOAT3));
 		}
 		else if (Token == TEXT("<ToTrigger>"))
 		{
@@ -69,19 +69,19 @@ bool CEventTrigger::IsInteracted() const
 	return m_IsInteracted;
 }
 
-void CEventTrigger::CalculateTriggerAreasByGuardPosition(const XMFLOAT3& Position)
+void CEventTrigger::CalculateTriggerAreaByGuard(const XMFLOAT3& Position)
 {
-	m_TriggerAreas[0].x = Position.x - 3.0f;
-	m_TriggerAreas[0].z = Position.z - 3.0f;
+	m_TriggerArea[0].x = Position.x - 3.0f;
+	m_TriggerArea[0].z = Position.z - 3.0f;
 
-	m_TriggerAreas[1].x = Position.x - 3.0f;
-	m_TriggerAreas[1].z = Position.z + 3.0f;
+	m_TriggerArea[1].x = Position.x - 3.0f;
+	m_TriggerArea[1].z = Position.z + 3.0f;
 
-	m_TriggerAreas[2].x = Position.x + 3.0f;
-	m_TriggerAreas[2].z = Position.z + 3.0f;
+	m_TriggerArea[2].x = Position.x + 3.0f;
+	m_TriggerArea[2].z = Position.z + 3.0f;
 
-	m_TriggerAreas[3].x = Position.x + 3.0f;
-	m_TriggerAreas[3].z = Position.z - 3.0f;
+	m_TriggerArea[3].x = Position.x + 3.0f;
+	m_TriggerArea[3].z = Position.z - 3.0f;
 }
 
 void CEventTrigger::InsertEventObject(const shared_ptr<CGameObject>& EventObject)
@@ -121,7 +121,7 @@ bool CEventTrigger::IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& Lo
 	{
 		for (UINT i = 0; i < 2; ++i)
 		{
-			if (Math::IsInTriangle(m_TriggerAreas[0], m_TriggerAreas[i + 1], m_TriggerAreas[i + 2], Position))
+			if (Math::IsInTriangle(m_TriggerArea[0], m_TriggerArea[i + 1], m_TriggerArea[i + 2], Position))
 			{
 				if (Vector3::Angle(LookDirection, m_ToTrigger) <= m_ActiveFOV)
 				{

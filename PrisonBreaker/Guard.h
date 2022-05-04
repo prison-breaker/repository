@@ -75,4 +75,6 @@ public:
 
 	void MoveToNavPath(float ElapsedTime);
 	void Patrol(float ElapsedTime);
+
+	void GenerateTrigger();
 };

@@ -12,7 +12,7 @@ protected:
 	XMFLOAT3						m_ToTrigger{};
 	float							m_ActiveFOV{};
 
-	XMFLOAT3						m_TriggerAreas[4]{}; // Vertice
+	XMFLOAT3						m_TriggerArea[4]{}; // Vertices
 
 	vector<shared_ptr<CGameObject>> m_EventObjects{};
 	shared_ptr<CBilboardObject>		m_InteractionUI{};
@@ -26,7 +26,7 @@ public:
 	virtual void ShowInteractionUI();
 
 	virtual void InteractEventTrigger();
-	virtual void GenerateEventTrigger(float ElapsedTime);
+	virtual void Update(float ElapsedTime);
 
 	void LoadEventTriggerFromFile(tifstream& InFile);
 
@@ -36,7 +36,7 @@ public:
 	void SetInteracted(bool IsInteracted);
 	bool IsInteracted() const;
 
-	void CalculateTriggerAreasByGuardPosition(const XMFLOAT3& Position);
+	void CalculateTriggerAreaByGuard(const XMFLOAT3& Position);
 
 	void InsertEventObject(const shared_ptr<CGameObject>& EventObject);
 	shared_ptr<CGameObject> GetEventObject(UINT Index);

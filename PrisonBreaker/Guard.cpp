@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Guard.h"
-#include "Player.h"
+#include "GameScene.h"
 
 void CGuard::Initialize()
 {
@@ -452,5 +452,14 @@ void CGuard::Patrol(float ElapsedTime)
 	else
 	{
 		CGameObject::Move(m_MovingDirection, m_Speed * ElapsedTime);
+	}
+}
+
+void CGuard::GenerateTrigger()
+{
+	if (m_EventTrigger)
+	{
+		m_EventTrigger->SetActive(true);
+		m_EventTrigger->CalculateTriggerAreaByGuard(GetPosition());
 	}
 }

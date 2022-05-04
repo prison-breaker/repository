@@ -27,7 +27,7 @@ void CSoundManager::Initialize()
 		return;
 	}
 
-	Result = m_System->init(9, FMOD_INIT_NORMAL, nullptr);
+	Result = m_System->init(MAX_SOUNDS, FMOD_INIT_NORMAL, nullptr);
 
 	if (Result != FMOD_OK)
 	{
@@ -42,7 +42,10 @@ void CSoundManager::Initialize()
 	Result = m_System->createSound("Sounds/ButtonOver.wav", FMOD_LOOP_OFF, nullptr, &m_Sounds[SOUND_TYPE_BUTTON_OVER]);
 	Result = m_System->createSound("Sounds/OpenDoor.wav", FMOD_LOOP_OFF, nullptr, &m_Sounds[SOUND_TYPE_OPEN_DOOR]);
 	Result = m_System->createSound("Sounds/OpenElectricalPanel.wav", FMOD_LOOP_OFF, nullptr, &m_Sounds[SOUND_TYPE_OPEN_EP]);
-	Result = m_System->createSound("Sounds/GruntsMale.wav", FMOD_LOOP_OFF, nullptr, &m_Sounds[SOUND_TYPE_GRUNT]);
+	Result = m_System->createSound("Sounds/OpenMetalDoor.wav", FMOD_LOOP_OFF, nullptr, &m_Sounds[SOUND_TYPE_OPEN_GATE]);
+	Result = m_System->createSound("Sounds/PowerDown.wav", FMOD_LOOP_OFF, nullptr, &m_Sounds[SOUND_TYPE_POWER_DOWN]);
+	Result = m_System->createSound("Sounds/Grunt_1.wav", FMOD_LOOP_OFF, nullptr, &m_Sounds[SOUND_TYPE_GRUNT_1]);
+	Result = m_System->createSound("Sounds/Grunt_2.wav", FMOD_LOOP_OFF, nullptr, &m_Sounds[SOUND_TYPE_GRUNT_2]);
 	Result = m_System->createSound("Sounds/PistolShot.wav", FMOD_LOOP_OFF, nullptr, &m_Sounds[SOUND_TYPE_PISTOL_SHOT]);
 	Result = m_System->createSound("Sounds/PistolDryFire.wav", FMOD_LOOP_OFF, nullptr, &m_Sounds[SOUND_TYPE_PISTOL_EMPTY]);
 	Result = m_System->createSound("Sounds/EvacuationSiren.wav", FMOD_LOOP_NORMAL, nullptr, &m_Sounds[SOUND_TYPE_SIREN]);
@@ -59,7 +62,7 @@ void CSoundManager::Initialize()
 		return;
 	}
 	
-	Result = m_Channels[SOUND_TYPE_TITLE_BGM]->setVolume(0.75f);
+	Result = m_Channels[SOUND_TYPE_TITLE_BGM]->setVolume(0.65f);
 
 	if (Result != FMOD_OK)
 	{

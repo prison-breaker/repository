@@ -142,7 +142,6 @@ void CTitleScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	POINT CursorPos{};
 
 	GetCursorPos(&CursorPos);
-	ScreenToClient(hWnd, &CursorPos);
 
 	UINT VertexCount{ static_cast<UINT>(m_BilboardObjects[2]->GetVertexCount()) };
 
@@ -180,7 +179,7 @@ void CTitleScene::ProcessInput(HWND hWnd, float ElapsedTime)
 					// GameStart Button
 					CSceneManager::GetInstance()->ReserveChangeScene(TEXT("GameScene"));
 					CSoundManager::GetInstance()->Stop(SOUND_TYPE_TITLE_BGM);
-					CSoundManager::GetInstance()->Play(SOUND_TYPE_INGAME_BGM, 0.6f);
+					CSoundManager::GetInstance()->Play(SOUND_TYPE_INGAME_BGM, 0.5f);
 				}
 					break;
 				case 1:

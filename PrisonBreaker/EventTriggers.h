@@ -15,7 +15,7 @@ public:
 	virtual void ShowInteractionUI();
 
 	virtual void InteractEventTrigger();
-	virtual void GenerateEventTrigger(float ElapsedTime);
+	virtual void Update(float ElapsedTime);
 };
 
 //=========================================================================================================================
@@ -34,7 +34,7 @@ public:
 	virtual void ShowInteractionUI();
 
 	virtual void InteractEventTrigger();
-	virtual void GenerateEventTrigger(float ElapsedTime);
+	virtual void Update(float ElapsedTime);
 
 	bool IsOpened() const;
 };
@@ -50,7 +50,7 @@ public:
 	virtual void ShowInteractionUI();
 
 	virtual void InteractEventTrigger();
-	virtual void GenerateEventTrigger(float ElapsedTime);
+	virtual void Update(float ElapsedTime);
 };
 
 //=========================================================================================================================
@@ -69,7 +69,7 @@ public:
 	virtual void ShowInteractionUI();
 
 	virtual void InteractEventTrigger();
-	virtual void GenerateEventTrigger(float ElapsedTime);
+	virtual void Update(float ElapsedTime);
 };
 
 //=========================================================================================================================

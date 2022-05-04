@@ -279,7 +279,8 @@ void CPlayerPunchingState::Enter(const shared_ptr<CPlayer>& Entity)
 
 				if ((Vector3::Length(ToGuard) < 3.0f) && (Vector3::Angle(Entity->GetLook(), Vector3::Normalize(ToGuard)) < 80.0f))
 				{
-					static_pointer_cast<CGuard>(Guard)->GetStateMachine()->ChangeState(CGuardHitState::GetInstance());
+					Guard->SetTarget(Entity);
+					Guard->GetStateMachine()->ChangeState(CGuardHitState::GetInstance());
 				}
 			}
 		}
@@ -401,12 +402,12 @@ void CPlayerShootingState::ProcessInput(const shared_ptr<CPlayer>& Entity, float
 				// 총알 UI의 총알 개수를 한 개 감소시킨다.
 				BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->SetVertexCount(BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->GetVertexCount() - 1);
 
-				CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_SHOT, 0.6f);
+				CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_SHOT, 0.45f);
 				break;
 			}
 			else
 			{
-				CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_EMPTY, 0.6f);
+				CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_EMPTY, 0.45f);
 			}
 		}
 	}

@@ -14,7 +14,7 @@ bool COpenDoorEventTrigger::CanPassTriggerArea(const XMFLOAT3& Position, const X
 	if (m_DoorAngle < 70.0f)
 	{
 		// 문 너머로 넘어가는 것을 계산한다.
-		if (Math::LineIntersection(m_TriggerAreas[0], m_TriggerAreas[3], Position, NewPosition))
+		if (Math::LineIntersection(m_TriggerArea[0], m_TriggerArea[3], Position, NewPosition))
 		{
 			return false;
 		}
@@ -39,7 +39,7 @@ void COpenDoorEventTrigger::InteractEventTrigger()
 	CSoundManager::GetInstance()->Play(SOUND_TYPE_OPEN_DOOR, 0.65f);
 }
 
-void COpenDoorEventTrigger::GenerateEventTrigger(float ElapsedTime)
+void COpenDoorEventTrigger::Update(float ElapsedTime)
 {
 	if (IsActive() && IsInteracted())
 	{
@@ -47,9 +47,9 @@ void COpenDoorEventTrigger::GenerateEventTrigger(float ElapsedTime)
 		{
 			const XMFLOAT3 WorldUp{ 0.0f, 1.0f, 0.0f };
 
-			m_EventObjects[0]->Rotate(WorldUp, 40.0f * ElapsedTime);
-			m_EventObjects[1]->Rotate(WorldUp, -40.0f * ElapsedTime);
-			m_DoorAngle += 40.0f * ElapsedTime;
+			m_EventObjects[0]->Rotate(WorldUp, 50.0f * ElapsedTime);
+			m_EventObjects[1]->Rotate(WorldUp, -50.0f * ElapsedTime);
+			m_DoorAngle += 50.0f * ElapsedTime;
 		}
 		else
 		{
@@ -99,6 +99,8 @@ void CPowerDownEventTrigger::InteractEventTrigger()
 
 		// 감시탑 차단 미션UI를 완료상태로 변경한다.
 		BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(0, 1);
+
+		CSoundManager::GetInstance()->Play(SOUND_TYPE_POWER_DOWN, 0.65f);
 	}
 	else
 	{
@@ -106,7 +108,7 @@ void CPowerDownEventTrigger::InteractEventTrigger()
 	}
 }
 
-void CPowerDownEventTrigger::GenerateEventTrigger(float ElapsedTime)
+void CPowerDownEventTrigger::Update(float ElapsedTime)
 {
 	if (IsActive() && IsInteracted())
 	{
@@ -114,8 +116,8 @@ void CPowerDownEventTrigger::GenerateEventTrigger(float ElapsedTime)
 		{
 			const XMFLOAT3 WorldUp{ 0.0f, 1.0f, 0.0f };
 
-			m_EventObjects[0]->Rotate(WorldUp, -20.0f * ElapsedTime);
-			m_PanelAngle += 20.0f * ElapsedTime;
+			m_EventObjects[0]->Rotate(WorldUp, -70.0f * ElapsedTime);
+			m_PanelAngle += 70.0f * ElapsedTime;
 		}
 		else
 		{
@@ -160,29 +162,32 @@ void CSirenEventTrigger::InteractEventTrigger()
 	auto GameObjects{ GameScene->GetGameObjects() };
 	auto NavMesh{ GameScene->GetNavMesh() };
 
-	UINT GuardCount{ static_cast<UINT>(GameObjects[OBJECT_TYPE_NPC].size())};
+	XMFLOAT3 CenterPosition{ (m_TriggerArea[0].x + m_TriggerArea[3].x) / 2.0f, m_TriggerArea[0].y, (m_TriggerArea[0].z + m_TriggerArea[1].z) / 2.0f};
 
-	for (UINT i = 0; i < 5; ++i)
+	for (const auto& GameObject : GameObjects[OBJECT_TYPE_NPC])
 	{
-		UINT Index{ rand() % GuardCount };
-		shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(GameObjects[OBJECT_TYPE_NPC][Index]) };
+		shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(GameObject) };
 
-		if (Guard)
+		if (Guard->GetHealth() > 0)
 		{
-			if (Guard->GetStateMachine()->IsInState(CGuardIdleState::GetInstance()) ||
-				Guard->GetStateMachine()->IsInState(CGuardPatrolState::GetInstance()) ||
-				Guard->GetStateMachine()->IsInState(CGuardReturnState::GetInstance()))
+			// 사이렌을 작동시킬 경우 주변 범위에 있는 경찰들이 플레이어를 쫒기 시작한다.
+			if (Math::Distance(CenterPosition, Guard->GetPosition()) <= 100.0f)
 			{
-				Guard->FindNavPath(NavMesh, GameObjects[OBJECT_TYPE_PLAYER].back()->GetPosition(), GameObjects);
-				Guard->GetStateMachine()->ChangeState(CGuardAssembleState::GetInstance());
+				if (Guard->GetStateMachine()->IsInState(CGuardIdleState::GetInstance()) ||
+					Guard->GetStateMachine()->IsInState(CGuardPatrolState::GetInstance()) ||
+					Guard->GetStateMachine()->IsInState(CGuardReturnState::GetInstance()))
+				{
+					Guard->FindNavPath(NavMesh, CenterPosition, GameObjects);
+					Guard->GetStateMachine()->ChangeState(CGuardAssembleState::GetInstance());
+				}
 			}
 		}
 	}
 
-	CSoundManager::GetInstance()->Play(SOUND_TYPE_SIREN, 0.5f);
+	CSoundManager::GetInstance()->Play(SOUND_TYPE_SIREN, 0.4f);
 }
 
-void CSirenEventTrigger::GenerateEventTrigger(float ElapsedTime)
+void CSirenEventTrigger::Update(float ElapsedTime)
 {
 
 }
@@ -201,7 +206,7 @@ bool COpenGateEventTrigger::CanPassTriggerArea(const XMFLOAT3& Position, const X
 	if (m_GateAngle < 120.0f)
 	{
 		// 게이트 너머로 넘어가는 것을 계산한다.
-		if (Math::LineIntersection(m_TriggerAreas[0], m_TriggerAreas[3], Position, NewPosition))
+		if (Math::LineIntersection(m_TriggerArea[0], m_TriggerArea[3], Position, NewPosition))
 		{
 			return false;
 		}
@@ -223,9 +228,10 @@ void COpenGateEventTrigger::ShowInteractionUI()
 void COpenGateEventTrigger::InteractEventTrigger()
 {
 	CEventTrigger::InteractEventTrigger();
+	CSoundManager::GetInstance()->Play(SOUND_TYPE_OPEN_GATE, 0.35f);
 }
 
-void COpenGateEventTrigger::GenerateEventTrigger(float ElapsedTime)
+void COpenGateEventTrigger::Update(float ElapsedTime)
 {
 	if (IsActive() && IsInteracted())
 	{
@@ -233,9 +239,9 @@ void COpenGateEventTrigger::GenerateEventTrigger(float ElapsedTime)
 		{
 			const XMFLOAT3 WorldUp{ 0.0f, 1.0f, 0.0f };
 
-			m_EventObjects[0]->Rotate(WorldUp, -20.0f * ElapsedTime);
-			m_EventObjects[1]->Rotate(WorldUp, 20.0f * ElapsedTime);
-			m_GateAngle += 20.0f * ElapsedTime;
+			m_EventObjects[0]->Rotate(WorldUp, -55.0f * ElapsedTime);
+			m_EventObjects[1]->Rotate(WorldUp, 55.0f * ElapsedTime);
+			m_GateAngle += 55.0f * ElapsedTime;
 		}
 	}
 }

@@ -372,15 +372,15 @@ void CGuardShootingState::Enter(const shared_ptr<CGuard>& Entity)
 	BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetVertexCount(BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->GetVertexCount() - 1);
 
 	auto Player{ static_pointer_cast<CPlayer>(Entity->GetTarget()) };
-	Player->SetHealth(Player->GetHealth() - 10);
+	//Player->SetHealth(Player->GetHealth() - 10);
 
 	if (Player->GetHealth() <= 0)
 	{
 		Player->GetStateMachine()->ChangeState(CPlayerDyingState::GetInstance());
 	}
 
-	CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_SHOT, 0.6f);
-	CSoundManager::GetInstance()->Play(SOUND_TYPE_GRUNT, 0.6f);	
+	CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_SHOT, 0.35f);
+	CSoundManager::GetInstance()->Play(SOUND_TYPE_GRUNT_1, 0.3f);
 }
 
 void CGuardShootingState::ProcessInput(const shared_ptr<CGuard>& Entity, float ElapsedTime, UINT InputMask)
@@ -473,6 +473,8 @@ void CGuardHitState::Enter(const shared_ptr<CGuard>& Entity)
 	Entity->SetAnimationClip(4);
 	Entity->SetSpeed(0.0f);
 	Entity->SetHealth(Entity->GetHealth() - 35);
+
+	CSoundManager::GetInstance()->Play(SOUND_TYPE_GRUNT_2, 0.5f);
 }
 
 void CGuardHitState::ProcessInput(const shared_ptr<CGuard>& Entity, float ElapsedTime, UINT InputMask)
@@ -514,14 +516,7 @@ void CGuardDyingState::Enter(const shared_ptr<CGuard>& Entity)
 	Entity->SetRecentTransition(false);
 	Entity->SetAnimationClip(5);
 	Entity->SetSpeed(0.0f);
-
-	auto EventTrigger{ Entity->GetEventTrigger() };
-
-	if (EventTrigger)
-	{
-		EventTrigger->SetActive(true);
-		EventTrigger->CalculateTriggerAreasByGuardPosition(Entity->GetPosition());
-	}
+	Entity->GenerateTrigger();
 }
 
 void CGuardDyingState::ProcessInput(const shared_ptr<CGuard>& Entity, float ElapsedTime, UINT InputMask)
