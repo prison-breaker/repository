@@ -17,7 +17,10 @@ void CEventTrigger::ShowInteractionUI()
 
 void CEventTrigger::InteractEventTrigger()
 {
-	SetInteracted(true);
+	if (!IsInteracted())
+	{
+		SetInteracted(true);
+	}
 }
 
 void CEventTrigger::Update(float ElapsedTime)
@@ -164,5 +167,10 @@ void CEventTrigger::DeleteThisEventTrigger()
 			EventTriggers.erase(iter);
 			break;
 		}
-	}	
+	}
+
+	if (EventTriggers.empty())
+	{
+		EventTriggers.shrink_to_fit();
+	}
 }

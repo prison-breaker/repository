@@ -15,10 +15,6 @@ void CGameScene::OnDestroy()
 	
 void CGameScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, ID3D12RootSignature* D3D12RootSignature)
 {
-	// NavMesh 객체를 생성한다.
-	m_NavMesh = make_shared<CNavMesh>();
-	m_NavMesh->LoadNavMeshFromFile(TEXT("Navigation/NavMesh.bin"));
-
 	// 렌더링에 필요한 셰이더 객체(PSO)를 생성한다.
 	shared_ptr<CGraphicsShader> Shader{ make_shared<CDepthWriteShader>(D3D12Device, D3D12GraphicsCommandList) };
 
@@ -40,6 +36,10 @@ void CGameScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandLi
 	Shader = make_shared<CDebugShader>();
 	Shader->CreatePipelineState(D3D12Device, D3D12RootSignature, 0);
 	CShaderManager::GetInstance()->RegisterShader(TEXT("DebugShader"), Shader);
+
+	// NavMesh 객체를 생성한다.
+	m_NavMesh = make_shared<CNavMesh>();
+	m_NavMesh->LoadNavMeshFromFile(TEXT("Navigation/NavMesh.bin"));
 
 	// 타입 수만큼 각 벡터의 크기를 재할당한다.
 	m_GameObjects.resize(OBJECT_TYPE_STRUCTURE + 1);
@@ -817,7 +817,7 @@ void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
 
 	Indices.resize(m_GameObjects[OBJECT_TYPE_NPC].size() - 2);
 	iota(Indices.begin(), Indices.end(), 2);
-	shuffle(Indices.begin(), Indices.end(), default_random_engine{});
+	shuffle(Indices.begin(), Indices.end(), default_random_engine{ random_device{}() });
 
 	for (UINT i = 0 ; i < 5 ; ++i)
 	{
@@ -834,18 +834,18 @@ void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
 
 	// 열쇠를 드롭하는 트리거를 추가한다.
 	// 열쇠는 외형이 다른 교도관(Index: 0, 1)이 보유하고 있다.
-	shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][0]) };
+	for (UINT i = 0; i < 2; ++i)
+	{
+		if (m_GameObjects[OBJECT_TYPE_NPC][i])
+		{
+			shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][i]) };
 
-	EventTrigger = make_shared<CGetKeyEventTrigger>();
-	Guard->SetEventTrigger(EventTrigger);
+			EventTrigger = make_shared<CGetKeyEventTrigger>();
+			Guard->SetEventTrigger(EventTrigger);
 
-	m_EventTriggers.push_back(EventTrigger);
-
-	Guard = static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][1]);
-	EventTrigger = make_shared<CGetKeyEventTrigger>();
-	Guard->SetEventTrigger(EventTrigger);
-
-	m_EventTriggers.push_back(EventTrigger);
+			m_EventTriggers.push_back(EventTrigger);
+		}
+	}
 
 	// 모든 트리거 객체는 상호작용 UI 객체를 공유한다.
 	UINT TriggerCount{ static_cast<UINT>(m_EventTriggers.size()) };
@@ -854,6 +854,7 @@ void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
 	{
 		if (EventTrigger)
 		{
+			// [BILBOARD_OBJECT_TYPE_UI][9]: InteractionUI
 			EventTrigger->SetInteractionUI(m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][9]);
 		}
 	}

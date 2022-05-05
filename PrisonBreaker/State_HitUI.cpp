@@ -12,7 +12,6 @@ CHitUIActivationState* CHitUIActivationState::GetInstance()
 void CHitUIActivationState::Enter(const shared_ptr<CHitUI>& Entity)
 {
 	Entity->SetActive(true);
-	Entity->GetUIAnimationController()->SetActive(true);
 	Entity->GetUIAnimationController()->SetKeyFrameIndex(0);
 }
 

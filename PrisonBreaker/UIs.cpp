@@ -52,10 +52,6 @@ shared_ptr<CStateMachine<CMissionUI>> CMissionUI::GetStateMachine() const
 void CKeyUI::Initialize()
 {
 	m_StateMachine = make_shared<CStateMachine<CKeyUI>>(static_pointer_cast<CKeyUI>(shared_from_this()));
-	m_StateMachine->SetCurrentState(CKeyUIActivationState::GetInstance());
-
-	// 일단은 애니메이션이 실행되지 않도록 한다.
-	m_UIAnimationController->SetActive(false);
 }
 
 void CKeyUI::Animate(float ElapsedTime)
@@ -84,7 +80,6 @@ void CHitUI::Initialize()
 	// 일단은 애니메이션이 실행되지 않도록 한다.
 	// SetActive() 함수를 호출하는 이유는 State의 Enter에서 매 번 true로 변하기 때문이다.
 	SetActive(false);
-	m_UIAnimationController->SetActive(false);
 }
 
 void CHitUI::Animate(float ElapsedTime)

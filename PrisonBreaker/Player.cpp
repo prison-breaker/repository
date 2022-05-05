@@ -285,7 +285,6 @@ void CPlayer::ProcessInput(float ElapsedTime, UINT InputMask)
 	}
 
 	shared_ptr<CNavMesh> NavMesh{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetNavMesh() };
-
 	XMFLOAT3 NewPosition{ Vector3::Add(GetPosition(), Vector3::ScalarProduct(m_Speed * ElapsedTime, m_MovingDirection, false)) };
 
 	if (!IsInNavMesh(NavMesh, NewPosition))

@@ -56,7 +56,12 @@ public:
 
 	bool IsInState(CState<EntityType>* State) const
 	{
-		return typeid(*m_CurrentState) == typeid(*State);
+		if (m_CurrentState)
+		{
+			return typeid(*m_CurrentState) == typeid(*State);
+		}
+
+		return false;
 	}
 
 	void ProcessInput(float ElapsedTime, UINT InputMask)

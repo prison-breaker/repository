@@ -323,9 +323,7 @@ void CPlayerShootingState::Enter(const shared_ptr<CPlayer>& Entity)
 
 void CPlayerShootingState::ProcessInput(const shared_ptr<CPlayer>& Entity, float ElapsedTime, UINT InputMask)
 {
-	switch (InputMask)
-	{
-	case INPUT_MASK_LMB | INPUT_MASK_RMB:
+	if ((InputMask & INPUT_MASK_LMB) && (InputMask & INPUT_MASK_RMB))
 	{
 		shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
 		vector<vector<shared_ptr<CGameObject>>>& GameObjects{ GameScene->GetGameObjects() };
@@ -352,6 +350,16 @@ void CPlayerShootingState::ProcessInput(const shared_ptr<CPlayer>& Entity, float
 						{
 							if (GameObject->IsActive())
 							{
+								if (i == OBJECT_TYPE_NPC)
+								{
+									shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(GameObject) };
+
+									if (Guard->GetHealth() <= 0)
+									{
+										continue;
+									}
+								}
+
 								// 모델을 공유하기 때문에, 월드 변환 행렬을 객체마다 갱신시켜주어야 한다.
 								shared_ptr<CAnimationController> AnimationController{ GameObject->GetAnimationController() };
 
@@ -403,7 +411,6 @@ void CPlayerShootingState::ProcessInput(const shared_ptr<CPlayer>& Entity, float
 				BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->SetVertexCount(BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->GetVertexCount() - 1);
 
 				CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_SHOT, 0.45f);
-				break;
 			}
 			else
 			{
@@ -411,8 +418,7 @@ void CPlayerShootingState::ProcessInput(const shared_ptr<CPlayer>& Entity, float
 			}
 		}
 	}
-	}
-	if (InputMask & INPUT_MASK_RMB)
+	else if (InputMask & INPUT_MASK_RMB)
 	{
 		Entity->GetCamera()->IncreaseZoomFactor(ElapsedTime);
 	}
