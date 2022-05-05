@@ -50,7 +50,6 @@ public:
 	virtual void ShowInteractionUI();
 
 	virtual void InteractEventTrigger();
-	virtual void Update(float ElapsedTime);
 };
 
 //=========================================================================================================================

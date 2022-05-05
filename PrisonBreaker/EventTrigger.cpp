@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "EventTrigger.h"
-#include "BilboardObject.h"
-#include "GameObject.h"
+#include "GameScene.h"
 
 bool CEventTrigger::CanPassTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& NewPosition)
 {
@@ -117,21 +116,24 @@ shared_ptr<CBilboardObject> CEventTrigger::GetInteractionUI() const
 
 bool CEventTrigger::IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& LookDirection)
 {
-	if (IsActive() && !IsInteracted())
+	if (IsActive())
 	{
 		for (UINT i = 0; i < 2; ++i)
 		{
 			if (Math::IsInTriangle(m_TriggerArea[0], m_TriggerArea[i + 1], m_TriggerArea[i + 2], Position))
 			{
-				if (Vector3::Angle(LookDirection, m_ToTrigger) <= m_ActiveFOV)
+				if (!IsInteracted())
 				{
 					// 각도가 일정 범위안에 있다면 상호작용 UI를 렌더링하도록 만든다.
-					ShowInteractionUI();
+					if (Vector3::Angle(LookDirection, m_ToTrigger) <= m_ActiveFOV)
+					{
+						ShowInteractionUI();
+
+						return true;
+					}
 				}
-				else
-				{
-					HideInteractionUI();
-				}
+
+				HideInteractionUI();
 
 				return true;
 			}
@@ -147,4 +149,20 @@ void CEventTrigger::HideInteractionUI()
 	{
 		m_InteractionUI->SetActive(false);
 	}
+}
+
+void CEventTrigger::DeleteThisEventTrigger()
+{
+	vector<shared_ptr<CEventTrigger>>& EventTriggers{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetEventTriggers() };
+
+	for (auto iter = EventTriggers.begin(); iter != EventTriggers.end(); ++iter)
+	{
+		shared_ptr<CEventTrigger> EventTrigger{ *iter };
+
+		if (EventTrigger == shared_from_this())
+		{
+			EventTriggers.erase(iter);
+			break;
+		}
+	}	
 }

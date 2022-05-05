@@ -53,7 +53,8 @@ void COpenDoorEventTrigger::Update(float ElapsedTime)
 		}
 		else
 		{
-			m_DoorAngle = 70.0f;
+			// 문이 모두 열렸다면, 현재 이벤트 트리거를 삭제한다.
+			DeleteThisEventTrigger();
 		}
 	}
 }
@@ -75,12 +76,10 @@ void CPowerDownEventTrigger::ShowInteractionUI()
 		if (m_PanelAngle <= 0.0f)
 		{
 			m_InteractionUI->SetCellIndex(0, 1);
-			m_PanelAngle;
 		}
 		else if (m_PanelAngle <= 120.0f)
 		{
 			m_InteractionUI->SetCellIndex(0, 2);
-			m_PanelAngle;
 		}
 	}
 }
@@ -92,15 +91,20 @@ void CPowerDownEventTrigger::InteractEventTrigger()
 	// 배전함이 열려있다면
 	if (IsOpened())
 	{
-		// 감시탑의 조명을 끈다.
-		static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetLights()[1].m_IsActive = false;
+		shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
+		vector<LIGHT>& Lights{ GameScene->GetLights() };
+		vector<vector<shared_ptr<CBilboardObject>>>& BilboardObjects{ GameScene->GetBilboardObjects() };
 
-		auto BilboardObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetBilboardObjects() };
+		// 감시탑의 조명을 끈다.
+		Lights[1].m_IsActive = false;
 
 		// 감시탑 차단 미션UI를 완료상태로 변경한다.
 		BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(0, 1);
 
 		CSoundManager::GetInstance()->Play(SOUND_TYPE_POWER_DOWN, 0.65f);
+
+		// 감시탑의 전원을 차단했다면, 현재 이벤트 트리거를 삭제한다.
+		DeleteThisEventTrigger();
 	}
 	else
 	{
@@ -158,38 +162,39 @@ void CSirenEventTrigger::InteractEventTrigger()
 {
 	CEventTrigger::InteractEventTrigger();
 
-	auto GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
-	auto GameObjects{ GameScene->GetGameObjects() };
-	auto NavMesh{ GameScene->GetNavMesh() };
+	shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
+	vector<vector<shared_ptr<CGameObject>>>& GameObjects{ GameScene->GetGameObjects() };
+	shared_ptr<CNavMesh> NavMesh{ GameScene->GetNavMesh() };
 
 	XMFLOAT3 CenterPosition{ (m_TriggerArea[0].x + m_TriggerArea[3].x) / 2.0f, m_TriggerArea[0].y, (m_TriggerArea[0].z + m_TriggerArea[1].z) / 2.0f};
 
 	for (const auto& GameObject : GameObjects[OBJECT_TYPE_NPC])
 	{
-		shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(GameObject) };
-
-		if (Guard->GetHealth() > 0)
+		if (GameObject)
 		{
-			// 사이렌을 작동시킬 경우 주변 범위에 있는 경찰들이 플레이어를 쫒기 시작한다.
-			if (Math::Distance(CenterPosition, Guard->GetPosition()) <= 100.0f)
+			shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(GameObject) };
+
+			if (Guard->GetHealth() > 0)
 			{
-				if (Guard->GetStateMachine()->IsInState(CGuardIdleState::GetInstance()) ||
-					Guard->GetStateMachine()->IsInState(CGuardPatrolState::GetInstance()) ||
-					Guard->GetStateMachine()->IsInState(CGuardReturnState::GetInstance()))
+				// 사이렌을 작동시킬 경우 주변 범위에 있는 경찰들이 플레이어를 쫒기 시작한다.
+				if (Math::Distance(CenterPosition, Guard->GetPosition()) <= 100.0f)
 				{
-					Guard->FindNavPath(NavMesh, CenterPosition, GameObjects);
-					Guard->GetStateMachine()->ChangeState(CGuardAssembleState::GetInstance());
+					if (Guard->GetStateMachine()->IsInState(CGuardIdleState::GetInstance()) ||
+						Guard->GetStateMachine()->IsInState(CGuardPatrolState::GetInstance()) ||
+						Guard->GetStateMachine()->IsInState(CGuardReturnState::GetInstance()))
+					{
+						Guard->FindNavPath(NavMesh, CenterPosition, GameObjects);
+						Guard->GetStateMachine()->ChangeState(CGuardAssembleState::GetInstance());
+					}
 				}
 			}
 		}
 	}
 
 	CSoundManager::GetInstance()->Play(SOUND_TYPE_SIREN, 0.4f);
-}
 
-void CSirenEventTrigger::Update(float ElapsedTime)
-{
-
+	// 사이렌을 작동시켰다면, 현재 이벤트 트리거를 삭제한다.
+	DeleteThisEventTrigger();
 }
 
 //=========================================================================================================================
@@ -243,6 +248,11 @@ void COpenGateEventTrigger::Update(float ElapsedTime)
 			m_EventObjects[1]->Rotate(WorldUp, 55.0f * ElapsedTime);
 			m_GateAngle += 55.0f * ElapsedTime;
 		}
+		else
+		{
+			// 문이 모두 열렸다면, 현재 이벤트 트리거를 삭제한다.
+			DeleteThisEventTrigger();
+		}
 	}
 }
 
@@ -266,9 +276,9 @@ void CGetPistolEventTrigger::InteractEventTrigger()
 {
 	CEventTrigger::InteractEventTrigger();
 
-	auto GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
-	auto GameObjects{ GameScene->GetGameObjects() };
-	auto BilboardObjects{ GameScene->GetBilboardObjects() };
+	shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
+	vector<vector<shared_ptr<CGameObject>>>& GameObjects{ GameScene->GetGameObjects() };
+	vector<vector<shared_ptr<CBilboardObject>>>& BilboardObjects{ GameScene->GetBilboardObjects() };
 
 	// 권총을 획득한 경우, 권총으로 무기를 교체하고 UI 또한 주먹에서 권총으로 변경시킨다.
 	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(GameObjects[OBJECT_TYPE_PLAYER].back()) };
@@ -284,6 +294,9 @@ void CGetPistolEventTrigger::InteractEventTrigger()
 	BilboardObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(true);  // 6: Pistol UI
 	BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->SetActive(true);  // 7: Bullet UI
 	BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->SetVertexCount(5);
+
+	// 권총을 획득했다면, 현재 이벤트 트리거를 삭제한다.
+	DeleteThisEventTrigger();
 }
 
 //=========================================================================================================================
@@ -306,11 +319,14 @@ void CGetKeyEventTrigger::InteractEventTrigger()
 {
 	CEventTrigger::InteractEventTrigger();
 
-	auto BilboardObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetBilboardObjects() };
+	vector<vector<shared_ptr<CBilboardObject>>>& BilboardObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetBilboardObjects() };
 
 	// 열쇠 획득 애니메이션을 출력하도록 CKeyUIActivationState 상태로 전이한다.
 	static_pointer_cast<CKeyUI>(BilboardObjects[BILBOARD_OBJECT_TYPE_UI][5])->GetStateMachine()->SetCurrentState(CKeyUIActivationState::GetInstance());
 
 	// 열쇠 획득 미션UI를 완료상태로 변경한다.
 	BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(1, 5);
+
+	// 열쇠를 획득했다면, 현재 이벤트 트리거를 삭제한다.
+	DeleteThisEventTrigger();
 }

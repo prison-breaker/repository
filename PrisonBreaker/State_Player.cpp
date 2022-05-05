@@ -265,13 +265,13 @@ void CPlayerPunchingState::Enter(const shared_ptr<CPlayer>& Entity)
 	Entity->SetMovingDirection(XMFLOAT3(0.0f, 0.0f, 0.0f));
 	Entity->SetAnimationClip(7);
 
-	auto GameObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetGameObjects() };
+	vector<vector<shared_ptr<CGameObject>>>& GameObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetGameObjects() };
 
 	for (const auto& GameObject : GameObjects[OBJECT_TYPE_NPC])
 	{
 		if (GameObject)
 		{
-			auto Guard{ static_pointer_cast<CGuard>(GameObject) };
+			shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(GameObject) };
 
 			if (Guard->GetHealth() > 0)
 			{
@@ -327,9 +327,9 @@ void CPlayerShootingState::ProcessInput(const shared_ptr<CPlayer>& Entity, float
 	{
 	case INPUT_MASK_LMB | INPUT_MASK_RMB:
 	{
-		auto GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
-		auto GameObjects{ GameScene->GetGameObjects() };
-		auto BilboardObjects{ GameScene->GetBilboardObjects() };
+		shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
+		vector<vector<shared_ptr<CGameObject>>>& GameObjects{ GameScene->GetGameObjects() };
+		vector<vector<shared_ptr<CBilboardObject>>>& BilboardObjects{ GameScene->GetBilboardObjects() };
 
 		// 줌 애니메이션을 하는 상태이고, 보유한 총알이 1발 이상 존재해야 쏠 수 있다.
 		if (Entity->GetAnimationController()->GetAnimationClip() == 8)

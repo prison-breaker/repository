@@ -24,14 +24,13 @@ void CGuardIdleState::ProcessInput(const shared_ptr<CGuard>& Entity, float Elaps
 
 void CGuardIdleState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTime)
 {
-	auto GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
-	auto GameObjects{ GameScene->GetGameObjects() };
-
+	shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
+	vector<vector<shared_ptr<CGameObject>>>& GameObjects{ GameScene->GetGameObjects() };
 	shared_ptr<CGameObject> NearestPlayer{ Entity->IsFoundPlayer(GameObjects) };
 
 	if (NearestPlayer)
 	{
-		auto NavMesh{ GameScene->GetNavMesh() };
+		shared_ptr<CNavMesh> NavMesh{ GameScene->GetNavMesh() };
 
 		Entity->SetTarget(NearestPlayer);
 		Entity->GetStateMachine()->ChangeState(CGuardChaseState::GetInstance());
@@ -78,14 +77,13 @@ void CGuardPatrolState::ProcessInput(const shared_ptr<CGuard>& Entity, float Ela
 
 void CGuardPatrolState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTime)
 {
-	auto GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
-	auto GameObjects{ GameScene->GetGameObjects() };
-
+	shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
+	vector<vector<shared_ptr<CGameObject>>>& GameObjects{ GameScene->GetGameObjects() };
 	shared_ptr<CGameObject> NearestPlayer{ Entity->IsFoundPlayer(GameObjects) };
 
 	if (NearestPlayer)
 	{
-		auto NavMesh{ GameScene->GetNavMesh() };
+		shared_ptr<CNavMesh> NavMesh{ GameScene->GetNavMesh() };
 
 		Entity->SetTarget(NearestPlayer);
 		Entity->GetStateMachine()->ChangeState(CGuardChaseState::GetInstance());
@@ -123,10 +121,9 @@ CGuardChaseState* CGuardChaseState::GetInstance()
 
 void CGuardChaseState::Enter(const shared_ptr<CGuard>& Entity)
 {
-	auto GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
-	auto GameObjects{ GameScene->GetGameObjects() };
-	auto NavMesh{ GameScene->GetNavMesh() };
-
+	shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
+	vector<vector<shared_ptr<CGameObject>>>& GameObjects{ GameScene->GetGameObjects() };
+	shared_ptr<CNavMesh> NavMesh{ GameScene->GetNavMesh() };
 	shared_ptr<CGameObject> Target{ Entity->GetTarget() };
 
 	Entity->FindNavPath(NavMesh, Target->GetPosition(), GameObjects);
@@ -147,12 +144,9 @@ void CGuardChaseState::ProcessInput(const shared_ptr<CGuard>& Entity, float Elap
 
 void CGuardChaseState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTime)
 {
-	auto GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
-	auto GameObjects{ GameScene->GetGameObjects() };
-	auto NavMesh{ GameScene->GetNavMesh() };
-
+	shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
+	vector<vector<shared_ptr<CGameObject>>>& GameObjects{ GameScene->GetGameObjects() };
 	shared_ptr<CGameObject> NearestPlayer{ Entity->IsFoundPlayer(GameObjects) };
-	XMFLOAT3 Direction{};
 
 	if (NearestPlayer)
 	{
@@ -160,6 +154,7 @@ void CGuardChaseState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTim
 	}
 
 	shared_ptr<CGameObject> Target{ Entity->GetTarget() };
+	XMFLOAT3 Direction{};
 
 	if (!NearestPlayer && Entity->GetRecentTransition())
 	{
@@ -205,6 +200,8 @@ void CGuardChaseState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTim
 
 		if (Entity->GetElapsedTime() > Entity->GetUpdateTargetTime() || Entity->GetNavPath().empty())
 		{
+			shared_ptr<CNavMesh> NavMesh{ GameScene->GetNavMesh() };
+
 			// 3초에 한번씩 혹은 NavPath가 비었을 경우 NavPath를 갱신한다.
 			Entity->FindNavPath(NavMesh, Target->GetPosition(), GameObjects);
 
@@ -236,9 +233,9 @@ CGuardReturnState* CGuardReturnState::GetInstance()
 
 void CGuardReturnState::Enter(const shared_ptr<CGuard>& Entity)
 {
-	auto GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
-	auto GameObjects{ GameScene->GetGameObjects() };
-	auto NavMesh{ GameScene->GetNavMesh() };
+	shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
+	vector<vector<shared_ptr<CGameObject>>>& GameObjects{ GameScene->GetGameObjects() };
+	shared_ptr<CNavMesh> NavMesh{ GameScene->GetNavMesh() };
 
 	Entity->FindNavPath(NavMesh, Entity->GetPatrolNavPath()[Entity->GetPatrolIndex()], GameObjects);
 
@@ -258,14 +255,14 @@ void CGuardReturnState::ProcessInput(const shared_ptr<CGuard>& Entity, float Ela
 
 void CGuardReturnState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTime)
 {
-	auto GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
-	auto GameObjects{ GameScene->GetGameObjects() };
+	shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
+	vector<vector<shared_ptr<CGameObject>>>& GameObjects{ GameScene->GetGameObjects() };
 
 	shared_ptr<CGameObject> NearestPlayer{ Entity->IsFoundPlayer(GameObjects) };
 
 	if (NearestPlayer)
 	{
-		auto NavMesh{ GameScene->GetNavMesh() };
+		shared_ptr<CNavMesh> NavMesh{ GameScene->GetNavMesh() };
 
 		Entity->SetTarget(NearestPlayer);
 		Entity->GetStateMachine()->ChangeState(CGuardChaseState::GetInstance());
@@ -318,10 +315,8 @@ void CGuardAssembleState::ProcessInput(const shared_ptr<CGuard>& Entity, float E
 
 void CGuardAssembleState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTime)
 {
-	auto GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
-	auto GameObjects{ GameScene->GetGameObjects() };
-	auto NavMesh{ GameScene->GetNavMesh() };
-
+	shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
+	vector<vector<shared_ptr<CGameObject>>>& GameObjects{ GameScene->GetGameObjects() };
 	shared_ptr<CGameObject> NearestPlayer{ Entity->IsFoundPlayer(GameObjects) };
 
 	if (NearestPlayer)
@@ -365,13 +360,13 @@ void CGuardShootingState::Enter(const shared_ptr<CGuard>& Entity)
 	Entity->SetAnimationClip(3);
 	Entity->SetSpeed(0.0f);
 
-	auto BilboardObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetBilboardObjects() };
+	vector<vector<shared_ptr<CBilboardObject>>>& BilboardObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetBilboardObjects() };
 
 	// 피격 UI 애니메이션을 재생시키고, UI 체력을 1감소시킨다.
 	static_pointer_cast<CHitUI>(BilboardObjects[BILBOARD_OBJECT_TYPE_UI][10])->GetStateMachine()->SetCurrentState(CHitUIActivationState::GetInstance());
 	BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetVertexCount(BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->GetVertexCount() - 1);
 
-	auto Player{ static_pointer_cast<CPlayer>(Entity->GetTarget()) };
+	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(Entity->GetTarget()) };
 	//Player->SetHealth(Player->GetHealth() - 10);
 
 	if (Player->GetHealth() <= 0)
@@ -393,8 +388,8 @@ void CGuardShootingState::Update(const shared_ptr<CGuard>& Entity, float Elapsed
 	// 총을 쏘면 다시 ChaseState로 전이한다.
 	if (Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE))
 	{
-		auto GameObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetGameObjects() };
-		auto Player{ static_pointer_cast<CPlayer>(Entity->GetTarget()) };
+		vector<vector<shared_ptr<CGameObject>>>& GameObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetGameObjects() };
+		shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(Entity->GetTarget()) };
 
 		if (Player->GetHealth() > 0)
 		{

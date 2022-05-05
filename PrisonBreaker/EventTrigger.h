@@ -3,7 +3,7 @@
 class CGameObject;
 class CBilboardObject;
 
-class CEventTrigger
+class CEventTrigger : public enable_shared_from_this<CEventTrigger>
 {
 protected:
 	bool							m_IsActive{};
@@ -47,4 +47,6 @@ public:
 	bool IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& LookDirection);
 
 	void HideInteractionUI();
+
+	void DeleteThisEventTrigger();
 };

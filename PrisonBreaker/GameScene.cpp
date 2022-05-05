@@ -813,25 +813,22 @@ void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
 
 	// 권총을 드롭하는 트리거를 추가한다.
 	// 권총은 열쇠를 갖지 않은 임의의 교도관(Index: 2 ~ 14) 중 5명이 보유하고 있다.
-	shared_ptr<bool[]> isVisited{ new bool[m_GameObjects[OBJECT_TYPE_NPC].size() - 2]{}, [](bool* p) { delete[] p; } };
+	vector<UINT> Indices{};
 
-	for (UINT i = 0; i < 5;)
+	Indices.resize(m_GameObjects[OBJECT_TYPE_NPC].size() - 2);
+	iota(Indices.begin(), Indices.end(), 2);
+	shuffle(Indices.begin(), Indices.end(), default_random_engine{});
+
+	for (UINT i = 0 ; i < 5 ; ++i)
 	{
-		UINT RandomIndex{ static_cast<UINT>((rand() % 13) + 2) };
-
-		if (!isVisited[RandomIndex])
+		if (m_GameObjects[OBJECT_TYPE_NPC][Indices[i]])
 		{
-			shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][RandomIndex]) };
+			shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][Indices[i]]) };
 
 			EventTrigger = make_shared<CGetPistolEventTrigger>();
-			EventTrigger->InsertEventObject(m_GameObjects[OBJECT_TYPE_PLAYER].back());
-
 			Guard->SetEventTrigger(EventTrigger);
 
 			m_EventTriggers.push_back(EventTrigger);
-
-			isVisited[RandomIndex] = true;
-			++i;
 		}
 	}
 
@@ -988,19 +985,22 @@ void CGameScene::InteractSpotLight(float ElapsedTime)
 						{
 							for (const auto& GameObject : m_GameObjects[OBJECT_TYPE_NPC])
 							{
-								shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(GameObject) };
-
-								if (Guard->GetHealth() > 0)
+								if (GameObject)
 								{
-									// 스팟조명과 충돌 할 경우 주변 범위에 있는 경찰들이 플레이어를 쫒기 시작한다.
-									if (Math::Distance(LightedPosition, Guard->GetPosition()) <= 150.0f)
+									shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(GameObject) };
+
+									if (Guard->GetHealth() > 0)
 									{
-										if (Guard->GetStateMachine()->IsInState(CGuardIdleState::GetInstance()) ||
-											Guard->GetStateMachine()->IsInState(CGuardPatrolState::GetInstance()) ||
-											Guard->GetStateMachine()->IsInState(CGuardReturnState::GetInstance()))
+										// 스팟조명과 충돌 할 경우 주변 범위에 있는 경찰들이 플레이어를 쫒기 시작한다.
+										if (Math::Distance(LightedPosition, Guard->GetPosition()) <= 150.0f)
 										{
-											Guard->FindNavPath(m_NavMesh, Player->GetPosition(), m_GameObjects);
-											Guard->GetStateMachine()->ChangeState(CGuardAssembleState::GetInstance());
+											if (Guard->GetStateMachine()->IsInState(CGuardIdleState::GetInstance()) ||
+												Guard->GetStateMachine()->IsInState(CGuardPatrolState::GetInstance()) ||
+												Guard->GetStateMachine()->IsInState(CGuardReturnState::GetInstance()))
+											{
+												Guard->FindNavPath(m_NavMesh, Player->GetPosition(), m_GameObjects);
+												Guard->GetStateMachine()->ChangeState(CGuardAssembleState::GetInstance());
+											}
 										}
 									}
 								}

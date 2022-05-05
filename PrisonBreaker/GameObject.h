@@ -103,7 +103,7 @@ public:
 
 	bool IsVisible(CCamera* Camera) const;
 
-	bool IsInNavMesh(const shared_ptr<CNavMesh>& NavMesh, const XMFLOAT3& NewPosition);
+	bool IsInNavMesh(const shared_ptr<CNavMesh>& NavMesh, XMFLOAT3& NewPosition);
 
 	void UpdateBoundingBox();
 	void UpdateTransform(const XMFLOAT4X4& ParentMatrix);

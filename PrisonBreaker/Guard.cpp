@@ -146,7 +146,7 @@ shared_ptr<CGameObject> CGuard::IsFoundPlayer(const vector<vector<shared_ptr<CGa
 	{
 		if (GameObject)
 		{
-			auto Player{ static_pointer_cast<CPlayer>(GameObject) };
+			shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(GameObject) };
 
 			if (Player->GetHealth() > 0)
 			{
@@ -158,7 +158,7 @@ shared_ptr<CGameObject> CGuard::IsFoundPlayer(const vector<vector<shared_ptr<CGa
 				{
 					float BetweenDegree{ Vector3::Angle(Vector3::Normalize(GetLook()), Vector3::Normalize(ToPlayer)) };
 
-					if (BetweenDegree < 140.0f)
+					if (BetweenDegree < 100.0f)
 					{
 						float NearestHitDistance{ FLT_MAX };
 						float HitDistance{};

@@ -220,13 +220,15 @@ void CPlayer::Rotate(float Pitch, float Yaw, float Roll, float ElapsedTime, floa
 
 bool CPlayer::IsCollidedByGuard(const XMFLOAT3& NewPosition)
 {
-	auto Guards{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetGameObjects()[OBJECT_TYPE_NPC] };
+	vector<vector<shared_ptr<CGameObject>>>& GameObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetGameObjects() };
 
-	for (const auto& Guard : Guards)
+	for (const auto& GameObject : GameObjects[OBJECT_TYPE_NPC])
 	{
-		if (Guard)
+		if (GameObject)
 		{
-			if (Guard->IsActive())
+			shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(GameObject) };
+
+			if (Guard->GetHealth() > 0)
 			{
 				if (Math::Distance(Guard->GetPosition(), NewPosition) <= 2.0f)
 				{
@@ -241,11 +243,11 @@ bool CPlayer::IsCollidedByGuard(const XMFLOAT3& NewPosition)
 
 bool CPlayer::IsCollidedByEventTrigger(const XMFLOAT3& NewPosition, bool IsInteracted)
 {
-	auto EventTriggers{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetEventTriggers() };
+	vector<shared_ptr<CEventTrigger>>& EventTriggers{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetEventTriggers() };
 
 	for (auto iter = EventTriggers.begin(); iter != EventTriggers.end(); ++iter)
 	{
-		auto EventTrigger = *iter;
+		shared_ptr<CEventTrigger> EventTrigger = *iter;
 
 		if (EventTrigger)
 		{
@@ -254,7 +256,6 @@ bool CPlayer::IsCollidedByEventTrigger(const XMFLOAT3& NewPosition, bool IsInter
 				if (IsInteracted)
 				{
 					EventTrigger->InteractEventTrigger();
-					EventTriggers.erase(iter);
 				}
 
 				if (EventTrigger->CanPassTriggerArea(GetPosition(), NewPosition))
@@ -283,7 +284,7 @@ void CPlayer::ProcessInput(float ElapsedTime, UINT InputMask)
 		m_StateMachine->ProcessInput(ElapsedTime, InputMask);
 	}
 
-	auto NavMesh{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetNavMesh() };
+	shared_ptr<CNavMesh> NavMesh{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetNavMesh() };
 
 	XMFLOAT3 NewPosition{ Vector3::Add(GetPosition(), Vector3::ScalarProduct(m_Speed * ElapsedTime, m_MovingDirection, false)) };
 

@@ -142,6 +142,8 @@ enum SOUND_TYPE
 #include <queue>
 #include <thread>
 #include <chrono>
+#include <numeric>
+#include <random>
 using namespace std;
 using namespace std::chrono;
 

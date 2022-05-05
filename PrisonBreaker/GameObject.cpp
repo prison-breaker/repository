@@ -753,14 +753,19 @@ bool CGameObject::IsVisible(CCamera* Camera) const
 	return Visible;
 }
 
-bool CGameObject::IsInNavMesh(const shared_ptr<CNavMesh>& NavMesh, const XMFLOAT3& NewPosition)
+bool CGameObject::IsInNavMesh(const shared_ptr<CNavMesh>& NavMesh, XMFLOAT3& NewPosition)
 {
 	if (NavMesh)
 	{
 		for (const auto& NavNode : NavMesh->GetNavNodes())
 		{
-			if (Math::IsInTriangle(NavNode->GetTriangle().m_Vertices[0], NavNode->GetTriangle().m_Vertices[1], NavNode->GetTriangle().m_Vertices[2], NewPosition))
+			TRIANGLE Triangle{ NavNode->GetTriangle() };
+
+			if (Math::IsInTriangle(Triangle.m_Vertices[0], Triangle.m_Vertices[1], Triangle.m_Vertices[2], NewPosition))
 			{
+				// NavMesh 안에 있다면, NewPosition의 높이 값을 밟고 있는 삼각형의 무게중심 높이로 설정한다.
+				NewPosition.y = Triangle.m_Centroid.y;
+
 				return true;
 			}
 		}
