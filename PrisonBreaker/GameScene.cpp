@@ -37,9 +37,14 @@ void CGameScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandLi
 	Shader->CreatePipelineState(D3D12Device, D3D12RootSignature, 0);
 	CShaderManager::GetInstance()->RegisterShader(TEXT("DebugShader"), Shader);
 
-	// NavMesh 객체를 생성한다.
+	// 파일로부터 NavMesh 객체를 생성한다.
 	m_NavMesh = make_shared<CNavMesh>();
+
+#ifdef READ_BINARY_FILE
 	m_NavMesh->LoadNavMeshFromFile(TEXT("Navigation/NavMesh.bin"));
+#else
+	m_NavMesh->LoadNavMeshFromFile(TEXT("Navigation/NavMesh.txt"));
+#endif
 
 	// 타입 수만큼 각 벡터의 크기를 재할당한다.
 	m_GameObjects.resize(OBJECT_TYPE_STRUCTURE + 1);

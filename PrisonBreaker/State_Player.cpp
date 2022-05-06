@@ -18,24 +18,37 @@ void CPlayerIdleState::Enter(const shared_ptr<CPlayer>& Entity)
 
 void CPlayerIdleState::ProcessInput(const shared_ptr<CPlayer>& Entity, float ElapsedTime, UINT InputMask)
 {
-	if (InputMask & INPUT_MASK_LMB)
-	{
-		if (!Entity->IsEquippedPistol())
-		{
-			Entity->GetStateMachine()->ChangeState(CPlayerPunchingState::GetInstance());
-		}
-	}
-	else if (InputMask & INPUT_MASK_RMB)
+	if (InputMask & INPUT_MASK_RMB)
 	{
 		if (Entity->IsEquippedPistol())
 		{
 			Entity->SetAnimationClip(8);
 			Entity->GetStateMachine()->ChangeState(CPlayerShootingState::GetInstance());
+			return;
 		}
 	}
-	else if (InputMask & INPUT_MASK_W || InputMask & INPUT_MASK_S || InputMask & INPUT_MASK_A || InputMask & INPUT_MASK_D)
+
+	if (InputMask & INPUT_MASK_LMB)
 	{
-		(InputMask & INPUT_MASK_SHIFT) ? Entity->GetStateMachine()->ChangeState(CPlayerRunningState::GetInstance()) : Entity->GetStateMachine()->ChangeState(CPlayerWalkingState::GetInstance());
+		if (!Entity->IsEquippedPistol())
+		{
+			Entity->GetStateMachine()->ChangeState(CPlayerPunchingState::GetInstance());
+			return;
+		}
+	}
+
+	if (InputMask & INPUT_MASK_W || InputMask & INPUT_MASK_S || InputMask & INPUT_MASK_A || InputMask & INPUT_MASK_D)
+	{
+		if (InputMask & INPUT_MASK_SHIFT)
+		{
+			Entity->GetStateMachine()->ChangeState(CPlayerRunningState::GetInstance());
+			return;
+		}
+		else
+		{
+			Entity->GetStateMachine()->ChangeState(CPlayerWalkingState::GetInstance());
+			return;
+		}
 	}
 }
 
@@ -60,11 +73,20 @@ CPlayerWalkingState* CPlayerWalkingState::GetInstance()
 
 void CPlayerWalkingState::Enter(const shared_ptr<CPlayer>& Entity)
 {
-
+	Entity->SetSpeed(3.15f);
 }
 
 void CPlayerWalkingState::ProcessInput(const shared_ptr<CPlayer>& Entity, float ElapsedTime, UINT InputMask)
 {
+	if (InputMask & INPUT_MASK_RMB)
+	{
+		if (Entity->IsEquippedPistol())
+		{
+			Entity->GetStateMachine()->ChangeState(CPlayerShootingState::GetInstance());
+			return;
+		}
+	}
+
 	if (InputMask & INPUT_MASK_LMB)
 	{
 		if (!Entity->IsEquippedPistol())
@@ -73,16 +95,8 @@ void CPlayerWalkingState::ProcessInput(const shared_ptr<CPlayer>& Entity, float 
 			return;
 		}
 	}
-	else if (InputMask & INPUT_MASK_RMB)
-	{
-		if (Entity->IsEquippedPistol())
-		{
-			Entity->SetAnimationClip(8);
-			Entity->GetStateMachine()->ChangeState(CPlayerShootingState::GetInstance());
-			return;
-		}
-	}
-	else if (InputMask & INPUT_MASK_SHIFT)
+
+	if (InputMask & INPUT_MASK_SHIFT)
 	{
 		if (InputMask & INPUT_MASK_W || InputMask & INPUT_MASK_S || InputMask & INPUT_MASK_A || InputMask & INPUT_MASK_D)
 		{
@@ -91,50 +105,46 @@ void CPlayerWalkingState::ProcessInput(const shared_ptr<CPlayer>& Entity, float 
 		}
 	}
 
-	switch (InputMask)
+	XMFLOAT3 MovingDirection{};
+
+	if (InputMask & INPUT_MASK_W)
 	{
-	case INPUT_MASK_W:
-		Entity->SetSpeed(3.15f);
-		Entity->SetMovingDirection(Entity->GetLook());
-		Entity->SetAnimationClip(1);
-		break;
-	case INPUT_MASK_W | INPUT_MASK_A:
-		Entity->SetSpeed(3.15f);
-		Entity->SetMovingDirection(Vector3::Normalize(Vector3::Add(Entity->GetLook(), Vector3::Inverse(Entity->GetRight()))));
-		Entity->SetAnimationClip(1);
-		break;
-	case INPUT_MASK_W | INPUT_MASK_D:
-		Entity->SetSpeed(3.15f);
-		Entity->SetMovingDirection(Vector3::Normalize(Vector3::Add(Entity->GetLook(), Entity->GetRight())));
-		Entity->SetAnimationClip(1);
-		break;
-	case INPUT_MASK_S:
-		Entity->SetSpeed(-3.15f);
-		Entity->SetMovingDirection(Entity->GetLook());
-		Entity->SetAnimationClip(1);
-		break;
-	case INPUT_MASK_S | INPUT_MASK_A:
-		Entity->SetSpeed(-3.15f);
-		Entity->SetMovingDirection(Vector3::Normalize(Vector3::Add(Entity->GetLook(), Entity->GetRight())));
-		Entity->SetAnimationClip(1);
-		break;
-	case INPUT_MASK_S | INPUT_MASK_D:
-		Entity->SetSpeed(-3.15f);
-		Entity->SetMovingDirection(Vector3::Normalize(Vector3::Add(Entity->GetLook(), Vector3::Inverse(Entity->GetRight()))));
-		Entity->SetAnimationClip(1);
-		break;
-	case INPUT_MASK_A:
-		Entity->SetSpeed(-3.15f);
-		Entity->SetMovingDirection(Entity->GetRight());
-		Entity->SetAnimationClip(2);
-		break;
-	case INPUT_MASK_D:
-		Entity->SetSpeed(3.15f);
-		Entity->SetMovingDirection(Entity->GetRight());
-		Entity->SetAnimationClip(3);
-		break;
-	default:
+		MovingDirection = Vector3::Add(MovingDirection, Entity->GetLook());
+	}
+
+	if (InputMask & INPUT_MASK_S)
+	{
+		MovingDirection = Vector3::Add(MovingDirection, Vector3::Inverse(Entity->GetLook()));
+	}
+
+	if (InputMask & INPUT_MASK_A)
+	{
+		MovingDirection = Vector3::Add(MovingDirection, Vector3::Inverse(Entity->GetRight()));
+	}
+
+	if (InputMask & INPUT_MASK_D)
+	{
+		MovingDirection = Vector3::Add(MovingDirection, Entity->GetRight());
+	}
+
+	MovingDirection = Vector3::Normalize(MovingDirection);
+	Entity->SetMovingDirection(MovingDirection);
+
+	if (Vector3::IsZero(MovingDirection))
+	{
 		Entity->GetStateMachine()->ChangeState(CPlayerIdleState::GetInstance());
+	}
+	else if (Vector3::IsEqual(MovingDirection, Entity->GetRight()))
+	{
+		Entity->SetAnimationClip(3);
+	}
+	else if (Vector3::IsEqual(MovingDirection, Vector3::Inverse(Entity->GetRight())))
+	{
+		Entity->SetAnimationClip(2);
+	}
+	else
+	{
+		Entity->SetAnimationClip(1);
 	}
 }
 
@@ -164,6 +174,15 @@ void CPlayerRunningState::Enter(const shared_ptr<CPlayer>& Entity)
 
 void CPlayerRunningState::ProcessInput(const shared_ptr<CPlayer>& Entity, float ElapsedTime, UINT InputMask)
 {
+	if (InputMask & INPUT_MASK_RMB)
+	{
+		if (Entity->IsEquippedPistol())
+		{
+			Entity->GetStateMachine()->ChangeState(CPlayerShootingState::GetInstance());
+			return;
+		}
+	}
+
 	if (InputMask & INPUT_MASK_LMB)
 	{
 		if (!Entity->IsEquippedPistol())
@@ -172,16 +191,8 @@ void CPlayerRunningState::ProcessInput(const shared_ptr<CPlayer>& Entity, float 
 			return;
 		}
 	}
-	else if (InputMask & INPUT_MASK_RMB)
-	{
-		if (Entity->IsEquippedPistol())
-		{
-			Entity->SetAnimationClip(8);
-			Entity->GetStateMachine()->ChangeState(CPlayerShootingState::GetInstance());
-			return;
-		}
-	}
-	else if (!(InputMask & INPUT_MASK_SHIFT))
+
+	if (!(InputMask & INPUT_MASK_SHIFT))
 	{
 		if (InputMask & INPUT_MASK_W || InputMask & INPUT_MASK_S || InputMask & INPUT_MASK_A || InputMask & INPUT_MASK_D)
 		{
@@ -190,54 +201,55 @@ void CPlayerRunningState::ProcessInput(const shared_ptr<CPlayer>& Entity, float 
 		}
 	}
 
-	switch (InputMask)
+	XMFLOAT3 MovingDirection{};
+
+	if (InputMask & INPUT_MASK_W)
 	{
-	case INPUT_MASK_W | INPUT_MASK_SHIFT:
-		Entity->SetSpeed(12.6f);
-		Entity->SetMovingDirection(Entity->GetLook());
-		Entity->SetAnimationClip(4);
-		break;
-	case INPUT_MASK_W | INPUT_MASK_A | INPUT_MASK_SHIFT:
-		Entity->SetSpeed(12.6f);
-		Entity->SetMovingDirection(Vector3::Normalize(Vector3::Add(Entity->GetLook(), Vector3::Inverse(Entity->GetRight()))));
-		Entity->SetAnimationClip(4);
-		break;
-	case INPUT_MASK_W | INPUT_MASK_D | INPUT_MASK_SHIFT:
-		Entity->SetSpeed(12.6f);
-		Entity->SetMovingDirection(Vector3::Normalize(Vector3::Add(Entity->GetLook(), Entity->GetRight())));
-		Entity->SetAnimationClip(4);
-		break;
-	case INPUT_MASK_S | INPUT_MASK_SHIFT:
-		Entity->SetSpeed(-3.15f);
-		Entity->SetMovingDirection(Entity->GetLook());
-		Entity->SetAnimationClip(1);
-		break;
-	case INPUT_MASK_S | INPUT_MASK_A | INPUT_MASK_SHIFT:
-		Entity->SetSpeed(-3.15f);
-		Entity->SetMovingDirection(Vector3::Normalize(Vector3::Add(Entity->GetLook(), Entity->GetRight())));
-		Entity->SetAnimationClip(1);
-		break;
-	case INPUT_MASK_S | INPUT_MASK_D | INPUT_MASK_SHIFT:
-		Entity->SetSpeed(-3.15f);
-		Entity->SetMovingDirection(Vector3::Normalize(Vector3::Add(Entity->GetLook(), Vector3::Inverse(Entity->GetRight()))));
-		Entity->SetAnimationClip(1);
-		break;
-	case INPUT_MASK_A | INPUT_MASK_SHIFT:
-		Entity->SetSpeed(-12.6f);
-		Entity->SetMovingDirection(Entity->GetRight());
-		Entity->SetAnimationClip(5);
-		break;
-	case INPUT_MASK_D | INPUT_MASK_SHIFT:
-		Entity->SetSpeed(12.6f);
-		Entity->SetMovingDirection(Entity->GetRight());
-		Entity->SetAnimationClip(6);
-		break;
-	default:
-		Entity->GetStateMachine()->ChangeState(CPlayerIdleState::GetInstance());
-		break;
+		MovingDirection = Vector3::Add(MovingDirection, Entity->GetLook());
 	}
 
-	Entity->SetSpeed(Entity->GetSpeed());
+	if (InputMask & INPUT_MASK_S)
+	{
+		MovingDirection = Vector3::Add(MovingDirection, Vector3::Inverse(Entity->GetLook()));
+	}
+
+	if (InputMask & INPUT_MASK_A)
+	{
+		MovingDirection = Vector3::Add(MovingDirection, Vector3::Inverse(Entity->GetRight()));
+	}
+
+	if (InputMask & INPUT_MASK_D)
+	{
+		MovingDirection = Vector3::Add(MovingDirection, Entity->GetRight());
+	}
+
+	MovingDirection = Vector3::Normalize(MovingDirection);
+	Entity->SetMovingDirection(MovingDirection);
+
+	if (Vector3::IsZero(MovingDirection))
+	{
+		Entity->GetStateMachine()->ChangeState(CPlayerIdleState::GetInstance());
+	}
+	else if (Vector3::IsEqual(MovingDirection, Entity->GetRight()))
+	{
+		Entity->SetSpeed(12.6f);
+		Entity->SetAnimationClip(6);
+	}
+	else if (Vector3::IsEqual(MovingDirection, Vector3::Inverse(Entity->GetRight())))
+	{
+		Entity->SetSpeed(12.6f);
+		Entity->SetAnimationClip(5);
+	}
+	else if (Vector3::Angle(MovingDirection, Entity->GetLook()) < 90.0f)
+	{
+		Entity->SetSpeed(12.6f);
+		Entity->SetAnimationClip(4);
+	}
+	else
+	{
+		Entity->SetSpeed(3.15f);
+		Entity->SetAnimationClip(1);
+	}
 }
 
 void CPlayerRunningState::Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime)
@@ -318,6 +330,7 @@ void CPlayerShootingState::Enter(const shared_ptr<CPlayer>& Entity)
 {
 	Entity->SetSpeed(0.0f);
 	Entity->SetMovingDirection(XMFLOAT3(0.0f, 0.0f, 0.0f));
+	Entity->SetAnimationClip(8);
 	Entity->GetCamera()->SetZoomIn(true);
 }
 
@@ -329,9 +342,10 @@ void CPlayerShootingState::ProcessInput(const shared_ptr<CPlayer>& Entity, float
 		vector<vector<shared_ptr<CGameObject>>>& GameObjects{ GameScene->GetGameObjects() };
 		vector<vector<shared_ptr<CBilboardObject>>>& BilboardObjects{ GameScene->GetBilboardObjects() };
 
-		// 줌 애니메이션을 하는 상태이고, 보유한 총알이 1발 이상 존재해야 쏠 수 있다.
+		// 줌 애니메이션을 하는 상태이고, 
 		if (Entity->GetAnimationController()->GetAnimationClip() == 8)
 		{
+			// 보유한 총알이 1발 이상있다면, 총을 쏜다.
 			if (BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->GetVertexCount() > 0)
 			{
 				shared_ptr<CGameObject> NearestIntersectedRootObject{};
@@ -394,8 +408,7 @@ void CPlayerShootingState::ProcessInput(const shared_ptr<CPlayer>& Entity, float
 					{
 						shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(NearestIntersectedRootObject) };
 
-						if (!Guard->GetStateMachine()->IsInState(CGuardHitState::GetInstance()) &&
-							!Guard->GetStateMachine()->IsInState(CGuardDyingState::GetInstance()))
+						if (!Guard->GetStateMachine()->IsInState(CGuardHitState::GetInstance()) && !Guard->GetStateMachine()->IsInState(CGuardDyingState::GetInstance()))
 						{
 							Guard->SetTarget(Entity);
 							Guard->GetStateMachine()->ChangeState(CGuardHitState::GetInstance());
