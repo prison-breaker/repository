@@ -22,7 +22,6 @@ void CPlayerIdleState::ProcessInput(const shared_ptr<CPlayer>& Entity, float Ela
 	{
 		if (Entity->IsEquippedPistol())
 		{
-			Entity->SetAnimationClip(8);
 			Entity->GetStateMachine()->ChangeState(CPlayerShootingState::GetInstance());
 			return;
 		}
@@ -291,7 +290,13 @@ void CPlayerPunchingState::Enter(const shared_ptr<CPlayer>& Entity)
 
 				if ((Vector3::Length(ToGuard) < 3.0f) && (Vector3::Angle(Entity->GetLook(), Vector3::Normalize(ToGuard)) < 80.0f))
 				{
-					Guard->SetTarget(Entity);
+					// 타겟이 설정된 경우가 아닌 경우에 맞았다면, 뒤에서 습격당한 경우이므로, 타겟을 설정하지 않는다.
+					// 즉, 타겟이 있었던 경우에만, 타겟을 때린 사람으로 변경한다.
+					if (Guard->GetTarget())
+					{
+						Guard->SetTarget(Entity);
+					}
+
 					Guard->GetStateMachine()->ChangeState(CGuardHitState::GetInstance());
 				}
 			}

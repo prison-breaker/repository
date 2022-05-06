@@ -17,7 +17,7 @@ private:
 	bool							  m_RecentTransition{};
 
 	float							  m_ElapsedTime{};
-	const float						  m_ToIdleEntryTime{ rand() % 5 + 3.0f };
+	const float						  m_ToIdleEntryTime{ Random::Range(3.0f, 7.0f) };
 	const float						  m_UpdateTargetTime{ 4.0f };
 
 	shared_ptr<CGameObject>			  m_Target{};

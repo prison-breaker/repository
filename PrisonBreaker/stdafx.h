@@ -211,7 +211,7 @@ namespace File
 
 namespace Random
 {
-	float Random(float Min, float Max);
+	float Range(float Min, float Max);
 }
 
 namespace Math
