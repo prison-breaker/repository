@@ -199,7 +199,7 @@ void CSirenEventTrigger::InteractEventTrigger()
 			}
 		}
 
-		CSoundManager::GetInstance()->Play(SOUND_TYPE_SIREN, 0.4f);
+		CSoundManager::GetInstance()->Play(SOUND_TYPE_SIREN, 0.25f);
 
 		// 사이렌을 작동시켰다면, 현재 이벤트 트리거를 삭제한다.
 		DeleteThisEventTrigger();

@@ -6,8 +6,8 @@ class CSoundManager
 private:
 	FMOD::System*  m_System{};
 
-	FMOD::Channel* m_Channels[MAX_SOUNDS]{};
-	FMOD::Sound*   m_Sounds[MAX_SOUNDS]{};
+	FMOD::Channel* m_Channels[MAX_BGM_SOUNDS + MAX_SFX_SOUNDS]{};
+	FMOD::Sound*   m_Sounds[MAX_BGM_SOUNDS + MAX_SFX_SOUNDS]{};
 
 private:
 	CSoundManager() = default;
@@ -18,7 +18,7 @@ public:
 
 	void Initialize();
 
-	void Play(SOUND_TYPE SoundType, float Volume = 1.0f);
+	void Play(SOUND_TYPE SoundType, float Volume);
 	void Stop(SOUND_TYPE SoundType);
 	void Pause(SOUND_TYPE SoundType);
 	void Resume(SOUND_TYPE SoundType);

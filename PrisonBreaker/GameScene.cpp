@@ -1011,6 +1011,10 @@ void CGameScene::InteractSpotLight(float ElapsedTime)
 									}
 								}
 							}
+
+							CSoundManager::GetInstance()->Stop(SOUND_TYPE_INGAME_BGM_1);
+							CSoundManager::GetInstance()->Play(SOUND_TYPE_INGAME_BGM_2, 0.4f);
+
 							return;
 						}
 					}

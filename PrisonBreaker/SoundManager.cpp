@@ -27,7 +27,7 @@ void CSoundManager::Initialize()
 		return;
 	}
 
-	Result = m_System->init(MAX_SOUNDS, FMOD_INIT_NORMAL, nullptr);
+	Result = m_System->init(MAX_BGM_SOUNDS + MAX_SFX_SOUNDS, FMOD_INIT_NORMAL, nullptr);
 
 	if (Result != FMOD_OK)
 	{
@@ -35,8 +35,9 @@ void CSoundManager::Initialize()
 	}
 
 	// BGM
-	Result = m_System->createSound("Sounds/Beginning.mp3", FMOD_LOOP_NORMAL, nullptr, &m_Sounds[SOUND_TYPE_TITLE_BGM]);
-	Result = m_System->createSound("Sounds/OnTheRun.mp3", FMOD_LOOP_NORMAL, nullptr, &m_Sounds[SOUND_TYPE_INGAME_BGM]);
+	Result = m_System->createSound("Sounds/01. Beginning.mp3", FMOD_LOOP_NORMAL, nullptr, &m_Sounds[SOUND_TYPE_TITLE_BGM]);
+	Result = m_System->createSound("Sounds/04. On The Run.mp3", FMOD_LOOP_NORMAL, nullptr, &m_Sounds[SOUND_TYPE_INGAME_BGM_1]);
+	Result = m_System->createSound("Sounds/05. Getaway.mp3", FMOD_LOOP_NORMAL, nullptr, &m_Sounds[SOUND_TYPE_INGAME_BGM_2]);
 
 	// SFX
 	Result = m_System->createSound("Sounds/ButtonOver.wav", FMOD_LOOP_OFF, nullptr, &m_Sounds[SOUND_TYPE_BUTTON_OVER]);
@@ -77,8 +78,15 @@ void CSoundManager::Play(SOUND_TYPE SoundType, float Volume)
 		return;
 	}
 
-	m_System->playSound(FMOD_CHANNEL_FREE, m_Sounds[SoundType], false, &m_Channels[SoundType]);
-	m_Channels[SoundType]->setVolume(Volume);
+	bool IsPlaying{};
+
+	m_Channels[SoundType]->isPlaying(&IsPlaying);
+
+	if (!IsPlaying)
+	{
+		m_System->playSound(FMOD_CHANNEL_FREE, m_Sounds[SoundType], false, &m_Channels[SoundType]);
+		m_Channels[SoundType]->setVolume(Volume);
+	}
 }
 
 void CSoundManager::Stop(SOUND_TYPE SoundType)

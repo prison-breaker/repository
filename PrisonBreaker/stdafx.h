@@ -11,7 +11,9 @@
 #define MAX_LIGHTS                2
 #define MAX_BOUNDINGBOX_INDICES	  36
 #define MAX_BONES				  100
-#define MAX_SOUNDS				  12
+
+#define MAX_BGM_SOUNDS			  3
+#define MAX_SFX_SOUNDS			  10
 
 #define CLIENT_WIDTH		      1920
 #define	CLIENT_HEIGHT		      1080
@@ -109,7 +111,8 @@ enum SOUND_TYPE
 {
 	// BGM
 	SOUND_TYPE_TITLE_BGM,
-	SOUND_TYPE_INGAME_BGM,
+	SOUND_TYPE_INGAME_BGM_1,
+	SOUND_TYPE_INGAME_BGM_2,
 
 	// SFX
 	SOUND_TYPE_BUTTON_OVER,

@@ -156,6 +156,8 @@ void CGuardChaseState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTim
 
 	if (!NearestPlayer && Entity->GetRecentTransition())
 	{
+		Entity->SetTarget(NearestPlayer);
+
 		// 플레이어가 시야각에서 보이지 않는다면 ReturnState로 전이하여 원래 순찰하는 위치로 돌아간다.
 		Entity->GetStateMachine()->ChangeState(CGuardReturnState::GetInstance());
 		return;

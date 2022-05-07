@@ -163,8 +163,7 @@ void CPlayer::ApplySlidingVectorToPosition(const shared_ptr<CNavMesh>& NavMesh, 
 	if (!IsInNavMesh(NavMesh, NewPosition))
 	{
 		NewPosition = GetPosition();
-
-		tcout << TEXT("Not in NavMesh!") << endl;
+		//tcout << TEXT("Not in NavMesh!") << endl;
 	}
 }
 
