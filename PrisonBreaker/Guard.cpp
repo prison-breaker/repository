@@ -169,7 +169,7 @@ shared_ptr<CGameObject> CGuard::IsFoundPlayer(const vector<vector<shared_ptr<CGa
 							if (GameObject)
 							{
 								XMFLOAT3 RayOrigin{ GetPosition() };
-								RayOrigin.y = 4.0f;
+								RayOrigin.y = 5.0f;
 
 								shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(RayOrigin, Vector3::Normalize(ToPlayer), HitDistance, 30.0f)};
 
@@ -292,7 +292,7 @@ void CGuard::FindRayCastingNavPath(const vector<vector<shared_ptr<CGameObject>>>
 			XMFLOAT3 CheckPosition{ m_NavPath[CheckIndex] };
 
 			// 바운딩 박스와 충돌이 일어나기 위한 최소 높이이다.
-			SearchPosition.y = CheckPosition.y = 4.0f;
+			SearchPosition.y = CheckPosition.y = 5.0f;
 
 			// Normalize 안하니까 터지지? 반대 방향은 왜 안되는지?
 			XMFLOAT3 ToNextPosition{ Vector3::Subtract(SearchPosition, CheckPosition) }; 

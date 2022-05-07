@@ -179,7 +179,7 @@ void CTitleScene::ProcessInput(HWND hWnd, float ElapsedTime)
 					// GameStart Button
 					CSceneManager::GetInstance()->ReserveChangeScene(TEXT("GameScene"));
 					CSoundManager::GetInstance()->Stop(SOUND_TYPE_TITLE_BGM);
-					CSoundManager::GetInstance()->Play(SOUND_TYPE_INGAME_BGM_1, 0.5f);
+					CSoundManager::GetInstance()->Play(SOUND_TYPE_INGAME_BGM_1, 0.3f);
 				}
 					break;
 				case 1:

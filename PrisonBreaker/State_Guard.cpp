@@ -180,7 +180,7 @@ void CGuardChaseState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTim
 				if (GameObject)
 				{
 					XMFLOAT3 RayOrigin{ Entity->GetPosition() };
-					RayOrigin.y = 4.0f;
+					RayOrigin.y = 5.0f;
 
 					shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(RayOrigin, Direction, HitDistance, 10.0f) };
 
@@ -402,7 +402,7 @@ void CGuardShootingState::Update(const shared_ptr<CGuard>& Entity, float Elapsed
 					if (GameObject)
 					{
 						XMFLOAT3 RayOrigin{ Entity->GetPosition() };
-						RayOrigin.y = 4.0f;
+						RayOrigin.y = 5.0f;
 
 						shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(RayOrigin, Direction, HitDistance, 10.0f) };
 

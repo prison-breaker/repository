@@ -18,7 +18,7 @@ private:
 
 	float							  m_ElapsedTime{};
 	const float						  m_ToIdleEntryTime{ Random::Range(3.0f, 7.0f) };
-	const float						  m_UpdateTargetTime{ 4.0f };
+	const float						  m_UpdateTargetTime{ 3.0f };
 
 	shared_ptr<CGameObject>			  m_Target{};
 	shared_ptr<CEventTrigger>		  m_EventTrigger{};

@@ -31,6 +31,8 @@ class CAnimationController
 private:
 	bool									m_IsActive{ true };
 
+	float									m_ElapsedTime{};
+
 	shared_ptr<CGameObject>					m_Owner{};
 
 	UINT									m_ClipNum{};
@@ -60,4 +62,5 @@ public:
 	void UpdateShaderVariables();
 
 	bool UpdateAnimationClip(ANIMATION_TYPE AnimationType);
+	bool UpdateAnimationClip(ANIMATION_TYPE AnimationType, SOUND_TYPE SoundType, float Volume, float PlayTime, float ElapsedTime);
 };

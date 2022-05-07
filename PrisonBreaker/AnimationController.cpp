@@ -154,6 +154,7 @@ void CAnimationController::SetAnimationClip(UINT ClipNum)
 
 	m_ClipNum = ClipNum;
 	m_KeyFrameIndex = 0;
+	m_ElapsedTime = 0.0f;
 }
 
 UINT CAnimationController::GetAnimationClip() const
@@ -169,6 +170,7 @@ void CAnimationController::SetKeyFrameIndex(UINT KeyFrameIndex)
 	}
 
 	m_KeyFrameIndex = KeyFrameIndex;
+	m_ElapsedTime = 0.0f;
 }
 
 UINT CAnimationController::GetKeyFrameIndex() const
@@ -237,6 +239,28 @@ bool CAnimationController::UpdateAnimationClip(ANIMATION_TYPE AnimationType)
 				IsFinished = true;
 			}
 			break;
+		}
+	}
+
+	return IsFinished;
+}
+
+bool CAnimationController::UpdateAnimationClip(ANIMATION_TYPE AnimationType, SOUND_TYPE SoundType, float Volume, float PlayTime, float ElapsedTime)
+{
+	bool IsFinished{ UpdateAnimationClip(AnimationType) };
+
+	if (IsFinished)
+	{
+		m_ElapsedTime = 0.0f;
+	}
+	else
+	{
+		m_ElapsedTime += ElapsedTime;
+
+		if (m_ElapsedTime >= PlayTime)
+		{
+			m_ElapsedTime = 0.0f;
+			CSoundManager::GetInstance()->Play(SoundType, Volume);
 		}
 	}
 

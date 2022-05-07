@@ -253,7 +253,7 @@ void CPlayerRunningState::ProcessInput(const shared_ptr<CPlayer>& Entity, float 
 
 void CPlayerRunningState::Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime)
 {
-	Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
+	Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP, SOUND_TYPE_BREATH, 0.8f, 0.96f, ElapsedTime);
 }
 
 void CPlayerRunningState::Exit(const shared_ptr<CPlayer>& Entity)
