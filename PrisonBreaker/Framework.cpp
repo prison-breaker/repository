@@ -196,11 +196,11 @@ void CFramework::CreateSwapChain()
 	DXGISwapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	DXGISwapChainDesc.BufferCount = m_SwapChainBufferCount;
 	DXGISwapChainDesc.OutputWindow = m_hWnd;
-	DXGISwapChainDesc.Windowed = false;
+	DXGISwapChainDesc.Windowed = true;
 	DXGISwapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	DXGISwapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
-	DX::ThrowIfFailed(m_DXGIFactory->CreateSwapChain(m_D3D12CommandQueue.Get(), &DXGISwapChainDesc, (IDXGISwapChain**)m_DXGISwapChain.GetAddressOf()));
+	DX::ThrowIfFailed(m_DXGIFactory->CreateSwapChain(m_D3D12CommandQueue.Get(), &DXGISwapChainDesc, reinterpret_cast<IDXGISwapChain**>(m_DXGISwapChain.GetAddressOf())));
 
 	// 스왑체인의 현재 후면버퍼 인덱스를 저장한다.
 	m_SwapChainBufferIndex = m_DXGISwapChain->GetCurrentBackBufferIndex();
@@ -333,8 +333,8 @@ void CFramework::ChangeSwapChainState()
 
 	BOOL FullScreenState{};
 
-	m_DXGISwapChain->GetFullscreenState(&FullScreenState, nullptr);
-	m_DXGISwapChain->SetFullscreenState(!FullScreenState, nullptr);
+	DX::ThrowIfFailed(m_DXGISwapChain->GetFullscreenState(&FullScreenState, nullptr));
+	DX::ThrowIfFailed(m_DXGISwapChain->SetFullscreenState(!FullScreenState, nullptr));
 
 	DXGI_MODE_DESC DXGIModeDesc{};
 
@@ -348,13 +348,21 @@ void CFramework::ChangeSwapChainState()
 
 	DX::ThrowIfFailed(m_DXGISwapChain->ResizeTarget(&DXGIModeDesc));
 
+	for (UINT i = 0; i < m_SwapChainBufferCount; ++i)
+	{
+		if (m_D3D12RenderTargetBuffers[i])
+		{
+			m_D3D12RenderTargetBuffers[i]->Release();
+		}
+	}
+
 	DXGI_SWAP_CHAIN_DESC DXGISwapChainDesc{};
 
 	DX::ThrowIfFailed(m_DXGISwapChain->GetDesc(&DXGISwapChainDesc));
 	DX::ThrowIfFailed(m_DXGISwapChain->ResizeBuffers(m_SwapChainBufferCount, CLIENT_WIDTH, CLIENT_HEIGHT, DXGISwapChainDesc.BufferDesc.Format, DXGISwapChainDesc.Flags));
 
 	m_SwapChainBufferIndex = m_DXGISwapChain->GetCurrentBackBufferIndex();
-
+	
 	CreateRenderTargetViews();
 }
 
@@ -410,7 +418,7 @@ void CFramework::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, 
 		case VK_ESCAPE:
 			PostQuitMessage(0);
 			break;
-		case VK_F12:
+		case VK_F9:
 			ChangeSwapChainState();
 			break;
 		default:
