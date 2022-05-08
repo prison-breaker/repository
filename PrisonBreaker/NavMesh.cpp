@@ -81,7 +81,7 @@ void CNavMesh::InsertNode(const shared_ptr<CNavNode>& NewNavNode)
 
 			for (UINT i = 0; i < 3; ++i)
 			{
-				XMFLOAT3 Vertex1{ NavNode->m_Triangle.m_Vertices[i]};
+				XMFLOAT3 Vertex1{ NavNode->m_Triangle.m_Vertices[i] };
 
 				for (UINT j = 0; j < 3; ++j)
 				{

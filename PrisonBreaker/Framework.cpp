@@ -196,7 +196,7 @@ void CFramework::CreateSwapChain()
 	DXGISwapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	DXGISwapChainDesc.BufferCount = m_SwapChainBufferCount;
 	DXGISwapChainDesc.OutputWindow = m_hWnd;
-	DXGISwapChainDesc.Windowed = true;
+	DXGISwapChainDesc.Windowed = false;
 	DXGISwapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	DXGISwapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 

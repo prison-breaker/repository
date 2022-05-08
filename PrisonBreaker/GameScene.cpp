@@ -124,6 +124,7 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 
 				Player->SetChild(ModelInfo->m_Model);
 				Player->SetTransformMatrix(TransformMatrix);
+				Player->UpdateTransform(Matrix4x4::Identity());
 				Player->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
 				Player->Initialize();
 
@@ -398,7 +399,11 @@ void CGameScene::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, 
 		break;
 	case 'q': // 플레이어를 감옥 밖으로 이동
 	case 'Q':
-		Player->SetPosition(m_NavMesh->GetNavNodes()[750]->GetTriangle().m_Centroid);
+		//Player->SetPosition(m_NavMesh->GetNavNodes()[750]->GetTriangle().m_Centroid);
+		break;
+	case 'i':
+	case 'I':
+		(m_InvincibleMode) ? m_InvincibleMode = false : m_InvincibleMode = true;
 		break;
 	}
 }
@@ -1025,4 +1030,9 @@ void CGameScene::InteractSpotLight(float ElapsedTime)
 		m_SpotLightAngle += ElapsedTime;
 		m_Lights[1].m_Direction = Vector3::Normalize(XMFLOAT3(cosf(m_SpotLightAngle), -1.0f, sinf(m_SpotLightAngle)));
 	}
+}
+
+bool CGameScene::IsInvincibleMode() const
+{
+	return m_InvincibleMode;
 }

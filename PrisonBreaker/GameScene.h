@@ -63,6 +63,7 @@ private:
 	ComPtr<ID3D12Resource>						m_D3D12Fog{};
 	CB_FOG*										m_MappedFog{};
 
+	bool										m_InvincibleMode{};
 	bool										m_RenderBoundingBox{};
 
 	float                                       m_SpotLightAngle{ XMConvertToRadians(90.0f) };
@@ -115,4 +116,6 @@ public:
 	void UpdatePerspective(HWND hWnd, float ElapsedTime, const shared_ptr<CPlayer>& Player);
 
 	void InteractSpotLight(float ElapsedTime);
+
+	bool IsInvincibleMode() const;
 };

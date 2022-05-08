@@ -174,19 +174,20 @@ void CSirenEventTrigger::InteractEventTrigger()
 		vector<vector<shared_ptr<CGameObject>>>& GameObjects{ GameScene->GetGameObjects() };
 		shared_ptr<CNavMesh> NavMesh{ GameScene->GetNavMesh() };
 
+		UINT GuardCount{ static_cast<UINT>(GameObjects[OBJECT_TYPE_NPC].size())};
 		XMFLOAT3 CenterPosition{ (m_TriggerArea[0].x + m_TriggerArea[3].x) / 2.0f, m_TriggerArea[0].y, (m_TriggerArea[0].z + m_TriggerArea[1].z) / 2.0f };
 
-		for (const auto& GameObject : GameObjects[OBJECT_TYPE_NPC])
+		for (UINT i = 3; i < GuardCount; ++i)
 		{
-			if (GameObject)
+			if (i == 3 || i == 5 || i == 6 || i == 8 || i == 9)
 			{
-				shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(GameObject) };
-
-				if (Guard->GetHealth() > 0)
+				if (GameObjects[OBJECT_TYPE_NPC][i])
 				{
-					// 사이렌을 작동시킬 경우 주변 범위에 있는 경찰들이 플레이어를 쫒기 시작한다.
-					if (Math::Distance(CenterPosition, Guard->GetPosition()) <= 100.0f)
+					shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(GameObjects[OBJECT_TYPE_NPC][i]) };
+
+					if (Guard->GetHealth() > 0)
 					{
+						// 사이렌을 작동시킬 경우 주변 범위에 있는 경찰들이 플레이어를 쫒기 시작한다.
 						if (Guard->GetStateMachine()->IsInState(CGuardIdleState::GetInstance()) ||
 							Guard->GetStateMachine()->IsInState(CGuardPatrolState::GetInstance()) ||
 							Guard->GetStateMachine()->IsInState(CGuardReturnState::GetInstance()))
