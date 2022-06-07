@@ -44,5 +44,7 @@ public:
 	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 	virtual void PostRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 
+	virtual void ApplyPacketData(const SERVER_TO_CLIENT_DATA& PacketData);
+
 	void RSSetViewportsAndScissorRects(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 };

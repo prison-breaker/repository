@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "GameScene.h"
+#include "Framework.h"
 
 void CGameScene::OnCreate(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, ID3D12RootSignature* D3D12RootSignature)
 {
@@ -369,7 +370,7 @@ void CGameScene::ProcessMouseMessage(HWND hWnd, UINT Message, WPARAM wParam, LPA
 
 void CGameScene::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
-	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER].back()) };
+	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][CFramework::GetInstance()->GetID()]) };
 
 	switch (wParam)
 	{
@@ -410,7 +411,7 @@ void CGameScene::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, 
 
 void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 {	
-	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER].back()) };
+	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][CFramework::GetInstance()->GetID()]) };
 
 	UpdatePerspective(hWnd, ElapsedTime, Player);
 
@@ -471,8 +472,14 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 		InputMask |= INPUT_MASK_RMB;
 	}
 
-	Player->ProcessInput(ElapsedTime, InputMask);
+	//Player->ProcessInput(ElapsedTime, InputMask);
 	(Player->GetCamera()->IsZoomIn()) ? m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][8]->SetActive(true) : m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][8]->SetActive(false);
+	
+	CFramework::GetInstance()->SendPacket(CLIENT_TO_SERVER_DATA{ 1, InputMask, Player->GetWorldMatrix() });
+
+	tcout << "[º¸³½ °Å]" << Player->GetWorldMatrix()._31 << ", " << Player->GetWorldMatrix()._32 << ", " << Player->GetWorldMatrix()._33 << endl;
+
+	CFramework::GetInstance()->ReceivePacket();
 }
 
 void CGameScene::Animate(float ElapsedTime)
@@ -522,7 +529,7 @@ void CGameScene::PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 
 void CGameScene::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
-	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER].back()) };
+	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][CFramework::GetInstance()->GetID()]) };
 
 	Player->GetCamera()->RSSetViewportsAndScissorRects(D3D12GraphicsCommandList);
 	Player->GetCamera()->UpdateShaderVariables(D3D12GraphicsCommandList);
@@ -545,7 +552,6 @@ void CGameScene::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 		}
 	}
 
-
 	for (UINT i = BILBOARD_OBJECT_TYPE_SKYBOX; i <= BILBOARD_OBJECT_TYPE_UI; ++i)
 	{
 		for (const auto& BilboardObject : m_BilboardObjects[i])
@@ -566,6 +572,23 @@ void CGameScene::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 void CGameScene::PostRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
 
+}
+
+void CGameScene::ApplyPacketData(const SERVER_TO_CLIENT_DATA& PacketData)
+{
+	for (UINT i = 0; i < MAX_CLIENT_CAPACITY; ++i)
+	{
+		m_GameObjects[OBJECT_TYPE_PLAYER][i]->SetTransformMatrix(PacketData.m_PlayerWorldMatrices[i]);
+		m_GameObjects[OBJECT_TYPE_PLAYER][i]->UpdateTransform(Matrix4x4::Identity());
+	}
+
+	//for (UINT i = 0; i < 10; ++i)
+	//{
+	//	m_GameObjects[OBJECT_TYPE_NPC][i]->SetTransformMatrix(PacketData.m_NPCWorldMatrices[i]);
+	//	m_GameObjects[OBJECT_TYPE_NPC][i]->UpdateTransform(Matrix4x4::Identity());
+	//}
+
+	//m_Lights[1].m_Direction = PacketData.m_TowerLightDirection;
 }
 
 vector<vector<shared_ptr<CGameObject>>>& CGameScene::GetGameObjects()

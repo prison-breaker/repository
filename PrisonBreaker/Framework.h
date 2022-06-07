@@ -10,6 +10,15 @@ struct CB_FRAMEWORKINFO
 class CFramework
 {
 private:
+	// Server Data
+	SOCKET_INFO						  m_SocketInfo{};
+
+	HANDLE							  m_ReceiveEvent{};
+	HANDLE							  m_RenderingEvent{};
+
+	SERVER_TO_CLIENT_DATA			  m_ReceivedPacketData{};
+
+	// Client Data
 	TCHAR							  m_Title[MAX_TITLE_LENGTH]{};
 			
 	bool							  m_IsActive{};
@@ -52,8 +61,9 @@ private:
 				
 public:
 	CFramework();
-	~CFramework() = default;
+	~CFramework();
 
+	// Client Function
 	static CFramework* GetInstance();
 
 	void UpdateWindowTitle();
@@ -95,4 +105,14 @@ public:
 
 	void PopulateCommandList();
 	void FrameAdvance();
+
+	// Server Function
+	void ConnectServer();
+	void CreateEvents();
+
+	void SendPacket(const CLIENT_TO_SERVER_DATA& PacketData);
+	void ReceivePacket();
+	void ApplyPacketData(const SERVER_TO_CLIENT_DATA& PacketData);
+
+	UINT GetID() const;
 };

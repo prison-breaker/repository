@@ -7,6 +7,14 @@ CFramework::CFramework()
 {
 	m_Timer = make_unique<CTimer>();
 	_tcscpy_s(m_Title, TEXT("PrisonBreaker ("));
+
+	ConnectServer();
+}
+
+CFramework::~CFramework()
+{
+	closesocket(m_SocketInfo.m_Socket);
+	WSACleanup();
 }
 
 void CFramework::UpdateWindowTitle()
@@ -44,6 +52,13 @@ void CFramework::OnCreate(HINSTANCE hInstance, HWND hWnd)
 	BuildObjects();
 
 	CSoundManager::GetInstance()->Initialize();
+
+	//HANDLE hThread{ CreateThread(NULL, 0, ReceivePacket, NULL, 0, NULL) };
+
+	//if (hThread)
+	//{
+	//	CloseHandle(hThread);
+	//}
 }
 
 void CFramework::OnDestroy()
@@ -486,14 +501,103 @@ void CFramework::PopulateCommandList()
 
 void CFramework::FrameAdvance()
 {
-	m_Timer->Tick(60.0f);
+	m_Timer->Tick(0.0f);
 
 	ProcessInput();
-	Animate();
 	PopulateCommandList();
 
 	DX::ThrowIfFailed(m_DXGISwapChain->Present(1, 0));
 
 	MoveToNextFrame();
 	UpdateWindowTitle();
+}
+
+void CFramework::ConnectServer()
+{
+	WSADATA Wsa{};
+
+	if (WSAStartup(MAKEWORD(2, 2), &Wsa))
+	{
+		cout << "윈속을 초기화하지 못했습니다." << endl;
+		exit(1);
+	}
+
+	m_SocketInfo.m_Socket = socket(AF_INET, SOCK_STREAM, 0);
+
+	if (m_SocketInfo.m_Socket == INVALID_SOCKET)
+	{
+		Server::ErrorQuit("socket()");
+	}
+
+	m_SocketInfo.m_SocketAddress.sin_family = AF_INET;
+	m_SocketInfo.m_SocketAddress.sin_addr.s_addr = inet_addr(SERVER_IP);
+	m_SocketInfo.m_SocketAddress.sin_port = htons(SERVER_PORT);
+
+	int ReturnValue{ connect(m_SocketInfo.m_Socket, (SOCKADDR*)&m_SocketInfo.m_SocketAddress, sizeof(m_SocketInfo.m_SocketAddress)) };
+
+	if (ReturnValue == SOCKET_ERROR)
+	{
+		Server::ErrorQuit("connect()");
+	}
+
+	// 플레이어 아이디를 수신한다.
+	ReturnValue = recv(m_SocketInfo.m_Socket, (char*)&m_SocketInfo.m_ID, sizeof(UINT), MSG_WAITALL);
+
+	if (ReturnValue == SOCKET_ERROR)
+	{
+		Server::ErrorDisplay("recv()");
+	}
+	else if (m_SocketInfo.m_ID == UINT_MAX)
+	{
+		MessageBox(m_hWnd, TEXT("현재 정원이 꽉찼거나, 게임이 이미 시작되어 참여할 수 없습니다."), TEXT("PRISON BREAKER"), MB_ICONSTOP | MB_OK);
+		PostQuitMessage(0);
+	}
+
+	//CreateEvents();
+}
+
+void CFramework::CreateEvents()
+{
+	m_ReceiveEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+	m_RenderingEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
+}
+
+void CFramework::SendPacket(const CLIENT_TO_SERVER_DATA& PacketData)
+{
+	int ReturnValue{ send(m_SocketInfo.m_Socket, (char*)&PacketData, sizeof(PacketData), 0) };
+
+	if (ReturnValue == SOCKET_ERROR)
+	{
+		Server::ErrorDisplay("send()");
+	}
+}
+
+void CFramework::ReceivePacket()
+{
+	int ReturnValue{ recv(m_SocketInfo.m_Socket, (char*)&m_ReceivedPacketData, sizeof(m_ReceivedPacketData), MSG_WAITALL) };
+
+	if (ReturnValue == SOCKET_ERROR)
+	{
+		Server::ErrorDisplay("recv()");
+	}
+	else if (ReturnValue == 0)
+	{
+		closesocket(m_SocketInfo.m_Socket);
+	}
+	else
+	{
+		ApplyPacketData(m_ReceivedPacketData);
+
+		tcout << "[받은 거]" << m_ReceivedPacketData.m_PlayerWorldMatrices[0]._31 << ", " << m_ReceivedPacketData.m_PlayerWorldMatrices[0]._32 << ", " << m_ReceivedPacketData.m_PlayerWorldMatrices[0]._33 << endl;
+	}
+}
+
+void CFramework::ApplyPacketData(const SERVER_TO_CLIENT_DATA& PacketData)
+{
+	CSceneManager::GetInstance()->GetCurrentScene()->ApplyPacketData(PacketData);
+}
+
+UINT CFramework::GetID() const
+{
+	return m_SocketInfo.m_ID;
 }

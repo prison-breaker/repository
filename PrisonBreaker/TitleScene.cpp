@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "TitleScene.h"
-#include "State.h"
+#include "Framework.h"
 
 void CTitleScene::OnCreate(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, ID3D12RootSignature* D3D12RootSignature)
 {
@@ -203,6 +203,9 @@ void CTitleScene::ProcessInput(HWND hWnd, float ElapsedTime)
 			}
 		}
 	}
+
+	CFramework::GetInstance()->SendPacket(CLIENT_TO_SERVER_DATA{ 0, 0, Matrix4x4::Identity() });
+	CFramework::GetInstance()->ReceivePacket();
 }
 
 void CTitleScene::Animate(float ElapsedTime)
@@ -244,4 +247,9 @@ void CTitleScene::RSSetViewportsAndScissorRects(ID3D12GraphicsCommandList* D3D12
 {
 	D3D12GraphicsCommandList->RSSetViewports(1, &m_ViewPort);
 	D3D12GraphicsCommandList->RSSetScissorRects(1, &m_ScissorRect);
+}
+
+void CTitleScene::ApplyPacketData(const SERVER_TO_CLIENT_DATA& PacketData)
+{
+
 }

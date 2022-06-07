@@ -1,12 +1,18 @@
 #pragma once
+#pragma comment(lib, "ws2_32")
 
 #define DEBUG_MODE
 #define READ_BINARY_FILE
 
 #define WIN32_LEAN_AND_MEAN
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+
+#define SERVER_IP				  "127.0.0.1"
+#define SERVER_PORT				  9000
 
 #define EPSILON			          1.0e-10f
 
+#define MAX_CLIENT_CAPACITY		  2
 #define MAX_TITLE_LENGTH	      64
 #define MAX_LIGHTS                2
 #define MAX_BOUNDINGBOX_INDICES	  36
@@ -129,7 +135,7 @@ enum SOUND_TYPE
 };
 
 // C Header
-#include <windows.h>
+#include <winsock2.h>
 #include <SDKDDKVer.h>
 #include <stdlib.h>
 #include <memory.h>
@@ -187,6 +193,34 @@ typedef basic_ofstream<TCHAR>      tofstream;
 typedef basic_stringstream<TCHAR>  tstringstream;
 typedef basic_istringstream<TCHAR> tistringstream;
 typedef basic_ostringstream<TCHAR> tostringstream;
+
+struct SOCKET_INFO
+{
+	UINT		m_ID{};
+	SOCKET      m_Socket{};
+	SOCKADDR_IN m_SocketAddress{};
+};
+
+struct CLIENT_TO_SERVER_DATA
+{
+	UINT	   m_SceneState{};
+
+	UINT	   m_InputMask{};
+	XMFLOAT4X4 m_WorldMatrix{};
+};
+
+struct SERVER_TO_CLIENT_DATA
+{
+	XMFLOAT4X4 m_PlayerWorldMatrices[MAX_CLIENT_CAPACITY]{};
+	XMFLOAT4X4 m_NPCWorldMatrices[10]{};
+
+	XMFLOAT3   m_TowerLightDirection{};
+
+	// 1. Scene's State - UINT
+	// 3. All Object's Current State - UINT[]
+	// 4. UI and Trigger's Activation Condition - bool
+	// 6. Sound Play Condition and Volume - bool and float
+};
 
 namespace DX
 {
@@ -282,6 +316,12 @@ namespace Matrix4x4
 
 	XMFLOAT4X4 LookAtLH(const XMFLOAT3& Position, const XMFLOAT3& FocusPosition, const XMFLOAT3& UpDirection);
 	XMFLOAT4X4 LookToLH(const XMFLOAT3& Position, const XMFLOAT3& Look, const XMFLOAT3& WorldUp);
+}
+
+namespace Server
+{
+	void ErrorQuit(const char* Msg);
+	void ErrorDisplay(const char* Msg);
 }
 
 // Managers

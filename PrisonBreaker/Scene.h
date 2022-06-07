@@ -30,4 +30,6 @@ public:
 	virtual void PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList) = 0;
 	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList) = 0;
 	virtual void PostRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList) = 0;
+
+	virtual void ApplyPacketData(const SERVER_TO_CLIENT_DATA& PacketData) = 0;
 };
