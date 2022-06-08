@@ -145,26 +145,26 @@ bool CAnimationController::IsActive() const
 	return m_IsActive;
 }
 
-void CAnimationController::SetAnimationClip(UINT ClipNum)
+void CAnimationController::SetAnimationClipType(ANIMATION_CLIP_TYPE ClipType)
 {
-	if (ClipNum < 0 || ClipNum >= m_AnimationClips.size() || m_ClipNum == ClipNum)
+	if (ClipType < 0 || ClipType >= m_AnimationClips.size() || m_ClipType == ClipType)
 	{
 		return;
 	}
 
-	m_ClipNum = ClipNum;
+	m_ClipType = ClipType;
 	m_KeyFrameIndex = 0;
 	m_ElapsedTime = 0.0f;
 }
 
-UINT CAnimationController::GetAnimationClip() const
+ANIMATION_CLIP_TYPE CAnimationController::GetAnimationClipType() const
 {
-	return m_ClipNum;
+	return m_ClipType;
 }
 
 void CAnimationController::SetKeyFrameIndex(UINT KeyFrameIndex)
 {
-	if (KeyFrameIndex < 0 || KeyFrameIndex >= m_AnimationClips[m_ClipNum]->m_KeyFrameCount)
+	if (KeyFrameIndex < 0 || KeyFrameIndex >= m_AnimationClips[m_ClipType]->m_KeyFrameCount)
 	{
 		return;
 	}
@@ -195,7 +195,7 @@ void CAnimationController::UpdateShaderVariables()
 
 		for (UINT j = 0; j < BoneFrameCount; ++j)
 		{
-			m_BoneFrameCaches[i][j]->SetTransformMatrix(m_AnimationClips[m_ClipNum]->m_BoneTransformMatrixes[i][j][m_KeyFrameIndex]);
+			m_BoneFrameCaches[i][j]->SetTransformMatrix(m_AnimationClips[m_ClipType]->m_BoneTransformMatrixes[i][j][m_KeyFrameIndex]);
 		}
 	}
 
@@ -216,7 +216,7 @@ bool CAnimationController::UpdateAnimationClip(ANIMATION_TYPE AnimationType)
 		case ANIMATION_TYPE_LOOP:
 			m_KeyFrameIndex += 1;
 
-			if (m_KeyFrameIndex >= m_AnimationClips[m_ClipNum]->m_KeyFrameCount)
+			if (m_KeyFrameIndex >= m_AnimationClips[m_ClipType]->m_KeyFrameCount)
 			{
 				m_KeyFrameIndex = 0;
 			}
@@ -224,9 +224,9 @@ bool CAnimationController::UpdateAnimationClip(ANIMATION_TYPE AnimationType)
 		case ANIMATION_TYPE_ONCE:
 			m_KeyFrameIndex += 1;
 
-			if (m_KeyFrameIndex >= m_AnimationClips[m_ClipNum]->m_KeyFrameCount)
+			if (m_KeyFrameIndex >= m_AnimationClips[m_ClipType]->m_KeyFrameCount)
 			{
-				m_KeyFrameIndex = m_AnimationClips[m_ClipNum]->m_KeyFrameCount - 1;
+				m_KeyFrameIndex = m_AnimationClips[m_ClipType]->m_KeyFrameCount - 1;
 				IsFinished = true;
 			}
 			break;

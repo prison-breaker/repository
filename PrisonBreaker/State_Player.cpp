@@ -13,7 +13,7 @@ void CPlayerIdleState::Enter(const shared_ptr<CPlayer>& Entity)
 {
 	Entity->SetSpeed(0.0f);
 	Entity->SetMovingDirection(XMFLOAT3(0.0f, 0.0f, 0.0f));
-	Entity->SetAnimationClip(0);
+	Entity->GetAnimationController()->SetAnimationClipType(ANIMATION_CLIP_TYPE_PLAYER_IDLE);
 }
 
 void CPlayerIdleState::ProcessInput(const shared_ptr<CPlayer>& Entity, float ElapsedTime, UINT InputMask)
@@ -135,15 +135,15 @@ void CPlayerWalkingState::ProcessInput(const shared_ptr<CPlayer>& Entity, float 
 	}
 	else if (Vector3::IsEqual(MovingDirection, Entity->GetRight()))
 	{
-		Entity->SetAnimationClip(3);
+		Entity->GetAnimationController()->SetAnimationClipType(ANIMATION_CLIP_TYPE_PLAYER_WALK_RIGHT);
 	}
 	else if (Vector3::IsEqual(MovingDirection, Vector3::Inverse(Entity->GetRight())))
 	{
-		Entity->SetAnimationClip(2);
+		Entity->GetAnimationController()->SetAnimationClipType(ANIMATION_CLIP_TYPE_PLAYER_WALK_LEFT);
 	}
 	else
 	{
-		Entity->SetAnimationClip(1);
+		Entity->GetAnimationController()->SetAnimationClipType(ANIMATION_CLIP_TYPE_PLAYER_WALK_FORWARD_AND_BACK);
 	}
 }
 
@@ -232,22 +232,22 @@ void CPlayerRunningState::ProcessInput(const shared_ptr<CPlayer>& Entity, float 
 	else if (Vector3::IsEqual(MovingDirection, Entity->GetRight()))
 	{
 		Entity->SetSpeed(12.6f);
-		Entity->SetAnimationClip(6);
+		Entity->GetAnimationController()->SetAnimationClipType(ANIMATION_CLIP_TYPE_PLAYER_RUN_RIGHT);
 	}
 	else if (Vector3::IsEqual(MovingDirection, Vector3::Inverse(Entity->GetRight())))
 	{
 		Entity->SetSpeed(12.6f);
-		Entity->SetAnimationClip(5);
+		Entity->GetAnimationController()->SetAnimationClipType(ANIMATION_CLIP_TYPE_PLAYER_RUN_LEFT);
 	}
 	else if (Vector3::Angle(MovingDirection, Entity->GetLook()) < 90.0f)
 	{
 		Entity->SetSpeed(12.6f);
-		Entity->SetAnimationClip(4);
+		Entity->GetAnimationController()->SetAnimationClipType(ANIMATION_CLIP_TYPE_PLAYER_RUN_FORWARD);
 	}
 	else
 	{
 		Entity->SetSpeed(3.15f);
-		Entity->SetAnimationClip(1);
+		Entity->GetAnimationController()->SetAnimationClipType(ANIMATION_CLIP_TYPE_PLAYER_WALK_FORWARD_AND_BACK);
 	}
 }
 
@@ -274,7 +274,7 @@ void CPlayerPunchingState::Enter(const shared_ptr<CPlayer>& Entity)
 {
 	Entity->SetSpeed(0.0f);
 	Entity->SetMovingDirection(XMFLOAT3(0.0f, 0.0f, 0.0f));
-	Entity->SetAnimationClip(7);
+	Entity->GetAnimationController()->SetAnimationClipType(ANIMATION_CLIP_TYPE_PLAYER_PUNCH);
 
 	vector<vector<shared_ptr<CGameObject>>>& GameObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetGameObjects() };
 
@@ -335,7 +335,7 @@ void CPlayerShootingState::Enter(const shared_ptr<CPlayer>& Entity)
 {
 	Entity->SetSpeed(0.0f);
 	Entity->SetMovingDirection(XMFLOAT3(0.0f, 0.0f, 0.0f));
-	Entity->SetAnimationClip(8);
+	Entity->GetAnimationController()->SetAnimationClipType(ANIMATION_CLIP_TYPE_PLAYER_PISTOL_IDLE);
 	Entity->GetCamera()->SetZoomIn(true);
 }
 
@@ -348,7 +348,7 @@ void CPlayerShootingState::ProcessInput(const shared_ptr<CPlayer>& Entity, float
 		vector<vector<shared_ptr<CBilboardObject>>>& BilboardObjects{ GameScene->GetBilboardObjects() };
 
 		// 줌 애니메이션을 하는 상태이고, 
-		if (Entity->GetAnimationController()->GetAnimationClip() == 8)
+		if (Entity->GetAnimationController()->GetAnimationClipType() == ANIMATION_CLIP_TYPE_PLAYER_PISTOL_IDLE)
 		{
 			// 보유한 총알이 1발 이상있다면, 총을 쏜다.
 			if (BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->GetVertexCount() > 0)
@@ -423,7 +423,7 @@ void CPlayerShootingState::ProcessInput(const shared_ptr<CPlayer>& Entity, float
 					//tcout << TEXT("★ 가장 먼저 광선을 맞은 객체명 : ") << NearestIntersectedObject->GetName() << TEXT(" (거리 : ") << NearestHitDistance << TEXT(")") << endl << endl;
 				}
 
-				Entity->GetAnimationController()->SetAnimationClip(9);
+				Entity->GetAnimationController()->SetAnimationClipType(ANIMATION_CLIP_TYPE_PLAYER_SHOOT);
 
 				// 총알 UI의 총알 개수를 한 개 감소시킨다.
 				BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->SetVertexCount(BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->GetVertexCount() - 1);
@@ -448,15 +448,15 @@ void CPlayerShootingState::ProcessInput(const shared_ptr<CPlayer>& Entity, float
 
 void CPlayerShootingState::Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime)
 {
-	switch (Entity->GetAnimationController()->GetAnimationClip())
+	switch (Entity->GetAnimationController()->GetAnimationClipType())
 	{
-	case 8:
+	case ANIMATION_CLIP_TYPE_PLAYER_PISTOL_IDLE:
 		Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
 		break;
-	case 9:
+	case ANIMATION_CLIP_TYPE_PLAYER_SHOOT:
 		if (Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE))
 		{
-			Entity->GetAnimationController()->SetAnimationClip(8);
+			Entity->GetAnimationController()->SetAnimationClipType(ANIMATION_CLIP_TYPE_PLAYER_PISTOL_IDLE);
 		}
 		break;
 	}
@@ -480,7 +480,7 @@ void CPlayerDyingState::Enter(const shared_ptr<CPlayer>& Entity)
 {
 	Entity->SetSpeed(0.0f);
 	Entity->SetMovingDirection(XMFLOAT3(0.0f, 0.0f, 0.0f));
-	Entity->SetAnimationClip(10);
+	Entity->GetAnimationController()->SetAnimationClipType(ANIMATION_CLIP_TYPE_PLAYER_DIE);
 }
 
 void CPlayerDyingState::ProcessInput(const shared_ptr<CPlayer>& Entity, float ElapsedTime, UINT InputMask)

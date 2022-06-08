@@ -476,9 +476,6 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	(Player->GetCamera()->IsZoomIn()) ? m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][8]->SetActive(true) : m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][8]->SetActive(false);
 	
 	CFramework::GetInstance()->SendPacket(CLIENT_TO_SERVER_DATA{ 1, InputMask, Player->GetWorldMatrix() });
-
-	tcout << "[º¸³½ °Å]" << Player->GetWorldMatrix()._31 << ", " << Player->GetWorldMatrix()._32 << ", " << Player->GetWorldMatrix()._33 << endl;
-
 	CFramework::GetInstance()->ReceivePacket();
 }
 
@@ -578,8 +575,20 @@ void CGameScene::ApplyPacketData(const SERVER_TO_CLIENT_DATA& PacketData)
 {
 	for (UINT i = 0; i < MAX_CLIENT_CAPACITY; ++i)
 	{
-		m_GameObjects[OBJECT_TYPE_PLAYER][i]->SetTransformMatrix(PacketData.m_PlayerWorldMatrices[i]);
-		m_GameObjects[OBJECT_TYPE_PLAYER][i]->UpdateTransform(Matrix4x4::Identity());
+		if (m_GameObjects[OBJECT_TYPE_PLAYER][i]->IsActive())
+		{
+			shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][i]) };
+
+			Player->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
+
+			if (Player->GetAnimationController()->GetAnimationClipType() != PacketData.m_PlayerAnimationClipTypes[i])
+			{
+				Player->GetAnimationController()->SetAnimationClipType(PacketData.m_PlayerAnimationClipTypes[i]);
+			}
+
+			Player->SetTransformMatrix(PacketData.m_PlayerWorldMatrices[i]);
+			Player->UpdateTransform(Matrix4x4::Identity());
+		}
 	}
 
 	//for (UINT i = 0; i < 10; ++i)

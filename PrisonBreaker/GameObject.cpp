@@ -696,24 +696,6 @@ shared_ptr<CAnimationController> CGameObject::GetAnimationController() const
 	return m_AnimationController;
 }
 
-void CGameObject::SetAnimationClip(UINT ClipNum)
-{
-	if (m_AnimationController)
-	{
-		m_AnimationController->SetAnimationClip(ClipNum);
-	}
-}
-
-UINT CGameObject::GetAnimationClip() const
-{
-	if (m_AnimationController)
-	{
-		return m_AnimationController->GetAnimationClip();
-	}
-
-	return 0;
-}
-
 void CGameObject::SetBoundingBox(const shared_ptr<BoundingBox>& BoundingBox)
 {
 	if (BoundingBox)

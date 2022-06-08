@@ -13,7 +13,7 @@ void CGuardIdleState::Enter(const shared_ptr<CGuard>& Entity)
 {
 	Entity->SetElapsedTime(0.0f);
 	Entity->SetRecentTransition(false);
-	Entity->SetAnimationClip(0);
+	Entity->GetAnimationController()->SetAnimationClipType(ANIMATION_CLIP_TYPE_NPC_IDLE);
 	Entity->SetSpeed(0.0f);
 }
 
@@ -65,7 +65,7 @@ void CGuardPatrolState::Enter(const shared_ptr<CGuard>& Entity)
 	Entity->UpdateLocalCoord(Direction);
 	Entity->SetElapsedTime(0.0f);
 	Entity->SetRecentTransition(false);
-	Entity->SetAnimationClip(1);
+	Entity->GetAnimationController()->SetAnimationClipType(ANIMATION_CLIP_TYPE_NPC_WALK_FORWARD);
 	Entity->SetSpeed(5.0f);
 }
 
@@ -132,7 +132,7 @@ void CGuardChaseState::Enter(const shared_ptr<CGuard>& Entity)
 	Entity->UpdateLocalCoord(Direction);
 	Entity->SetElapsedTime(0.0f);
 	Entity->SetRecentTransition(false);
-	Entity->SetAnimationClip(2);
+	Entity->GetAnimationController()->SetAnimationClipType(ANIMATION_CLIP_TYPE_NPC_RUN_FORWARD);
 	Entity->SetSpeed(13.0f);
 }
 
@@ -246,7 +246,7 @@ void CGuardReturnState::Enter(const shared_ptr<CGuard>& Entity)
 	Entity->UpdateLocalCoord(Direction);
 	Entity->SetElapsedTime(0.0f);
 	Entity->SetRecentTransition(false);
-	Entity->SetAnimationClip(1);
+	Entity->GetAnimationController()->SetAnimationClipType(ANIMATION_CLIP_TYPE_NPC_WALK_FORWARD);
 	Entity->SetSpeed(5.0f);
 }
 
@@ -301,7 +301,7 @@ void CGuardAssembleState::Enter(const shared_ptr<CGuard>& Entity)
 	Entity->UpdateLocalCoord(Direction);
 	Entity->SetElapsedTime(0.0f);
 	Entity->SetRecentTransition(false);
-	Entity->SetAnimationClip(2);
+	Entity->GetAnimationController()->SetAnimationClipType(ANIMATION_CLIP_TYPE_NPC_RUN_FORWARD);
 	Entity->SetSpeed(13.0f);
 }
 
@@ -352,7 +352,7 @@ void CGuardShootingState::Enter(const shared_ptr<CGuard>& Entity)
 {
 	Entity->SetElapsedTime(0.0f);
 	Entity->SetRecentTransition(false);
-	Entity->SetAnimationClip(3);
+	Entity->GetAnimationController()->SetAnimationClipType(ANIMATION_CLIP_TYPE_NPC_SHOOT);
 	Entity->SetSpeed(0.0f);
 
 	shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
@@ -475,7 +475,7 @@ void CGuardHitState::Enter(const shared_ptr<CGuard>& Entity)
 
 	Entity->SetElapsedTime(0.0f);
 	Entity->SetRecentTransition(false);
-	Entity->SetAnimationClip(4);
+	Entity->GetAnimationController()->SetAnimationClipType(ANIMATION_CLIP_TYPE_NPC_HIT);
 	Entity->SetSpeed(0.0f);
 
 	CSoundManager::GetInstance()->Play(SOUND_TYPE_GRUNT_2, 0.5f);
@@ -519,7 +519,7 @@ void CGuardDyingState::Enter(const shared_ptr<CGuard>& Entity)
 {
 	Entity->SetElapsedTime(0.0f);
 	Entity->SetRecentTransition(false);
-	Entity->SetAnimationClip(5);
+	Entity->GetAnimationController()->SetAnimationClipType(ANIMATION_CLIP_TYPE_NPC_DIE);
 	Entity->SetSpeed(0.0f);
 	Entity->GenerateTrigger();
 }

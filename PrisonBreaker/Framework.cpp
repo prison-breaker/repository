@@ -587,8 +587,6 @@ void CFramework::ReceivePacket()
 	else
 	{
 		ApplyPacketData(m_ReceivedPacketData);
-
-		tcout << "[¹ÞÀº °Å]" << m_ReceivedPacketData.m_PlayerWorldMatrices[0]._31 << ", " << m_ReceivedPacketData.m_PlayerWorldMatrices[0]._32 << ", " << m_ReceivedPacketData.m_PlayerWorldMatrices[0]._33 << endl;
 	}
 }
 
