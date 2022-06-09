@@ -742,11 +742,8 @@ void CSkinnedMesh::LoadSkinInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphic
 			{
 				vector<XMUINT4> BoneIndices{ VertexCount };
 
-				for (UINT i = 0; i < VertexCount; ++i)
-				{
-					InFile.read(reinterpret_cast<TCHAR*>(&BoneIndices[i]), sizeof(XMUINT4));
-				}
-
+				InFile.read(reinterpret_cast<TCHAR*>(BoneIndices.data()), sizeof(XMUINT4) * VertexCount);
+				
 				m_D3D12BoneIndexBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, BoneIndices.data(), sizeof(XMUINT4) * VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12BoneIndexUploadBuffer.GetAddressOf());
 				m_D3D12BoneIndexBufferView.BufferLocation = m_D3D12BoneIndexBuffer->GetGPUVirtualAddress();
 				m_D3D12BoneIndexBufferView.StrideInBytes = sizeof(XMUINT4);
@@ -761,10 +758,7 @@ void CSkinnedMesh::LoadSkinInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphic
 			{
 				vector<XMFLOAT4> BoneWeights{ VertexCount };
 
-				for (UINT i = 0; i < VertexCount; ++i)
-				{
-					InFile.read(reinterpret_cast<TCHAR*>(&BoneWeights[i]), sizeof(XMFLOAT4));
-				}
+				InFile.read(reinterpret_cast<TCHAR*>(BoneWeights.data()), sizeof(XMFLOAT4) * VertexCount);
 
 				m_D3D12BoneWeightBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, BoneWeights.data(), sizeof(XMFLOAT4) * VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12BoneWeightUploadBuffer.GetAddressOf());
 				m_D3D12BoneWeightBufferView.BufferLocation = m_D3D12BoneWeightBuffer->GetGPUVirtualAddress();

@@ -504,6 +504,7 @@ void CFramework::FrameAdvance()
 	m_Timer->Tick(0.0f);
 
 	ProcessInput();
+	ProcessPacket();
 	PopulateCommandList();
 
 	DX::ThrowIfFailed(m_DXGISwapChain->Present(1, 0));
@@ -552,50 +553,14 @@ void CFramework::ConnectServer()
 		MessageBox(m_hWnd, TEXT("현재 정원이 꽉찼거나, 게임이 이미 시작되어 참여할 수 없습니다."), TEXT("PRISON BREAKER"), MB_ICONSTOP | MB_OK);
 		PostQuitMessage(0);
 	}
-
-	//CreateEvents();
 }
 
-void CFramework::CreateEvents()
+void CFramework::ProcessPacket()
 {
-	m_ReceiveEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-	m_RenderingEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
+	CSceneManager::GetInstance()->ProcessPacket();
 }
 
-void CFramework::SendPacket(const CLIENT_TO_SERVER_DATA& PacketData)
+const SOCKET_INFO& CFramework::GetSocketInfo() const
 {
-	int ReturnValue{ send(m_SocketInfo.m_Socket, (char*)&PacketData, sizeof(PacketData), 0) };
-
-	if (ReturnValue == SOCKET_ERROR)
-	{
-		Server::ErrorDisplay("send()");
-	}
-}
-
-void CFramework::ReceivePacket()
-{
-	int ReturnValue{ recv(m_SocketInfo.m_Socket, (char*)&m_ReceivedPacketData, sizeof(m_ReceivedPacketData), MSG_WAITALL) };
-
-	if (ReturnValue == SOCKET_ERROR)
-	{
-		Server::ErrorDisplay("recv()");
-	}
-	else if (ReturnValue == 0)
-	{
-		closesocket(m_SocketInfo.m_Socket);
-	}
-	else
-	{
-		ApplyPacketData(m_ReceivedPacketData);
-	}
-}
-
-void CFramework::ApplyPacketData(const SERVER_TO_CLIENT_DATA& PacketData)
-{
-	CSceneManager::GetInstance()->GetCurrentScene()->ApplyPacketData(PacketData);
-}
-
-UINT CFramework::GetID() const
-{
-	return m_SocketInfo.m_ID;
+	return m_SocketInfo;
 }

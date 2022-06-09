@@ -203,9 +203,6 @@ void CTitleScene::ProcessInput(HWND hWnd, float ElapsedTime)
 			}
 		}
 	}
-
-	CFramework::GetInstance()->SendPacket(CLIENT_TO_SERVER_DATA{ 0, 0, Matrix4x4::Identity() });
-	CFramework::GetInstance()->ReceivePacket();
 }
 
 void CTitleScene::Animate(float ElapsedTime)
@@ -249,7 +246,15 @@ void CTitleScene::RSSetViewportsAndScissorRects(ID3D12GraphicsCommandList* D3D12
 	D3D12GraphicsCommandList->RSSetScissorRects(1, &m_ScissorRect);
 }
 
-void CTitleScene::ApplyPacketData(const SERVER_TO_CLIENT_DATA& PacketData)
+void CTitleScene::ProcessPacket()
 {
+	SOCKET_INFO SocketInfo{ CFramework::GetInstance()->GetSocketInfo() };
+	MSG_TYPE MsgType{ MSG_TYPE_TITLE };
 
+	int ReturnValue{ send(SocketInfo.m_Socket, (char*)&MsgType, sizeof(MsgType), 0) };
+
+	if (ReturnValue == SOCKET_ERROR)
+	{
+		Server::ErrorDisplay("send()");
+	}
 }

@@ -161,6 +161,7 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 
 				Architecture->SetChild(ModelInfo->m_Model);
 				Architecture->SetTransformMatrix(TransformMatrix);
+				Architecture->UpdateTransform(Matrix4x4::Identity());
 				Architecture->Initialize();
 
 				m_GameObjects[ObjectType].push_back(Architecture);
@@ -370,7 +371,7 @@ void CGameScene::ProcessMouseMessage(HWND hWnd, UINT Message, WPARAM wParam, LPA
 
 void CGameScene::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
-	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][CFramework::GetInstance()->GetID()]) };
+	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][CFramework::GetInstance()->GetSocketInfo().m_ID]) };
 
 	switch (wParam)
 	{
@@ -400,7 +401,7 @@ void CGameScene::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, 
 		break;
 	case 'q': // 플레이어를 감옥 밖으로 이동
 	case 'Q':
-		//Player->SetPosition(m_NavMesh->GetNavNodes()[750]->GetTriangle().m_Centroid);
+		Player->SetPosition(m_NavMesh->GetNavNodes()[750]->GetTriangle().m_Centroid);
 		break;
 	case 'i':
 	case 'I':
@@ -411,7 +412,7 @@ void CGameScene::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, 
 
 void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 {	
-	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][CFramework::GetInstance()->GetID()]) };
+	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][CFramework::GetInstance()->GetSocketInfo().m_ID]) };
 
 	UpdatePerspective(hWnd, ElapsedTime, Player);
 
@@ -422,61 +423,58 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	//if (GetAsyncKeyState('D') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(15.0f * ElapsedTime, Player->GetCamera()->GetRight(), false));
 	//return;
 
-	UINT InputMask{};
+	m_InputMask = INPUT_MASK_NONE;
 
 	if (GetAsyncKeyState('W') & 0x8000)
 	{
-		InputMask |= INPUT_MASK_W;
+		m_InputMask |= INPUT_MASK_W;
 	}
 
 	if (GetAsyncKeyState('S') & 0x8000)
 	{
-		InputMask |= INPUT_MASK_S;
+		m_InputMask |= INPUT_MASK_S;
 	}
 
 	if (GetAsyncKeyState('A') & 0x8000)
 	{
-		InputMask |= INPUT_MASK_A;
+		m_InputMask |= INPUT_MASK_A;
 	}
 
 	if (GetAsyncKeyState('D') & 0x8000)
 	{
-		InputMask |= INPUT_MASK_D;
+		m_InputMask |= INPUT_MASK_D;
 	}
 
 	if (GetAsyncKeyState('F') & 0x0001)
 	{
-		InputMask |= INPUT_MASK_F;
+		m_InputMask |= INPUT_MASK_F;
 	}
 
 	if (GetAsyncKeyState(VK_SHIFT) & 0x8000)
 	{
-		InputMask |= INPUT_MASK_SHIFT;
+		m_InputMask |= INPUT_MASK_SHIFT;
 	}
 
 	// 미션 UI ON/OFF
 	if (GetAsyncKeyState(VK_TAB) & 0x0001)
 	{
-		InputMask |= INPUT_MASK_TAB;
+		m_InputMask |= INPUT_MASK_TAB;
 
-		static_pointer_cast<CMissionUI>(m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0])->GetStateMachine()->ProcessInput(ElapsedTime, InputMask);
+		static_pointer_cast<CMissionUI>(m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0])->GetStateMachine()->ProcessInput(ElapsedTime, m_InputMask);
 	}
 
 	if (GetAsyncKeyState(VK_LBUTTON) & 0x0001)
 	{
-		InputMask |= INPUT_MASK_LMB;
+		m_InputMask |= INPUT_MASK_LMB;
 	}
 
 	if (GetAsyncKeyState(VK_RBUTTON) & 0x8000)
 	{
-		InputMask |= INPUT_MASK_RMB;
+		m_InputMask |= INPUT_MASK_RMB;
 	}
 
 	//Player->ProcessInput(ElapsedTime, InputMask);
 	(Player->GetCamera()->IsZoomIn()) ? m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][8]->SetActive(true) : m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][8]->SetActive(false);
-	
-	CFramework::GetInstance()->SendPacket(CLIENT_TO_SERVER_DATA{ 1, InputMask, Player->GetWorldMatrix() });
-	CFramework::GetInstance()->ReceivePacket();
 }
 
 void CGameScene::Animate(float ElapsedTime)
@@ -526,7 +524,7 @@ void CGameScene::PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 
 void CGameScene::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
-	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][CFramework::GetInstance()->GetID()]) };
+	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][CFramework::GetInstance()->GetSocketInfo().m_ID]) };
 
 	Player->GetCamera()->RSSetViewportsAndScissorRects(D3D12GraphicsCommandList);
 	Player->GetCamera()->UpdateShaderVariables(D3D12GraphicsCommandList);
@@ -571,33 +569,82 @@ void CGameScene::PostRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 
 }
 
-void CGameScene::ApplyPacketData(const SERVER_TO_CLIENT_DATA& PacketData)
+void CGameScene::ProcessPacket()
 {
-	for (UINT i = 0; i < MAX_CLIENT_CAPACITY; ++i)
+	// Send to msg data.
+	SOCKET_INFO SocketInfo{ CFramework::GetInstance()->GetSocketInfo() };
+	MSG_TYPE MsgType{ MSG_TYPE_NORMAL };
+	int ReturnValue{ send(SocketInfo.m_Socket, (char*)&MsgType, sizeof(MsgType), 0) };
+
+	if (ReturnValue == SOCKET_ERROR)
 	{
-		if (m_GameObjects[OBJECT_TYPE_PLAYER][i]->IsActive())
-		{
-			shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][i]) };
-
-			Player->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
-
-			if (Player->GetAnimationController()->GetAnimationClipType() != PacketData.m_PlayerAnimationClipTypes[i])
-			{
-				Player->GetAnimationController()->SetAnimationClipType(PacketData.m_PlayerAnimationClipTypes[i]);
-			}
-
-			Player->SetTransformMatrix(PacketData.m_PlayerWorldMatrices[i]);
-			Player->UpdateTransform(Matrix4x4::Identity());
-		}
+		Server::ErrorDisplay("send()");
 	}
 
-	//for (UINT i = 0; i < 10; ++i)
-	//{
-	//	m_GameObjects[OBJECT_TYPE_NPC][i]->SetTransformMatrix(PacketData.m_NPCWorldMatrices[i]);
-	//	m_GameObjects[OBJECT_TYPE_NPC][i]->UpdateTransform(Matrix4x4::Identity());
-	//}
+	// Send to packet data.
+	CLIENT_TO_SERVER_DATA SendedPacketData{ m_InputMask, m_GameObjects[OBJECT_TYPE_PLAYER][SocketInfo.m_ID]->GetWorldMatrix() };
 
-	//m_Lights[1].m_Direction = PacketData.m_TowerLightDirection;
+	ReturnValue = send(SocketInfo.m_Socket, (char*)&SendedPacketData, sizeof(SendedPacketData), 0);
+
+	if (ReturnValue == SOCKET_ERROR)
+	{
+		Server::ErrorDisplay("send()");
+	}
+
+	// Receive updated packet data.
+	SERVER_TO_CLIENT_DATA ReceivedPacketData{};
+
+	ReturnValue = recv(SocketInfo.m_Socket, (char*)&ReceivedPacketData, sizeof(ReceivedPacketData), MSG_WAITALL);
+
+	if (ReturnValue == SOCKET_ERROR)
+	{
+		Server::ErrorDisplay("recv()");
+	}
+	else if (ReturnValue == 0)
+	{
+		tcout << "서버가 종료되었습니다." << endl;
+		closesocket(SocketInfo.m_Socket);
+	}
+	else
+	{
+		for (UINT i = 0; i < 1; ++i)
+		{
+			if (m_GameObjects[OBJECT_TYPE_PLAYER][i]->IsActive())
+			{
+				shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][i]) };
+
+				Player->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
+
+				if (Player->GetAnimationController()->GetAnimationClipType() != ReceivedPacketData.m_PlayerAnimationClipTypes[i])
+				{
+					Player->GetAnimationController()->SetAnimationClipType(ReceivedPacketData.m_PlayerAnimationClipTypes[i]);
+				}
+
+				Player->SetTransformMatrix(ReceivedPacketData.m_PlayerWorldMatrices[i]);
+				Player->UpdateTransform(Matrix4x4::Identity());
+			}
+		}
+
+		for (UINT i = 0; i < MAX_NPC_COUNT; ++i)
+		{
+			if (m_GameObjects[OBJECT_TYPE_NPC][i]->IsActive())
+			{
+				shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][i]) };
+
+				Guard->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
+
+				if (Guard->GetAnimationController()->GetAnimationClipType() != ReceivedPacketData.m_NPCAnimationClipTypes[i])
+				{
+					Guard->GetAnimationController()->SetAnimationClipType(ReceivedPacketData.m_NPCAnimationClipTypes[i]);
+				}
+
+				Guard->SetTransformMatrix(ReceivedPacketData.m_NPCWorldMatrices[i]);
+				Guard->UpdateTransform(Matrix4x4::Identity());
+			}
+		}
+
+		m_Lights[1].m_Direction = ReceivedPacketData.m_TowerLightDirection;
+	}
 }
 
 vector<vector<shared_ptr<CGameObject>>>& CGameScene::GetGameObjects()

@@ -34,4 +34,7 @@ public:
 	void PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 	void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 	void PostRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
+
+	// Server Function
+	void ProcessPacket();
 };

@@ -16,7 +16,7 @@
 #define PLANE_WIDTH				  400
 #define PLANE_HEIGHT			  400
 
-#define SERVER_IP				  "127.0.0.1"
+#define SERVER_IP				  "118.37.253.55"
 #define SERVER_PORT				  9000
 
 #define MAX_CLIENT_CAPACITY		  2
@@ -43,6 +43,12 @@
 #define TEXTURE_MASK_METALLIC_MAP 0x02
 #define TEXTURE_MASK_NORMAL_MAP   0x04
 #define TEXTURE_MASK_SHADOW_MAP   0x08
+
+enum MSG_TYPE
+{
+	MSG_TYPE_TITLE,
+	MSG_TYPE_NORMAL,
+};
 
 enum OBJECT_TYPE
 {
@@ -225,8 +231,6 @@ struct SOCKET_INFO
 
 struct CLIENT_TO_SERVER_DATA
 {
-	UINT	   m_SceneState{};
-
 	UINT	   m_InputMask{};
 	XMFLOAT4X4 m_WorldMatrix{};
 };

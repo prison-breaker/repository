@@ -110,3 +110,12 @@ void CSceneManager::PostRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandLi
 		m_CurrentScene->PostRender(D3D12GraphicsCommandList);
 	}
 }
+
+void CSceneManager::ProcessPacket()
+{
+	if (m_CurrentScene)
+	{
+		m_CurrentScene->ProcessPacket();
+	}
+}
+

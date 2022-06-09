@@ -13,11 +13,6 @@ private:
 	// Server Data
 	SOCKET_INFO						  m_SocketInfo{};
 
-	HANDLE							  m_ReceiveEvent{};
-	HANDLE							  m_RenderingEvent{};
-
-	SERVER_TO_CLIENT_DATA			  m_ReceivedPacketData{};
-
 	// Client Data
 	TCHAR							  m_Title[MAX_TITLE_LENGTH]{};
 			
@@ -108,11 +103,7 @@ public:
 
 	// Server Function
 	void ConnectServer();
-	void CreateEvents();
+	void ProcessPacket();
 
-	void SendPacket(const CLIENT_TO_SERVER_DATA& PacketData);
-	void ReceivePacket();
-	void ApplyPacketData(const SERVER_TO_CLIENT_DATA& PacketData);
-
-	UINT GetID() const;
+	const SOCKET_INFO& GetSocketInfo() const;
 };

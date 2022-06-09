@@ -49,6 +49,8 @@ struct CB_LIGHT
 class CGameScene : public CScene
 {
 private:
+	UINT										m_InputMask{};
+
 	vector<vector<shared_ptr<CGameObject>>>     m_GameObjects{};
 	vector<vector<shared_ptr<CBilboardObject>>> m_BilboardObjects{};
 
@@ -97,7 +99,8 @@ public:
 	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 	virtual void PostRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 
-	virtual void ApplyPacketData(const SERVER_TO_CLIENT_DATA& PacketData);
+	// Server Function
+	virtual void ProcessPacket();
 
 	vector<vector<shared_ptr<CGameObject>>>& GetGameObjects();
 	vector<vector<shared_ptr<CBilboardObject>>>& GetBilboardObjects();
