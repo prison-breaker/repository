@@ -607,7 +607,7 @@ void CGameScene::ProcessPacket()
 	}
 	else
 	{
-		for (UINT i = 0; i < 1; ++i)
+		for (UINT i = 0; i < MAX_CLIENT_CAPACITY; ++i)
 		{
 			if (m_GameObjects[OBJECT_TYPE_PLAYER][i]->IsActive())
 			{

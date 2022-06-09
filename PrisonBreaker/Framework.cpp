@@ -3,6 +3,9 @@
 #include "TitleScene.h"
 #include "GameScene.h"
 
+#define SERVER_IP	"127.0.0.1"
+#define SERVER_PORT	9000
+
 CFramework::CFramework()
 {
 	m_Timer = make_unique<CTimer>();

@@ -16,9 +16,6 @@
 #define PLANE_WIDTH				  400
 #define PLANE_HEIGHT			  400
 
-#define SERVER_IP				  "118.37.253.55"
-#define SERVER_PORT				  9000
-
 #define MAX_CLIENT_CAPACITY		  2
 #define MAX_NPC_COUNT			  15	
 #define MAX_TITLE_LENGTH	      64
