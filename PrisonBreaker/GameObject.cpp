@@ -812,3 +812,12 @@ void CGameObject::Rotate(const XMFLOAT3& Axis, float Angle)
 
 	UpdateTransform(Matrix4x4::Identity());
 }
+
+void CGameObject::SubRotate(const XMFLOAT3& Axis, float Angle)
+{
+	XMFLOAT4X4 RotationMatrix{ Matrix4x4::RotationAxis(Axis, Angle) };
+
+	m_TransformMatrix = Matrix4x4::Multiply(RotationMatrix, m_WorldMatrix);
+
+	UpdateTransform(Matrix4x4::Identity());
+}

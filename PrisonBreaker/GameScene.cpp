@@ -473,13 +473,13 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 		m_InputMask |= INPUT_MASK_RMB;
 	}
 
-	//Player->ProcessInput(ElapsedTime, InputMask);
+	Player->ProcessInput(ElapsedTime, m_InputMask);
 	(Player->GetCamera()->IsZoomIn()) ? m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][8]->SetActive(true) : m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][8]->SetActive(false);
 }
 
 void CGameScene::Animate(float ElapsedTime)
 {
-	for (UINT i = OBJECT_TYPE_PLAYER; i <= OBJECT_TYPE_STRUCTURE; ++i)
+	for (UINT i = OBJECT_TYPE_PLAYER; i <= OBJECT_TYPE_NPC; ++i)
 	{
 		for (const auto& GameObject : m_GameObjects[i])
 		{
@@ -537,11 +537,6 @@ void CGameScene::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 		{
 			if (GameObject)
 			{
-				if (!GameObject->GetAnimationController())
-				{
-					GameObject->UpdateTransform(Matrix4x4::Identity());
-				}
-
 				GameObject->Render(D3D12GraphicsCommandList, Player->GetCamera().get(), RENDER_TYPE_STANDARD);
 			}
 		}

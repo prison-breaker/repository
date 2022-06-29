@@ -50,8 +50,8 @@ void COpenDoorEventTrigger::Update(float ElapsedTime)
 		{
 			const XMFLOAT3 WorldUp{ 0.0f, 1.0f, 0.0f };
 
-			m_EventObjects[0]->Rotate(WorldUp, 50.0f * ElapsedTime);
-			m_EventObjects[1]->Rotate(WorldUp, -50.0f * ElapsedTime);
+			m_EventObjects[0]->SubRotate(WorldUp, 50.0f * ElapsedTime);
+			m_EventObjects[1]->SubRotate(WorldUp, -50.0f * ElapsedTime);
 			m_DoorAngle += 50.0f * ElapsedTime;
 		}
 		else
@@ -126,7 +126,7 @@ void CPowerDownEventTrigger::Update(float ElapsedTime)
 		{
 			const XMFLOAT3 WorldUp{ 0.0f, 1.0f, 0.0f };
 
-			m_EventObjects[0]->Rotate(WorldUp, -70.0f * ElapsedTime);
+			m_EventObjects[0]->SubRotate(WorldUp, -70.0f * ElapsedTime);
 			m_PanelAngle += 70.0f * ElapsedTime;
 		}
 		else
@@ -269,8 +269,8 @@ void COpenGateEventTrigger::Update(float ElapsedTime)
 		{
 			const XMFLOAT3 WorldUp{ 0.0f, 1.0f, 0.0f };
 
-			m_EventObjects[0]->Rotate(WorldUp, -55.0f * ElapsedTime);
-			m_EventObjects[1]->Rotate(WorldUp, 55.0f * ElapsedTime);
+			m_EventObjects[0]->SubRotate(WorldUp, -55.0f * ElapsedTime);
+			m_EventObjects[1]->SubRotate(WorldUp, 55.0f * ElapsedTime);
 			m_GateAngle += 55.0f * ElapsedTime;
 		}
 		else
@@ -308,7 +308,7 @@ void CGetPistolEventTrigger::InteractEventTrigger()
 		vector<vector<shared_ptr<CBilboardObject>>>& BilboardObjects{ GameScene->GetBilboardObjects() };
 
 		// 권총을 획득한 경우, 권총으로 무기를 교체하고 UI 또한 주먹에서 권총으로 변경시킨다.
-		shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(GameObjects[OBJECT_TYPE_PLAYER].back()) };
+		shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(GameObjects[OBJECT_TYPE_PLAYER][0]) };
 
 		if (!Player->HasPistol())
 		{

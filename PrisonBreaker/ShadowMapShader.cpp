@@ -200,11 +200,6 @@ void CDepthWriteShader::PrepareShadowMap(ID3D12GraphicsCommandList* D3D12Graphic
 			{
 				if (GameObject)
 				{
-					if (!GameObject->GetAnimationController()) 
-					{
-						GameObject->UpdateTransform(Matrix4x4::Identity());
-					}
-
 					GameObject->Render(D3D12GraphicsCommandList, m_LightCamera.get(), RENDER_TYPE_DEPTH_WRITE);
 				}
 			}

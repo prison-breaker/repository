@@ -11,7 +11,7 @@ CFramework::CFramework()
 	m_Timer = make_unique<CTimer>();
 	_tcscpy_s(m_Title, TEXT("PrisonBreaker ("));
 
-	ConnectServer();
+	//ConnectServer();
 }
 
 CFramework::~CFramework()
@@ -507,7 +507,8 @@ void CFramework::FrameAdvance()
 	m_Timer->Tick(0.0f);
 
 	ProcessInput();
-	ProcessPacket();
+	//ProcessPacket();
+	Animate();
 	PopulateCommandList();
 
 	DX::ThrowIfFailed(m_DXGISwapChain->Present(1, 0));
