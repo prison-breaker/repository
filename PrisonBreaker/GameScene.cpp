@@ -165,6 +165,11 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 				Architecture->Initialize();
 
 				m_GameObjects[ObjectType].push_back(Architecture);
+
+				if (ModelInfo->m_Model->GetName() == TEXT("tower"))
+				{
+					m_TowerLightFrame = ModelInfo->m_Model->FindFrame(TEXT("spotlight_pr_1"));
+				}
 			}
 				break;
 			}
@@ -946,30 +951,34 @@ void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
 
 void CGameScene::BuildLights()
 {
-	LIGHT Lights[MAX_LIGHTS]{};
+	m_Lights.resize(MAX_LIGHTS);
 
-	Lights[0].m_IsActive = true;
-	Lights[0].m_ShadowMapping = false;
-	Lights[0].m_Type = LIGHT_TYPE_DIRECTIONAL;
-	Lights[0].m_Position = XMFLOAT3(0.0f, 500.0f, 100.0f);
-	Lights[0].m_Direction = XMFLOAT3(0.0f, -1.0f, -1.0f);
-	Lights[0].m_Color = XMFLOAT4(0.1f, 0.1f, 0.1f, 0.0f);
+	m_Lights[0].m_IsActive = true;
+	m_Lights[0].m_ShadowMapping = false;
+	m_Lights[0].m_Type = LIGHT_TYPE_DIRECTIONAL;
+	m_Lights[0].m_Position = XMFLOAT3(0.0f, 500.0f, 100.0f);
+	m_Lights[0].m_Direction = XMFLOAT3(0.0f, -1.0f, -1.0f);
+	m_Lights[0].m_Color = XMFLOAT4(0.1f, 0.1f, 0.1f, 0.0f);
 
-	Lights[1].m_IsActive = true;
-	Lights[1].m_ShadowMapping = true;
-	Lights[1].m_Type = LIGHT_TYPE_SPOT;
-	Lights[1].m_Position = XMFLOAT3(0.0f, 50.0f, 0.0f);
-	Lights[1].m_Direction = Vector3::Normalize(XMFLOAT3(cosf(m_SpotLightAngle), -1.0f, sinf(m_SpotLightAngle)));
-	Lights[1].m_Color = XMFLOAT4(1.0f, 1.0f, 0.3f, 0.0f);
-	Lights[1].m_Attenuation = XMFLOAT3(0.5f, 0.01f, 0.0f);
-	Lights[1].m_Falloff = 1.0f;
-	Lights[1].m_Range = 500.0f;
-	Lights[1].m_Theta = cosf(XMConvertToRadians(5.0f));
-	Lights[1].m_Phi = cosf(XMConvertToRadians(10.0f));
+	m_Lights[1].m_IsActive = true;
+	m_Lights[1].m_ShadowMapping = true;
+	m_Lights[1].m_Type = LIGHT_TYPE_SPOT;
+	m_Lights[1].m_Position = XMFLOAT3(0.0f, 50.0f, 0.0f);
+	m_Lights[1].m_Direction = Vector3::Normalize(XMFLOAT3(cosf(m_SpotLightAngle), -1.0f, sinf(m_SpotLightAngle)));
+	m_Lights[1].m_Color = XMFLOAT4(1.0f, 1.0f, 0.3f, 0.0f);
+	m_Lights[1].m_Attenuation = XMFLOAT3(0.5f, 0.01f, 0.0f);
+	m_Lights[1].m_Falloff = 1.0f;
+	m_Lights[1].m_Range = 500.0f;
+	m_Lights[1].m_Theta = cosf(XMConvertToRadians(5.0f));
+	m_Lights[1].m_Phi = cosf(XMConvertToRadians(10.0f));
 
-	m_Lights.reserve(MAX_LIGHTS);
-	m_Lights.push_back(Lights[0]);
-	m_Lights.push_back(Lights[1]);
+	m_Lights[2].m_IsActive = true;
+	m_Lights[2].m_ShadowMapping = false;
+	m_Lights[2].m_Type = LIGHT_TYPE_POINT;
+	m_Lights[2].m_Position = XMFLOAT3(20.0f * cosf(m_SpotLightAngle), m_TowerLightFrame->GetPosition().y, 20.0f * sinf(m_SpotLightAngle));
+	m_Lights[2].m_Color = XMFLOAT4(0.3f, 0.3f, 0.0f, 0.0f);
+	m_Lights[2].m_Attenuation = XMFLOAT3(0.5f, 0.01f, 0.0f);
+	m_Lights[2].m_Range = 20.0f;
 }
 
 void CGameScene::BuildFog()
@@ -1000,18 +1009,18 @@ void CGameScene::UpdatePerspective(HWND hWnd, float ElapsedTime, const shared_pt
 		XMFLOAT3 RayOrigin{ Player->GetPosition().x, Player->GetCamera()->GetPosition().y, Player->GetPosition().z };
 		XMFLOAT3 RayDirection{ Vector3::Inverse(Player->GetLook()) };
 
-		for (const auto& GameObject : m_GameObjects[OBJECT_TYPE_STRUCTURE])
-		{
-			if (GameObject)
-			{
-				shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(RayOrigin, RayDirection, HitDistance, 3.0f) };
+		//for (const auto& GameObject : m_GameObjects[OBJECT_TYPE_STRUCTURE])
+		//{
+		//	if (GameObject)
+		//	{
+		//		shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(RayOrigin, RayDirection, HitDistance, 3.0f) };
 
-				if (IntersectedObject && (HitDistance < NearestHitDistance))
-				{
-					NearestHitDistance = HitDistance;
-				}
-			}
-		}
+		//		if (IntersectedObject && (HitDistance < NearestHitDistance))
+		//		{
+		//			NearestHitDistance = HitDistance;
+		//		}
+		//	}
+		//}
 
 		// 1ÀÎÄª ¸ðµå
 		//Player->GetCamera()->Rotate(Delta.y, Delta.x, 0.0f);
@@ -1103,6 +1112,8 @@ void CGameScene::InteractSpotLight(float ElapsedTime)
 
 		m_SpotLightAngle += ElapsedTime;
 		m_Lights[1].m_Direction = Vector3::Normalize(XMFLOAT3(cosf(m_SpotLightAngle), -1.0f, sinf(m_SpotLightAngle)));
+		m_Lights[2].m_Position = XMFLOAT3(20.0f * cosf(m_SpotLightAngle), m_TowerLightFrame->GetPosition().y, 20.0f * sinf(m_SpotLightAngle));
+		m_TowerLightFrame->SubRotate(XMFLOAT3(0.0f, 1.0f, 0.0f), -40.0f * ElapsedTime);
 	}
 }
 

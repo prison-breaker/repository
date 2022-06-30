@@ -61,6 +61,7 @@ private:
 	vector<LIGHT>						        m_Lights{};
 	ComPtr<ID3D12Resource>				        m_D3D12Lights{};
 	CB_LIGHT*							        m_MappedLights{};
+	shared_ptr<CGameObject>						m_TowerLightFrame{};
 
 	ComPtr<ID3D12Resource>						m_D3D12Fog{};
 	CB_FOG*										m_MappedFog{};
