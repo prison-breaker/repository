@@ -240,31 +240,17 @@ bool CPlayer::IsCollidedByGuard(const XMFLOAT3& NewPosition)
 	return false;
 }
 
-bool CPlayer::IsCollidedByEventTrigger(const XMFLOAT3& NewPosition, bool IsInteracted)
+bool CPlayer::IsCollidedByEventTrigger(const XMFLOAT3& NewPosition)
 {
 	vector<shared_ptr<CEventTrigger>>& EventTriggers{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetEventTriggers() };
 
-	for (auto iter = EventTriggers.begin(); iter != EventTriggers.end(); ++iter)
+	for (const auto& EventTrigger : EventTriggers)
 	{
-		shared_ptr<CEventTrigger> EventTrigger = *iter;
-
 		if (EventTrigger)
 		{
 			if (EventTrigger->IsInTriggerArea(GetPosition(), GetLook()))
 			{
-				if (IsInteracted)
-				{
-					EventTrigger->InteractEventTrigger();
-				}
-
-				if (EventTrigger->CanPassTriggerArea(GetPosition(), NewPosition))
-				{
-					return false;
-				}
-				else
-				{
-					return true;
-				}
+				return true;
 			}
 		}
 	}
@@ -278,23 +264,23 @@ bool CPlayer::IsCollidedByEventTrigger(const XMFLOAT3& NewPosition, bool IsInter
 
 void CPlayer::ProcessInput(float ElapsedTime, UINT InputMask)
 {
-	if (m_StateMachine)
-	{
-		m_StateMachine->ProcessInput(ElapsedTime, InputMask);
-	}
+	//if (m_StateMachine)
+	//{
+	//	m_StateMachine->ProcessInput(ElapsedTime, InputMask);
+	//}
 
-	shared_ptr<CNavMesh> NavMesh{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetNavMesh() };
-	XMFLOAT3 NewPosition{ Vector3::Add(GetPosition(), Vector3::ScalarProduct(m_Speed * ElapsedTime, m_MovingDirection, false)) };
+	//shared_ptr<CNavMesh> NavMesh{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetNavMesh() };
+	//XMFLOAT3 NewPosition{ Vector3::Add(GetPosition(), Vector3::ScalarProduct(m_Speed * ElapsedTime, m_MovingDirection, false)) };
 
-	if (!IsInNavMesh(NavMesh, NewPosition))
-	{
-		// SlidingVector를 이용하여 NewPosition의 값을 보정한다.
-		ApplySlidingVectorToPosition(NavMesh, NewPosition);
-	}
+	//if (!IsInNavMesh(NavMesh, NewPosition))
+	//{
+	//	// SlidingVector를 이용하여 NewPosition의 값을 보정한다.
+	//	ApplySlidingVectorToPosition(NavMesh, NewPosition);
+	//}
 
-	// NewPosition으로 이동 시, 교도관과의 충돌, 트리거 내 상호작용을 처리하거나, 움직임 제어 영향을 받지 않는다면 움직이도록 만든다.
-	if (!IsCollidedByGuard(NewPosition) && !IsCollidedByEventTrigger(NewPosition, (InputMask & INPUT_MASK_F) ? true : false))
-	{
-		SetPosition(NewPosition);
-	}
+	//// NewPosition으로 이동 시, 교도관과의 충돌, 트리거 내 상호작용을 처리하거나, 움직임 제어 영향을 받지 않는다면 움직이도록 만든다.
+	//if (!IsCollidedByGuard(NewPosition) && !IsCollidedByEventTrigger(NewPosition, (InputMask & INPUT_MASK_F) ? true : false))
+	//{
+	//	SetPosition(NewPosition);
+	//}
 }

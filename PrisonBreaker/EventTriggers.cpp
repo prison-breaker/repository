@@ -2,7 +2,7 @@
 #include "EventTriggers.h"
 #include "GameScene.h"
 
-COpenDoorEventTrigger::COpenDoorEventTrigger()
+COpenDoorEventTrigger::COpenDoorEventTrigger(MSG_TYPE Type) : CEventTrigger(Type)
 {
 	m_IsActive = true;
 	m_ActiveFOV = 70.0f;
@@ -64,7 +64,7 @@ void COpenDoorEventTrigger::Update(float ElapsedTime)
 
 //=========================================================================================================================
 
-CPowerDownEventTrigger::CPowerDownEventTrigger()
+CPowerDownEventTrigger::CPowerDownEventTrigger(MSG_TYPE Type) : CEventTrigger(Type)
 {
 	m_IsActive = true;
 	m_ActiveFOV = 40.0f;
@@ -113,6 +113,8 @@ void CPowerDownEventTrigger::InteractEventTrigger()
 		}
 		else
 		{
+			m_Type = MSG_TYPE_TRIGGER_POWER_DOWN_TOWER;
+
 			CSoundManager::GetInstance()->Play(SOUND_TYPE_OPEN_EP, 0.65f);
 		}
 	}
@@ -149,7 +151,7 @@ bool CPowerDownEventTrigger::IsOpened() const
 
 //=========================================================================================================================
 
-CSirenEventTrigger::CSirenEventTrigger()
+CSirenEventTrigger::CSirenEventTrigger(MSG_TYPE Type) : CEventTrigger(Type)
 {
 	m_IsActive = true;
 	m_ActiveFOV = 40.0f;
@@ -209,7 +211,7 @@ void CSirenEventTrigger::InteractEventTrigger()
 
 //=========================================================================================================================
 
-COpenGateEventTrigger::COpenGateEventTrigger()
+COpenGateEventTrigger::COpenGateEventTrigger(MSG_TYPE Type) : CEventTrigger(Type)
 {
 	m_IsActive = true;
 	m_ActiveFOV = 70.0f;
@@ -283,7 +285,7 @@ void COpenGateEventTrigger::Update(float ElapsedTime)
 
 //=========================================================================================================================
 
-CGetPistolEventTrigger::CGetPistolEventTrigger()
+CGetPistolEventTrigger::CGetPistolEventTrigger(MSG_TYPE Type) : CEventTrigger(Type)
 {
 	m_ActiveFOV = 360.0f;
 }
@@ -329,7 +331,7 @@ void CGetPistolEventTrigger::InteractEventTrigger()
 
 //=========================================================================================================================
 
-CGetKeyEventTrigger::CGetKeyEventTrigger()
+CGetKeyEventTrigger::CGetKeyEventTrigger(MSG_TYPE Type) : CEventTrigger(Type)
 {
 	m_ActiveFOV = 360.0f;
 }

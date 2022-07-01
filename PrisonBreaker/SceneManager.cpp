@@ -17,6 +17,16 @@ void CSceneManager::ReleaseUploadBuffers()
 	}
 }
 
+shared_ptr<CScene> CSceneManager::GetScene(const tstring& SceneName)
+{
+	if (m_Scenes.count(SceneName))
+	{
+		return m_Scenes[SceneName];
+	}
+
+	return nullptr;
+}
+
 shared_ptr<CScene> CSceneManager::GetCurrentScene() const
 {
 	return m_CurrentScene;

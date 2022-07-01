@@ -50,7 +50,7 @@ public:
 	void Rotate(float Pitch, float Yaw, float Roll, float ElapsedTime, float NearestHitDistance);
 
 	bool IsCollidedByGuard(const XMFLOAT3& NewPosition);
-	bool IsCollidedByEventTrigger(const XMFLOAT3& NewPosition, bool IsInteracted);
+	bool IsCollidedByEventTrigger(const XMFLOAT3& NewPosition);
 
 	void ProcessInput(float ElapsedTime, UINT InputMask);
 };

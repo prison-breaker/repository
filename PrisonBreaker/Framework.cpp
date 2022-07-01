@@ -80,14 +80,13 @@ void CFramework::BuildObjects()
 	// 타이틀 씬과 게임 씬의 데이터를 모두 로드해서 SceneManager에 추가한다.
 	shared_ptr<CScene> Scene{ make_shared<CTitleScene>() };
 
-	Scene->OnCreate(m_D3D12Device.Get(), m_D3D12GraphicsCommandList.Get(), m_D3D12RootSignature.Get());
 	CSceneManager::GetInstance()->RegisterScene(TEXT("TitleScene"), Scene);
 	CSceneManager::GetInstance()->ChangeScene(TEXT("TitleScene"));
+	Scene->OnCreate(m_D3D12Device.Get(), m_D3D12GraphicsCommandList.Get(), m_D3D12RootSignature.Get());
 
 	Scene = make_shared<CGameScene>();
-
-	Scene->OnCreate(m_D3D12Device.Get(), m_D3D12GraphicsCommandList.Get(), m_D3D12RootSignature.Get());
 	CSceneManager::GetInstance()->RegisterScene(TEXT("GameScene"), Scene);
+	Scene->OnCreate(m_D3D12Device.Get(), m_D3D12GraphicsCommandList.Get(), m_D3D12RootSignature.Get());
 
 	DX::ThrowIfFailed(m_D3D12GraphicsCommandList->Close());
 
@@ -508,6 +507,7 @@ void CFramework::FrameAdvance()
 
 	ProcessInput();
 	ProcessPacket();
+	Animate();
 	PopulateCommandList();
 
 	DX::ThrowIfFailed(m_DXGISwapChain->Present(1, 0));

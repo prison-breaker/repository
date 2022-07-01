@@ -18,6 +18,7 @@ public:
 
 	void ReleaseUploadBuffers();
 
+	shared_ptr<CScene> GetScene(const tstring& SceneName);
 	shared_ptr<CScene> GetCurrentScene() const;
 
 	void RegisterScene(const tstring& SceneName, const shared_ptr<CScene>& Scene);
