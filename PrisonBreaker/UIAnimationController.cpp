@@ -46,7 +46,7 @@ void CUIAnimationClip::LoadAnimationClipInfoFromFile(ifstream& InFile, UINT Vert
 
 				BilboardMesh.SetPosition(Position);
 				BilboardMesh.SetSize(Size);
-				BilboardMesh.SetCellIndex(static_cast<UINT>(CellIndex));
+				BilboardMesh.SetCellIndex(CellIndex);
 
 				m_TransformData[i].push_back(BilboardMesh);
 			}

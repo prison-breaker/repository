@@ -1,6 +1,6 @@
 #pragma once
 #include "Scene.h"
-#include "BilboardObject.h"
+#include "UIs.h"
 #include "UIShader.h"
 
 class CTitleScene : public CScene
@@ -11,9 +11,6 @@ private:
 	D3D12_RECT							m_ScissorRect{ 0, 0, CLIENT_WIDTH, CLIENT_HEIGHT };
 
 	vector<shared_ptr<CBilboardObject>> m_BilboardObjects{};
-
-	bool								m_ButtonOver{};
-	XMFLOAT4							m_ButtonArea[3]{};
 
 public:
 	CTitleScene() = default;
@@ -46,6 +43,8 @@ public:
 
 	// Server Function
 	virtual void ProcessPacket();
+
+	vector<shared_ptr<CBilboardObject>>& GetBilboardObjects();
 
 	void RSSetViewportsAndScissorRects(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 };

@@ -1,5 +1,6 @@
 #pragma once
 #include "Timer.h"
+#include "UILayer.h"
 
 struct CB_FRAMEWORKINFO
 {
@@ -53,7 +54,9 @@ private:
 
 	ComPtr<ID3D12Resource>			  m_D3D12FrameworkInfo{};
 	CB_FRAMEWORKINFO*				  m_MappedFrameworkInfo{};
-				
+
+	shared_ptr<CUILayer>			  m_UILayer{};
+
 public:
 	CFramework();
 	~CFramework();
@@ -61,8 +64,9 @@ public:
 	// Client Function
 	static CFramework* GetInstance();
 
-	void UpdateWindowTitle();
 	void SetActive(bool IsActive);
+
+	void UpdateWindowTitle();
 
 	void OnCreate(HINSTANCE hInstance, HWND hWnd);
 	void OnDestroy();
@@ -100,6 +104,8 @@ public:
 
 	void PopulateCommandList();
 	void FrameAdvance();
+
+	shared_ptr<CUILayer> GetUILayer();
 
 	// Server Function
 	void ConnectServer();

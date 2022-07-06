@@ -75,3 +75,55 @@ public:
 
 	shared_ptr<CStateMachine<CHitUI>> GetStateMachine() const;
 };
+
+//=========================================================================================================================
+
+class CButtonUI : public CBilboardObject
+{
+protected:
+	bool	 m_IsMouseOver{};
+
+	XMFLOAT4 m_ButtonAreas[2]{};
+
+public:
+	CButtonUI() = default;
+	virtual ~CButtonUI() = default;
+
+	virtual void ProcessMouseMessage(UINT Message, const XMINT2& ScreenPosition, UINT RootFrameIndex);
+
+	void SetButtonArea(UINT Index, const XMFLOAT4& Area);
+	const XMFLOAT4& GetButtonArea(UINT Index) const;
+};
+
+//=========================================================================================================================
+
+class CMainButtonUI : public CButtonUI
+{
+public:
+	CMainButtonUI() = default;
+	virtual ~CMainButtonUI() = default;
+
+	virtual void ProcessMouseMessage(UINT Message, const XMINT2& ScreenPosition, UINT RootFrameIndex);
+};
+
+//=========================================================================================================================
+
+class CPanelButtonUI : public CButtonUI
+{
+public:
+	CPanelButtonUI() = default;
+	virtual ~CPanelButtonUI() = default;
+
+	virtual void ProcessMouseMessage(UINT Message, const XMINT2& ScreenPosition, UINT RootFrameIndex);
+};
+
+//=========================================================================================================================
+
+class CLoadingIconUI : public CBilboardObject
+{
+public:
+	CLoadingIconUI() = default;
+	virtual ~CLoadingIconUI() = default;
+
+	virtual void Animate(float ElapsedTime);
+};

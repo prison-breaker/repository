@@ -408,7 +408,7 @@ struct VS_INPUT_IMAGE
 	float2 m_SizeS      : SIZE;
     float  m_AlphaColor : ALPHACOLOR;
 	uint2  m_CellCount  : CELLCOUNT;
-	uint   m_CellIndex  : CELLINDEX;
+	float  m_CellIndex  : CELLINDEX;
 };
 
 struct VS_OUTPUT_IMAGE
@@ -417,7 +417,7 @@ struct VS_OUTPUT_IMAGE
 	float2 m_SizeS      : SIZE;
     float  m_AlphaColor : ALPHACOLOR;
 	uint2  m_CellCount  : CELLCOUNT;
-	uint   m_CellIndex  : CELLINDEX;
+    float m_CellIndex   : CELLINDEX;
 };
 
 struct GS_OUTPUT_IMAGE
@@ -472,9 +472,9 @@ void GS_Image(point VS_OUTPUT_IMAGE Input[1], inout TriangleStream<GS_OUTPUT_IMA
 
 		for (int i = 0; i < 4; ++i)
 		{
-			TexCoords[i].x = CellSize.x * TexCoords[i].x + CellSize.x * (Input[0].m_CellIndex % Input[0].m_CellCount.y);
-			TexCoords[i].y = CellSize.y * TexCoords[i].y + CellSize.y * (Input[0].m_CellIndex / Input[0].m_CellCount.y);
-		}
+            TexCoords[i].x = CellSize.x * TexCoords[i].x + CellSize.x * (int)((Input[0].m_CellIndex) % Input[0].m_CellCount.y);
+            TexCoords[i].y = CellSize.y * TexCoords[i].y + CellSize.y * (int)((Input[0].m_CellIndex) / Input[0].m_CellCount.y);
+        }
 	}
 
 	GS_OUTPUT_IMAGE Output = (GS_OUTPUT_IMAGE)0;

@@ -10,20 +10,12 @@ CFramework::CFramework()
 {
 	m_Timer = make_unique<CTimer>();
 	_tcscpy_s(m_Title, TEXT("PrisonBreaker ("));
-
-	ConnectServer();
 }
 
 CFramework::~CFramework()
 {
 	closesocket(m_SocketInfo.m_Socket);
 	WSACleanup();
-}
-
-void CFramework::UpdateWindowTitle()
-{
-	m_Timer->GetFrameRate(m_Title + 15, 48);
-	SetWindowText(m_hWnd, m_Title);
 }
 
 CFramework* CFramework::GetInstance()
@@ -36,6 +28,12 @@ CFramework* CFramework::GetInstance()
 void CFramework::SetActive(bool IsActive)
 {
 	m_IsActive = IsActive;
+}
+
+void CFramework::UpdateWindowTitle()
+{
+	m_Timer->GetFrameRate(m_Title + 15, 48);
+	SetWindowText(m_hWnd, m_Title);
 }
 
 void CFramework::OnCreate(HINSTANCE hInstance, HWND hWnd)
@@ -75,6 +73,9 @@ void CFramework::OnDestroy()
 
 void CFramework::BuildObjects()
 {
+	m_UILayer = make_shared<CUILayer>(m_D3D12Device.Get(), m_D3D12CommandQueue.Get(), m_SwapChainBufferCount);
+	m_UILayer->Resize(m_D3D12RenderTargetBuffers->GetAddressOf(), CLIENT_WIDTH, CLIENT_HEIGHT);
+
 	DX::ThrowIfFailed(m_D3D12GraphicsCommandList->Reset(m_D3D12CommandAllocator.Get(), nullptr));
 
 	// 타이틀 씬과 게임 씬의 데이터를 모두 로드해서 SceneManager에 추가한다.
@@ -104,7 +105,10 @@ void CFramework::BuildObjects()
 
 void CFramework::ReleaseObjects()
 {
-
+	if (m_UILayer)
+	{
+		m_UILayer->ReleaseResources();
+	}
 }
 
 void CFramework::CreateDevice()
@@ -429,6 +433,7 @@ void CFramework::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, 
 {
 	switch (Message)
 	{
+	case WM_CHAR:
 	case WM_KEYUP:
 		switch (wParam)
 		{
@@ -491,7 +496,7 @@ void CFramework::PopulateCommandList()
 
 	Render();
 
-	DX::ResourceTransition(m_D3D12GraphicsCommandList.Get(), m_D3D12RenderTargetBuffers[m_SwapChainBufferIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	//DX::ResourceTransition(m_D3D12GraphicsCommandList.Get(), m_D3D12RenderTargetBuffers[m_SwapChainBufferIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 	DX::ThrowIfFailed(m_D3D12GraphicsCommandList->Close());
 
 	ComPtr<ID3D12CommandList> D3D12CommandLists[] = { m_D3D12GraphicsCommandList.Get() };
@@ -499,6 +504,8 @@ void CFramework::PopulateCommandList()
 	m_D3D12CommandQueue->ExecuteCommandLists(_countof(D3D12CommandLists), D3D12CommandLists->GetAddressOf());
 
 	WaitForGpuComplete();
+
+	m_UILayer->Render(m_SwapChainBufferIndex);
 }
 
 void CFramework::FrameAdvance()
@@ -516,6 +523,11 @@ void CFramework::FrameAdvance()
 	UpdateWindowTitle();
 }
 
+shared_ptr<CUILayer> CFramework::GetUILayer()
+{
+	return m_UILayer;
+}
+
 void CFramework::ConnectServer()
 {
 	WSADATA Wsa{};
@@ -523,7 +535,7 @@ void CFramework::ConnectServer()
 	if (WSAStartup(MAKEWORD(2, 2), &Wsa))
 	{
 		cout << "윈속을 초기화하지 못했습니다." << endl;
-		exit(1);
+		PostQuitMessage(0);
 	}
 
 	m_SocketInfo.m_Socket = socket(AF_INET, SOCK_STREAM, 0);
@@ -534,7 +546,7 @@ void CFramework::ConnectServer()
 	}
 
 	m_SocketInfo.m_SocketAddress.sin_family = AF_INET;
-	m_SocketInfo.m_SocketAddress.sin_addr.s_addr = inet_addr(SERVER_IP);
+	m_SocketInfo.m_SocketAddress.sin_addr.s_addr = inet_addr(m_UILayer->GetText().c_str());
 	m_SocketInfo.m_SocketAddress.sin_port = htons(SERVER_PORT);
 
 	int ReturnValue{ connect(m_SocketInfo.m_Socket, (SOCKADDR*)&m_SocketInfo.m_SocketAddress, sizeof(m_SocketInfo.m_SocketAddress)) };

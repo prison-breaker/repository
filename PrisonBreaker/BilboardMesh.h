@@ -8,7 +8,7 @@ private:
 	float	 m_AlphaColor{};
 	
 	XMUINT2  m_CellCount{};
-	UINT	 m_CellIndex{};
+	float	 m_CellIndex{};
 
 public:
 	CBilboardMesh() = default;
@@ -29,6 +29,6 @@ public:
 	void SetCellCount(const XMUINT2& CellCount);
 	const XMUINT2& GetCellCount() const;
 
-	void SetCellIndex(UINT CellIndex);
-	UINT GetCellIndex() const;
+	void SetCellIndex(float CellIndex);
+	float GetCellIndex() const;
 };

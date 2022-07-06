@@ -44,11 +44,11 @@ void CTitleScene::LoadUIInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCo
 {
 	tstring Token{};
 
+	unordered_map<tstring, shared_ptr<CMaterial>> MaterialCaches{};
 	shared_ptr<CBilboardObject> Object{};
 
 	tcout << FileName << TEXT(" 로드 시작...") << endl;
 
-#ifdef READ_BINARY_FILE
 	tifstream InFile{ FileName, ios::binary };
 
 	while (true)
@@ -57,7 +57,7 @@ void CTitleScene::LoadUIInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCo
 
 		if (Token == TEXT("<UIObject>"))
 		{
-			Object = CBilboardObject::LoadObjectInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
+			Object = CBilboardObject::LoadObjectInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile, MaterialCaches);
 
 			m_BilboardObjects.push_back(Object);
 		}
@@ -66,39 +66,8 @@ void CTitleScene::LoadUIInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCo
 			break;
 		}
 	}
-#else
-	tifstream InFile{ FileName };
 
-	while (InFile >> Token)
-	{
-		if (Token == TEXT("<UIObject>"))
-		{
-			Object = CBilboardObject::LoadObjectInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
-
-			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI].push_back(Object);
-		}
-		else if (Token == TEXT("</UI>"))
-		{
-			break;
-		}
-	}
-#endif
 	tcout << FileName << TEXT(" 로드 완료...") << endl << endl;
-
-	UINT VertexCount{ static_cast<UINT>(m_BilboardObjects[2]->GetVertexCount()) };
-
-	for (UINT i = 0; i < VertexCount; ++i)
-	{
-		// 버튼의 영역이 필요하기 때문에 어쩔 수 없이 MappedData를 읽어들임(한번만 하므로 사용)
-		XMFLOAT3 Position{ m_BilboardObjects[2]->GetPosition(i) };
-		XMFLOAT2 Size{ m_BilboardObjects[2]->GetSize(i) };
-
-		// x: XMin, y: XMax, z: YMin, w: YMax
-		m_ButtonArea[i].x = Position.x - 0.5f * Size.x;
-		m_ButtonArea[i].y = Position.x + 0.5f * Size.x;
-		m_ButtonArea[i].z = Position.y - 0.5f * Size.y;
-		m_ButtonArea[i].w = Position.y + 0.5f * Size.y;
-	}
 }
 
 void CTitleScene::CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
@@ -129,80 +98,44 @@ void CTitleScene::ReleaseUploadBuffers()
 
 void CTitleScene::ProcessMouseMessage(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
+	switch (Message)
+	{
+	case WM_LBUTTONDOWN:
+	case WM_RBUTTONDOWN:
+	case WM_LBUTTONUP:
+	case WM_RBUTTONUP:
+	case WM_MOUSEMOVE:
+	{
+		UINT BilboardObjectCount{ static_cast<UINT>(m_BilboardObjects.size()) };
 
+		for (UINT i = 0; i < BilboardObjectCount; ++i)
+		{
+			if (m_BilboardObjects[i])
+			{
+				m_BilboardObjects[i]->ProcessMouseMessage(Message, XMINT2{ LOWORD(lParam), HIWORD(lParam) }, i);
+			}
+		}
+
+		// m_BilboardObject[3]: 서버 IP주소 입력 패널
+		CFramework::GetInstance()->GetUILayer()->SetActive(m_BilboardObjects[3]->IsActive());
+	}
+	break;
+	}
 }
 
 void CTitleScene::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
-
+	switch (Message)
+	{
+	case WM_CHAR:
+		CFramework::GetInstance()->GetUILayer()->UpdateText(wParam);
+		break;
+	}
 }
 
 void CTitleScene::ProcessInput(HWND hWnd, float ElapsedTime)
 {
-	POINT CursorPos{};
 
-	GetCursorPos(&CursorPos);
-
-	UINT VertexCount{ static_cast<UINT>(m_BilboardObjects[2]->GetVertexCount()) };
-
-	for (UINT i = 0; i < VertexCount; ++i)
-	{
-		if ((m_ButtonArea[i].x <= CursorPos.x) && (CursorPos.x <= m_ButtonArea[i].y) &&
-			(m_ButtonArea[i].z <= CursorPos.y) && (CursorPos.y <= m_ButtonArea[i].w))
-		{
-			m_BilboardObjects[2]->SetCellIndex(i, 2 * i + 1);
-
-			if (!m_ButtonOver)
-			{
-				m_ButtonOver = true;
-
-				CSoundManager::GetInstance()->Play(SOUND_TYPE_BUTTON_OVER, 0.7f);
-			}
-
-			if (GetAsyncKeyState(VK_LBUTTON) & 0x8000)
-			{
-				switch (i)
-				{
-				case 0:
-				{	
-					// 게임시작시 커서가 중앙에 위치하도록 하여 카메라가 돌아가지 않도록 한다.
-					// 나중에 이 코드는 옮겨야 한다.
-					RECT Rect{};
-
-					GetWindowRect(hWnd, &Rect);
-
-					POINT OldCursorPos{ Rect.right / 2, Rect.bottom / 2 };
-
-					SetCursorPos(OldCursorPos.x, OldCursorPos.y);
-					ShowCursor(FALSE);
-
-					// GameStart Button
-					CSceneManager::GetInstance()->ReserveChangeScene(TEXT("GameScene"));
-					CSoundManager::GetInstance()->Stop(SOUND_TYPE_TITLE_BGM);
-					CSoundManager::GetInstance()->Play(SOUND_TYPE_INGAME_BGM_1, 0.3f);
-				}
-					break;
-				case 1:
-					// Help Button
-					break;
-				case 2:
-					// Exit Button
-					PostQuitMessage(0);
-					break;
-				}
-			}
-			return;
-		}
-		else
-		{
-			m_BilboardObjects[2]->SetCellIndex(i, 2 * i);
-
-			if (i == 2)
-			{
-				m_ButtonOver = false;
-			}
-		}
-	}
 }
 
 void CTitleScene::Animate(float ElapsedTime)
@@ -240,21 +173,56 @@ void CTitleScene::PostRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList
 
 }
 
+void CTitleScene::ProcessPacket()
+{
+	SOCKET_INFO SocketInfo{ CFramework::GetInstance()->GetSocketInfo() };
+
+	if (SocketInfo.m_Socket)
+	{
+		MSG_TYPE MsgType{ MSG_TYPE_TITLE };
+
+		int ReturnValue{ send(SocketInfo.m_Socket, (char*)&MsgType, sizeof(MsgType), 0) };
+
+		if (ReturnValue == SOCKET_ERROR)
+		{
+			Server::ErrorDisplay("send()");
+		}
+
+		// 두 명의 플레이어가 연결됐는지를 수신한다.
+		bool IsReady{};
+
+		ReturnValue = recv(SocketInfo.m_Socket, (char*)&IsReady, sizeof(IsReady), MSG_WAITALL);
+
+		if (ReturnValue == SOCKET_ERROR)
+		{
+			Server::ErrorDisplay("recv()");
+		}
+		else if (ReturnValue == 0)
+		{
+			tcout << "서버가 종료되었습니다." << endl;
+			closesocket(SocketInfo.m_Socket);
+		}
+		else
+		{
+			if (IsReady)
+			{
+				ShowCursor(FALSE);
+
+				CSceneManager::GetInstance()->ChangeScene(TEXT("GameScene"));
+				CSoundManager::GetInstance()->Stop(SOUND_TYPE_TITLE_BGM);
+				CSoundManager::GetInstance()->Play(SOUND_TYPE_INGAME_BGM_1, 0.3f);
+			}
+		}
+	}
+}
+
+vector<shared_ptr<CBilboardObject>>& CTitleScene::GetBilboardObjects()
+{
+	return m_BilboardObjects;
+}
+
 void CTitleScene::RSSetViewportsAndScissorRects(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
 	D3D12GraphicsCommandList->RSSetViewports(1, &m_ViewPort);
 	D3D12GraphicsCommandList->RSSetScissorRects(1, &m_ScissorRect);
-}
-
-void CTitleScene::ProcessPacket()
-{
-	SOCKET_INFO SocketInfo{ CFramework::GetInstance()->GetSocketInfo() };
-	MSG_TYPE MsgType{ MSG_TYPE_TITLE };
-
-	int ReturnValue{ send(SocketInfo.m_Socket, (char*)&MsgType, sizeof(MsgType), 0) };
-
-	if (ReturnValue == SOCKET_ERROR)
-	{
-		Server::ErrorDisplay("send()");
-	}
 }

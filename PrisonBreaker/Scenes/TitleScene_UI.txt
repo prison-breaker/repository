@@ -2,7 +2,7 @@
 	<UIObject>
 		<Type> 1
 		<IsActive> 1
-		<TextureName> Textures/TS_Background_UI.dds
+		<TextureName> Textures/Background.dds
 		<RectTransform> 1 959 539 0 1920 1080 
 		<AlphaColor> 1
 		<Animation>
@@ -131,20 +131,119 @@
 				</AnimationClip>
 			</AnimationClips>
 		</Animation>
+		<ChildCount> 0
 	</UIObject>
 	<UIObject>
 		<Type> 0
 		<IsActive> 1
-		<TextureName> Textures/Title_UI.dds
+		<TextureName> Textures/Title.dds
 		<RectTransform> 1 1139 349 0 900 90 
 		<AlphaColor> 1
+		<ChildCount> 0
 	</UIObject>
 	<UIObject>
 		<Type> 0
 		<IsActive> 1
-		<TextureName> Textures/Buttons_UI.dds
-		<CellInfo> 3 2
-		<RectTransform> 3 369 669 0 343 52 369 769 2 343 52 369 869 4 343 52 
-		<AlphaColor> 1 1 1 
+		<TextureName> Textures/MainButtons.dds
+		<CellInfo> 2 2
+		<RectTransform> 2 359 749 0 390 60 359 869 2 390 60 
+		<AlphaColor> 1 1 
+		<ChildCount> 0
+	</UIObject>
+	<UIObject>
+		<Type> 0
+		<IsActive> 0
+		<TextureName> Textures/Panel.dds
+		<RectTransform> 1 959 539 0 440 242 
+		<AlphaColor> 1
+		<ChildCount> 3
+			<UIObject>
+				<Type> 0
+				<IsActive> 1
+				<TextureName> Textures/Texts.dds
+				<CellInfo> 3 1
+				<RectTransform> 1 959 479 0 188 50 
+				<AlphaColor> 1
+				<ChildCount> 0
+			</UIObject>
+			<UIObject>
+				<Type> 0
+				<IsActive> 1
+				<TextureName> Textures/InputBars.dds
+				<CellInfo> 2 1
+				<RectTransform> 2 959 539 0 300 38 959 539 1 300 38 
+				<AlphaColor> 1 1 
+				<ChildCount> 0
+			</UIObject>
+			<UIObject>
+				<Type> 0
+				<IsActive> 1
+				<TextureName> Textures/PanelButtons.dds
+				<CellInfo> 2 2
+				<RectTransform> 2 819 609 0 125 27 1109 609 2 125 27 
+				<AlphaColor> 1 1 
+				<ChildCount> 0
+			</UIObject>
+	</UIObject>
+	<UIObject>
+		<Type> 0
+		<IsActive> 0
+		<TextureName> Textures/Panel.dds
+		<RectTransform> 1 959 539 0 440 242 
+		<AlphaColor> 1
+		<ChildCount> 3
+			<UIObject>
+				<Type> 0
+				<IsActive> 1
+				<TextureName> Textures/Texts.dds
+				<CellInfo> 3 1
+				<RectTransform> 1 1019 519 2 225 60 
+				<AlphaColor> 1
+				<ChildCount> 0
+			</UIObject>
+			<UIObject>
+				<Type> 0
+				<IsActive> 1
+				<TextureName> Textures/LoadingIcons.dds
+				<CellInfo> 1 6
+				<RectTransform> 1 829 519 0 60 60 
+				<AlphaColor> 1
+				<ChildCount> 0
+			</UIObject>
+			<UIObject>
+				<Type> 0
+				<IsActive> 1
+				<TextureName> Textures/PanelButtons.dds
+				<CellInfo> 2 2
+				<RectTransform> 1 959 609 2 125 27 
+				<AlphaColor> 1 
+				<ChildCount> 0
+			</UIObject>
+	</UIObject>
+	<UIObject>
+		<Type> 0
+		<IsActive> 0
+		<TextureName> Textures/Panel.dds
+		<RectTransform> 1 959 539 0 440 242 
+		<AlphaColor> 1
+		<ChildCount> 2
+			<UIObject>
+				<Type> 0
+				<IsActive> 1
+				<TextureName> Textures/Texts.dds
+				<CellInfo> 3 1
+				<RectTransform> 1 959 519 1 225 60 
+				<AlphaColor> 1
+				<ChildCount> 0
+			</UIObject>
+			<UIObject>
+				<Type> 0
+				<IsActive> 1
+				<TextureName> Textures/PanelButtons.dds
+				<CellInfo> 2 2
+				<RectTransform> 1 959 609 2 125 27 
+				<AlphaColor> 1 
+				<ChildCount> 0
+			</UIObject>
 	</UIObject>
 </UI>

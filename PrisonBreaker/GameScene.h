@@ -99,7 +99,6 @@ public:
 	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 	virtual void PostRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 
-	// Server Function
 	virtual void ProcessPacket();
 
 	vector<vector<shared_ptr<CGameObject>>>& GetGameObjects();

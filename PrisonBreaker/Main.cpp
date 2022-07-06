@@ -96,6 +96,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_MOUSEMOVE:
         CFramework::GetInstance()->ProcessMouseMessage(hWnd, message, wParam, lParam);
         break;
+    case WM_CHAR:
     case WM_KEYDOWN:
     case WM_KEYUP:
         CFramework::GetInstance()->ProcessKeyboardMessage(hWnd, message, wParam, lParam);

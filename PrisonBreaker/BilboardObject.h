@@ -8,29 +8,33 @@ class CMaterial;
 class CBilboardObject : public enable_shared_from_this<CBilboardObject>
 {
 protected:
-	bool				               m_IsActive{};
-								       
-	vector<shared_ptr<CMaterial>>      m_Materials{};
-	
-	UINT						       m_MaxVertexCount{};
-	UINT						       m_VertexCount{};
-								       
-	ComPtr<ID3D12Resource>	           m_D3D12VertexBuffer{};
-	ComPtr<ID3D12Resource>	           m_D3D12VertexUploadBuffer{};
-	D3D12_VERTEX_BUFFER_VIEW           m_D3D12VertexBufferView{};
-								       
-	CBilboardMesh*				       m_MappedImageInfo{};
-									   
-	shared_ptr<CUIAnimationController> m_UIAnimationController{};
+	bool				                m_IsActive{};
+								        
+	vector<shared_ptr<CMaterial>>       m_Materials{};
+									    
+	UINT						        m_MaxVertexCount{};
+	UINT						        m_VertexCount{};
+								        
+	ComPtr<ID3D12Resource>	            m_D3D12VertexBuffer{};
+	ComPtr<ID3D12Resource>	            m_D3D12VertexUploadBuffer{};
+	D3D12_VERTEX_BUFFER_VIEW            m_D3D12VertexBufferView{};
+								        
+	CBilboardMesh*				        m_MappedImageInfo{};
+									    
+	shared_ptr<CUIAnimationController>  m_UIAnimationController{};
+
+	vector<shared_ptr<CBilboardObject>> m_ChildObjects{};
 
 public:
 	CBilboardObject() = default;
 	virtual ~CBilboardObject() = default;
 
-	static shared_ptr<CBilboardObject> LoadObjectInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile);
+	static shared_ptr<CBilboardObject> LoadObjectInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile, unordered_map<tstring, shared_ptr<CMaterial>>& MaterialCaches);
 	static void LoadAnimationInfoFromFile(tifstream& InFile, const shared_ptr<CBilboardObject>& Model);
 
 	virtual void Initialize();
+
+	virtual void ProcessMouseMessage(UINT Message, const XMINT2& ScreenPosition, UINT RootFrameIndex);
 
 	virtual void Animate(float ElapsedTime);
 
@@ -57,11 +61,13 @@ public:
 	void SetAlphaColor(UINT Index, float AlphaColor);
 	float GetAlphaColor(UINT Index) const;
 
-	void SetCellIndex(UINT Index, UINT CellIndex);
-	UINT GetCellIndex(UINT Index) const;
+	void SetCellIndex(UINT Index, float CellIndex);
+	float GetCellIndex(UINT Index) const;
 
 	shared_ptr<CUIAnimationController> GetUIAnimationController() const;
 
 	void SetAnimationClip(UINT ClipNum);
 	void SetKeyFrameIndex(UINT KeyFrameIndex);
+
+	void SetChild(const shared_ptr<CBilboardObject>& ChildObject);
 };

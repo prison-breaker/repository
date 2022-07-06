@@ -13,7 +13,7 @@ void CGameScene::OnDestroy()
 {
 
 }
-	
+
 void CGameScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, ID3D12RootSignature* D3D12RootSignature)
 {
 	// 렌더링에 필요한 셰이더 객체(PSO)를 생성한다.
@@ -266,6 +266,7 @@ void CGameScene::LoadUIInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCom
 {
 	tstring Token{};
 
+	unordered_map<tstring, shared_ptr<CMaterial>> MaterialCaches{};
 	shared_ptr<CBilboardObject> Object{};
 
 	tcout << FileName << TEXT(" 로드 시작...") << endl;
@@ -279,7 +280,7 @@ void CGameScene::LoadUIInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCom
 
 		if (Token == TEXT("<UIObject>"))
 		{
-			Object = CBilboardObject::LoadObjectInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
+			Object = CBilboardObject::LoadObjectInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile, MaterialCaches);
 
 			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI].push_back(Object);
 		}
@@ -378,17 +379,15 @@ void CGameScene::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, 
 	case '1': // 무기 스왑 - 펀치
 		if (Player->SwapWeapon(WEAPON_TYPE_PUNCH))
 		{
-			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(true);  // 4: Punch UI
-			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(false); // 6: Pistol UI
-			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->SetActive(false); // 7: Bullet UI
+			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(true);  // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]: Punch
+			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(false); // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]: Pistol
 		}
 		break;
 	case '2': // 무기 스왑 - 권총
 		if (Player->SwapWeapon(WEAPON_TYPE_PISTOL))
 		{
-			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(false); // 4: Punch UI
-			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(true);	 // 6: Pistol UI
-			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->SetActive(true);	 // 7: Bullet UI
+			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(false); // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]: Punch
+			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(true);  // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]: Pistol
 		}
 		break;
 	case 'b': // 바운딩 박스 렌더링 ON/OFF
@@ -455,11 +454,11 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 		m_InputMask |= INPUT_MASK_SHIFT;
 	}
 
-	// 미션 UI ON/OFF
 	if (GetAsyncKeyState(VK_TAB) & 0x0001)
 	{
 		m_InputMask |= INPUT_MASK_TAB;
 
+		// m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]: Mission
 		static_pointer_cast<CMissionUI>(m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0])->GetStateMachine()->ProcessInput(ElapsedTime, m_InputMask);
 	}
 
@@ -472,13 +471,21 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	{
 		m_InputMask |= INPUT_MASK_RMB;
 	}
-
-	//Player->ProcessInput(ElapsedTime, m_InputMask);
-	(Player->GetCamera()->IsZoomIn()) ? m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][8]->SetActive(true) : m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][8]->SetActive(false);
 }
 
 void CGameScene::Animate(float ElapsedTime)
 {
+	for (UINT i = OBJECT_TYPE_PLAYER; i <= OBJECT_TYPE_NPC; ++i)
+	{
+		for (const auto& GameObject : m_GameObjects[i])
+		{
+			if (GameObject)
+			{
+				GameObject->Animate(ElapsedTime);
+			}
+		}
+	}
+
 	for (const auto& BilboardObject : m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI])
 	{
 		if (BilboardObject)
@@ -592,15 +599,39 @@ void CGameScene::ProcessPacket()
 			if (m_GameObjects[OBJECT_TYPE_PLAYER][i]->IsActive())
 			{
 				Player = static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][i]);
-				Player->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
+				Player->SetTransformMatrix(ReceivedPacketData.m_PlayerWorldMatrices[i]);
 
 				if (Player->GetAnimationController()->GetAnimationClipType() != ReceivedPacketData.m_PlayerAnimationClipTypes[i])
 				{
+					switch (ReceivedPacketData.m_PlayerAnimationClipTypes[i])
+					{
+						case ANIMATION_CLIP_TYPE_PLAYER_IDLE:
+							Player->GetStateMachine()->ChangeState(CPlayerIdleState::GetInstance());
+							break;
+						case ANIMATION_CLIP_TYPE_PLAYER_WALK_FORWARD_AND_BACK:
+						case ANIMATION_CLIP_TYPE_PLAYER_WALK_LEFT:
+						case ANIMATION_CLIP_TYPE_PLAYER_WALK_RIGHT:
+							Player->GetStateMachine()->ChangeState(CPlayerWalkingState::GetInstance());
+							break;
+						case ANIMATION_CLIP_TYPE_PLAYER_RUN_FORWARD:
+						case ANIMATION_CLIP_TYPE_PLAYER_RUN_LEFT:
+						case ANIMATION_CLIP_TYPE_PLAYER_RUN_RIGHT:
+							Player->GetStateMachine()->ChangeState(CPlayerRunningState::GetInstance());
+							break;
+						case ANIMATION_CLIP_TYPE_PLAYER_PUNCH:
+							Player->GetStateMachine()->ChangeState(CPlayerPunchingState::GetInstance());
+							break;
+						case ANIMATION_CLIP_TYPE_PLAYER_PISTOL_IDLE:
+						case ANIMATION_CLIP_TYPE_PLAYER_SHOOT:
+							Player->GetStateMachine()->ChangeState(CPlayerShootingState::GetInstance());
+							break;
+						case ANIMATION_CLIP_TYPE_PLAYER_DIE:
+							Player->GetStateMachine()->ChangeState(CPlayerDyingState::GetInstance());
+							break;
+					}
+
 					Player->GetAnimationController()->SetAnimationClipType(ReceivedPacketData.m_PlayerAnimationClipTypes[i]);
 				}
-
-				Player->SetTransformMatrix(ReceivedPacketData.m_PlayerWorldMatrices[i]);
-				Player->UpdateTransform(Matrix4x4::Identity());
 			}
 		}
 
@@ -610,15 +641,34 @@ void CGameScene::ProcessPacket()
 			{
 				shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][i]) };
 
-				Guard->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
+				Guard->SetTransformMatrix(ReceivedPacketData.m_NPCWorldMatrices[i]);
 
 				if (Guard->GetAnimationController()->GetAnimationClipType() != ReceivedPacketData.m_NPCAnimationClipTypes[i])
 				{
+					switch (ReceivedPacketData.m_NPCAnimationClipTypes[i])
+					{
+					case ANIMATION_CLIP_TYPE_NPC_IDLE:
+						Guard->GetStateMachine()->ChangeState(CGuardIdleState::GetInstance());
+						break;
+					case ANIMATION_CLIP_TYPE_NPC_WALK_FORWARD:
+						Guard->GetStateMachine()->ChangeState(CGuardPatrolState::GetInstance());
+						break;
+					case ANIMATION_CLIP_TYPE_NPC_RUN_FORWARD:
+						Guard->GetStateMachine()->ChangeState(CGuardChaseState::GetInstance());
+						break;
+					case ANIMATION_CLIP_TYPE_NPC_SHOOT:
+						Guard->GetStateMachine()->ChangeState(CGuardShootingState::GetInstance());
+						break;
+					case ANIMATION_CLIP_TYPE_NPC_HIT:
+						Guard->GetStateMachine()->ChangeState(CGuardHitState::GetInstance());
+						break;
+					case ANIMATION_CLIP_TYPE_NPC_DIE:
+						Guard->GetStateMachine()->ChangeState(CGuardDyingState::GetInstance());
+						break;
+					}
+
 					Guard->GetAnimationController()->SetAnimationClipType(ReceivedPacketData.m_NPCAnimationClipTypes[i]);
 				}
-
-				Guard->SetTransformMatrix(ReceivedPacketData.m_NPCWorldMatrices[i]);
-				Guard->UpdateTransform(Matrix4x4::Identity());
 			}
 		}
 
@@ -636,6 +686,9 @@ void CGameScene::ProcessPacket()
 
 		Player = static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][SocketInfo.m_ID]);
 		Player->IsCollidedByEventTrigger(Player->GetPosition());
+
+		// m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][6]: Crosshair
+		(Player->GetCamera()->IsZoomIn()) ? m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(true) : m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(false);
 
 		m_Lights[1].m_Direction = ReceivedPacketData.m_TowerLightDirection;
 	}
@@ -910,8 +963,8 @@ void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
 	{
 		if (EventTrigger)
 		{
-			// [BILBOARD_OBJECT_TYPE_UI][9]: InteractionUI
-			EventTrigger->SetInteractionUI(m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][9]);
+			// [BILBOARD_OBJECT_TYPE_UI][7]: Interactions
+			EventTrigger->SetInteractionUI(m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]);
 		}
 	}
 }

@@ -4,7 +4,7 @@
 #include "UIAnimationController.h"
 #include "UIs.h"
 
-shared_ptr<CBilboardObject> CBilboardObject::LoadObjectInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile)
+shared_ptr<CBilboardObject> CBilboardObject::LoadObjectInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile, unordered_map<tstring, shared_ptr<CMaterial>>& MaterialCaches)
 {
 	tstring Token{};
 
@@ -36,6 +36,15 @@ shared_ptr<CBilboardObject> CBilboardObject::LoadObjectInfoFromFile(ID3D12Device
 			case 4:
 				NewObject = make_shared<CHitUI>();
 				break;
+			case 5:
+				NewObject = make_shared<CMainButtonUI>();
+				break;
+			case 6:
+				NewObject = make_shared<CPanelButtonUI>();
+				break;
+			case 7:
+				NewObject = make_shared<CLoadingIconUI>();
+				break;
 			default:
 				NewObject = make_shared<CBilboardObject>();
 			}
@@ -49,17 +58,25 @@ shared_ptr<CBilboardObject> CBilboardObject::LoadObjectInfoFromFile(ID3D12Device
 		else if (Token == TEXT("<TextureName>"))
 		{
 			File::ReadStringFromFile(InFile, Token);
-			
-			shared_ptr<CMaterial> Material{ make_shared<CMaterial>() };
-			shared_ptr<CTexture> Texture{ make_shared<CTexture>() };
-			shared_ptr<CShader> Shader{ CShaderManager::GetInstance()->GetShader("UIShader") };
+		
+			if (MaterialCaches.count(Token))
+			{
+				NewObject->SetMaterial(MaterialCaches[Token]);
+			}
+			else
+			{
+				shared_ptr<CMaterial> Material{ make_shared<CMaterial>() };
+				shared_ptr<CTexture> Texture{ make_shared<CTexture>() };
+				shared_ptr<CShader> Shader{ CShaderManager::GetInstance()->GetShader("UIShader") };
 
-			Texture->LoadTextureFromDDSFile(D3D12Device, D3D12GraphicsCommandList, TEXTURE_TYPE_ALBEDO_MAP, Token);
-			Material->RegisterTexture(Texture);
-			Material->RegisterShader(Shader);
-			CTextureManager::GetInstance()->RegisterTexture(Token, Texture);
+				Texture->LoadTextureFromDDSFile(D3D12Device, D3D12GraphicsCommandList, TEXTURE_TYPE_ALBEDO_MAP, Token);
+				Material->RegisterTexture(Texture);
+				Material->RegisterShader(Shader);
+				CTextureManager::GetInstance()->RegisterTexture(Token, Texture);
+				MaterialCaches.emplace(Token, Material);
 
-			NewObject->SetMaterial(Material);
+				NewObject->SetMaterial(Material);
+			}
 		}
 		else if (Token == TEXT("<CellInfo>"))
 		{
@@ -76,6 +93,13 @@ shared_ptr<CBilboardObject> CBilboardObject::LoadObjectInfoFromFile(ID3D12Device
 			NewObject->m_D3D12VertexBufferView.StrideInBytes = sizeof(CBilboardMesh);
 			NewObject->m_D3D12VertexBufferView.SizeInBytes = sizeof(CBilboardMesh) * NewObject->m_VertexCount;
 
+			shared_ptr<CButtonUI> ButtonUI{};
+
+			if (typeid(*NewObject) == typeid(CMainButtonUI) || typeid(*NewObject) == typeid(CPanelButtonUI))
+			{
+				ButtonUI = static_pointer_cast<CButtonUI>(NewObject);
+			}
+
 			for (UINT i = 0; i < NewObject->m_VertexCount; ++i)
 			{
 				CBilboardMesh* MappedInfo{ NewObject->m_MappedImageInfo + i };
@@ -90,7 +114,15 @@ shared_ptr<CBilboardObject> CBilboardObject::LoadObjectInfoFromFile(ID3D12Device
 				MappedInfo->SetPosition(Position);
 				MappedInfo->SetSize(Size);
 				MappedInfo->SetCellCount(CellCount);
-				MappedInfo->SetCellIndex(static_cast<UINT>(CellIndex));
+				MappedInfo->SetCellIndex(CellIndex);
+
+				if (ButtonUI)
+				{
+					// x: XMin, y: XMax, z: YMin, w: YMax
+					XMFLOAT4 Area{ Position.x - 0.5f * Size.x, Position.x + 0.5f * Size.x, Position.y - 0.5f * Size.y, Position.y + 0.5f * Size.y };
+
+					ButtonUI->SetButtonArea(i, Area);
+				}
 			}
 		}
 		else if (Token == TEXT("<AlphaColor>"))
@@ -108,6 +140,23 @@ shared_ptr<CBilboardObject> CBilboardObject::LoadObjectInfoFromFile(ID3D12Device
 		else if (Token == TEXT("<Animation>"))
 		{
 			CBilboardObject::LoadAnimationInfoFromFile(InFile, NewObject);
+		}
+		else if (Token == TEXT("<ChildCount>"))
+		{
+			UINT ChildCount{ File::ReadIntegerFromFile(InFile) };
+
+			if (ChildCount > 0)
+			{
+				for (UINT i = 0; i < ChildCount; ++i)
+				{
+					shared_ptr<CBilboardObject> ChildObject{ CBilboardObject::LoadObjectInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile, MaterialCaches) };
+
+					if (ChildObject)
+					{
+						NewObject->SetChild(ChildObject);
+					}
+				}
+			}
 		}
 		else if (Token == TEXT("</UIObject>"))
 		{
@@ -257,9 +306,32 @@ void CBilboardObject::Initialize()
 	SetActive(true);
 }
 
+void CBilboardObject::ProcessMouseMessage(UINT Message, const XMINT2& ScreenPosition, UINT RootFrameIndex)
+{
+	if (IsActive())
+	{
+		for (const auto& ChildObjects : m_ChildObjects)
+		{
+			if (ChildObjects)
+			{
+				ChildObjects->ProcessMouseMessage(Message, ScreenPosition, RootFrameIndex);
+			}
+		}
+	}
+}
+
 void CBilboardObject::Animate(float ElapsedTime)
 {
-
+	if (IsActive())
+	{
+		for (const auto& ChildObjects : m_ChildObjects)
+		{
+			if (ChildObjects)
+			{
+				ChildObjects->Animate(ElapsedTime);
+			}
+		}
+	}
 }
 
 void CBilboardObject::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType)
@@ -283,6 +355,14 @@ void CBilboardObject::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList
 
 			D3D12GraphicsCommandList->DrawInstanced(m_VertexCount, 1, 0, 0);
 		}
+
+		for (const auto& ChildObject : m_ChildObjects)
+		{
+			if (ChildObject)
+			{
+				ChildObject->Render(D3D12GraphicsCommandList, Camera, RenderType);
+			}
+		}
 	}
 }
 
@@ -291,6 +371,14 @@ void CBilboardObject::ReleaseUploadBuffers()
 	if (m_D3D12VertexUploadBuffer)
 	{
 		m_D3D12VertexUploadBuffer.ReleaseAndGetAddressOf();
+	}
+
+	for (const auto& ChildObject : m_ChildObjects)
+	{
+		if (ChildObject)
+		{
+			ChildObject->ReleaseUploadBuffers();
+		}
 	}
 }
 
@@ -377,7 +465,7 @@ float CBilboardObject::GetAlphaColor(UINT Index) const
 	return m_MappedImageInfo[Index].GetAlphaColor();
 }
 
-void CBilboardObject::SetCellIndex(UINT Index, UINT CellIndex)
+void CBilboardObject::SetCellIndex(UINT Index, float CellIndex)
 {
 	if (Index < 0 || Index > m_VertexCount)
 	{
@@ -387,7 +475,7 @@ void CBilboardObject::SetCellIndex(UINT Index, UINT CellIndex)
 	m_MappedImageInfo[Index].SetCellIndex(CellIndex);
 }
 
-UINT CBilboardObject::GetCellIndex(UINT Index) const
+float CBilboardObject::GetCellIndex(UINT Index) const
 {
 	return m_MappedImageInfo[Index].GetCellIndex();
 }
@@ -410,5 +498,13 @@ void CBilboardObject::SetKeyFrameIndex(UINT KeyFrameIndex)
 	if (m_UIAnimationController)
 	{
 		m_UIAnimationController->SetKeyFrameIndex(KeyFrameIndex);
+	}
+}
+
+void CBilboardObject::SetChild(const shared_ptr<CBilboardObject>& ChildObject)
+{
+	if (ChildObject)
+	{
+		m_ChildObjects.push_back(ChildObject);
 	}
 }

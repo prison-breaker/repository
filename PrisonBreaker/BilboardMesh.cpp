@@ -48,12 +48,12 @@ const XMUINT2& CBilboardMesh::GetCellCount() const
 	return m_CellCount;
 }
 
-void CBilboardMesh::SetCellIndex(UINT CellIndex)
+void CBilboardMesh::SetCellIndex(float CellIndex)
 {
 	m_CellIndex = CellIndex;
 }
 
-UINT CBilboardMesh::GetCellIndex() const
+float CBilboardMesh::GetCellIndex() const
 {
 	return m_CellIndex;
 }

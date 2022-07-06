@@ -43,8 +43,8 @@
 
 enum MSG_TYPE
 {
-	MSG_TYPE_NONE					     = 0x0000,
-	MSG_TYPE_TITLE				         = 0x0001,
+	MSG_TYPE_NONE                        = 0x0000,
+	MSG_TYPE_TITLE                       = 0x0001,
 	MSG_TYPE_INGAME                      = 0x0002,
 	MSG_TYPE_TRIGGER_OPEN_PRISON_DOOR    = 0x0004,
 	MSG_TYPE_TRIGGER_OPEN_ELEC_PANEL     = 0x0008,
@@ -192,12 +192,18 @@ using namespace std::chrono;
 // DirectX Header
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "d3d12.lib")
+#pragma comment(lib, "d3d11.lib")
+#pragma comment(lib, "d2d1.lib")
+#pragma comment(lib, "dwrite.lib")
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "dxguid.lib")
 #include "D3DX12.h"
+#include <D3D11on12.h>
 #include <D3Dcompiler.h>
+#include <D2D1_3.h>
 #include <DXGI1_4.h>
 #include <DXGIDebug.h>
+#include <DWrite.h>
 #include <DirectXMath.h>
 #include <DirectXPackedVector.h>
 #include <DirectXColors.h>

@@ -2,7 +2,7 @@
 	<UIObject>
 		<Type> 2
 		<IsActive> 1
-		<TextureName> Textures/Mission_UI.dds
+		<TextureName> Textures/Missions.dds
 		<CellInfo> 3 2
 		<RectTransform> 2 159 359 0 240 104 159 479 4 240 104 
 		<AlphaColor> 1 1 
@@ -72,121 +72,74 @@
 				</AnimationClip>
 			</AnimationClips>
 		</Animation>
+		<ChildCount> 0
 	</UIObject>
 	<UIObject>
 		<Type> 0
 		<IsActive> 1
-		<TextureName> Textures/Portrait_UI.dds
+		<TextureName> Textures/Portraits.dds
+		<CellInfo> 1 2
 		<RectTransform> 1 99 979 0 120 120 
 		<AlphaColor> 1
+		<ChildCount> 0
 	</UIObject>
 	<UIObject>
 		<Type> 0
 		<IsActive> 1
-		<TextureName> Textures/Life_UI.dds
-		<RectTransform> 1 199 929 0 40 40 
-		<AlphaColor> 1
+		<TextureName> Textures/StatusIcons.dds
+		<CellInfo> 6 1
+		<RectTransform> 11 199 929 0 40 40 250 929 4 50 50 270 929 4 50 50 290 929 4 50 50 310 929 4 50 50 330 929 4 50 50 350 929 4 50 50 370 929 4 50 50 390 929 4 50 50 410 929 4 50 50 430 929 4 50 50 
+		<AlphaColor> 1 1 1 1 1 1 1 1 1 1 1 
+		<ChildCount> 0
 	</UIObject>
 	<UIObject>
 		<Type> 0
 		<IsActive> 1
-		<TextureName> Textures/Blood_UI.dds
-		<RectTransform> 10 250 929 0 15 24 270 929 0 15 24 290 929 0 15 24 310 929 0 15 24 330 929 0 15 24 350 929 0 15 24 370 929 0 15 24 390 929 0 15 24 410 929 0 15 24 430 929 0 15 24 
-		<AlphaColor> 1 1 1 1 1 1 1 1 1 1 
-	</UIObject>
-	<UIObject>
-		<Type> 0
-		<IsActive> 1
-		<TextureName> Textures/Punch_UI.dds
-		<RectTransform> 1 199 979 0 40 40 
-		<AlphaColor> 1
-	</UIObject>
-	<UIObject>
-		<Type> 3
-		<IsActive> 1
-		<TextureName> Textures/Key_UI.dds
-		<RectTransform> 1 199 1029 0 40 40 
-		<AlphaColor> 0.5019608
-		<Animation>
-			<AnimationClips> 1
-				<AnimationClip> Activate 60 20 0.3333333
-					<RectTransform> 0.01666667 199 1029 0 40.50963 40.50963 
-					<AlphaColor> 0.01666667 0.2408382
-					<RectTransform> 0.03333334 199 1029 0 41.9437 41.9437 
-					<AlphaColor> 0.03333334 0.2567059
-					<RectTransform> 0.05 199 1029 0 44.16 44.16 
-					<AlphaColor> 0.05 0.28175
-					<RectTransform> 0.06666667 199 1029 0 47.0163 47.0163 
-					<AlphaColor> 0.06666667 0.3148235
-					<RectTransform> 0.08333334 199 1029 0 50.37037 50.37037 
-					<AlphaColor> 0.08333334 0.3547794
-					<RectTransform> 0.1 199 1029 0 54.08 54.08 
-					<AlphaColor> 0.1 0.4004706
-					<RectTransform> 0.1166667 199 1029 0 58.00296 58.00296 
-					<AlphaColor> 0.1166667 0.45075
-					<RectTransform> 0.1333333 199 1029 0 61.99704 61.99704 
-					<AlphaColor> 0.1333333 0.5044706
-					<RectTransform> 0.15 199 1029 0 65.92 65.92 
-					<AlphaColor> 0.15 0.5604853
-					<RectTransform> 0.1666667 199 1029 0 69.62963 69.62963 
-					<AlphaColor> 0.1666667 0.6176471
-					<RectTransform> 0.1833333 199 1029 0 72.9837 72.9837 
-					<AlphaColor> 0.1833333 0.6748088
-					<RectTransform> 0.2 199 1029 0 75.84 75.84 
-					<AlphaColor> 0.2 0.7308235
-					<RectTransform> 0.2166667 199 1029 0 78.0563 78.0563 
-					<AlphaColor> 0.2166667 0.7845441
-					<RectTransform> 0.2333333 199 1029 0 79.49037 79.49037 
-					<AlphaColor> 0.2333333 0.8348235
-					<RectTransform> 0.25 199 1029 0 80 80 
-					<AlphaColor> 0.25 0.8805146
-					<RectTransform> 0.2666667 199 1029 0 75.84 75.84 
-					<AlphaColor> 0.2666667 0.9204705
-					<RectTransform> 0.2833334 199 1029 0 65.91998 65.91998 
-					<AlphaColor> 0.2833334 0.9535441
-					<RectTransform> 0.3 199 1029 0 54.07998 54.07998 
-					<AlphaColor> 0.3 0.9785882
-					<RectTransform> 0.3166667 199 1029 0 44.15998 44.15998 
-					<AlphaColor> 0.3166667 0.9944559
-					<RectTransform> 0.3333334 199 1029 0 40 40 
-					<AlphaColor> 0.3333334 1
-				</AnimationClip>
-			</AnimationClips>
-		</Animation>
+		<TextureName> Textures/StatusIcons.dds
+		<CellInfo> 6 1
+		<RectTransform> 1 199 979 1 40 40 
+		<AlphaColor> 1 
+		<ChildCount> 0
 	</UIObject>
 	<UIObject>
 		<Type> 0
 		<IsActive> 0
-		<TextureName> Textures/Pistol_UI.dds
-		<RectTransform> 1 199 979 0 50 34 
-		<AlphaColor> 1
+		<TextureName> Textures/StatusIcons.dds
+		<CellInfo> 6 1
+		<RectTransform> 6 199 979 2 40 40 249 979 5 50 50 269 979 5 50 50 289 979 5 50 50 309 979 5 50 50 329 979 5 50 50 
+		<AlphaColor> 1 1 1 1 1 1 
+		<ChildCount> 0
+	</UIObject>
+	<UIObject>
+		<Type> 0
+		<IsActive> 1
+		<TextureName> Textures/StatusIcons.dds
+		<CellInfo> 6 1
+		<RectTransform> 1 199 1029 3 40 40 
+		<AlphaColor> 0.3921569 
+		<ChildCount> 0
 	</UIObject>
 	<UIObject>
 		<Type> 0
 		<IsActive> 0
-		<TextureName> Textures/Bullet_UI.dds
-		<RectTransform> 5 249 979 0 8 32 269 979 0 8 32 289 979 0 8 32 309 979 0 8 32 329 979 0 8 32 
-		<AlphaColor> 1 1 1 1 1 
-	</UIObject>
-	<UIObject>
-		<Type> 0
-		<IsActive> 0
-		<TextureName> Textures/Crosshair_UI.dds
+		<TextureName> Textures/Crosshair.dds
 		<RectTransform> 1 959 539 0 32 32 
 		<AlphaColor> 1
+		<ChildCount> 0
 	</UIObject>
 	<UIObject>
 		<Type> 0
 		<IsActive> 0
-		<TextureName> Textures/Interaction_UI.dds
+		<TextureName> Textures/Interactions.dds
 		<CellInfo> 7 1
 		<RectTransform> 1 959 759 0 400 83 
 		<AlphaColor> 1
+		<ChildCount> 0
 	</UIObject>
 	<UIObject>
 		<Type> 4
 		<IsActive> 0
-		<TextureName> Textures/Hit_UI.dds
+		<TextureName> Textures/Hit.dds
 		<RectTransform> 1 959 539 0 1920 1080 
 		<AlphaColor> 0.2
 		<Animation>
@@ -235,5 +188,6 @@
 				</AnimationClip>
 			</AnimationClips>
 		</Animation>
+		<ChildCount> 0
 	</UIObject>
 </UI>
