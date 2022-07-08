@@ -2,6 +2,53 @@
 #include "GameScene.h"
 #include "Framework.h"
 
+void CGameScene::Initialize()
+{
+	SOCKET_INFO SocketInfo{ CFramework::GetInstance()->GetSocketInfo() };
+	UINT HasPistolGuardIndics[5]{};
+
+	int ReturnValue{ recv(SocketInfo.m_Socket, (char*)HasPistolGuardIndics, sizeof(HasPistolGuardIndics), MSG_WAITALL) };
+
+	if (ReturnValue == SOCKET_ERROR)
+	{
+		Server::ErrorDisplay("recv()");
+	}
+
+	UINT TriggerCount{ static_cast<UINT>(m_EventTriggers.size()) };
+
+	for (UINT i = 0; i < TriggerCount; ++i)
+	{
+		if (i > 6)
+		{
+			m_EventTriggers[i]->SetActive(true);
+		}
+		else
+		{
+			m_EventTriggers[i]->SetActive(false);
+		}
+
+		m_EventTriggers[i]->SetInteracted(false);
+	}
+
+	// 권총을 드롭하는 트리거를 추가한다.
+	// 권총은 열쇠를 갖지 않은 임의의 교도관(Index: 2 ~ 14) 중 5명이 보유하고 있다.
+	UINT GuardCount{ static_cast<UINT>(m_GameObjects[OBJECT_TYPE_NPC].size()) };
+
+	for (UINT i = 2, j = 0; i < GuardCount; ++i)
+	{
+		shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][i]) };
+
+		if (i == HasPistolGuardIndics[j])
+		{
+			Guard->SetEventTrigger(m_EventTriggers[j++]);
+		}
+		else
+		{
+			Guard->SetEventTrigger(nullptr);
+		}
+	}
+}
+
 void CGameScene::OnCreate(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, ID3D12RootSignature* D3D12RootSignature)
 {
 	BuildObjects(D3D12Device, D3D12GraphicsCommandList, D3D12RootSignature);
@@ -870,8 +917,33 @@ void CGameScene::LoadMaterialCachesFromFile(ID3D12Device* D3D12Device, ID3D12Gra
 
 void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
 {
-	tstring Token{};
 	shared_ptr<CEventTrigger> EventTrigger{};
+
+	// 권총을 드롭하는 트리거를 추가한다.
+	// 권총은 열쇠를 갖지 않은 임의의 교도관(Index: 2 ~ 14) 중 5명이 보유하고 있다.
+	for (UINT i = 0; i < 5; ++i)
+	{
+		EventTrigger = make_shared<CGetPistolEventTrigger>(MSG_TYPE_NONE);
+
+		m_EventTriggers.push_back(EventTrigger);
+	}
+
+	// 열쇠를 드롭하는 트리거를 추가한다.
+	// 열쇠는 외형이 다른 교도관(Index: 0, 1)이 보유하고 있다.
+	for (UINT i = 0; i < 2; ++i)
+	{
+		if (m_GameObjects[OBJECT_TYPE_NPC][i])
+		{
+			shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][i]) };
+
+			EventTrigger = make_shared<CGetKeyEventTrigger>(MSG_TYPE_NONE);
+			Guard->SetEventTrigger(EventTrigger);
+
+			m_EventTriggers.push_back(EventTrigger);
+		}
+	}
+
+	tstring Token{};
 
 	tcout << FileName << TEXT(" 로드 시작...") << endl;
 
@@ -921,42 +993,6 @@ void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
 	tifstream InFile{ FileName };
 #endif
 	tcout << FileName << TEXT(" 로드 완료...") << endl << endl;
-
-	//// 권총을 드롭하는 트리거를 추가한다.
-	//// 권총은 열쇠를 갖지 않은 임의의 교도관(Index: 2 ~ 14) 중 5명이 보유하고 있다.
-	//vector<UINT> Indices{};
-
-	//Indices.resize(m_GameObjects[OBJECT_TYPE_NPC].size() - 2);
-	//iota(Indices.begin(), Indices.end(), 2);
-	//shuffle(Indices.begin(), Indices.end(), default_random_engine{ random_device{}() });
-
-	//for (UINT i = 0 ; i < 5 ; ++i)
-	//{
-	//	if (m_GameObjects[OBJECT_TYPE_NPC][Indices[i]])
-	//	{
-	//		shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][Indices[i]]) };
-
-	//		EventTrigger = make_shared<CGetPistolEventTrigger>();
-	//		Guard->SetEventTrigger(EventTrigger);
-
-	//		m_EventTriggers.push_back(EventTrigger);
-	//	}
-	//}
-
-	//// 열쇠를 드롭하는 트리거를 추가한다.
-	//// 열쇠는 외형이 다른 교도관(Index: 0, 1)이 보유하고 있다.
-	//for (UINT i = 0; i < 2; ++i)
-	//{
-	//	if (m_GameObjects[OBJECT_TYPE_NPC][i])
-	//	{
-	//		shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][i]) };
-
-	//		EventTrigger = make_shared<CGetKeyEventTrigger>();
-	//		Guard->SetEventTrigger(EventTrigger);
-
-	//		m_EventTriggers.push_back(EventTrigger);
-	//	}
-	//}
 
 	// 모든 트리거 객체는 상호작용 UI 객체를 공유한다.
 	for (const auto& EventTrigger : m_EventTriggers)

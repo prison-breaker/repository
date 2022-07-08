@@ -53,13 +53,6 @@ void CFramework::OnCreate(HINSTANCE hInstance, HWND hWnd)
 	BuildObjects();
 
 	CSoundManager::GetInstance()->Initialize();
-
-	//HANDLE hThread{ CreateThread(NULL, 0, ReceivePacket, NULL, 0, NULL) };
-
-	//if (hThread)
-	//{
-	//	CloseHandle(hThread);
-	//}
 }
 
 void CFramework::OnDestroy()
@@ -557,7 +550,7 @@ void CFramework::ConnectServer()
 	}
 
 	// 플레이어 아이디를 수신한다.
-	ReturnValue = recv(m_SocketInfo.m_Socket, (char*)&m_SocketInfo.m_ID, sizeof(UINT), MSG_WAITALL);
+	ReturnValue = recv(m_SocketInfo.m_Socket, (char*)&m_SocketInfo.m_ID, sizeof(m_SocketInfo.m_ID), MSG_WAITALL);
 
 	if (ReturnValue == SOCKET_ERROR)
 	{
@@ -565,9 +558,12 @@ void CFramework::ConnectServer()
 	}
 	else if (m_SocketInfo.m_ID == UINT_MAX)
 	{
-		MessageBox(m_hWnd, TEXT("현재 정원이 꽉찼거나, 게임이 이미 시작되어 참여할 수 없습니다."), TEXT("PRISON BREAKER"), MB_ICONSTOP | MB_OK);
+		MessageBox(m_hWnd, TEXT("현재 정원이 꽉찼거나, 게임이 이미 시작되어 참여할 수 없습니다."), TEXT("Prison Breaker"), MB_ICONSTOP | MB_OK);
 		PostQuitMessage(0);
 	}
+
+	CSceneManager::GetInstance()->GetScene(TEXT("TitleScene"))->Initialize();
+	CSceneManager::GetInstance()->GetScene(TEXT("GameScene"))->Initialize();
 }
 
 void CFramework::ProcessPacket()
