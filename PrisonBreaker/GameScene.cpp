@@ -18,13 +18,13 @@ void CGameScene::Initialize()
 
 	for (UINT i = 0; i < TriggerCount; ++i)
 	{
-		if (i > 6)
+		if (i <= 6)
 		{
-			m_EventTriggers[i]->SetActive(true);
+			m_EventTriggers[i]->SetActive(false);
 		}
 		else
 		{
-			m_EventTriggers[i]->SetActive(false);
+			m_EventTriggers[i]->SetActive(true);
 		}
 
 		m_EventTriggers[i]->SetInteracted(false);
@@ -40,7 +40,7 @@ void CGameScene::Initialize()
 
 		if (i == HasPistolGuardIndics[j])
 		{
-			Guard->SetEventTrigger(m_EventTriggers[j++]);
+			Guard->SetEventTrigger(m_EventTriggers[2 + j++]);
 		}
 		else
 		{
@@ -132,6 +132,8 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 	tstring Token{};
 
 	shared_ptr<LOADED_MODEL_INFO> ModelInfo{};
+
+	UINT PlayerID{};
 	UINT ObjectType{};
 
 	unordered_map<tstring, shared_ptr<CMesh>> MeshCaches{};
@@ -170,6 +172,7 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 				// 플레이어 객체를 생성한다.
 				shared_ptr<CPlayer> Player{ make_shared<CPlayer>(D3D12Device, D3D12GraphicsCommandList) };
 
+				Player->SetID(PlayerID++);
 				Player->SetChild(ModelInfo->m_Model);
 				Player->SetTransformMatrix(TransformMatrix);
 				Player->UpdateTransform(Matrix4x4::Identity());
@@ -421,37 +424,42 @@ void CGameScene::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, 
 {
 	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][CFramework::GetInstance()->GetSocketInfo().m_ID]) };
 
-	switch (wParam)
+	switch (Message)
 	{
-	case '1': // 무기 스왑 - 펀치
-		if (Player->SwapWeapon(WEAPON_TYPE_PUNCH))
+	case WM_KEYUP:
+		switch (wParam)
 		{
-			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(true);  // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]: Punch
-			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(false); // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]: Pistol
+		case '1': // 무기 스왑 - 펀치
+			if (Player->SwapWeapon(WEAPON_TYPE_PUNCH))
+			{
+				m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(true);  // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]: Punch
+				m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(false); // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]: Pistol
+			}
+			break;
+		case '2': // 무기 스왑 - 권총
+			if (Player->SwapWeapon(WEAPON_TYPE_PISTOL))
+			{
+				m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(false); // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]: Punch
+				m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(true);  // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]: Pistol
+			}
+			break;
+		case 'b': // 바운딩 박스 렌더링 ON/OFF
+		case 'B':
+			(m_RenderBoundingBox) ? m_RenderBoundingBox = false : m_RenderBoundingBox = true;
+			break;
+		case 'p': // 안개 ON/OFF
+		case 'P':
+			(m_MappedFog->m_Fog.m_Density > 0.0f) ? m_MappedFog->m_Fog.m_Density = 0.0f : m_MappedFog->m_Fog.m_Density = 0.025f;
+			break;
+		case 'q': // 플레이어를 감옥 밖으로 이동
+		case 'Q':
+			Player->SetPosition(m_NavMesh->GetNavNodes()[750]->GetTriangle().m_Centroid);
+			break;
+		case 'i':
+		case 'I':
+			(m_InvincibleMode) ? m_InvincibleMode = false : m_InvincibleMode = true;
+			break;
 		}
-		break;
-	case '2': // 무기 스왑 - 권총
-		if (Player->SwapWeapon(WEAPON_TYPE_PISTOL))
-		{
-			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(false); // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]: Punch
-			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(true);  // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]: Pistol
-		}
-		break;
-	case 'b': // 바운딩 박스 렌더링 ON/OFF
-	case 'B':
-		(m_RenderBoundingBox) ? m_RenderBoundingBox = false : m_RenderBoundingBox = true;
-		break;
-	case 'p': // 안개 ON/OFF
-	case 'P':
-		(m_MappedFog->m_Fog.m_Density > 0.0f) ? m_MappedFog->m_Fog.m_Density = 0.0f : m_MappedFog->m_Fog.m_Density = 0.025f;
-		break;
-	case 'q': // 플레이어를 감옥 밖으로 이동
-	case 'Q':
-		Player->SetPosition(m_NavMesh->GetNavNodes()[750]->GetTriangle().m_Centroid);
-		break;
-	case 'i':
-	case 'I':
-		(m_InvincibleMode) ? m_InvincibleMode = false : m_InvincibleMode = true;
 		break;
 	}
 }
@@ -568,12 +576,24 @@ void CGameScene::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 
 	CTextureManager::GetInstance()->GetTexture(TEXT("ShadowMap"))->UpdateShaderVariable(D3D12GraphicsCommandList);
 
-	for (UINT i = OBJECT_TYPE_PLAYER; i <= OBJECT_TYPE_STRUCTURE; ++i)
+	for (UINT i = OBJECT_TYPE_PLAYER; i <= OBJECT_TYPE_NPC; ++i)
 	{
 		for (const auto& GameObject : m_GameObjects[i])
 		{
 			if (GameObject)
 			{
+				GameObject->Render(D3D12GraphicsCommandList, Player->GetCamera().get(), RENDER_TYPE_STANDARD);
+			}
+		}
+	}
+
+	for (UINT i = OBJECT_TYPE_TERRAIN; i <= OBJECT_TYPE_STRUCTURE; ++i)
+	{
+		for (const auto& GameObject : m_GameObjects[i])
+		{
+			if (GameObject)
+			{
+				GameObject->UpdateTransform(Matrix4x4::Identity());
 				GameObject->Render(D3D12GraphicsCommandList, Player->GetCamera().get(), RENDER_TYPE_STANDARD);
 			}
 		}
@@ -720,13 +740,38 @@ void CGameScene::ProcessPacket()
 		}
 
 		// 메세지 타입에 트리거와 관련된 내용이 포함돼있다면 상호작용을 수행한다.
-		for (const auto& EventTrigger : m_EventTriggers)
+		if (ReceivedPacketData.m_MsgType & MSG_TYPE_TRIGGER)
 		{
-			if (EventTrigger)
+			TRIGGER_DATA TriggerData{};
+
+			ReturnValue = recv(SocketInfo.m_Socket, (char*)&TriggerData, sizeof(TriggerData), MSG_WAITALL);
+
+			if (ReturnValue == SOCKET_ERROR)
 			{
-				if (EventTrigger->GetType() & ReceivedPacketData.m_MsgType)
+				Server::ErrorDisplay("recv()");
+			}
+			else if (ReturnValue == 0)
+			{
+				tcout << "서버가 종료되었습니다." << endl;
+				closesocket(SocketInfo.m_Socket);
+			}
+			else
+			{
+				for (UINT i = 0, j = 0; i < TriggerData.m_Size; ++i)
 				{
-					EventTrigger->InteractEventTrigger();
+					UINT TriggerIndex{ TriggerData.m_TriggerIndexStack[i] };
+
+					if (m_EventTriggers[TriggerIndex])
+					{
+						if (TriggerIndex <= 6)
+						{
+							m_EventTriggers[TriggerIndex]->InteractEventTrigger(TriggerData.m_CallerIndexStack[j++]);
+						}
+						else
+						{
+							m_EventTriggers[TriggerIndex]->InteractEventTrigger();
+						}
+					}
 				}
 			}
 		}
@@ -919,15 +964,6 @@ void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
 {
 	shared_ptr<CEventTrigger> EventTrigger{};
 
-	// 권총을 드롭하는 트리거를 추가한다.
-	// 권총은 열쇠를 갖지 않은 임의의 교도관(Index: 2 ~ 14) 중 5명이 보유하고 있다.
-	for (UINT i = 0; i < 5; ++i)
-	{
-		EventTrigger = make_shared<CGetPistolEventTrigger>(MSG_TYPE_NONE);
-
-		m_EventTriggers.push_back(EventTrigger);
-	}
-
 	// 열쇠를 드롭하는 트리거를 추가한다.
 	// 열쇠는 외형이 다른 교도관(Index: 0, 1)이 보유하고 있다.
 	for (UINT i = 0; i < 2; ++i)
@@ -936,11 +972,20 @@ void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
 		{
 			shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][i]) };
 
-			EventTrigger = make_shared<CGetKeyEventTrigger>(MSG_TYPE_NONE);
+			EventTrigger = make_shared<CGetKeyEventTrigger>();
 			Guard->SetEventTrigger(EventTrigger);
 
 			m_EventTriggers.push_back(EventTrigger);
 		}
+	}
+
+	// 권총을 드롭하는 트리거를 추가한다.
+	// 권총은 열쇠를 갖지 않은 임의의 교도관(Index: 2 ~ 14) 중 5명이 보유하고 있다.
+	for (UINT i = 0; i < 5; ++i)
+	{
+		EventTrigger = make_shared<CGetPistolEventTrigger>();
+
+		m_EventTriggers.push_back(EventTrigger);
 	}
 
 	tstring Token{};
@@ -962,22 +1007,21 @@ void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
 		}
 		else if (Token == TEXT("<Type>"))
 		{
-			MSG_TYPE TriggerType{ static_cast<MSG_TYPE>(File::ReadIntegerFromFile(InFile)) };
+			TRIGGER_TYPE TriggerType{ static_cast<TRIGGER_TYPE>(File::ReadIntegerFromFile(InFile)) };
 
 			switch (TriggerType)
 			{
-			case MSG_TYPE_TRIGGER_OPEN_PRISON_DOOR:
-			case MSG_TYPE_TRIGGER_OPEN_GUARDPOST_DOOR:
-				EventTrigger = make_shared<COpenDoorEventTrigger>(TriggerType);
+			case TRIGGER_TYPE_OPEN_DOOR:
+				EventTrigger = make_shared<COpenDoorEventTrigger>();
 				break;
-			case MSG_TYPE_TRIGGER_OPEN_ELEC_PANEL:
-				EventTrigger = make_shared<CPowerDownEventTrigger>(TriggerType);
+			case TRIGGER_TYPE_OPEN_ELEC_PANEL:
+				EventTrigger = make_shared<CPowerDownEventTrigger>();
 				break;
-			case MSG_TYPE_TRIGGER_SIREN:
-				EventTrigger = make_shared<CSirenEventTrigger>(TriggerType);
+			case TRIGGER_TYPE_SIREN:
+				EventTrigger = make_shared<CSirenEventTrigger>();
 				break;
-			case MSG_TYPE_TRIGGER_OPEN_GATE:
-				EventTrigger = make_shared<COpenGateEventTrigger>(TriggerType);
+			case TRIGGER_TYPE_OPEN_GATE:
+				EventTrigger = make_shared<COpenGateEventTrigger>();
 				break;
 			}
 

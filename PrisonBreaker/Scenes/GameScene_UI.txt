@@ -111,12 +111,58 @@
 		<ChildCount> 0
 	</UIObject>
 	<UIObject>
-		<Type> 0
+		<Type> 3
 		<IsActive> 1
 		<TextureName> Textures/StatusIcons.dds
 		<CellInfo> 6 1
 		<RectTransform> 1 199 1029 3 40 40 
 		<AlphaColor> 0.3921569 
+		<Animation>
+			<AnimationClips> 1
+				<AnimationClip> Activate 60 20 0.3333333
+					<RectTransform> 0.01666667 199 1029 3 40.56 40.56 
+					<AlphaColor> 0.01666667 0.3932353 
+					<RectTransform> 0.03333334 199 1029 3 42.08 42.08 
+					<AlphaColor> 0.03333334 0.3964706 
+					<RectTransform> 0.05 199 1029 3 44.32 44.32 
+					<AlphaColor> 0.05 0.4018627 
+					<RectTransform> 0.06666667 199 1029 3 47.04 47.04 
+					<AlphaColor> 0.06666667 0.4094118 
+					<RectTransform> 0.08333334 199 1029 3 50 50 
+					<AlphaColor> 0.08333334 0.4191177 
+					<RectTransform> 0.1 199 1029 3 52.96 52.96 
+					<AlphaColor> 0.1 0.4309804 
+					<RectTransform> 0.1166667 199 1029 3 55.68 55.68 
+					<AlphaColor> 0.1166667 0.445 
+					<RectTransform> 0.1333333 199 1029 3 57.92 57.92 
+					<AlphaColor> 0.1333333 0.4611765 
+					<RectTransform> 0.15 199 1029 3 59.44 59.44 
+					<AlphaColor> 0.15 0.4795098 
+					<RectTransform> 0.1666667 199 1029 3 60 60 
+					<AlphaColor> 0.1666667 0.5 
+					<RectTransform> 0.1833333 199 1029 3 59.44 59.44 
+					<AlphaColor> 0.1833333 0.5314706 
+					<RectTransform> 0.2 199 1029 3 57.92 57.92 
+					<AlphaColor> 0.2 0.5796078 
+					<RectTransform> 0.2166667 199 1029 3 55.68 55.68 
+					<AlphaColor> 0.2166667 0.6397058 
+					<RectTransform> 0.2333333 199 1029 3 52.96 52.96 
+					<AlphaColor> 0.2333333 0.7070588 
+					<RectTransform> 0.25 199 1029 3 50 50 
+					<AlphaColor> 0.25 0.7769607 
+					<RectTransform> 0.2666667 199 1029 3 47.04 47.04 
+					<AlphaColor> 0.2666667 0.8447058 
+					<RectTransform> 0.2833334 199 1029 3 44.32 44.32 
+					<AlphaColor> 0.2833334 0.9055883 
+					<RectTransform> 0.3 199 1029 3 42.08 42.08 
+					<AlphaColor> 0.3 0.9549021 
+					<RectTransform> 0.3166667 199 1029 3 40.56 40.56 
+					<AlphaColor> 0.3166667 0.9879411 
+					<RectTransform> 0.3333334 199 1029 3 40 40 
+					<AlphaColor> 0.3333334 1 
+				</AnimationClip>
+			</AnimationClips>
+		</Animation>
 		<ChildCount> 0
 	</UIObject>
 	<UIObject>

@@ -1,8 +1,9 @@
 #include "stdafx.h"
 #include "EventTriggers.h"
+#include "Framework.h"
 #include "GameScene.h"
 
-COpenDoorEventTrigger::COpenDoorEventTrigger(MSG_TYPE Type) : CEventTrigger(Type)
+COpenDoorEventTrigger::COpenDoorEventTrigger()
 {
 	m_IsActive = true;
 	m_ActiveFOV = 70.0f;
@@ -54,17 +55,12 @@ void COpenDoorEventTrigger::Update(float ElapsedTime)
 			m_EventObjects[1]->Rotate(WorldUp, -50.0f * ElapsedTime);
 			m_DoorAngle += 50.0f * ElapsedTime;
 		}
-		else
-		{
-			// 문이 모두 열렸다면, 현재 이벤트 트리거를 삭제한다.
-			DeleteThisEventTrigger();
-		}
 	}
 }
 
 //=========================================================================================================================
 
-CPowerDownEventTrigger::CPowerDownEventTrigger(MSG_TYPE Type) : CEventTrigger(Type)
+CPowerDownEventTrigger::CPowerDownEventTrigger()
 {
 	m_IsActive = true;
 	m_ActiveFOV = 40.0f;
@@ -107,14 +103,9 @@ void CPowerDownEventTrigger::InteractEventTrigger()
 			BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(0, 1);
 
 			CSoundManager::GetInstance()->Play(SOUND_TYPE_POWER_DOWN, 0.65f);
-
-			// 감시탑의 전원을 차단했다면, 현재 이벤트 트리거를 삭제한다.
-			DeleteThisEventTrigger();
 		}
 		else
 		{
-			m_Type = MSG_TYPE_TRIGGER_POWER_DOWN_TOWER;
-
 			CSoundManager::GetInstance()->Play(SOUND_TYPE_OPEN_EP, 0.65f);
 		}
 	}
@@ -151,7 +142,7 @@ bool CPowerDownEventTrigger::IsOpened() const
 
 //=========================================================================================================================
 
-CSirenEventTrigger::CSirenEventTrigger(MSG_TYPE Type) : CEventTrigger(Type)
+CSirenEventTrigger::CSirenEventTrigger()
 {
 	m_IsActive = true;
 	m_ActiveFOV = 40.0f;
@@ -176,7 +167,7 @@ void CSirenEventTrigger::InteractEventTrigger()
 		vector<vector<shared_ptr<CGameObject>>>& GameObjects{ GameScene->GetGameObjects() };
 		shared_ptr<CNavMesh> NavMesh{ GameScene->GetNavMesh() };
 
-		UINT GuardCount{ static_cast<UINT>(GameObjects[OBJECT_TYPE_NPC].size())};
+		UINT GuardCount{ static_cast<UINT>(GameObjects[OBJECT_TYPE_NPC].size()) };
 		XMFLOAT3 CenterPosition{ (m_TriggerArea[0].x + m_TriggerArea[3].x) / 2.0f, m_TriggerArea[0].y, (m_TriggerArea[0].z + m_TriggerArea[1].z) / 2.0f };
 
 		for (UINT i = 3; i < GuardCount; ++i)
@@ -203,15 +194,12 @@ void CSirenEventTrigger::InteractEventTrigger()
 		}
 
 		CSoundManager::GetInstance()->Play(SOUND_TYPE_SIREN, 0.25f);
-
-		// 사이렌을 작동시켰다면, 현재 이벤트 트리거를 삭제한다.
-		DeleteThisEventTrigger();
 	}
 }
 
 //=========================================================================================================================
 
-COpenGateEventTrigger::COpenGateEventTrigger(MSG_TYPE Type) : CEventTrigger(Type)
+COpenGateEventTrigger::COpenGateEventTrigger()
 {
 	m_IsActive = true;
 	m_ActiveFOV = 70.0f;
@@ -253,13 +241,13 @@ void COpenGateEventTrigger::InteractEventTrigger()
 	if (!IsInteracted())
 	{
 		// 열쇠를 획득한 경우에만, 트리거를 활성화 시키도록 한다.
-		vector<vector<shared_ptr<CBilboardObject>>>& BilboardObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetBilboardObjects() };
+		//vector<vector<shared_ptr<CBilboardObject>>>& BilboardObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetBilboardObjects() };
 
-		if (static_pointer_cast<CKeyUI>(BilboardObjects[BILBOARD_OBJECT_TYPE_UI][5])->GetStateMachine()->IsInState(CKeyUIActivationState::GetInstance()))
-		{
-			CEventTrigger::InteractEventTrigger();
-			CSoundManager::GetInstance()->Play(SOUND_TYPE_OPEN_GATE, 0.35f);
-		}
+		//if (static_pointer_cast<CKeyUI>(BilboardObjects[BILBOARD_OBJECT_TYPE_UI][5])->GetStateMachine()->IsInState(CKeyUIActivationState::GetInstance()))
+		//{
+		//	CEventTrigger::InteractEventTrigger();
+		//	CSoundManager::GetInstance()->Play(SOUND_TYPE_OPEN_GATE, 0.35f);
+		//}
 	}
 }
 
@@ -275,17 +263,12 @@ void COpenGateEventTrigger::Update(float ElapsedTime)
 			m_EventObjects[1]->Rotate(WorldUp, 55.0f * ElapsedTime);
 			m_GateAngle += 55.0f * ElapsedTime;
 		}
-		else
-		{
-			// 문이 모두 열렸다면, 현재 이벤트 트리거를 삭제한다.
-			DeleteThisEventTrigger();
-		}
 	}
 }
 
 //=========================================================================================================================
 
-CGetPistolEventTrigger::CGetPistolEventTrigger(MSG_TYPE Type) : CEventTrigger(Type)
+CGetPistolEventTrigger::CGetPistolEventTrigger()
 {
 	m_ActiveFOV = 360.0f;
 }
@@ -299,7 +282,7 @@ void CGetPistolEventTrigger::ShowInteractionUI()
 	}
 }
 
-void CGetPistolEventTrigger::InteractEventTrigger()
+void CGetPistolEventTrigger::InteractEventTrigger(UINT CallerIndex)
 {
 	if (!IsInteracted())
 	{
@@ -307,10 +290,9 @@ void CGetPistolEventTrigger::InteractEventTrigger()
 
 		shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
 		vector<vector<shared_ptr<CGameObject>>>& GameObjects{ GameScene->GetGameObjects() };
-		vector<vector<shared_ptr<CBilboardObject>>>& BilboardObjects{ GameScene->GetBilboardObjects() };
 
 		// 권총을 획득한 경우, 권총으로 무기를 교체하고 UI 또한 주먹에서 권총으로 변경시킨다.
-		shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(GameObjects[OBJECT_TYPE_PLAYER].back()) };
+		shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(GameObjects[OBJECT_TYPE_PLAYER][CallerIndex]) };
 
 		if (!Player->HasPistol())
 		{
@@ -319,19 +301,20 @@ void CGetPistolEventTrigger::InteractEventTrigger()
 
 		Player->SwapWeapon(WEAPON_TYPE_PISTOL);
 
-		BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(false); // 4: Punch UI
-		BilboardObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(true);  // 6: Pistol UI
-		BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->SetActive(true);  // 7: Bullet UI
-		BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]->SetVertexCount(5);
+		if (CFramework::GetInstance()->GetSocketInfo().m_ID == CallerIndex)
+		{
+			vector<vector<shared_ptr<CBilboardObject>>>& BilboardObjects{ GameScene->GetBilboardObjects() };
 
-		// 권총을 획득했다면, 현재 이벤트 트리거를 삭제한다.
-		DeleteThisEventTrigger();
+			BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(false); // 4: Punch UI
+			BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(true);  // 6: Pistol UI
+			BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetVertexCount(6);
+		}
 	}
 }
 
 //=========================================================================================================================
 
-CGetKeyEventTrigger::CGetKeyEventTrigger(MSG_TYPE Type) : CEventTrigger(Type)
+CGetKeyEventTrigger::CGetKeyEventTrigger()
 {
 	m_ActiveFOV = 360.0f;
 }
@@ -345,21 +328,21 @@ void CGetKeyEventTrigger::ShowInteractionUI()
 	}
 }
 
-void CGetKeyEventTrigger::InteractEventTrigger()
+void CGetKeyEventTrigger::InteractEventTrigger(UINT CallerIndex)
 {
 	if (!IsInteracted())
 	{
 		CEventTrigger::InteractEventTrigger();
 
-		vector<vector<shared_ptr<CBilboardObject>>>& BilboardObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetBilboardObjects() };
+		if (CFramework::GetInstance()->GetSocketInfo().m_ID == CallerIndex)
+		{
+			vector<vector<shared_ptr<CBilboardObject>>>& BilboardObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetBilboardObjects() };
 
-		// 열쇠 획득 애니메이션을 출력하도록 CKeyUIActivationState 상태로 전이한다.
-		static_pointer_cast<CKeyUI>(BilboardObjects[BILBOARD_OBJECT_TYPE_UI][5])->GetStateMachine()->SetCurrentState(CKeyUIActivationState::GetInstance());
+			//// 열쇠 획득 애니메이션을 출력하도록 CKeyUIActivationState 상태로 전이한다.
+			static_pointer_cast<CKeyUI>(BilboardObjects[BILBOARD_OBJECT_TYPE_UI][5])->GetStateMachine()->SetCurrentState(CKeyUIActivationState::GetInstance());
 
-		// 열쇠 획득 미션UI를 완료상태로 변경한다.
-		BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(1, 5);
-
-		// 열쇠를 획득했다면, 현재 이벤트 트리거를 삭제한다.
-		DeleteThisEventTrigger();
+			// 열쇠 획득 미션UI를 완료상태로 변경한다.
+			BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(1, 5);
+		}
 	}
 }

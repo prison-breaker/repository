@@ -33,6 +33,16 @@ void CPlayer::Animate(float ElapsedTime)
 	}
 }
 
+void CPlayer::SetID(UINT ID)
+{
+	m_ID = ID;
+}
+
+UINT CPlayer::GetID() const
+{
+	return m_ID;
+}
+
 void CPlayer::SetHealth(UINT Health)
 {
 	// UINT UnderFlow

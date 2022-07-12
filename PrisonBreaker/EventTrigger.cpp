@@ -2,12 +2,6 @@
 #include "EventTrigger.h"
 #include "GameScene.h"
 
-CEventTrigger::CEventTrigger(MSG_TYPE Type) :
-	m_Type{ Type }
-{
-
-}
-
 bool CEventTrigger::CanPassTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& NewPosition)
 {
 	return true;
@@ -22,6 +16,14 @@ void CEventTrigger::ShowInteractionUI()
 }
 
 void CEventTrigger::InteractEventTrigger()
+{
+	if (!IsInteracted())
+	{
+		SetInteracted(true);
+	}
+}
+
+void CEventTrigger::InteractEventTrigger(UINT CallerIndex)
 {
 	if (!IsInteracted())
 	{
@@ -79,11 +81,6 @@ void CEventTrigger::LoadEventTriggerFromFile(tifstream& InFile)
 	}
 #else
 #endif
-}
-
-MSG_TYPE CEventTrigger::GetType() const
-{
-	return m_Type;
 }
 
 void CEventTrigger::SetActive(bool IsActive)
@@ -186,26 +183,5 @@ void CEventTrigger::HideInteractionUI()
 	if (m_InteractionUI)
 	{
 		m_InteractionUI->SetActive(false);
-	}
-}
-
-void CEventTrigger::DeleteThisEventTrigger()
-{
-	vector<shared_ptr<CEventTrigger>>& EventTriggers{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetEventTriggers() };
-
-	for (auto iter = EventTriggers.begin(); iter != EventTriggers.end(); ++iter)
-	{
-		shared_ptr<CEventTrigger> EventTrigger{ *iter };
-
-		if (EventTrigger == shared_from_this())
-		{
-			EventTriggers.erase(iter);
-			break;
-		}
-	}
-
-	if (EventTriggers.empty())
-	{
-		EventTriggers.shrink_to_fit();
 	}
 }

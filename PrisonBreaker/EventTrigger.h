@@ -6,8 +6,6 @@ class CBilboardObject;
 class CEventTrigger : public enable_shared_from_this<CEventTrigger>
 {
 protected:
-	MSG_TYPE						m_Type{};
-
 	bool							m_IsActive{};
 	bool							m_IsInteracted{};
 
@@ -20,7 +18,7 @@ protected:
 	shared_ptr<CBilboardObject>		m_InteractionUI{};
 
 public:
-	CEventTrigger(MSG_TYPE Type);
+	CEventTrigger() = default;
 	virtual ~CEventTrigger() = default;
 
 	virtual bool CanPassTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& NewPosition);
@@ -28,11 +26,11 @@ public:
 	virtual void ShowInteractionUI();
 
 	virtual void InteractEventTrigger();
+	virtual void InteractEventTrigger(UINT CallerIndex);
+
 	virtual void Update(float ElapsedTime);
 
 	void LoadEventTriggerFromFile(tifstream& InFile);
-
-	MSG_TYPE GetType() const;
 
 	void SetActive(bool IsActive);
 	bool IsActive() const;
@@ -51,6 +49,4 @@ public:
 	bool IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& LookDirection);
 
 	void HideInteractionUI();
-
-	void DeleteThisEventTrigger();
 };

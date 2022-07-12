@@ -145,6 +145,7 @@ void CPlayerShootingState::Update(const shared_ptr<CPlayer>& Entity, float Elaps
 	{
 	case ANIMATION_CLIP_TYPE_PLAYER_PISTOL_IDLE:
 		Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
+		Entity->GetCamera()->IncreaseZoomFactor(ElapsedTime);
 		break;
 	case ANIMATION_CLIP_TYPE_PLAYER_SHOOT:
 		Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE);

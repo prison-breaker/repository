@@ -194,17 +194,24 @@ void CDepthWriteShader::PrepareShadowMap(ID3D12GraphicsCommandList* D3D12Graphic
 		m_LightCamera->RSSetViewportsAndScissorRects(D3D12GraphicsCommandList);
 		m_LightCamera->UpdateShaderVariables(D3D12GraphicsCommandList);
 
-		for (UINT i = OBJECT_TYPE_PLAYER; i <= OBJECT_TYPE_STRUCTURE; ++i)
+		for (UINT i = OBJECT_TYPE_PLAYER; i <= OBJECT_TYPE_NPC; ++i)
 		{
 			for (const auto& GameObject : GameObjects[i])
 			{
 				if (GameObject)
 				{
-					if (!GameObject->GetAnimationController()) 
-					{
-						GameObject->UpdateTransform(Matrix4x4::Identity());
-					}
+					GameObject->Render(D3D12GraphicsCommandList, m_LightCamera.get(), RENDER_TYPE_DEPTH_WRITE);
+				}
+			}
+		}
 
+		for (UINT i = OBJECT_TYPE_TERRAIN; i <= OBJECT_TYPE_STRUCTURE; ++i)
+		{
+			for (const auto& GameObject : GameObjects[i])
+			{
+				if (GameObject)
+				{
+					GameObject->UpdateTransform(Matrix4x4::Identity());
 					GameObject->Render(D3D12GraphicsCommandList, m_LightCamera.get(), RENDER_TYPE_DEPTH_WRITE);
 				}
 			}
