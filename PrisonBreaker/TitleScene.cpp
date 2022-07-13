@@ -31,8 +31,6 @@ void CTitleScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandL
 #else
 	LoadUIInfoFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Scenes/TitleScene_UI.txt"));
 #endif
-
-	CreateShaderVariables(D3D12Device, D3D12GraphicsCommandList);
 }
 
 void CTitleScene::ReleaseObjects()
@@ -185,7 +183,6 @@ void CTitleScene::ProcessPacket()
 	if (SocketInfo.m_Socket)
 	{
 		MSG_TYPE MsgType{ MSG_TYPE_TITLE };
-
 		int ReturnValue{ send(SocketInfo.m_Socket, (char*)&MsgType, sizeof(MsgType), 0) };
 
 		if (ReturnValue == SOCKET_ERROR)

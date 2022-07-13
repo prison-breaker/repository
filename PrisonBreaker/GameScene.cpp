@@ -453,7 +453,7 @@ void CGameScene::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, 
 }
 
 void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
-{	
+{
 	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][CFramework::GetInstance()->GetSocketInfo().m_ID]) };
 
 	UpdatePerspective(hWnd, ElapsedTime, Player);
@@ -463,7 +463,7 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	//if (GetAsyncKeyState('S') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(-15.0f * ElapsedTime, Player->GetCamera()->GetLook(), false));
 	//if (GetAsyncKeyState('A') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(-15.0f * ElapsedTime, Player->GetCamera()->GetRight(), false));
 	//if (GetAsyncKeyState('D') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(15.0f * ElapsedTime, Player->GetCamera()->GetRight(), false));
-	
+
 	//return;
 
 	m_InputMask = INPUT_MASK_NONE;
@@ -524,6 +524,25 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	if (GetAsyncKeyState(0x32) & 0x0001)
 	{
 		m_InputMask |= INPUT_MASK_NUM2;
+	}
+
+	// INPUT_MASK에 발사 조건이 충족된다면, 쏠 수 있는지 검사하여 INPUT_MASK를 수정한다.
+	if ((m_InputMask & INPUT_MASK_LMB) && (m_InputMask & INPUT_MASK_RMB))
+	{
+		if (Player->IsEquippedPistol())
+		{
+			UINT BulletCount{ m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->GetVertexCount() };
+
+			// m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]: StatueIcons_Pistol
+			// 1은 Pistol Icon Vertex
+			if (BulletCount <= 1)
+			{
+				// 총알이 없는 경우일 때는 IMPUT_MASK_LMB를 제거한다.
+				m_InputMask &= ~INPUT_MASK_LMB;
+
+				CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_EMPTY, 0.45f);
+			}
+		}
 	}
 }
 
@@ -642,6 +661,20 @@ void CGameScene::ProcessPacket()
 		Server::ErrorDisplay("send()");
 	}
 
+	if ((m_InputMask & INPUT_MASK_LMB) && (m_InputMask & INPUT_MASK_RMB))
+	{
+		XMFLOAT3 CameraPosition{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][SocketInfo.m_ID])->GetCamera()->GetPosition() };
+
+		ReturnValue = send(SocketInfo.m_Socket, (char*)&CameraPosition, sizeof(CameraPosition), 0);
+
+		if (ReturnValue == SOCKET_ERROR)
+		{
+			Server::ErrorDisplay("send()");
+		}
+
+		tcout << "총을 쐈기에 카메라의 위치를 전송했습니다." << endl;
+	}
+
 	// Receive updated packet data.
 	SERVER_TO_CLIENT_DATA ReceivedPacketData{};
 
@@ -669,6 +702,8 @@ void CGameScene::ProcessPacket()
 
 				if (Player->GetAnimationController()->GetAnimationClipType() != ReceivedPacketData.m_PlayerAnimationClipTypes[i])
 				{
+					Player->GetAnimationController()->SetAnimationClipType(ReceivedPacketData.m_PlayerAnimationClipTypes[i]);
+
 					switch (ReceivedPacketData.m_PlayerAnimationClipTypes[i])
 					{
 						case ANIMATION_CLIP_TYPE_PLAYER_IDLE:
@@ -688,15 +723,22 @@ void CGameScene::ProcessPacket()
 							Player->GetStateMachine()->ChangeState(CPlayerPunchingState::GetInstance());
 							break;
 						case ANIMATION_CLIP_TYPE_PLAYER_PISTOL_IDLE:
-						case ANIMATION_CLIP_TYPE_PLAYER_SHOOT:
 							Player->GetStateMachine()->ChangeState(CPlayerShootingState::GetInstance());
+							break;
+						case ANIMATION_CLIP_TYPE_PLAYER_SHOOT:
+							if (CFramework::GetInstance()->GetSocketInfo().m_ID == Player->GetID())
+							{
+								UINT BulletCount{ m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->GetVertexCount() };
+
+								m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetVertexCount(BulletCount - 1);
+
+								CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_SHOT, 0.45f);
+							}
 							break;
 						case ANIMATION_CLIP_TYPE_PLAYER_DIE:
 							Player->GetStateMachine()->ChangeState(CPlayerDyingState::GetInstance());
 							break;
 					}
-
-					Player->GetAnimationController()->SetAnimationClipType(ReceivedPacketData.m_PlayerAnimationClipTypes[i]);
 				}
 			}
 		}
@@ -711,6 +753,8 @@ void CGameScene::ProcessPacket()
 
 				if (Guard->GetAnimationController()->GetAnimationClipType() != ReceivedPacketData.m_NPCAnimationClipTypes[i])
 				{
+					Guard->GetAnimationController()->SetAnimationClipType(ReceivedPacketData.m_NPCAnimationClipTypes[i]);
+
 					switch (ReceivedPacketData.m_NPCAnimationClipTypes[i])
 					{
 					case ANIMATION_CLIP_TYPE_NPC_IDLE:
@@ -732,8 +776,6 @@ void CGameScene::ProcessPacket()
 						Guard->GetStateMachine()->ChangeState(CGuardDyingState::GetInstance());
 						break;
 					}
-
-					Guard->GetAnimationController()->SetAnimationClipType(ReceivedPacketData.m_NPCAnimationClipTypes[i]);
 				}
 			}
 		}
