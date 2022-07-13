@@ -422,27 +422,11 @@ void CGameScene::ProcessMouseMessage(HWND hWnd, UINT Message, WPARAM wParam, LPA
 
 void CGameScene::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
-	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][CFramework::GetInstance()->GetSocketInfo().m_ID]) };
-
 	switch (Message)
 	{
 	case WM_KEYUP:
 		switch (wParam)
 		{
-		case '1': // 무기 스왑 - 펀치
-			if (Player->SwapWeapon(WEAPON_TYPE_PUNCH))
-			{
-				m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(true);  // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]: Punch
-				m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(false); // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]: Pistol
-			}
-			break;
-		case '2': // 무기 스왑 - 권총
-			if (Player->SwapWeapon(WEAPON_TYPE_PISTOL))
-			{
-				m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(false); // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]: Punch
-				m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(true);  // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]: Pistol
-			}
-			break;
 		case 'b': // 바운딩 박스 렌더링 ON/OFF
 		case 'B':
 			(m_RenderBoundingBox) ? m_RenderBoundingBox = false : m_RenderBoundingBox = true;
@@ -451,14 +435,18 @@ void CGameScene::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, 
 		case 'P':
 			(m_MappedFog->m_Fog.m_Density > 0.0f) ? m_MappedFog->m_Fog.m_Density = 0.0f : m_MappedFog->m_Fog.m_Density = 0.025f;
 			break;
-		case 'q': // 플레이어를 감옥 밖으로 이동
-		case 'Q':
-			Player->SetPosition(m_NavMesh->GetNavNodes()[750]->GetTriangle().m_Centroid);
-			break;
-		case 'i':
+		case 'i': // 플레이어 무적 ON/OFF
 		case 'I':
 			(m_InvincibleMode) ? m_InvincibleMode = false : m_InvincibleMode = true;
 			break;
+		case 'q': // 플레이어를 감옥 밖으로 이동
+		case 'Q':
+		{
+			shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][CFramework::GetInstance()->GetSocketInfo().m_ID]) };
+
+			Player->SetPosition(m_NavMesh->GetNavNodes()[750]->GetTriangle().m_Centroid);
+		}
+		break;
 		}
 		break;
 	}
@@ -475,6 +463,7 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	//if (GetAsyncKeyState('S') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(-15.0f * ElapsedTime, Player->GetCamera()->GetLook(), false));
 	//if (GetAsyncKeyState('A') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(-15.0f * ElapsedTime, Player->GetCamera()->GetRight(), false));
 	//if (GetAsyncKeyState('D') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(15.0f * ElapsedTime, Player->GetCamera()->GetRight(), false));
+	
 	//return;
 
 	m_InputMask = INPUT_MASK_NONE;
@@ -525,6 +514,16 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	if (GetAsyncKeyState(VK_RBUTTON) & 0x8000)
 	{
 		m_InputMask |= INPUT_MASK_RMB;
+	}
+
+	if (GetAsyncKeyState(0x31) & 0x0001)
+	{
+		m_InputMask |= INPUT_MASK_NUM1;
+	}
+
+	if (GetAsyncKeyState(0x32) & 0x0001)
+	{
+		m_InputMask |= INPUT_MASK_NUM2;
 	}
 }
 
@@ -735,6 +734,58 @@ void CGameScene::ProcessPacket()
 					}
 
 					Guard->GetAnimationController()->SetAnimationClipType(ReceivedPacketData.m_NPCAnimationClipTypes[i]);
+				}
+			}
+		}
+
+		if (ReceivedPacketData.m_MsgType & MSG_TYPE_PLAYER1_WEAPON_SWAP)
+		{
+			Player = static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][0]);
+
+			if (Player->IsEquippedPistol())
+			{
+				Player->SwapWeapon(WEAPON_TYPE_PUNCH);
+
+				if (Player->GetID() == SocketInfo.m_ID)
+				{
+					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(true);  // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]: Punch
+					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(false); // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]: Pistol
+				}
+			}
+			else
+			{
+				Player->SwapWeapon(WEAPON_TYPE_PISTOL);
+
+				if (Player->GetID() == SocketInfo.m_ID)
+				{
+					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(false); // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]: Punch
+					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(true);  // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]: Pistol
+				}
+			}
+		}
+
+		if (ReceivedPacketData.m_MsgType & MSG_TYPE_PLAYER2_WEAPON_SWAP)
+		{
+			Player = static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][1]);
+
+			if (Player->IsEquippedPistol())
+			{
+				Player->SwapWeapon(WEAPON_TYPE_PUNCH);
+
+				if (Player->GetID() == SocketInfo.m_ID)
+				{
+					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(true);  // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]: Punch
+					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(false); // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]: Pistol
+				}
+			}
+			else
+			{
+				Player->SwapWeapon(WEAPON_TYPE_PISTOL);
+
+				if (Player->GetID() == SocketInfo.m_ID)
+				{
+					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(false); // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]: Punch
+					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(true);  // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]: Pistol
 				}
 			}
 		}
@@ -1051,30 +1102,26 @@ void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
 
 void CGameScene::BuildLights()
 {
-	LIGHT Lights[MAX_LIGHTS]{};
+	m_Lights.resize(MAX_LIGHTS);
 
-	Lights[0].m_IsActive = true;
-	Lights[0].m_ShadowMapping = false;
-	Lights[0].m_Type = LIGHT_TYPE_DIRECTIONAL;
-	Lights[0].m_Position = XMFLOAT3(0.0f, 500.0f, 100.0f);
-	Lights[0].m_Direction = XMFLOAT3(0.0f, -1.0f, -1.0f);
-	Lights[0].m_Color = XMFLOAT4(0.1f, 0.1f, 0.1f, 0.0f);
+	m_Lights[0].m_IsActive = true;
+	m_Lights[0].m_ShadowMapping = false;
+	m_Lights[0].m_Type = LIGHT_TYPE_DIRECTIONAL;
+	m_Lights[0].m_Position = XMFLOAT3(0.0f, 500.0f, 100.0f);
+	m_Lights[0].m_Direction = XMFLOAT3(0.0f, -1.0f, -1.0f);
+	m_Lights[0].m_Color = XMFLOAT4(0.1f, 0.1f, 0.1f, 0.0f);
 
-	Lights[1].m_IsActive = true;
-	Lights[1].m_ShadowMapping = true;
-	Lights[1].m_Type = LIGHT_TYPE_SPOT;
-	Lights[1].m_Position = XMFLOAT3(0.0f, 50.0f, 0.0f);
-	Lights[1].m_Direction = Vector3::Normalize(XMFLOAT3(cosf(m_SpotLightAngle), -1.0f, sinf(m_SpotLightAngle)));
-	Lights[1].m_Color = XMFLOAT4(1.0f, 1.0f, 0.3f, 0.0f);
-	Lights[1].m_Attenuation = XMFLOAT3(0.5f, 0.01f, 0.0f);
-	Lights[1].m_Falloff = 1.0f;
-	Lights[1].m_Range = 500.0f;
-	Lights[1].m_Theta = cosf(XMConvertToRadians(5.0f));
-	Lights[1].m_Phi = cosf(XMConvertToRadians(10.0f));
-
-	m_Lights.reserve(MAX_LIGHTS);
-	m_Lights.push_back(Lights[0]);
-	m_Lights.push_back(Lights[1]);
+	m_Lights[1].m_IsActive = true;
+	m_Lights[1].m_ShadowMapping = true;
+	m_Lights[1].m_Type = LIGHT_TYPE_SPOT;
+	m_Lights[1].m_Position = XMFLOAT3(0.0f, 50.0f, 0.0f);
+	m_Lights[1].m_Direction = Vector3::Normalize(XMFLOAT3(cosf(m_SpotLightAngle), -1.0f, sinf(m_SpotLightAngle)));
+	m_Lights[1].m_Color = XMFLOAT4(1.0f, 1.0f, 0.3f, 0.0f);
+	m_Lights[1].m_Attenuation = XMFLOAT3(0.5f, 0.01f, 0.0f);
+	m_Lights[1].m_Falloff = 1.0f;
+	m_Lights[1].m_Range = 500.0f;
+	m_Lights[1].m_Theta = cosf(XMConvertToRadians(5.0f));
+	m_Lights[1].m_Phi = cosf(XMConvertToRadians(10.0f));
 }
 
 void CGameScene::BuildFog()
