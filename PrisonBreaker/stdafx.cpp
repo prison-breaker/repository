@@ -1,9 +1,6 @@
 #include "stdafx.h"
 #include "DDSTextureLoader12.h"
 
-// To measure algorithm time.
-steady_clock::time_point BeginTime{};
-
 namespace DX
 {
 	void ThrowIfFailed(HRESULT Result)
@@ -161,21 +158,6 @@ namespace DX
 
 		D3D12ResourceBarrier = D3D12ResourceBarrier.Transition(Resource, BeforeState, AfterState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, D3D12_RESOURCE_BARRIER_FLAG_NONE);
 		D3D12GraphicsCommandList->ResourceBarrier(1, &D3D12ResourceBarrier);
-	}
-}
-
-namespace Time
-{
-	void MesureStart()
-	{
-		BeginTime = steady_clock::now();
-		
-		tcout << TEXT("========== 지금부터 알고리즘의 진행 시간을 측정합니다. ==========") << endl;
-	}
-
-	void MesureEnd()
-	{
-		tcout << TEXT("========== 측정을 종료합니다.(경과 시간(초): " << duration_cast<milliseconds>(steady_clock::now() - BeginTime).count() << "s ==========") << endl;
 	}
 }
 

@@ -7,7 +7,6 @@ void CAnimationClip::LoadAnimationClipInfoFromFile(ifstream& InFile, const share
 	tstring Token{};
 	UINT SkinnedMeshCount{};
 
-#ifdef READ_BINARY_FILE
 	while (true)
 	{
 		File::ReadStringFromFile(InFile, Token);
@@ -58,59 +57,6 @@ void CAnimationClip::LoadAnimationClipInfoFromFile(ifstream& InFile, const share
 			break;
 		}
 	}
-#else
-	while (InFile >> Token)
-	{
-		if (Token == TEXT("<AnimationClip>"))
-		{
-			InFile >> m_ClipName;
-			InFile >> m_FramePerSec;
-			InFile >> m_KeyFrameCount;
-			InFile >> m_KeyFrameTime;
-
-			SkinnedMeshCount = static_cast<UINT>(ModelInfo->m_SkinnedMeshCaches.size());
-			m_BoneTransformMatrixes.resize(SkinnedMeshCount);
-
-			for (UINT i = 0; i < SkinnedMeshCount; ++i)
-			{
-				UINT BoneCount{ static_cast<UINT>(ModelInfo->m_BoneFrameCaches[i].size()) };
-
-				m_BoneTransformMatrixes[i].resize(BoneCount);
-
-				for (UINT j = 0; j < BoneCount; ++j)
-				{
-					m_BoneTransformMatrixes[i][j].reserve(m_KeyFrameCount);
-				}
-			}
-		}
-		else if (Token == TEXT("<TransformMatrix>"))
-		{
-			// Current KeyFrameTime
-			InFile >> Token;
-
-			for (UINT i = 0; i < SkinnedMeshCount; ++i)
-			{
-				UINT BoneCount{ static_cast<UINT>(ModelInfo->m_BoneFrameCaches[i].size()) };
-
-				for (UINT j = 0; j < BoneCount; ++j)
-				{
-					XMFLOAT4X4 TransformMatrix{};
-
-					InFile >> TransformMatrix._11 >> TransformMatrix._12 >> TransformMatrix._13 >> TransformMatrix._14;
-					InFile >> TransformMatrix._21 >> TransformMatrix._22 >> TransformMatrix._23 >> TransformMatrix._24;
-					InFile >> TransformMatrix._31 >> TransformMatrix._32 >> TransformMatrix._33 >> TransformMatrix._34;
-					InFile >> TransformMatrix._41 >> TransformMatrix._42 >> TransformMatrix._43 >> TransformMatrix._44;
-
-					m_BoneTransformMatrixes[i][j].push_back(TransformMatrix);
-				}
-			}
-		}
-		else if (Token == TEXT("</AnimationClip>"))
-		{
-			break;
-		}
-	}
-#endif
 }
 
 //=========================================================================================================================

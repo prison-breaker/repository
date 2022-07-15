@@ -3,9 +3,6 @@
 #include "TitleScene.h"
 #include "GameScene.h"
 
-#define SERVER_IP	"127.0.0.1"
-#define SERVER_PORT	9000
-
 CFramework::CFramework()
 {
 	m_Timer = make_unique<CTimer>();
@@ -14,8 +11,11 @@ CFramework::CFramework()
 
 CFramework::~CFramework()
 {
-	closesocket(m_SocketInfo.m_Socket);
-	WSACleanup();
+	if (m_SocketInfo.m_Socket)
+	{
+		closesocket(m_SocketInfo.m_Socket);
+		WSACleanup();
+	}
 }
 
 CFramework* CFramework::GetInstance()
@@ -411,9 +411,6 @@ void CFramework::MoveToNextFrame()
 	// TitleScene의 경우 Set된 Shader를 다시 사용해야하기 때문에, Reset해준다.
 	CShaderManager::GetInstance()->ResetShaderAndStateNum();
 
-	// 예약된 씬이 있다면 전환한다.
-	CSceneManager::GetInstance()->ChangeToReservedScene();
-
 	CSoundManager::GetInstance()->Update();
 }
 
@@ -564,6 +561,14 @@ void CFramework::ConnectServer()
 
 	CSceneManager::GetInstance()->GetScene(TEXT("TitleScene"))->Initialize();
 	CSceneManager::GetInstance()->GetScene(TEXT("GameScene"))->Initialize();
+}
+
+void CFramework::DisconnectServer()
+{
+	closesocket(m_SocketInfo.m_Socket);
+	WSACleanup();
+
+	memset(&m_SocketInfo, NULL, sizeof(SOCKET_INFO));
 }
 
 void CFramework::ProcessPacket()

@@ -1,13 +1,13 @@
 #pragma once
-#pragma comment(lib, "ws2_32")
 
 #define DEBUG_MODE
-#define READ_BINARY_FILE
 
 #define WIN32_LEAN_AND_MEAN
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
 #define EPSILON			          1.0e-10f
+
+#define SERVER_PORT				  9000
 
 #define CLIENT_WIDTH		      1920
 #define	CLIENT_HEIGHT		      1080
@@ -16,7 +16,7 @@
 #define PLANE_WIDTH				  400
 #define PLANE_HEIGHT			  400
 
-#define MAX_CLIENT_CAPACITY		  2
+#define MAX_PLAYER_CAPACITY		  2
 #define MAX_NPC_COUNT			  15	
 #define MAX_TITLE_LENGTH	      64
 #define MAX_LIGHTS                2
@@ -38,10 +38,82 @@
 #define INPUT_MASK_NUM1			  0x0200
 #define INPUT_MASK_NUM2			  0x0400
 
-#define TEXTURE_MASK_ALBEDO_MAP   0x01
-#define TEXTURE_MASK_METALLIC_MAP 0x02
-#define TEXTURE_MASK_NORMAL_MAP   0x04
-#define TEXTURE_MASK_SHADOW_MAP   0x08
+#define TEXTURE_MASK_ALBEDO_MAP   0x0001
+#define TEXTURE_MASK_METALLIC_MAP 0x0002
+#define TEXTURE_MASK_NORMAL_MAP   0x0004
+#define TEXTURE_MASK_SHADOW_MAP   0x0008
+
+// SDKDDKVer.h를 포함하면 최고 수준의 가용성을 가진 Windows 플랫폼이 정의됩니다.
+// 이전 Windows 플랫폼용 애플리케이션을 빌드하려는 경우에는 SDKDDKVer.h를 포함하기 전에
+// WinSDKVer.h를 포함하고 _WIN32_WINNT를 지원하려는 플랫폼으로 설정합니다.
+#include <SDKDDKVer.h>
+
+// C Header
+#pragma comment(lib, "ws2_32")
+#include <winsock2.h>
+#include <memory.h>
+#include <tchar.h>
+#include <wrl.h>
+#include <shellapi.h>
+
+// C++ Header
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <unordered_map>
+#include <queue>
+#include <thread>
+#include <chrono>
+#include <numeric>
+#include <random>
+
+using namespace std;
+using namespace std::chrono;
+
+// DirectX Header
+#pragma comment(lib, "d3dcompiler.lib")
+#pragma comment(lib, "d3d12.lib")
+#pragma comment(lib, "d3d11.lib")
+#pragma comment(lib, "d2d1.lib")
+#pragma comment(lib, "dwrite.lib")
+#pragma comment(lib, "dxgi.lib")
+#pragma comment(lib, "dxguid.lib")
+#include "D3DX12.h"
+#include <D3D11on12.h>
+#include <D3Dcompiler.h>
+#include <D2D1_3.h>
+#include <DXGI1_4.h>
+#include <DXGIDebug.h>
+#include <DWrite.h>
+#include <DirectXMath.h>
+#include <DirectXPackedVector.h>
+#include <DirectXColors.h>
+#include <DirectXCollision.h>
+
+using namespace DirectX;
+using namespace DirectX::PackedVector;
+using Microsoft::WRL::ComPtr;
+
+#ifdef _UNICODE
+#define tcout wcout
+#define tcin  wcin
+#pragma comment(linker, "/entry:wWinMainCRTStartup /subsystem:console")
+#else
+#define tcout cout
+#define tcin  cin
+#pragma comment(linker, "/entry:WinMainCRTStartup /subsystem:console")
+#endif
+
+typedef basic_string<TCHAR>        tstring;
+typedef basic_istream<TCHAR>       tistream;
+typedef basic_ostream<TCHAR>       tostream;
+typedef basic_fstream<TCHAR>       tfstream;
+typedef basic_ifstream<TCHAR>      tifstream;
+typedef basic_ofstream<TCHAR>      tofstream;
+typedef basic_stringstream<TCHAR>  tstringstream;
+typedef basic_istringstream<TCHAR> tistringstream;
+typedef basic_ostringstream<TCHAR> tostringstream;
 
 enum MSG_TYPE
 {
@@ -50,7 +122,10 @@ enum MSG_TYPE
 	MSG_TYPE_INGAME              = 0x0002,
 	MSG_TYPE_TRIGGER             = 0x0004,
 	MSG_TYPE_PLAYER1_WEAPON_SWAP = 0x0008,
-	MSG_TYPE_PLAYER2_WEAPON_SWAP = 0x0010
+	MSG_TYPE_PLAYER2_WEAPON_SWAP = 0x0010,
+	MSG_TYPE_DISCONNECTION       = 0x0020,
+	MSG_TYPE_GAME_OVER           = 0x0040,
+	MSG_TYPE_GAME_CLEAR          = 0x0080
 };
 
 enum OBJECT_TYPE
@@ -173,72 +248,6 @@ enum SOUND_TYPE
 	SOUND_TYPE_SIREN
 };
 
-// C Header
-#include <winsock2.h>
-#include <SDKDDKVer.h>
-#include <stdlib.h>
-#include <memory.h>
-#include <tchar.h>
-#include <wrl.h>
-#include <shellapi.h>
-
-// C++ Header
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <vector>
-#include <unordered_map>
-#include <queue>
-#include <thread>
-#include <chrono>
-#include <numeric>
-#include <random>
-using namespace std;
-using namespace std::chrono;
-
-// DirectX Header
-#pragma comment(lib, "d3dcompiler.lib")
-#pragma comment(lib, "d3d12.lib")
-#pragma comment(lib, "d3d11.lib")
-#pragma comment(lib, "d2d1.lib")
-#pragma comment(lib, "dwrite.lib")
-#pragma comment(lib, "dxgi.lib")
-#pragma comment(lib, "dxguid.lib")
-#include "D3DX12.h"
-#include <D3D11on12.h>
-#include <D3Dcompiler.h>
-#include <D2D1_3.h>
-#include <DXGI1_4.h>
-#include <DXGIDebug.h>
-#include <DWrite.h>
-#include <DirectXMath.h>
-#include <DirectXPackedVector.h>
-#include <DirectXColors.h>
-#include <DirectXCollision.h>
-using namespace DirectX;
-using namespace DirectX::PackedVector;
-using Microsoft::WRL::ComPtr;
-
-#ifdef _UNICODE
-#define tcout wcout
-#define tcin  wcin
-#pragma comment(linker, "/entry:wWinMainCRTStartup /subsystem:console")
-#else
-#define tcout cout
-#define tcin  cin
-#pragma comment(linker, "/entry:WinMainCRTStartup /subsystem:console")
-#endif
-
-typedef basic_string<TCHAR>        tstring;
-typedef basic_istream<TCHAR>       tistream;
-typedef basic_ostream<TCHAR>       tostream;
-typedef basic_fstream<TCHAR>       tfstream;
-typedef basic_ifstream<TCHAR>      tifstream;
-typedef basic_ofstream<TCHAR>      tofstream;
-typedef basic_stringstream<TCHAR>  tstringstream;
-typedef basic_istringstream<TCHAR> tistringstream;
-typedef basic_ostringstream<TCHAR> tostringstream;
-
 struct SOCKET_INFO
 {
 	UINT		m_ID{};
@@ -264,17 +273,13 @@ struct SERVER_TO_CLIENT_DATA
 {
 	MSG_TYPE			m_MsgType;
 
-	XMFLOAT4X4          m_PlayerWorldMatrices[MAX_CLIENT_CAPACITY]{};
-	ANIMATION_CLIP_TYPE m_PlayerAnimationClipTypes[MAX_CLIENT_CAPACITY]{};
+	XMFLOAT4X4          m_PlayerWorldMatrices[MAX_PLAYER_CAPACITY]{};
+	ANIMATION_CLIP_TYPE m_PlayerAnimationClipTypes[MAX_PLAYER_CAPACITY]{};
 
 	XMFLOAT4X4          m_NPCWorldMatrices[MAX_NPC_COUNT]{};
 	ANIMATION_CLIP_TYPE m_NPCAnimationClipTypes[MAX_NPC_COUNT]{};
 
 	XMFLOAT3            m_TowerLightDirection{};
-
-	// 1. Scene's State - UINT
-	// 4. UI and Trigger's Activation Condition - bool
-	// 6. Sound Play Condition and Volume - bool and float
 };
 
 namespace DX
@@ -287,12 +292,6 @@ namespace DX
 	ComPtr<ID3D12Resource> CreateTextureResourceFromDDSFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName, D3D12_RESOURCE_STATES D3D12ResourceStates, ID3D12Resource** D3D12UploadBuffer);
 
 	void ResourceTransition(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState);
-}
-
-namespace Time
-{
-	void MesureStart();
-	void MesureEnd();
 }
 
 namespace File

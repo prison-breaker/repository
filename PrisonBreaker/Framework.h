@@ -61,7 +61,6 @@ public:
 	CFramework();
 	~CFramework();
 
-	// Client Function
 	static CFramework* GetInstance();
 
 	void SetActive(bool IsActive);
@@ -109,6 +108,8 @@ public:
 
 	// Server Function
 	void ConnectServer();
+	void DisconnectServer();
+
 	void ProcessPacket();
 
 	const SOCKET_INFO& GetSocketInfo() const;

@@ -5,9 +5,9 @@
 void CMaterial::LoadMaterialInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile)
 {
 	tstring Token{};
+
 	shared_ptr<CTexture> Texture{};
 
-#ifdef READ_BINARY_FILE
 	File::ReadStringFromFile(InFile, m_Name);
 
 	while (true)
@@ -91,89 +91,6 @@ void CMaterial::LoadMaterialInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphi
 			break;
 		}
 	}
-#else
-	InFile >> m_Name;
-
-	while (InFile >> Token)
-	{
-		if (Token == TEXT("<StateNum>"))
-		{
-			InFile >> m_StateNum;
-
-			RegisterShader(CShaderManager::GetInstance()->GetShader("ShadowMapShader"));
-			RegisterShader(CShaderManager::GetInstance()->GetShader("DepthWriteShader"));
-		}
-		else if (Token == TEXT("<TextureScale>"))
-		{
-			InFile >> m_TextureScale.x >> m_TextureScale.y;
-		}
-		else if (Token == TEXT("<AlbedoColor>"))
-		{
-			InFile >> m_AlbedoColor.x >> m_AlbedoColor.y >> m_AlbedoColor.z >> m_AlbedoColor.w;
-		}
-		else if (Token == TEXT("<AlbedoMap>"))
-		{
-			InFile >> Token;
-
-			if (Token != TEXT("Null"))
-			{
-				Texture = CTextureManager::GetInstance()->GetTexture(Token);
-
-				if (!Texture)
-				{
-					Texture = make_shared<CTexture>();
-					Texture->LoadTextureFromDDSFile(D3D12Device, D3D12GraphicsCommandList, TEXTURE_TYPE_ALBEDO_MAP, Token);
-				}
-
-				m_TextureMask |= TEXTURE_MASK_ALBEDO_MAP;
-				m_Textures.push_back(Texture);
-				CTextureManager::GetInstance()->RegisterTexture(Token, Texture);
-			}
-		}
-		else if (Token == TEXT("<MetallicMap>"))
-		{
-			InFile >> Token;
-
-			if (Token != TEXT("Null"))
-			{
-				Texture = CTextureManager::GetInstance()->GetTexture(Token);
-
-				if (!Texture)
-				{
-					Texture = make_shared<CTexture>();
-					Texture->LoadTextureFromDDSFile(D3D12Device, D3D12GraphicsCommandList, TEXTURE_TYPE_METALLIC_MAP, Token);
-				}
-
-				m_TextureMask |= TEXTURE_MASK_METALLIC_MAP;
-				m_Textures.push_back(Texture);
-				CTextureManager::GetInstance()->RegisterTexture(Token, Texture);
-			}
-		}
-		else if (Token == TEXT("<NormalMap>"))
-		{
-			InFile >> Token;
-
-			if (Token != TEXT("Null"))
-			{
-				Texture = CTextureManager::GetInstance()->GetTexture(Token);
-
-				if (!Texture)
-				{
-					Texture = make_shared<CTexture>();
-					Texture->LoadTextureFromDDSFile(D3D12Device, D3D12GraphicsCommandList, TEXTURE_TYPE_NORMAL_MAP, Token);
-				}
-
-				m_TextureMask |= TEXTURE_MASK_NORMAL_MAP;
-				m_Textures.push_back(Texture);
-				CTextureManager::GetInstance()->RegisterTexture(Token, Texture);
-			}
-		}
-		else if (Token == TEXT("</Material>"))
-		{
-			break;
-		}
-	}
-#endif
 }
 
 void CMaterial::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)

@@ -2,7 +2,7 @@
 
 struct TextBlock
 {
-    wstring                   m_Text{};
+    tstring                   m_Text{};
     int                       m_TextPos{};
 
     D2D1_RECT_F               m_D2D1Rect{};
@@ -41,7 +41,7 @@ public:
     bool IsActive() const;
 
     void UpdateText(WPARAM wParam);
-    tstring GetText() const;
+    const tstring& GetText() const;
 
     void Render(UINT RenderTargetIndex);
     void ReleaseResources();

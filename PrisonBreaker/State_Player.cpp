@@ -171,6 +171,7 @@ void CPlayerDyingState::Enter(const shared_ptr<CPlayer>& Entity)
 {
 	Entity->SetSpeed(0.0f);
 	Entity->SetMovingDirection(XMFLOAT3(0.0f, 0.0f, 0.0f));
+	Entity->SetHealth(0);
 }
 
 void CPlayerDyingState::ProcessInput(const shared_ptr<CPlayer>& Entity, float ElapsedTime, UINT InputMask)

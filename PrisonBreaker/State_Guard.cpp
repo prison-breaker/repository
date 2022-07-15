@@ -162,19 +162,16 @@ void CGuardShootingState::Enter(const shared_ptr<CGuard>& Entity)
 	// 피격 UI 애니메이션을 재생시키고, UI 체력을 1감소시킨다.
 	static_pointer_cast<CHitUI>(BilboardObjects[BILBOARD_OBJECT_TYPE_UI][8])->GetStateMachine()->SetCurrentState(CHitUIActivationState::GetInstance());
 
-	if (!GameScene->IsInvincibleMode())
+	UINT LifeCount{ BilboardObjects[BILBOARD_OBJECT_TYPE_UI][2]->GetVertexCount() };
+
+	// 첫번째 정점은 하트 아이콘이므로 2이상부터 체력 아이콘임
+	if (LifeCount > 1)
 	{
-		UINT LifeCount{ BilboardObjects[BILBOARD_OBJECT_TYPE_UI][2]->GetVertexCount() };
-
-		// 첫번째 정점은 하트 아이콘이므로 2이상부터 체력 아이콘임
-		if (LifeCount > 1)
-		{
-			BilboardObjects[BILBOARD_OBJECT_TYPE_UI][2]->SetVertexCount(LifeCount - 1);
-		}
-
-		//shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(Entity->GetTarget()) };
-		// 한명만 맞도록 조치해야댐
+		BilboardObjects[BILBOARD_OBJECT_TYPE_UI][2]->SetVertexCount(LifeCount - 1);
 	}
+
+	//shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(Entity->GetTarget()) };
+	// 한명만 맞도록 조치해야댐
 
 	Entity->GetAnimationController()->SetKeyFrameIndex(0);
 

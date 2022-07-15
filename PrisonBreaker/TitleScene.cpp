@@ -26,16 +26,35 @@ void CTitleScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandL
 	CShaderManager::GetInstance()->RegisterShader(TEXT("UIShader"), Shader);
 
 	// 파일로부터 UI 객체들을 생성하고 배치한다.
-#ifdef READ_BINARY_FILE
 	LoadUIInfoFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Scenes/TitleScene_UI.bin"));
-#else
-	LoadUIInfoFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Scenes/TitleScene_UI.txt"));
-#endif
 }
 
 void CTitleScene::ReleaseObjects()
 {
 
+}
+
+void CTitleScene::Enter(MSG_TYPE MsgType)
+{
+	switch (MsgType)
+	{
+	case MSG_TYPE_DISCONNECTION:
+		m_BilboardObjects[5]->SetActive(true);
+		break;
+	}
+}
+
+void CTitleScene::Exit()
+{
+	UINT BilboardObjectCount{ static_cast<UINT>(m_BilboardObjects.size()) };
+
+	for (UINT i = 3; i < BilboardObjectCount; ++i)
+	{
+		if (m_BilboardObjects[i])
+		{
+			m_BilboardObjects[i]->SetActive(false);
+		}
+	}
 }
 
 void CTitleScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName)

@@ -3,13 +3,12 @@
 
 void CNavMesh::LoadNavMeshFromFile(const tstring& FileName)
 {
+	tifstream InFile{ FileName, ios::binary };
 	tstring Token{};
+
 	vector<XMFLOAT3> Vertices{};
 
 	tcout << FileName << TEXT(" 로드 시작...") << endl;
-
-#ifdef READ_BINARY_FILE
-	tifstream InFile{ FileName, ios::binary };
 
 	while (true)
 	{
@@ -56,8 +55,7 @@ void CNavMesh::LoadNavMeshFromFile(const tstring& FileName)
 			break;
 		}
 	}
-#else
-#endif
+
 	tcout << FileName << TEXT(" 로드 완료...(정점 수: ") << m_NavNodes.size() << ")" << endl << endl;
 }
 

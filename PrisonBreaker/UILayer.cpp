@@ -66,20 +66,20 @@ void CUILayer::UpdateText(WPARAM wParam)
 {
     if (m_IsActive)
     {
-        if (wParam == VK_BACK && m_TextBlock.m_TextPos > 0)
+        if (m_TextBlock.m_TextPos >= 1 && wParam == VK_BACK)
         {
             m_TextBlock.m_Text[--m_TextBlock.m_TextPos] = NULL;
         }
-        else if (m_TextBlock.m_TextPos <= m_TextBlock.m_Text.length())
+        else if (m_TextBlock.m_TextPos < m_TextBlock.m_Text.length() && (('0' <= wParam && wParam <= '9') || wParam == '.'))
         {
-            m_TextBlock.m_Text[m_TextBlock.m_TextPos++] = static_cast<WCHAR>(wParam);
+            m_TextBlock.m_Text[m_TextBlock.m_TextPos++] = static_cast<TCHAR>(wParam);
         }
     }
 }
 
-tstring CUILayer::GetText() const
+const tstring& CUILayer::GetText() const
 {
-    return tstring{ m_TextBlock.m_Text.begin(), m_TextBlock.m_Text.end() };
+    return m_TextBlock.m_Text;
 }
 
 void CUILayer::Render(UINT RenderTargetIndex)
@@ -92,7 +92,7 @@ void CUILayer::Render(UINT RenderTargetIndex)
     if (m_IsActive)
     {
         m_D2D1DeviceContext->BeginDraw();
-        m_D2D1DeviceContext->DrawText(m_TextBlock.m_Text.c_str(), static_cast<UINT>(m_TextBlock.m_Text.length()), m_TextBlock.m_WriteFormat.Get(), m_TextBlock.m_D2D1Rect, m_D2D1TextBrush.Get());
+        m_D2D1DeviceContext->DrawText(wstring{ m_TextBlock.m_Text.begin(), m_TextBlock.m_Text.end() }.c_str(), static_cast<UINT>(m_TextBlock.m_Text.length()), m_TextBlock.m_WriteFormat.Get(), m_TextBlock.m_D2D1Rect, m_D2D1TextBrush.Get());
         DX::ThrowIfFailed(m_D2D1DeviceContext->EndDraw());
     }
 
@@ -156,6 +156,6 @@ void CUILayer::Resize(ID3D12Resource** D3D12RenderTargets, UINT Width, UINT Heig
     DX::ThrowIfFailed(m_DWTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER));
     DX::ThrowIfFailed(m_DWTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER));
 
-    m_TextBlock = { L"", 0, D2D1::RectF(0.0f, 0.0f, m_Width, m_Height), m_DWTextFormat.Get() };
-    m_TextBlock.m_Text.resize(20);
+    m_TextBlock = { "", 0, D2D1::RectF(0.0f, 0.0f, m_Width, m_Height), m_DWTextFormat.Get() };
+    m_TextBlock.m_Text.resize(15);
 }

@@ -77,22 +77,13 @@ void CGameScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandLi
 	Shader->CreatePipelineState(D3D12Device, D3D12RootSignature, 0);
 	CShaderManager::GetInstance()->RegisterShader(TEXT("SkyBoxShader"), Shader);
 
-	//Shader = make_shared<CUIShader>();
-	//Shader->CreatePipelineState(D3D12Device, D3D12RootSignature, 0);
-	//CShaderManager::GetInstance()->RegisterShader(TEXT("UIShader"), Shader);
-
 	Shader = make_shared<CDebugShader>();
 	Shader->CreatePipelineState(D3D12Device, D3D12RootSignature, 0);
 	CShaderManager::GetInstance()->RegisterShader(TEXT("DebugShader"), Shader);
 
 	// 파일로부터 NavMesh 객체를 생성한다.
 	m_NavMesh = make_shared<CNavMesh>();
-
-#ifdef READ_BINARY_FILE
 	m_NavMesh->LoadNavMeshFromFile(TEXT("Navigation/NavMesh.bin"));
-#else
-	m_NavMesh->LoadNavMeshFromFile(TEXT("Navigation/NavMesh.txt"));
-#endif
 
 	// 타입 수만큼 각 벡터의 크기를 재할당한다.
 	m_GameObjects.resize(OBJECT_TYPE_STRUCTURE + 1);
@@ -102,18 +93,10 @@ void CGameScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandLi
 	m_BilboardObjects[BILBOARD_OBJECT_TYPE_SKYBOX].push_back(make_shared<CSkyBox>(D3D12Device, D3D12GraphicsCommandList));
 
 	// 파일로부터 씬 객체들을 생성하고 배치한다.
-#ifdef READ_BINARY_FILE
 	LoadSceneInfoFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Scenes/GameScene.bin"));
-#else
-	LoadSceneInfoFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Scenes/GameScene.txt"));
-#endif
 
 	// 파일로부터 UI 객체들을 생성하고 배치한다.
-#ifdef READ_BINARY_FILE
 	LoadUIInfoFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Scenes/GameScene_UI.bin"));
-#else
-	LoadUIInfoFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Scenes/GameScene_UI.txt"));
-#endif
 
 	// 모든 텍스처를 저장하는 힙과 각 텍스처의 SRV 리소스를 생성한다.
 	CTextureManager::GetInstance()->CreateCbvSrvUavDescriptorHeaps(D3D12Device);
@@ -125,6 +108,16 @@ void CGameScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandLi
 void CGameScene::ReleaseObjects()
 {
 	ReleaseShaderVariables();
+}
+
+void CGameScene::Enter(MSG_TYPE MsgType)
+{
+
+}
+
+void CGameScene::Exit()
+{
+
 }
 
 void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName)
@@ -139,7 +132,6 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 	unordered_map<tstring, shared_ptr<CMesh>> MeshCaches{};
 	unordered_map<tstring, shared_ptr<CMaterial>> MaterialCaches{};
 
-#ifdef READ_BINARY_FILE
 	LoadMeshCachesFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("MeshesAndMaterials/Meshes.bin"), MeshCaches);
 	LoadMaterialCachesFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("MeshesAndMaterials/Materials.bin"), MaterialCaches);
 
@@ -225,91 +217,6 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 			break;
 		}
 	}
-#else
-	LoadMeshCachesFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("MeshesAndMaterials/Meshes.txt"), MeshCaches);
-	LoadMaterialCachesFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("MeshesAndMaterials/Materials.txt"), MaterialCaches);
-
-	tifstream InFile{ FileName };
-
-	while (InFile >> Token)
-	{
-		if (Token == TEXT("<Name>"))
-		{
-			InFile >> Token;
-			ModelInfo = CGameObject::LoadObjectFromFile(D3D12Device, D3D12GraphicsCommandList, Token, MeshCaches, MaterialCaches);
-		}
-		else if (Token == TEXT("<Type>"))
-		{
-			InFile >> ObjectType;
-		}
-		else if (Token == TEXT("<TransformMatrix>"))
-		{
-			XMFLOAT4X4 TransformMatrix{};
-
-			InFile >> TransformMatrix._11 >> TransformMatrix._12 >> TransformMatrix._13 >> TransformMatrix._14;
-			InFile >> TransformMatrix._21 >> TransformMatrix._22 >> TransformMatrix._23 >> TransformMatrix._24;
-			InFile >> TransformMatrix._31 >> TransformMatrix._32 >> TransformMatrix._33 >> TransformMatrix._34;
-			InFile >> TransformMatrix._41 >> TransformMatrix._42 >> TransformMatrix._43 >> TransformMatrix._44;
-
-			switch (ObjectType)
-			{
-			case OBJECT_TYPE_PLAYER:
-			{
-				// 플레이어 객체를 생성한다.
-				shared_ptr<CPlayer> Player{ make_shared<CPlayer>(D3D12Device, D3D12GraphicsCommandList) };
-
-				Player->SetChild(ModelInfo->m_Model);
-				Player->SetTransformMatrix(TransformMatrix);
-				Player->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
-				Player->Initialize();
-
-				m_GameObjects[ObjectType].push_back(Player);
-			}
-			break;
-			case OBJECT_TYPE_NPC:
-			{
-				XMFLOAT3 TargetPosition{};
-
-				// <TargetPosition>
-				InFile >> Token;
-				InFile >> TargetPosition.x >> TargetPosition.y >> TargetPosition.z;
-
-				// 교도관 객체를 생성한다.
-				shared_ptr<CGuard> Guard{ make_shared<CGuard>() };
-
-				Guard->SetChild(ModelInfo->m_Model);
-				Guard->SetTransformMatrix(TransformMatrix);
-				Guard->UpdateTransform(Matrix4x4::Identity());
-				Guard->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
-				Guard->SetTargetPosition(TargetPosition);
-				//Guard->FindPatrolNavPath(m_NavMesh);
-				Guard->Initialize();
-
-				m_GameObjects[ObjectType].push_back(Guard);
-			}
-			break;
-			case OBJECT_TYPE_TERRAIN:
-			case OBJECT_TYPE_STRUCTURE:
-			{
-				// 지형 및 구조물 객체를 생성한다.
-				shared_ptr<CGameObject> Architecture{ make_shared<CGameObject>() };
-
-				Architecture->SetChild(ModelInfo->m_Model);
-				Architecture->SetTransformMatrix(TransformMatrix);
-				Architecture->Initialize();
-
-				m_GameObjects[ObjectType].push_back(Architecture);
-			}
-			break;
-			}
-		}
-		else if (Token == TEXT("</GameScene>"))
-		{
-			tcout << endl;
-			break;
-		}
-	}
-#endif
 }
 
 void CGameScene::LoadUIInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName)
@@ -321,7 +228,6 @@ void CGameScene::LoadUIInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCom
 
 	tcout << FileName << TEXT(" 로드 시작...") << endl;
 
-#ifdef READ_BINARY_FILE
 	tifstream InFile{ FileName, ios::binary };
 
 	while (true)
@@ -339,23 +245,7 @@ void CGameScene::LoadUIInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCom
 			break;
 		}
 	}
-#else
-	tifstream InFile{ FileName };
 
-	while (InFile >> Token)
-	{
-		if (Token == TEXT("<UIObject>"))
-		{
-			Object = CBilboardObject::LoadObjectInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
-
-			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI].push_back(Object);
-		}
-		else if (Token == TEXT("</UI>"))
-		{
-			break;
-		}
-	}
-#endif
 	tcout << FileName << TEXT(" 로드 완료...") << endl << endl;
 
 	LoadEventTriggerFromFile(TEXT("Triggers/EventTriggers.bin"));
@@ -434,10 +324,6 @@ void CGameScene::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, 
 		case 'p': // 안개 ON/OFF
 		case 'P':
 			(m_MappedFog->m_Fog.m_Density > 0.0f) ? m_MappedFog->m_Fog.m_Density = 0.0f : m_MappedFog->m_Fog.m_Density = 0.025f;
-			break;
-		case 'i': // 플레이어 무적 ON/OFF
-		case 'I':
-			(m_InvincibleMode) ? m_InvincibleMode = false : m_InvincibleMode = true;
 			break;
 		case 'q': // 플레이어를 감옥 밖으로 이동
 		case 'Q':
@@ -691,9 +577,22 @@ void CGameScene::ProcessPacket()
 	}
 	else
 	{
+		if (ReceivedPacketData.m_MsgType == MSG_TYPE_DISCONNECTION)
+		{
+			ShowCursor(TRUE);
+
+			CSceneManager::GetInstance()->ChangeScene(TEXT("TitleScene"), MSG_TYPE_DISCONNECTION);
+			CSoundManager::GetInstance()->Stop(SOUND_TYPE_INGAME_BGM_1);
+			CSoundManager::GetInstance()->Play(SOUND_TYPE_TITLE_BGM, 0.3f);
+
+			CFramework::GetInstance()->DisconnectServer();
+
+			return;
+		}
+
 		shared_ptr<CPlayer> Player{};
 
-		for (UINT i = 0; i < MAX_CLIENT_CAPACITY; ++i)
+		for (UINT i = 0; i < MAX_PLAYER_CAPACITY; ++i)
 		{
 			if (m_GameObjects[OBJECT_TYPE_PLAYER][i]->IsActive())
 			{
@@ -906,10 +805,8 @@ shared_ptr<CNavMesh>& CGameScene::GetNavMesh()
 
 void CGameScene::LoadMeshCachesFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName, unordered_map<tstring, shared_ptr<CMesh>>& MeshCaches)
 {
-	tstring Token{};
-
-#ifdef READ_BINARY_FILE
 	tifstream InFile{ FileName, ios::binary };
+	tstring Token{};
 
 	while (true)
 	{
@@ -945,52 +842,12 @@ void CGameScene::LoadMeshCachesFromFile(ID3D12Device* D3D12Device, ID3D12Graphic
 			break;
 		}
 	}
-#else
-	tifstream InFile{ FileName };
-
-	while (InFile >> Token)
-	{
-		if (Token == TEXT("<Meshes>"))
-		{
-			UINT MeshCount{};
-
-			InFile >> MeshCount;
-
-			if (MeshCount > 0)
-			{
-				tcout << FileName << TEXT(" 로드 시작...") << endl;
-				MeshCaches.reserve(MeshCount);
-			}
-		}
-		else if (Token == TEXT("<Mesh>"))
-		{
-			shared_ptr<CMesh> Mesh{ make_shared<CMesh>() };
-
-			Mesh->LoadMeshInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
-			MeshCaches.emplace(Mesh->GetName(), Mesh);
-		}
-		else if (Token == TEXT("<SkinnedMesh>"))
-		{
-			shared_ptr<CSkinnedMesh> SkinnedMesh{ make_shared<CSkinnedMesh>() };
-
-			SkinnedMesh->LoadMeshInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
-			MeshCaches.emplace(SkinnedMesh->GetName(), SkinnedMesh);
-		}
-		else if (Token == TEXT("</Meshes>"))
-		{
-			tcout << FileName << TEXT(" 로드 완료...(메쉬 수: ") << MeshCaches.size() << ")" << endl << endl;
-			break;
-		}
-	}
-#endif
 }
 
 void CGameScene::LoadMaterialCachesFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName, unordered_map<tstring, shared_ptr<CMaterial>>& MaterialCaches)
 {
-	tstring Token{};
-
-#ifdef READ_BINARY_FILE
 	tifstream InFile{ FileName, ios::binary };
+	tstring Token{};
 
 	while (true)
 	{
@@ -1019,38 +876,6 @@ void CGameScene::LoadMaterialCachesFromFile(ID3D12Device* D3D12Device, ID3D12Gra
 			break;
 		}
 	}
-
-#else
-	tifstream InFile{ FileName };
-
-	while (InFile >> Token)
-	{
-		if (Token == TEXT("<Materials>"))
-		{
-			UINT MaterialCount{};
-
-			InFile >> MaterialCount;
-
-			if (MaterialCount > 0)
-			{
-				tcout << FileName << TEXT(" 로드 시작...") << endl;
-				MaterialCaches.reserve(MaterialCount);
-			}
-		}
-		else if (Token == TEXT("<Material>"))
-		{
-			shared_ptr<CMaterial> Material{ make_shared<CMaterial>() };
-
-			Material->LoadMaterialInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
-			MaterialCaches.emplace(Material->GetName(), Material);
-		}
-		else if (Token == TEXT("</Materials>"))
-		{
-			tcout << FileName << TEXT(" 로드 완료...(메터리얼 수: ") << MaterialCaches.size() << ")" << endl << endl;
-			break;
-		}
-	}
-#endif
 }
 
 void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
@@ -1081,12 +906,10 @@ void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
 		m_EventTriggers.push_back(EventTrigger);
 	}
 
+	tifstream InFile{ FileName, ios::binary };
 	tstring Token{};
 
 	tcout << FileName << TEXT(" 로드 시작...") << endl;
-
-#ifdef READ_BINARY_FILE
-	tifstream InFile{ FileName, ios::binary };
 
 	while (true)
 	{
@@ -1126,9 +949,7 @@ void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
 			break;
 		}
 	}
-#else
-	tifstream InFile{ FileName };
-#endif
+
 	tcout << FileName << TEXT(" 로드 완료...") << endl << endl;
 
 	// 모든 트리거 객체는 상호작용 UI 객체를 공유한다.
@@ -1298,9 +1119,4 @@ void CGameScene::InteractSpotLight(float ElapsedTime)
 		m_SpotLightAngle += ElapsedTime;
 		m_Lights[1].m_Direction = Vector3::Normalize(XMFLOAT3(cosf(m_SpotLightAngle), -1.0f, sinf(m_SpotLightAngle)));
 	}
-}
-
-bool CGameScene::IsInvincibleMode() const
-{
-	return m_InvincibleMode;
 }

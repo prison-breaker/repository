@@ -3,12 +3,10 @@
 
 shared_ptr<LOADED_MODEL_INFO> CGameObject::LoadObjectFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName, unordered_map<tstring, shared_ptr<CMesh>>& MeshCaches, unordered_map<tstring, shared_ptr<CMaterial>>& MaterialCaches)
 {
+	tifstream InFile{ FileName, ios::binary };
 	tstring Token{};
 
 	shared_ptr<LOADED_MODEL_INFO> ModelInfo{ make_shared<LOADED_MODEL_INFO>() };
-
-#ifdef READ_BINARY_FILE
-	tifstream InFile{ FileName, ios::binary };
 
 	while (true)
 	{
@@ -35,43 +33,15 @@ shared_ptr<LOADED_MODEL_INFO> CGameObject::LoadObjectFromFile(ID3D12Device* D3D1
 		tcout << FileName << TEXT(" 애니메이션 로드 완료...") << endl;
 	}
 
-#else
-	tifstream InFile{ FileName };
-
-	while (InFile >> Token)
-	{
-		if (Token == TEXT("<Hierarchy>"))
-		{
-			tcout << FileName << TEXT(" 모델 로드 시작...") << endl;
-			ModelInfo->m_Model = CGameObject::LoadModelInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile, MeshCaches, MaterialCaches);
-		}
-		else if (Token == TEXT("</Hierarchy>"))
-		{
-			tcout << FileName << TEXT(" 모델 로드 완료...") << endl;
-			break;
-		}
-	}
-
-	if (InFile >> Token)
-	{
-		if (Token == TEXT("<Animation>"))
-		{
-			tcout << FileName << TEXT(" 애니메이션 로드 시작...") << endl;
-			CGameObject::LoadAnimationInfoFromFile(InFile, ModelInfo);
-			tcout << FileName << TEXT(" 애니메이션 로드 완료...") << endl;
-		}
-	}
-#endif
-
 	return ModelInfo;
 }
 
 shared_ptr<CGameObject> CGameObject::LoadModelInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile, unordered_map<tstring, shared_ptr<CMesh>>& MeshCaches, unordered_map<tstring, shared_ptr<CMaterial>>& MaterialCaches)
 {
 	tstring Token{};
+
 	shared_ptr<CGameObject> NewObject{};
 
-#ifdef READ_BINARY_FILE
 	while (true)
 	{
 		File::ReadStringFromFile(InFile, Token);
@@ -145,88 +115,6 @@ shared_ptr<CGameObject> CGameObject::LoadModelInfoFromFile(ID3D12Device* D3D12De
 			break;
 		}
 	}
-#else
-	while (InFile >> Token)
-	{
-		if (Token == TEXT("<Frame>"))
-		{
-			NewObject = make_shared<CGameObject>();
-			NewObject->SetActive(true);
-
-			InFile >> NewObject->m_FrameName;
-		}
-		else if (Token == TEXT("<TransformMatrix>"))
-		{
-			InFile >> NewObject->m_TransformMatrix._11 >> NewObject->m_TransformMatrix._12 >> NewObject->m_TransformMatrix._13 >> NewObject->m_TransformMatrix._14;
-			InFile >> NewObject->m_TransformMatrix._21 >> NewObject->m_TransformMatrix._22 >> NewObject->m_TransformMatrix._23 >> NewObject->m_TransformMatrix._24;
-			InFile >> NewObject->m_TransformMatrix._31 >> NewObject->m_TransformMatrix._32 >> NewObject->m_TransformMatrix._33 >> NewObject->m_TransformMatrix._34;
-			InFile >> NewObject->m_TransformMatrix._41 >> NewObject->m_TransformMatrix._42 >> NewObject->m_TransformMatrix._43 >> NewObject->m_TransformMatrix._44;
-		}
-		else if (Token == TEXT("<Mesh>"))
-		{
-			InFile >> Token;
-
-			NewObject->SetMesh(MeshCaches[Token]);
-			NewObject->SetBoundingBox(make_shared<BoundingBox>());
-		}
-		else if (Token == TEXT("<SkinnedMesh>"))
-		{
-			InFile >> Token;
-
-			shared_ptr<CSkinnedMesh> SkinnedMesh{ make_shared<CSkinnedMesh>(*(static_pointer_cast<CSkinnedMesh>(MeshCaches[Token]))) };
-
-			SkinnedMesh->LoadSkinInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
-			NewObject->SetMesh(SkinnedMesh);
-			NewObject->SetBoundingBox(make_shared<BoundingBox>());
-		}
-		else if (Token == TEXT("<Materials>"))
-		{
-			UINT MaterialCount{};
-
-			InFile >> MaterialCount;
-
-			if (MaterialCount > 0)
-			{
-				NewObject->m_Materials.reserve(MaterialCount);
-
-				// <Material>
-				InFile >> Token;
-
-				for (UINT i = 0; i < MaterialCount; ++i)
-				{
-					InFile >> Token;
-
-					NewObject->SetMaterial(MaterialCaches[Token]);
-				}
-			}
-		}
-		else if (Token == TEXT("<ChildCount>"))
-		{
-			UINT ChildCount{};
-
-			InFile >> ChildCount;
-
-			if (ChildCount > 0)
-			{
-				NewObject->m_ChildObjects.reserve(ChildCount);
-
-				for (UINT i = 0; i < ChildCount; ++i)
-				{
-					shared_ptr<CGameObject> ChildObject{ CGameObject::LoadModelInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile, MeshCaches, MaterialCaches) };
-
-					if (ChildObject)
-					{
-						NewObject->SetChild(ChildObject);
-					}
-				}
-			}
-		}
-		else if (Token == TEXT("</Frame>"))
-		{
-			break;
-		}
-	}
-#endif
 
 	return NewObject;
 }
@@ -237,7 +125,6 @@ void CGameObject::LoadAnimationInfoFromFile(tifstream& InFile, const shared_ptr<
 
 	unordered_map<tstring, shared_ptr<CGameObject>> BoneFrameCaches{};
 
-#ifdef READ_BINARY_FILE
 	while (true)
 	{
 		File::ReadStringFromFile(InFile, Token);
@@ -297,69 +184,6 @@ void CGameObject::LoadAnimationInfoFromFile(tifstream& InFile, const shared_ptr<
 			break;
 		}
 	}
-
-#else
-	while (InFile >> Token)
-	{
-		if (Token == TEXT("<FrameNames>"))
-		{
-			UINT SkinnedMeshFrameCount{};
-
-			InFile >> SkinnedMeshFrameCount;
-			ModelInfo->m_SkinnedMeshCaches.reserve(SkinnedMeshFrameCount);
-			ModelInfo->m_BoneFrameCaches.resize(SkinnedMeshFrameCount);
-
-			for (UINT i = 0; i < SkinnedMeshFrameCount; ++i)
-			{
-				InFile >> Token;
-				ModelInfo->m_SkinnedMeshCaches.push_back(ModelInfo->m_Model->FindSkinnedMesh(Token));
-
-				UINT BoneCount{};
-
-				InFile >> BoneCount;
-				ModelInfo->m_BoneFrameCaches[i].reserve(BoneCount);
-
-				for (UINT j = 0; j < BoneCount; ++j)
-				{
-					InFile >> Token;
-					
-					if (BoneFrameCaches.count(Token))
-					{
-						ModelInfo->m_BoneFrameCaches[i].push_back(BoneFrameCaches[Token]);
-					}
-					else
-					{
-						shared_ptr<CGameObject> Frame{ ModelInfo->m_Model->FindFrame(Token) };
-
-						ModelInfo->m_BoneFrameCaches[i].push_back(Frame);
-						BoneFrameCaches.emplace(Token, Frame);
-					}
-				}
-
-				ModelInfo->m_SkinnedMeshCaches.back()->SetBoneFrameCaches(ModelInfo->m_BoneFrameCaches[i]);
-			}
-		}
-		else if (Token == TEXT("<AnimationClips>"))
-		{
-			UINT AnimationClipCount{};
-
-			InFile >> AnimationClipCount;
-			ModelInfo->m_AnimationClips.reserve(AnimationClipCount);
-
-			for (UINT i = 0; i < AnimationClipCount; ++i)
-			{
-				shared_ptr<CAnimationClip> AnimationClip{ make_shared<CAnimationClip>() };
-
-				AnimationClip->LoadAnimationClipInfoFromFile(InFile, ModelInfo);
-				ModelInfo->m_AnimationClips.push_back(AnimationClip);
-			}
-		}
-		else if (Token == TEXT("</Animation>"))
-		{
-			break;
-		}
-	}
-#endif
 }
 
 void CGameObject::Initialize()

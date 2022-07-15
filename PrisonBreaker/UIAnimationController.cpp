@@ -8,7 +8,6 @@ void CUIAnimationClip::LoadAnimationClipInfoFromFile(ifstream& InFile, UINT Vert
 
 	UINT Count{};
 
-#ifdef READ_BINARY_FILE
 	while (true)
 	{
 		File::ReadStringFromFile(InFile, Token);
@@ -72,42 +71,6 @@ void CUIAnimationClip::LoadAnimationClipInfoFromFile(ifstream& InFile, UINT Vert
 			break;
 		}
 	}
-#else
-	while (InFile >> Token)
-	{
-		if (Token == TEXT("<AnimationClip>"))
-		{
-			InFile >> m_ClipName;
-			InFile >> m_FramePerSec;
-			InFile >> m_KeyFrameCount;
-			InFile >> m_KeyFrameTime;
-
-			m_TransformData.resize(VertexCount);
-		}
-		else if (Token == TEXT("<RectTransform>"))
-		{
-			// Current KeyFrameTime
-			InFile >> Token;
-
-			for (UINT i = 0; i < VertexCount; ++i)
-			{
-				XMFLOAT3 Position{};
-				UINT CellIndex{};
-				XMFLOAT2 Size{};
-
-				InFile >> Position.x >> Position.y;
-				InFile >> CellIndex;
-				InFile >> Size.x >> Size.y;
-
-				m_TransformData[i].emplace_back(Position, Size, XMUINT2(), CellIndex);
-			}
-		}
-		else if (Token == TEXT("</AnimationClip>"))
-		{
-			break;
-		}
-	}
-#endif
 }
 
 //=========================================================================================================================

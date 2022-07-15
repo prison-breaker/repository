@@ -14,6 +14,9 @@ public:
 	virtual void BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, ID3D12RootSignature* D3D12RootSignature) = 0;
 	virtual void ReleaseObjects() = 0;
 
+	virtual void Enter(MSG_TYPE MsgType) = 0;
+	virtual void Exit() = 0;
+
 	virtual void LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName) = 0;
 	virtual void LoadUIInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName) = 0;
 
