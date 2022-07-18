@@ -191,6 +191,11 @@ void CGameObject::Initialize()
 	SetActive(true);
 }
 
+void CGameObject::Reset(const XMFLOAT4X4& TransformMatrix)
+{
+	SetActive(true);
+}
+
 void CGameObject::CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
 

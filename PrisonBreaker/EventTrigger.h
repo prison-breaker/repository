@@ -21,6 +21,8 @@ public:
 	CEventTrigger() = default;
 	virtual ~CEventTrigger() = default;
 
+	virtual void Reset();
+
 	virtual bool CanPassTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& NewPosition);
 
 	virtual void ShowInteractionUI();

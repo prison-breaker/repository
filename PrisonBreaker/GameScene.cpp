@@ -5,46 +5,66 @@
 void CGameScene::Initialize()
 {
 	SOCKET_INFO SocketInfo{ CFramework::GetInstance()->GetSocketInfo() };
-	UINT HasPistolGuardIndics[5]{};
+	UINT HasPistolGuardIndices[5]{};
 
-	int ReturnValue{ recv(SocketInfo.m_Socket, (char*)HasPistolGuardIndics, sizeof(HasPistolGuardIndics), MSG_WAITALL) };
+	int ReturnValue{ recv(SocketInfo.m_Socket, (char*)HasPistolGuardIndices, sizeof(HasPistolGuardIndices), MSG_WAITALL) };
 
 	if (ReturnValue == SOCKET_ERROR)
 	{
 		Server::ErrorDisplay("recv()");
 	}
 
-	UINT TriggerCount{ static_cast<UINT>(m_EventTriggers.size()) };
+	tcout << "권총을 들고 있는 경찰의 인덱스 : " << HasPistolGuardIndices[0] << " " << HasPistolGuardIndices[1] << " " << HasPistolGuardIndices[2] << " " << HasPistolGuardIndices[3] << " " << HasPistolGuardIndices[4] << endl;
 
-	for (UINT i = 0; i < TriggerCount; ++i)
+	for (const auto& EventTrigger : m_EventTriggers)
 	{
-		if (i <= 6)
+		if (EventTrigger)
 		{
-			m_EventTriggers[i]->SetActive(false);
+			EventTrigger->Reset();
 		}
-		else
-		{
-			m_EventTriggers[i]->SetActive(true);
-		}
-
-		m_EventTriggers[i]->SetInteracted(false);
 	}
 
-	// 권총을 드롭하는 트리거를 추가한다.
-	// 권총은 열쇠를 갖지 않은 임의의 교도관(Index: 2 ~ 14) 중 5명이 보유하고 있다.
-	UINT GuardCount{ static_cast<UINT>(m_GameObjects[OBJECT_TYPE_NPC].size()) };
-
-	for (UINT i = 2, j = 0; i < GuardCount; ++i)
+	for (UINT i = 0; i < MAX_PLAYER_CAPACITY; ++i)
 	{
-		shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][i]) };
-
-		if (i == HasPistolGuardIndics[j])
+		if (m_GameObjects[OBJECT_TYPE_PLAYER][i])
 		{
-			Guard->SetEventTrigger(m_EventTriggers[2 + j++]);
+			m_GameObjects[OBJECT_TYPE_PLAYER][i]->Reset(m_InitGameData.m_PlayerInitTransformMatrixes[i]);
 		}
-		else
+	}
+
+	// 0 ~ 1: Has Key Guard
+	// Random 5 : Has Pistol Guard
+	for (UINT i = 0, j = 0; i < MAX_NPC_COUNT; ++i)
+	{
+		if (m_GameObjects[OBJECT_TYPE_NPC][i])
 		{
-			Guard->SetEventTrigger(nullptr);
+			m_GameObjects[OBJECT_TYPE_NPC][i]->Reset(m_InitGameData.m_NPCInitTransformMatrixes[i]);
+
+			if (i <= 1 || i == HasPistolGuardIndices[j - 2])
+			{
+				shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][i]) };
+
+				Guard->SetEventTrigger(m_EventTriggers[j++]);
+			}
+		}
+	}
+
+	UINT UICount{ static_cast<UINT>(m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI].size())};
+
+	for (UINT i = 0; i < UICount; ++i)
+	{
+		if (m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][i])
+		{
+			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][i]->Reset();
+
+			// 4 : Pistol & Bullet
+			// 6 : Crosshair
+			// 7 : Interactions
+			// 8 : Hit
+			if (i == 4 || 6 <= i && i <= 8)
+			{
+				m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][i]->SetActive(false);
+			}
 		}
 	}
 }
@@ -172,6 +192,7 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 				Player->Initialize();
 
 				m_GameObjects[ObjectType].push_back(Player);
+				m_InitGameData.m_PlayerInitTransformMatrixes.push_back(TransformMatrix);
 			}
 			break;
 			case OBJECT_TYPE_NPC:
@@ -193,6 +214,7 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 				Guard->Initialize();
 
 				m_GameObjects[ObjectType].push_back(Guard);
+				m_InitGameData.m_NPCInitTransformMatrixes.push_back(TransformMatrix);
 			}
 			break;
 			case OBJECT_TYPE_TERRAIN:
@@ -557,8 +579,6 @@ void CGameScene::ProcessPacket()
 		{
 			Server::ErrorDisplay("send()");
 		}
-
-		tcout << "총을 쐈기에 카메라의 위치를 전송했습니다." << endl;
 	}
 
 	// Receive updated packet data.
@@ -577,19 +597,20 @@ void CGameScene::ProcessPacket()
 	}
 	else
 	{
-		if (ReceivedPacketData.m_MsgType == MSG_TYPE_DISCONNECTION)
+		switch (ReceivedPacketData.m_MsgType)
 		{
+		case MSG_TYPE_DISCONNECTION:
+		case MSG_TYPE_TITLE:
 			ShowCursor(TRUE);
 
-			CSceneManager::GetInstance()->ChangeScene(TEXT("TitleScene"), MSG_TYPE_DISCONNECTION);
+			CSceneManager::GetInstance()->ChangeScene(TEXT("TitleScene"), ReceivedPacketData.m_MsgType);
 			CSoundManager::GetInstance()->Stop(SOUND_TYPE_INGAME_BGM_1);
 			CSoundManager::GetInstance()->Play(SOUND_TYPE_TITLE_BGM, 0.3f);
-
 			CFramework::GetInstance()->DisconnectServer();
 
 			return;
 		}
-
+		
 		shared_ptr<CPlayer> Player{};
 
 		for (UINT i = 0; i < MAX_PLAYER_CAPACITY; ++i)
@@ -597,84 +618,84 @@ void CGameScene::ProcessPacket()
 			if (m_GameObjects[OBJECT_TYPE_PLAYER][i]->IsActive())
 			{
 				Player = static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][i]);
+
+				ANIMATION_CLIP_TYPE PrevAnimationClipType{ Player->GetAnimationController()->GetAnimationClipType() };
+
 				Player->SetTransformMatrix(ReceivedPacketData.m_PlayerWorldMatrices[i]);
+				Player->GetAnimationController()->SetAnimationClipType(ReceivedPacketData.m_PlayerAnimationClipTypes[i]);
 
-				if (Player->GetAnimationController()->GetAnimationClipType() != ReceivedPacketData.m_PlayerAnimationClipTypes[i])
+				switch (ReceivedPacketData.m_PlayerAnimationClipTypes[i])
 				{
-					Player->GetAnimationController()->SetAnimationClipType(ReceivedPacketData.m_PlayerAnimationClipTypes[i]);
-
-					switch (ReceivedPacketData.m_PlayerAnimationClipTypes[i])
+				case ANIMATION_CLIP_TYPE_PLAYER_IDLE:
+					Player->GetStateMachine()->ChangeState(CPlayerIdleState::GetInstance());
+					break;
+				case ANIMATION_CLIP_TYPE_PLAYER_WALK_FORWARD_AND_BACK:
+				case ANIMATION_CLIP_TYPE_PLAYER_WALK_LEFT:
+				case ANIMATION_CLIP_TYPE_PLAYER_WALK_RIGHT:
+					Player->GetStateMachine()->ChangeState(CPlayerWalkingState::GetInstance());
+					break;
+				case ANIMATION_CLIP_TYPE_PLAYER_RUN_FORWARD:
+				case ANIMATION_CLIP_TYPE_PLAYER_RUN_LEFT:
+				case ANIMATION_CLIP_TYPE_PLAYER_RUN_RIGHT:
+					Player->GetStateMachine()->ChangeState(CPlayerRunningState::GetInstance());
+					break;
+				case ANIMATION_CLIP_TYPE_PLAYER_PUNCH:
+					Player->GetStateMachine()->ChangeState(CPlayerPunchingState::GetInstance());
+					break;
+				case ANIMATION_CLIP_TYPE_PLAYER_PISTOL_IDLE:
+					Player->GetStateMachine()->ChangeState(CPlayerShootingState::GetInstance());
+					break;
+				case ANIMATION_CLIP_TYPE_PLAYER_SHOOT:
+					if (PrevAnimationClipType != ReceivedPacketData.m_PlayerAnimationClipTypes[i])
 					{
-						case ANIMATION_CLIP_TYPE_PLAYER_IDLE:
-							Player->GetStateMachine()->ChangeState(CPlayerIdleState::GetInstance());
-							break;
-						case ANIMATION_CLIP_TYPE_PLAYER_WALK_FORWARD_AND_BACK:
-						case ANIMATION_CLIP_TYPE_PLAYER_WALK_LEFT:
-						case ANIMATION_CLIP_TYPE_PLAYER_WALK_RIGHT:
-							Player->GetStateMachine()->ChangeState(CPlayerWalkingState::GetInstance());
-							break;
-						case ANIMATION_CLIP_TYPE_PLAYER_RUN_FORWARD:
-						case ANIMATION_CLIP_TYPE_PLAYER_RUN_LEFT:
-						case ANIMATION_CLIP_TYPE_PLAYER_RUN_RIGHT:
-							Player->GetStateMachine()->ChangeState(CPlayerRunningState::GetInstance());
-							break;
-						case ANIMATION_CLIP_TYPE_PLAYER_PUNCH:
-							Player->GetStateMachine()->ChangeState(CPlayerPunchingState::GetInstance());
-							break;
-						case ANIMATION_CLIP_TYPE_PLAYER_PISTOL_IDLE:
-							Player->GetStateMachine()->ChangeState(CPlayerShootingState::GetInstance());
-							break;
-						case ANIMATION_CLIP_TYPE_PLAYER_SHOOT:
-							if (CFramework::GetInstance()->GetSocketInfo().m_ID == Player->GetID())
-							{
-								UINT BulletCount{ m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->GetVertexCount() };
+						if (CFramework::GetInstance()->GetSocketInfo().m_ID == Player->GetID())
+						{
+							UINT BulletCount{ m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->GetVertexCount() };
 
-								m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetVertexCount(BulletCount - 1);
+							m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetVertexCount(BulletCount - 1);
 
-								CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_SHOT, 0.45f);
-							}
-							break;
-						case ANIMATION_CLIP_TYPE_PLAYER_DIE:
-							Player->GetStateMachine()->ChangeState(CPlayerDyingState::GetInstance());
-							break;
+							CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_SHOT, 0.45f);
+						}
 					}
+					break;
+				case ANIMATION_CLIP_TYPE_PLAYER_DIE:
+					Player->GetStateMachine()->ChangeState(CPlayerDyingState::GetInstance());
+					break;
 				}
 			}
 		}
+
+		shared_ptr<CGuard> Guard{};
 
 		for (UINT i = 0; i < MAX_NPC_COUNT; ++i)
 		{
 			if (m_GameObjects[OBJECT_TYPE_NPC][i]->IsActive())
 			{
-				shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][i]) };
+				Guard = static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][i]);
 
 				Guard->SetTransformMatrix(ReceivedPacketData.m_NPCWorldMatrices[i]);
+				Guard->GetAnimationController()->SetAnimationClipType(ReceivedPacketData.m_NPCAnimationClipTypes[i]);
 
-				if (Guard->GetAnimationController()->GetAnimationClipType() != ReceivedPacketData.m_NPCAnimationClipTypes[i])
+				switch (ReceivedPacketData.m_NPCAnimationClipTypes[i])
 				{
-					Guard->GetAnimationController()->SetAnimationClipType(ReceivedPacketData.m_NPCAnimationClipTypes[i]);
-
-					switch (ReceivedPacketData.m_NPCAnimationClipTypes[i])
-					{
-					case ANIMATION_CLIP_TYPE_NPC_IDLE:
-						Guard->GetStateMachine()->ChangeState(CGuardIdleState::GetInstance());
-						break;
-					case ANIMATION_CLIP_TYPE_NPC_WALK_FORWARD:
-						Guard->GetStateMachine()->ChangeState(CGuardPatrolState::GetInstance());
-						break;
-					case ANIMATION_CLIP_TYPE_NPC_RUN_FORWARD:
-						Guard->GetStateMachine()->ChangeState(CGuardChaseState::GetInstance());
-						break;
-					case ANIMATION_CLIP_TYPE_NPC_SHOOT:
-						Guard->GetStateMachine()->ChangeState(CGuardShootingState::GetInstance());
-						break;
-					case ANIMATION_CLIP_TYPE_NPC_HIT:
-						Guard->GetStateMachine()->ChangeState(CGuardHitState::GetInstance());
-						break;
-					case ANIMATION_CLIP_TYPE_NPC_DIE:
-						Guard->GetStateMachine()->ChangeState(CGuardDyingState::GetInstance());
-						break;
-					}
+				case ANIMATION_CLIP_TYPE_NPC_IDLE:
+					Guard->GetStateMachine()->ChangeState(CGuardIdleState::GetInstance());
+					break;
+				case ANIMATION_CLIP_TYPE_NPC_WALK_FORWARD:
+					Guard->GetStateMachine()->ChangeState(CGuardPatrolState::GetInstance());
+					break;
+				case ANIMATION_CLIP_TYPE_NPC_RUN_FORWARD:
+					Guard->GetStateMachine()->ChangeState(CGuardChaseState::GetInstance());
+					break;
+				case ANIMATION_CLIP_TYPE_NPC_SHOOT:
+					Guard->GetStateMachine()->ChangeState(CGuardShootingState::GetInstance());
+					break;
+				case ANIMATION_CLIP_TYPE_NPC_HIT:
+					Guard->GetStateMachine()->ChangeState(CGuardHitState::GetInstance());
+					break;
+				case ANIMATION_CLIP_TYPE_NPC_DIE:
+					Guard->GetStateMachine()->ChangeState(CGuardDyingState::GetInstance());
+					break;
 				}
 			}
 		}
@@ -689,8 +710,8 @@ void CGameScene::ProcessPacket()
 
 				if (Player->GetID() == SocketInfo.m_ID)
 				{
-					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(true);  // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]: Punch
-					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(false); // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]: Pistol
+					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(true);  // 3: Punch
+					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(false); // 4: Pistol
 				}
 			}
 			else
@@ -699,8 +720,8 @@ void CGameScene::ProcessPacket()
 
 				if (Player->GetID() == SocketInfo.m_ID)
 				{
-					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(false); // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]: Punch
-					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(true);  // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]: Pistol
+					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(false); // 3: Punch
+					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(true);  // 4: Pistol
 				}
 			}
 		}
@@ -715,8 +736,8 @@ void CGameScene::ProcessPacket()
 
 				if (Player->GetID() == SocketInfo.m_ID)
 				{
-					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(true);  // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]: Punch
-					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(false); // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]: Pistol
+					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(true);  // 3: Punch
+					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(false); // 4: Pistol
 				}
 			}
 			else
@@ -725,8 +746,79 @@ void CGameScene::ProcessPacket()
 
 				if (Player->GetID() == SocketInfo.m_ID)
 				{
-					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(false); // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]: Punch
-					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(true);  // m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]: Pistol
+					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(false); // 3: Punch
+					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(true);  // 4: Pistol
+				}
+			}
+		}
+
+		if (ReceivedPacketData.m_MsgType & MSG_TYPE_PLAYER_ATTACK)
+		{
+			PLAYER_ATTACK_DATA PlayerAttackData{};
+
+			ReturnValue = recv(SocketInfo.m_Socket, (char*)&PlayerAttackData, sizeof(PlayerAttackData), MSG_WAITALL);
+
+			if (ReturnValue == SOCKET_ERROR)
+			{
+				Server::ErrorDisplay("recv()");
+			}
+			else if (ReturnValue == 0)
+			{
+				tcout << "서버가 종료되었습니다." << endl;
+				closesocket(SocketInfo.m_Socket);
+			}
+			else
+			{
+				for (UINT i = 0; i < MAX_PLAYER_CAPACITY; ++i)
+				{
+					if (PlayerAttackData.m_TargetIndices[i] != UINT_MAX)
+					{
+						CSoundManager::GetInstance()->Play(SOUND_TYPE_GRUNT_2, 0.5f);
+					}
+				}
+			}
+		}
+
+		if (ReceivedPacketData.m_MsgType & MSG_TYPE_GUARD_ATTACK)
+		{
+			GUARD_ATTACK_DATA GuardAttackData{};
+
+			ReturnValue = recv(SocketInfo.m_Socket, (char*)&GuardAttackData, sizeof(GuardAttackData), MSG_WAITALL);
+
+			if (ReturnValue == SOCKET_ERROR)
+			{
+				Server::ErrorDisplay("recv()");
+			}
+			else if (ReturnValue == 0)
+			{
+				tcout << "서버가 종료되었습니다." << endl;
+				closesocket(SocketInfo.m_Socket);
+			}
+			else
+			{
+				for (UINT i = 0; i < MAX_NPC_COUNT; ++i)
+				{
+					Guard = static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][i]);
+
+					if (ReceivedPacketData.m_NPCAnimationClipTypes[i] == ANIMATION_CLIP_TYPE_NPC_SHOOT)
+					{
+						if (CFramework::GetInstance()->GetSocketInfo().m_ID == GuardAttackData.m_TargetIndices[i])
+						{
+							// 피격 UI 애니메이션을 재생시키고, UI 체력을 1감소시킨다.
+							static_pointer_cast<CHitUI>(m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][8])->GetStateMachine()->SetCurrentState(CHitUIActivationState::GetInstance());
+
+							UINT LifeCount{ m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][2]->GetVertexCount() };
+
+							// 첫번째 정점은 하트 아이콘이므로 2이상부터 체력 아이콘임
+							if (LifeCount > 1)
+							{
+								m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][2]->SetVertexCount(LifeCount - 1);
+							}
+
+							CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_SHOT, 0.35f);
+							CSoundManager::GetInstance()->Play(SOUND_TYPE_GRUNT_1, 0.3f);
+						}
+					}
 				}
 			}
 		}
@@ -965,6 +1057,8 @@ void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
 
 void CGameScene::BuildLights()
 {
+	float m_SpotLightAngle{ XMConvertToRadians(90.0f) };
+
 	m_Lights.resize(MAX_LIGHTS);
 
 	m_Lights[0].m_IsActive = true;
@@ -1038,85 +1132,5 @@ void CGameScene::UpdatePerspective(HWND hWnd, float ElapsedTime, const shared_pt
 		XMFLOAT3 Direction{ Vector3::Inverse(Player->GetCamera()->GetLook()) };
 
 		Player->GetCamera()->Move(Vector3::ScalarProduct(2.5f * ElapsedTime, XMFLOAT3(Direction.x, 0.3f, Direction.z), false));
-	}
-}
-
-void CGameScene::InteractSpotLight(float ElapsedTime)
-{
-	if (m_Lights[1].m_IsActive)
-	{ 	
-		// 광원 포지션과 방향벡터를 활용해 평면에 도달하는 중심점을 계산한다. 
-		float LightAngle{ Vector3::Angle(m_Lights[1].m_Direction, XMFLOAT3(0.0f, -1.0f, 0.0f)) };  // 빗변과 변의 각도 계산
-		float HypotenuseLength{ m_Lights[1].m_Position.y / cosf(XMConvertToRadians(LightAngle)) }; // 빗변의 길이 계산
-		float Radian{ HypotenuseLength * tanf(XMConvertToRadians(10.0f)) };                        // 광원이 쏘아지는 원의 반지름
-
-		// 평면에 도달하는 점 계산
-		XMFLOAT3 LightedPosition{ Vector3::Add(m_Lights[1].m_Position , Vector3::ScalarProduct(HypotenuseLength, m_Lights[1].m_Direction, false)) };
-
-		for (const auto& Player : m_GameObjects[OBJECT_TYPE_PLAYER])
-		{
-			if (Player)
-			{
-				if (Player->IsActive())
-				{
-					if (Math::Distance(Player->GetPosition(), LightedPosition) < Radian)
-					{
-						XMFLOAT3 Direction = Vector3::Normalize(Vector3::Subtract(Player->GetPosition(), m_Lights[1].m_Position));
-
-						float NearestHitDistance{ FLT_MAX };
-						float HitDistance{};
-						bool HitCheck{};
-
-						for (const auto& GameObject : m_GameObjects[OBJECT_TYPE_STRUCTURE])
-						{
-							if (GameObject)
-							{
-								shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(m_Lights[1].m_Position, Direction, HitDistance, HypotenuseLength) };
-
-								if (IntersectedObject && HitDistance < HypotenuseLength)
-								{
-									HitCheck = true;
-									break;
-								}
-							}
-						}
-
-						if (!HitCheck)
-						{
-							for (const auto& GameObject : m_GameObjects[OBJECT_TYPE_NPC])
-							{
-								if (GameObject)
-								{
-									shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(GameObject) };
-
-									if (Guard->GetHealth() > 0)
-									{
-										// 스팟조명과 충돌 할 경우 주변 범위에 있는 경찰들이 플레이어를 쫒기 시작한다.
-										if (Math::Distance(LightedPosition, Guard->GetPosition()) <= 150.0f)
-										{
-											if (Guard->GetStateMachine()->IsInState(CGuardIdleState::GetInstance()) ||
-												Guard->GetStateMachine()->IsInState(CGuardPatrolState::GetInstance()) ||
-												Guard->GetStateMachine()->IsInState(CGuardReturnState::GetInstance()))
-											{
-												Guard->FindNavPath(m_NavMesh, Player->GetPosition(), m_GameObjects);
-												Guard->GetStateMachine()->ChangeState(CGuardAssembleState::GetInstance());
-											}
-										}
-									}
-								}
-							}
-
-							CSoundManager::GetInstance()->Stop(SOUND_TYPE_INGAME_BGM_1);
-							CSoundManager::GetInstance()->Play(SOUND_TYPE_INGAME_BGM_2, 0.3f);
-
-							return;
-						}
-					}
-				}
-			}
-		}
-
-		m_SpotLightAngle += ElapsedTime;
-		m_Lights[1].m_Direction = Vector3::Normalize(XMFLOAT3(cosf(m_SpotLightAngle), -1.0f, sinf(m_SpotLightAngle)));
 	}
 }

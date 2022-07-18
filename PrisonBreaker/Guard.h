@@ -32,6 +32,7 @@ public:
 	virtual ~CGuard() = default;
 
 	virtual void Initialize();
+	virtual void Reset(const XMFLOAT4X4& TransformMatrix);
 
 	virtual void Animate(float ElapsedTime);
 

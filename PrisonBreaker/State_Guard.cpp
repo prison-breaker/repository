@@ -156,27 +156,7 @@ CGuardShootingState* CGuardShootingState::GetInstance()
 
 void CGuardShootingState::Enter(const shared_ptr<CGuard>& Entity)
 {
-	shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
-	vector<vector<shared_ptr<CBilboardObject>>>& BilboardObjects{ GameScene->GetBilboardObjects() };
 
-	// 피격 UI 애니메이션을 재생시키고, UI 체력을 1감소시킨다.
-	static_pointer_cast<CHitUI>(BilboardObjects[BILBOARD_OBJECT_TYPE_UI][8])->GetStateMachine()->SetCurrentState(CHitUIActivationState::GetInstance());
-
-	UINT LifeCount{ BilboardObjects[BILBOARD_OBJECT_TYPE_UI][2]->GetVertexCount() };
-
-	// 첫번째 정점은 하트 아이콘이므로 2이상부터 체력 아이콘임
-	if (LifeCount > 1)
-	{
-		BilboardObjects[BILBOARD_OBJECT_TYPE_UI][2]->SetVertexCount(LifeCount - 1);
-	}
-
-	//shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(Entity->GetTarget()) };
-	// 한명만 맞도록 조치해야댐
-
-	Entity->GetAnimationController()->SetKeyFrameIndex(0);
-
-	CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_SHOT, 0.35f);
-	CSoundManager::GetInstance()->Play(SOUND_TYPE_GRUNT_1, 0.3f);
 }
 
 void CGuardShootingState::ProcessInput(const shared_ptr<CGuard>& Entity, float ElapsedTime, UINT InputMask)
@@ -186,10 +166,7 @@ void CGuardShootingState::ProcessInput(const shared_ptr<CGuard>& Entity, float E
 
 void CGuardShootingState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTime)
 {
-	if (Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE))
-	{
-		Entity->GetStateMachine()->GetCurrentState()->Enter(Entity);
-	}
+	Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
 }
 
 void CGuardShootingState::Exit(const shared_ptr<CGuard>& Entity)
@@ -208,9 +185,7 @@ CGuardHitState* CGuardHitState::GetInstance()
 
 void CGuardHitState::Enter(const shared_ptr<CGuard>& Entity)
 {
-	Entity->GetAnimationController()->SetKeyFrameIndex(0);
 
-	CSoundManager::GetInstance()->Play(SOUND_TYPE_GRUNT_2, 0.5f);
 }
 
 void CGuardHitState::ProcessInput(const shared_ptr<CGuard>& Entity, float ElapsedTime, UINT InputMask)
@@ -220,10 +195,7 @@ void CGuardHitState::ProcessInput(const shared_ptr<CGuard>& Entity, float Elapse
 
 void CGuardHitState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTime)
 {
-	if (Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE))
-	{
-		Entity->GetStateMachine()->GetCurrentState()->Enter(Entity);
-	}
+	Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
 }
 
 void CGuardHitState::Exit(const shared_ptr<CGuard>& Entity)

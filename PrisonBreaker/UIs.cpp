@@ -33,6 +33,12 @@ void CMissionUI::Initialize()
 	m_StateMachine->SetCurrentState(CMissionUIShowingState::GetInstance());
 }
 
+void CMissionUI::Reset()
+{
+	m_StateMachine->SetCurrentState(CMissionUIShowingState::GetInstance());
+	m_UIAnimationController->SetKeyFrameIndex(0);
+}
+
 void CMissionUI::Animate(float ElapsedTime)
 {
 	if (IsActive())
@@ -56,6 +62,12 @@ void CKeyUI::Initialize()
 	m_StateMachine = make_shared<CStateMachine<CKeyUI>>(static_pointer_cast<CKeyUI>(shared_from_this()));
 }
 
+void CKeyUI::Reset()
+{
+	m_StateMachine->SetCurrentState(nullptr);
+	m_UIAnimationController->SetKeyFrameIndex(0);
+}
+
 void CKeyUI::Animate(float ElapsedTime)
 {
 	if (IsActive())
@@ -77,6 +89,11 @@ shared_ptr<CStateMachine<CKeyUI>> CKeyUI::GetStateMachine() const
 void CHitUI::Initialize()
 {
 	m_StateMachine = make_shared<CStateMachine<CHitUI>>(static_pointer_cast<CHitUI>(shared_from_this()));
+}
+
+void CHitUI::Reset()
+{
+	m_IsActive = false;
 }
 
 void CHitUI::Animate(float ElapsedTime)

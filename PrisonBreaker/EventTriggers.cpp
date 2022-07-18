@@ -9,6 +9,19 @@ COpenDoorEventTrigger::COpenDoorEventTrigger()
 	m_ActiveFOV = 70.0f;
 }
 
+void COpenDoorEventTrigger::Reset()
+{
+	CEventTrigger::Reset();
+
+	SetActive(true);
+
+	const XMFLOAT3 WorldUp{ 0.0f, 1.0f, 0.0f };
+
+	m_EventObjects[0]->Rotate(WorldUp, -m_DoorAngle);
+	m_EventObjects[1]->Rotate(WorldUp, m_DoorAngle);
+	m_DoorAngle = 0.0f;
+}
+
 bool COpenDoorEventTrigger::CanPassTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& NewPosition)
 {
 	// 문이 모두 열리지 않은 상태에서는 문 너머로 갈 수 없다.
@@ -64,6 +77,29 @@ CPowerDownEventTrigger::CPowerDownEventTrigger()
 {
 	m_IsActive = true;
 	m_ActiveFOV = 40.0f;
+}
+
+void CPowerDownEventTrigger::Reset()
+{
+	CEventTrigger::Reset();
+
+	SetActive(true);
+
+	const XMFLOAT3 WorldUp{ 0.0f, 1.0f, 0.0f };
+
+	shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene(TEXT("GameScene"))) };
+	vector<LIGHT>& Lights{ GameScene->GetLights() };
+	vector<vector<shared_ptr<CBilboardObject>>>& BilboardObjects{ GameScene->GetBilboardObjects() };
+
+	// 감시탑의 조명을 켠다.
+	Lights[1].m_IsActive = true;
+
+	// 감시탑 차단 미션UI를 미완료상태로 변경한다.
+	BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(0, 0);
+
+	m_IsOpened = false;
+	m_EventObjects[0]->Rotate(WorldUp, m_PanelAngle);
+	m_PanelAngle = 0.0f;
 }
 
 void CPowerDownEventTrigger::ShowInteractionUI()
@@ -148,6 +184,15 @@ CSirenEventTrigger::CSirenEventTrigger()
 	m_ActiveFOV = 40.0f;
 }
 
+void CSirenEventTrigger::Reset()
+{
+	CEventTrigger::Reset();
+
+	SetActive(true);
+
+	CSoundManager::GetInstance()->Stop(SOUND_TYPE_SIREN);
+}
+
 void CSirenEventTrigger::ShowInteractionUI()
 {
 	if (m_InteractionUI)
@@ -203,6 +248,19 @@ COpenGateEventTrigger::COpenGateEventTrigger()
 {
 	m_IsActive = true;
 	m_ActiveFOV = 70.0f;
+}
+
+void COpenGateEventTrigger::Reset()
+{
+	CEventTrigger::Reset();
+
+	SetActive(true);
+
+	const XMFLOAT3 WorldUp{ 0.0f, 1.0f, 0.0f };
+
+	m_EventObjects[0]->Rotate(WorldUp, m_GateAngle);
+	m_EventObjects[1]->Rotate(WorldUp, -m_GateAngle);
+	m_GateAngle = 0.0f;
 }
 
 bool COpenGateEventTrigger::CanPassTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& NewPosition)
@@ -273,6 +331,13 @@ CGetPistolEventTrigger::CGetPistolEventTrigger()
 	m_ActiveFOV = 360.0f;
 }
 
+void CGetPistolEventTrigger::Reset()
+{
+	CEventTrigger::Reset();
+
+	SetActive(false);
+}
+
 void CGetPistolEventTrigger::ShowInteractionUI()
 {
 	if (m_InteractionUI)
@@ -296,7 +361,7 @@ void CGetPistolEventTrigger::InteractEventTrigger(UINT CallerIndex)
 
 		if (!Player->HasPistol())
 		{
-			Player->AcquirePistol();
+			Player->ManagePistol(true);
 		}
 
 		Player->SwapWeapon(WEAPON_TYPE_PISTOL);
@@ -319,6 +384,13 @@ CGetKeyEventTrigger::CGetKeyEventTrigger()
 	m_ActiveFOV = 360.0f;
 }
 
+void CGetKeyEventTrigger::Reset()
+{
+	CEventTrigger::Reset();
+
+	SetActive(false);
+}
+
 void CGetKeyEventTrigger::ShowInteractionUI()
 {
 	if (m_InteractionUI)
@@ -338,7 +410,7 @@ void CGetKeyEventTrigger::InteractEventTrigger(UINT CallerIndex)
 		{
 			vector<vector<shared_ptr<CBilboardObject>>>& BilboardObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetBilboardObjects() };
 
-			//// 열쇠 획득 애니메이션을 출력하도록 CKeyUIActivationState 상태로 전이한다.
+			// 열쇠 획득 애니메이션을 출력하도록 CKeyUIActivationState 상태로 전이한다.
 			static_pointer_cast<CKeyUI>(BilboardObjects[BILBOARD_OBJECT_TYPE_UI][5])->GetStateMachine()->SetCurrentState(CKeyUIActivationState::GetInstance());
 
 			// 열쇠 획득 미션UI를 완료상태로 변경한다.

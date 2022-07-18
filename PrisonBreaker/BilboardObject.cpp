@@ -208,6 +208,12 @@ void CBilboardObject::Initialize()
 	SetActive(true);
 }
 
+void CBilboardObject::Reset()
+{
+	m_IsActive = true;
+	m_VertexCount = m_MaxVertexCount;
+}
+
 void CBilboardObject::ProcessMouseMessage(UINT Message, const XMINT2& ScreenPosition, UINT RootFrameIndex)
 {
 	if (IsActive())

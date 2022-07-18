@@ -34,6 +34,7 @@ public:
 	virtual ~CMissionUI() = default;
 
 	virtual void Initialize();
+	virtual void Reset();
 
 	virtual void Animate(float ElapsedTime);
 
@@ -52,6 +53,7 @@ public:
 	virtual ~CKeyUI() = default;
 
 	virtual void Initialize();
+	virtual void Reset();
 
 	virtual void Animate(float ElapsedTime);
 
@@ -70,6 +72,7 @@ public:
 	virtual ~CHitUI() = default;
 
 	virtual void Initialize();
+	virtual void Reset();
 
 	virtual void Animate(float ElapsedTime);
 

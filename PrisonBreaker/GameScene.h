@@ -51,6 +51,8 @@ class CGameScene : public CScene
 private:
 	UINT										m_InputMask{};
 
+	INIT_GAME_DATA								m_InitGameData{};
+
 	vector<vector<shared_ptr<CGameObject>>>     m_GameObjects{};
 	vector<vector<shared_ptr<CBilboardObject>>> m_BilboardObjects{};
 
@@ -66,8 +68,6 @@ private:
 	CB_FOG*										m_MappedFog{};
 
 	bool										m_RenderBoundingBox{};
-
-	float                                       m_SpotLightAngle{ XMConvertToRadians(90.0f) };
 
 public:
 	CGameScene() = default;
@@ -122,6 +122,4 @@ public:
 	void BuildFog();
 
 	void UpdatePerspective(HWND hWnd, float ElapsedTime, const shared_ptr<CPlayer>& Player);
-
-	void InteractSpotLight(float ElapsedTime);
 };

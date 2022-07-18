@@ -209,10 +209,7 @@ void CTitleScene::ProcessPacket()
 			Server::ErrorDisplay("send()");
 		}
 
-		// 두 명의 플레이어가 연결됐는지를 수신한다.
-		bool IsReady{};
-
-		ReturnValue = recv(SocketInfo.m_Socket, (char*)&IsReady, sizeof(IsReady), MSG_WAITALL);
+		ReturnValue = recv(SocketInfo.m_Socket, (char*)&MsgType, sizeof(MsgType), MSG_WAITALL);
 
 		if (ReturnValue == SOCKET_ERROR)
 		{
@@ -225,7 +222,7 @@ void CTitleScene::ProcessPacket()
 		}
 		else
 		{
-			if (IsReady)
+			if (MsgType == MSG_TYPE_INGAME)
 			{
 				ShowCursor(FALSE);
 

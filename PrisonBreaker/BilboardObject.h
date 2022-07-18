@@ -33,6 +33,7 @@ public:
 	static void LoadAnimationInfoFromFile(tifstream& InFile, const shared_ptr<CBilboardObject>& Model);
 
 	virtual void Initialize();
+	virtual void Reset();
 
 	virtual void ProcessMouseMessage(UINT Message, const XMINT2& ScreenPosition, UINT RootFrameIndex);
 
