@@ -795,15 +795,30 @@ void CGameScene::ProcessPacket()
 				{
 					if (PlayerAttackData.m_TargetIndices[i] != UINT_MAX)
 					{
-						shared_ptr<CPlayer> Player{};
 						shared_ptr<CGuard> Guard{};
-						Player = static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][i]);
 						Guard = static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][PlayerAttackData.m_TargetIndices[i]]);
 
-						float Distance{};
-						Distance = Math::Distance(Player->GetPosition(), Guard->GetPosition());
+						if (SocketInfo.m_ID == i) 
+						{
+							shared_ptr<CPlayer> Player{};
+							Player = static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][i]);
 
-						CSoundManager::GetInstance()->Play(SOUND_TYPE_GRUNT_2, MultiSound(Distance, 0.5f, 50.0f));
+							float Distance{};
+							Distance = Math::Distance(Player->GetPosition(), Guard->GetPosition());
+
+							CSoundManager::GetInstance()->Play(SOUND_TYPE_GRUNT_2, MultiSound(Distance, 0.5f, 50.0f));
+						}
+						
+						else
+						{
+							shared_ptr<CPlayer> OtherPlayer{};
+							OtherPlayer = static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][abs(int(i - 1))]);
+
+							float Distance{};
+							Distance = Math::Distance(OtherPlayer->GetPosition(), Guard->GetPosition());
+
+							CSoundManager::GetInstance()->Play(SOUND_TYPE_GRUNT_2, MultiSound(Distance, 0.5f, 50.0f));
+						}
 					}
 				}
 			}
