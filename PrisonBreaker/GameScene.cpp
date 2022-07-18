@@ -14,8 +14,6 @@ void CGameScene::Initialize()
 		Server::ErrorDisplay("recv()");
 	}
 
-	tcout << "±ÇÃÑÀ» µé°í ÀÖ´Â °æÂûÀÇ ÀÎµ¦½º : " << HasPistolGuardIndices[0] << " " << HasPistolGuardIndices[1] << " " << HasPistolGuardIndices[2] << " " << HasPistolGuardIndices[3] << " " << HasPistolGuardIndices[4] << endl;
-
 	for (const auto& EventTrigger : m_EventTriggers)
 	{
 		if (EventTrigger)
@@ -49,7 +47,7 @@ void CGameScene::Initialize()
 		}
 	}
 
-	UINT UICount{ static_cast<UINT>(m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI].size())};
+	UINT UICount{ static_cast<UINT>(m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI].size()) };
 
 	for (UINT i = 0; i < UICount; ++i)
 	{
@@ -66,6 +64,19 @@ void CGameScene::Initialize()
 				m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][i]->SetActive(false);
 			}
 		}
+	}
+
+	if (SocketInfo.m_ID == 0)
+	{
+		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(0, 0);
+		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(1, 4);
+		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][1]->SetCellIndex(0, 0);
+	}
+	else
+	{
+		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(0, 2);
+		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(1, 4);
+		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][1]->SetCellIndex(0, 1);
 	}
 }
 
