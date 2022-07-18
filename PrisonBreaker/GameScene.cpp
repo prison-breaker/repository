@@ -667,6 +667,17 @@ void CGameScene::ProcessPacket()
 
 							CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_SHOT, 0.45f);
 						}
+
+						else
+						{
+							shared_ptr<CPlayer> OtherPlayer{};
+							OtherPlayer = static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][abs(int(Player->GetID() - 1))]);
+
+							float Distance{};
+							Distance = Math::Distance(Player->GetPosition(), OtherPlayer->GetPosition());
+
+							CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_SHOT, MultiSound(Distance, 0.45f, 100.0f));
+						}
 					}
 					break;
 				case ANIMATION_CLIP_TYPE_PLAYER_DIE:
@@ -784,7 +795,15 @@ void CGameScene::ProcessPacket()
 				{
 					if (PlayerAttackData.m_TargetIndices[i] != UINT_MAX)
 					{
-						CSoundManager::GetInstance()->Play(SOUND_TYPE_GRUNT_2, 0.5f);
+						shared_ptr<CPlayer> Player{};
+						shared_ptr<CGuard> Guard{};
+						Player = static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][i]);
+						Guard = static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][PlayerAttackData.m_TargetIndices[i]]);
+
+						float Distance{};
+						Distance = Math::Distance(Player->GetPosition(), Guard->GetPosition());
+
+						CSoundManager::GetInstance()->Play(SOUND_TYPE_GRUNT_2, MultiSound(Distance, 0.5f, 50.0f));
 					}
 				}
 			}
@@ -828,6 +847,19 @@ void CGameScene::ProcessPacket()
 
 							CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_SHOT, 0.35f);
 							CSoundManager::GetInstance()->Play(SOUND_TYPE_GRUNT_1, 0.3f);
+						}
+
+						else if (CFramework::GetInstance()->GetSocketInfo().m_ID != GuardAttackData.m_TargetIndices[i] && GuardAttackData.m_TargetIndices[i] < 2)
+						{
+							shared_ptr<CPlayer> Player1{}, Player2{};
+							Player1 = static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][0]);
+							Player2 = static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][1]);
+
+							float Distance{};
+							Distance = Math::Distance(Player1->GetPosition(), Player2->GetPosition());
+
+							CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_SHOT, MultiSound(Distance, 0.35f, 100.0f));
+							CSoundManager::GetInstance()->Play(SOUND_TYPE_GRUNT_1, MultiSound(Distance, 0.3f, 50.0f));
 						}
 					}
 				}
@@ -1144,4 +1176,13 @@ void CGameScene::UpdatePerspective(HWND hWnd, float ElapsedTime, const shared_pt
 
 		Player->GetCamera()->Move(Vector3::ScalarProduct(2.5f * ElapsedTime, XMFLOAT3(Direction.x, 0.3f, Direction.z), false));
 	}
+}
+
+float CGameScene::MultiSound(float DistanceBetweenPlayer, float MaxVolume, float MaxHearingDistance)
+{
+	float SoundSize{};
+
+	SoundSize = MaxVolume + ((2.0f - DistanceBetweenPlayer) * (MaxVolume / MaxHearingDistance));
+
+	return SoundSize;
 }

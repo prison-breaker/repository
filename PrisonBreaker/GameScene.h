@@ -122,4 +122,6 @@ public:
 	void BuildFog();
 
 	void UpdatePerspective(HWND hWnd, float ElapsedTime, const shared_ptr<CPlayer>& Player);
+
+	float MultiSound(float DistanceBetweenPlayer, float MaxVolume, float MaxHearingDistance);
 };
