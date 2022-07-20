@@ -4,7 +4,8 @@
 
 void CEventTrigger::Reset()
 {
-	SetInteracted(false);
+	m_IsActive = true;
+	m_IsInteracted = false;
 }
 
 bool CEventTrigger::CanPassTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& NewPosition)
@@ -20,20 +21,16 @@ void CEventTrigger::ShowInteractionUI()
 	}
 }
 
-void CEventTrigger::InteractEventTrigger()
+bool CEventTrigger::InteractEventTrigger(UINT CallerIndex)
 {
-	if (!IsInteracted())
+	if (!m_IsInteracted)
 	{
-		SetInteracted(true);
-	}
-}
+		m_IsInteracted = true;
 
-void CEventTrigger::InteractEventTrigger(UINT CallerIndex)
-{
-	if (!IsInteracted())
-	{
-		SetInteracted(true);
+		return true;
 	}
+
+	return false;
 }
 
 void CEventTrigger::Update(float ElapsedTime)
@@ -153,29 +150,24 @@ shared_ptr<CBilboardObject> CEventTrigger::GetInteractionUI() const
 
 bool CEventTrigger::IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& LookDirection)
 {
-	if (IsActive())
+	if (m_IsActive && !m_IsInteracted)
 	{
 		for (UINT i = 0; i < 2; ++i)
 		{
 			if (Math::IsInTriangle(m_TriggerArea[0], m_TriggerArea[i + 1], m_TriggerArea[i + 2], Position))
 			{
-				if (!IsInteracted())
+				// 각도가 일정 범위안에 있다면 상호작용 UI를 렌더링하도록 만든다.
+				if (Vector3::Angle(LookDirection, m_ToTrigger) <= m_ActiveFOV)
 				{
-					// 각도가 일정 범위안에 있다면 상호작용 UI를 렌더링하도록 만든다.
-					if (Vector3::Angle(LookDirection, m_ToTrigger) <= m_ActiveFOV)
-					{
-						ShowInteractionUI();
+					ShowInteractionUI();
 
-						return true;
-					}
+					return true;
 				}
-
-				HideInteractionUI();
-
-				return true;
 			}
 		}
 	}
+
+	HideInteractionUI();
 
 	return false;
 }

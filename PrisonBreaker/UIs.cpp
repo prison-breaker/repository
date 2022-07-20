@@ -66,6 +66,7 @@ void CKeyUI::Reset()
 {
 	m_StateMachine->SetCurrentState(nullptr);
 	m_UIAnimationController->SetKeyFrameIndex(0);
+	m_UIAnimationController->UpdateAnimationClip(ANIMATION_TYPE_NONE); // Only Initialize Mapped Data
 }
 
 void CKeyUI::Animate(float ElapsedTime)

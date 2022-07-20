@@ -615,6 +615,7 @@ void CGameScene::ProcessPacket()
 			ShowCursor(TRUE);
 
 			CSceneManager::GetInstance()->ChangeScene(TEXT("TitleScene"), ReceivedPacketData.m_MsgType);
+			CSoundManager::GetInstance()->Stop(SOUND_TYPE_SIREN);
 			CSoundManager::GetInstance()->Stop(SOUND_TYPE_INGAME_BGM_1);
 			CSoundManager::GetInstance()->Play(SOUND_TYPE_TITLE_BGM, 0.3f);
 			CFramework::GetInstance()->DisconnectServer();
@@ -852,20 +853,12 @@ void CGameScene::ProcessPacket()
 			}
 			else
 			{
-				for (UINT i = 0, j = 0; i < TriggerData.m_Size; ++i)
+				for (UINT i = 0; i < MAX_PLAYER_CAPACITY; ++i)
 				{
-					UINT TriggerIndex{ TriggerData.m_TriggerIndexStack[i] };
-
-					if (m_EventTriggers[TriggerIndex])
+					// 타겟 인덱스가 UINT_MAX가 아니라면, 해당 프레임에 i번째 플레이어가 m_TargetIndices[i]번째 트리거를 활성화했다는 것을 의미한다.
+					if (TriggerData.m_TargetIndices[i] != UINT_MAX)
 					{
-						if (TriggerIndex <= 6)
-						{
-							m_EventTriggers[TriggerIndex]->InteractEventTrigger(TriggerData.m_CallerIndexStack[j++]);
-						}
-						else
-						{
-							m_EventTriggers[TriggerIndex]->InteractEventTrigger();
-						}
+						m_EventTriggers[TriggerData.m_TargetIndices[i]]->InteractEventTrigger(i);
 					}
 				}
 			}
@@ -873,9 +866,7 @@ void CGameScene::ProcessPacket()
 
 		Player = static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][SocketInfo.m_ID]);
 		Player->IsCollidedByEventTrigger(Player->GetPosition());
-
-		// m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][6]: Crosshair
-		(Player->GetCamera()->IsZoomIn()) ? m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(true) : m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(false);
+		(Player->GetCamera()->IsZoomIn()) ? m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(true) : m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(false); // 6: Crosshair
 
 		m_Lights[1].m_Direction = ReceivedPacketData.m_TowerLightDirection;
 	}
