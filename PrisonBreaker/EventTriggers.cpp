@@ -51,7 +51,21 @@ bool COpenDoorEventTrigger::InteractEventTrigger(UINT CallerIndex)
 	{
 		m_IsInteracted = true;
 
-		CSoundManager::GetInstance()->Play(SOUND_TYPE_OPEN_DOOR, 0.65f);
+		shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
+		vector<vector<shared_ptr<CGameObject>>>& GameObjects{ GameScene->GetGameObjects() };
+		shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(GameObjects[OBJECT_TYPE_PLAYER][CallerIndex]) };
+		shared_ptr<CPlayer> OtherPlayer{ static_pointer_cast<CPlayer>(GameObjects[OBJECT_TYPE_PLAYER][abs(int(CallerIndex - 1))]) };
+
+		if (CFramework::GetInstance()->GetSocketInfo().m_ID == CallerIndex)
+		{
+			CSoundManager::GetInstance()->Play(SOUND_TYPE_OPEN_DOOR, 0.65f);
+		}
+		else
+		{
+			float Distance{ Math::Distance(Player->GetPosition(), OtherPlayer->GetPosition()) };
+
+			CSoundManager::GetInstance()->Play(SOUND_TYPE_OPEN_DOOR, GameScene->MultiSound(Distance, 0.65f, 30.0f));
+		}
 
 		return true;
 	}
@@ -137,13 +151,17 @@ bool CPowerDownEventTrigger::InteractEventTrigger(UINT CallerIndex)
 				vector<vector<shared_ptr<CBilboardObject>>>& BilboardObjects{ GameScene->GetBilboardObjects() };
 
 				BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(0, 1);
-			}
 
-			CSoundManager::GetInstance()->Play(SOUND_TYPE_POWER_DOWN, 0.65f);
+				CSoundManager::GetInstance()->Play(SOUND_TYPE_POWER_DOWN, 0.65f);
+			}
+			
 		}
 		else
 		{
-			CSoundManager::GetInstance()->Play(SOUND_TYPE_OPEN_EP, 0.65f);
+			if (CFramework::GetInstance()->GetSocketInfo().m_ID == 0)
+			{
+				CSoundManager::GetInstance()->Play(SOUND_TYPE_OPEN_EP, 0.65f);
+			}
 		}
 
 		return true;
@@ -314,7 +332,6 @@ bool COpenGateEventTrigger::InteractEventTrigger(UINT CallerIndex)
 			if (m_UsedKeyIndices[0] && m_UsedKeyIndices[1])
 			{
 				m_IsInteracted = true;
-
 				CSoundManager::GetInstance()->Play(SOUND_TYPE_OPEN_GATE, 0.35f);
 			}
 
