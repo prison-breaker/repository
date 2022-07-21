@@ -580,3 +580,29 @@ const SOCKET_INFO& CFramework::GetSocketInfo() const
 {
 	return m_SocketInfo;
 }
+
+int CFramework::recvn(SOCKET Socket, char* Buffer, int Length, int Flags)
+{
+	int Received{};
+	int Left{ Length };
+	char* Ptr{ Buffer };
+
+	while (Left > 0)
+	{
+		Received = recvn(Socket, Ptr, Left, Flags);
+
+		if (Received == SOCKET_ERROR)
+		{
+			return SOCKET_ERROR;
+		}
+		else if (Received == 0)
+		{
+			break;
+		}
+
+		Left -= Received;
+		Ptr += Received;
+	}
+
+	return (Length - Left);
+}

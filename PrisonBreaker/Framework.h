@@ -113,4 +113,7 @@ public:
 	void ProcessPacket();
 
 	const SOCKET_INFO& GetSocketInfo() const;
+
+
+	int recvn(SOCKET Socket, char* Buffer, int Length, int Flags);
 };

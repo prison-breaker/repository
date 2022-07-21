@@ -7,11 +7,10 @@ void CGameScene::Initialize()
 	SOCKET_INFO SocketInfo{ CFramework::GetInstance()->GetSocketInfo() };
 	UINT HasPistolGuardIndices[5]{};
 
-	int ReturnValue{ recv(SocketInfo.m_Socket, (char*)HasPistolGuardIndices, sizeof(HasPistolGuardIndices), MSG_WAITALL) };
-
+	int ReturnValue{ CFramework::GetInstance()->recvn(SocketInfo.m_Socket, (char*)HasPistolGuardIndices, sizeof(HasPistolGuardIndices), 0) };
 	if (ReturnValue == SOCKET_ERROR)
 	{
-		Server::ErrorDisplay("recv()");
+		Server::ErrorDisplay("CFramework::GetInstance()->recvn()");
 	}
 
 	for (const auto& EventTrigger : m_EventTriggers)
@@ -595,11 +594,11 @@ void CGameScene::ProcessPacket()
 	// Receive updated packet data.
 	SERVER_TO_CLIENT_DATA ReceivedPacketData{};
 
-	ReturnValue = recv(SocketInfo.m_Socket, (char*)&ReceivedPacketData, sizeof(ReceivedPacketData), MSG_WAITALL);
+	ReturnValue = CFramework::GetInstance()->recvn(SocketInfo.m_Socket, (char*)&ReceivedPacketData, sizeof(ReceivedPacketData), 0);
 
 	if (ReturnValue == SOCKET_ERROR)
 	{
-		Server::ErrorDisplay("recv()");
+		Server::ErrorDisplay("CFramework::GetInstance()->recvn()");
 	}
 	else if (ReturnValue == 0)
 	{
@@ -779,11 +778,11 @@ void CGameScene::ProcessPacket()
 		{
 			PLAYER_ATTACK_DATA PlayerAttackData{};
 
-			ReturnValue = recv(SocketInfo.m_Socket, (char*)&PlayerAttackData, sizeof(PlayerAttackData), MSG_WAITALL);
+			ReturnValue = CFramework::GetInstance()->recvn(SocketInfo.m_Socket, (char*)&PlayerAttackData, sizeof(PlayerAttackData), 0);
 
 			if (ReturnValue == SOCKET_ERROR)
 			{
-				Server::ErrorDisplay("recv()");
+				Server::ErrorDisplay("CFramework::GetInstance()->recvn()");
 			}
 			else if (ReturnValue == 0)
 			{
@@ -829,11 +828,11 @@ void CGameScene::ProcessPacket()
 		{
 			GUARD_ATTACK_DATA GuardAttackData{};
 
-			ReturnValue = recv(SocketInfo.m_Socket, (char*)&GuardAttackData, sizeof(GuardAttackData), MSG_WAITALL);
+			ReturnValue = CFramework::GetInstance()->recvn(SocketInfo.m_Socket, (char*)&GuardAttackData, sizeof(GuardAttackData), 0);
 
 			if (ReturnValue == SOCKET_ERROR)
 			{
-				Server::ErrorDisplay("recv()");
+				Server::ErrorDisplay("CFramework::GetInstance()->recvn()");
 			}
 			else if (ReturnValue == 0)
 			{
@@ -887,11 +886,11 @@ void CGameScene::ProcessPacket()
 		{
 			TRIGGER_DATA TriggerData{};
 
-			ReturnValue = recv(SocketInfo.m_Socket, (char*)&TriggerData, sizeof(TriggerData), MSG_WAITALL);
+			ReturnValue = CFramework::GetInstance()->recvn(SocketInfo.m_Socket, (char*)&TriggerData, sizeof(TriggerData), 0);
 
 			if (ReturnValue == SOCKET_ERROR)
 			{
-				Server::ErrorDisplay("recv()");
+				Server::ErrorDisplay("CFramework::GetInstance()->recvn()");
 			}
 			else if (ReturnValue == 0)
 			{
@@ -1192,3 +1191,4 @@ float CGameScene::MultiSound(float DistanceBetweenPlayer, float MaxVolume, float
 
 	return SoundSize;
 }
+
