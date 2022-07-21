@@ -13,8 +13,6 @@ void COpenDoorEventTrigger::Reset()
 {
 	CEventTrigger::Reset();
 
-	SetActive(true);
-
 	const XMFLOAT3 WorldUp{ 0.0f, 1.0f, 0.0f };
 
 	m_EventObjects[0]->Rotate(WorldUp, -m_DoorAngle);
@@ -47,18 +45,23 @@ void COpenDoorEventTrigger::ShowInteractionUI()
 	}
 }
 
-void COpenDoorEventTrigger::InteractEventTrigger()
+bool COpenDoorEventTrigger::InteractEventTrigger(UINT CallerIndex)
 {
-	if (!IsInteracted())
+	if (!m_IsInteracted)
 	{
-		CEventTrigger::InteractEventTrigger();
+		m_IsInteracted = true;
+
 		CSoundManager::GetInstance()->Play(SOUND_TYPE_OPEN_DOOR, 0.65f);
+
+		return true;
 	}
+
+	return false;
 }
 
 void COpenDoorEventTrigger::Update(float ElapsedTime)
 {
-	if (IsActive() && IsInteracted())
+	if (m_IsActive && m_IsInteracted)
 	{
 		if (m_DoorAngle < 70.0f)
 		{
@@ -83,22 +86,13 @@ void CPowerDownEventTrigger::Reset()
 {
 	CEventTrigger::Reset();
 
-	SetActive(true);
-
+	vector<LIGHT>& Lights{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene(TEXT("GameScene")))->GetLights() };
 	const XMFLOAT3 WorldUp{ 0.0f, 1.0f, 0.0f };
 
-	shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene(TEXT("GameScene"))) };
-	vector<LIGHT>& Lights{ GameScene->GetLights() };
-	vector<vector<shared_ptr<CBilboardObject>>>& BilboardObjects{ GameScene->GetBilboardObjects() };
-
-	// 감시탑의 조명을 켠다.
 	Lights[1].m_IsActive = true;
 
-	// 감시탑 차단 미션UI를 미완료상태로 변경한다.
-	BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(0, 0);
-
-	m_IsOpened = false;
 	m_EventObjects[0]->Rotate(WorldUp, m_PanelAngle);
+	m_IsOpened = false;
 	m_PanelAngle = 0.0f;
 }
 
@@ -106,37 +100,44 @@ void CPowerDownEventTrigger::ShowInteractionUI()
 {
 	if (m_InteractionUI)
 	{
-		m_InteractionUI->SetActive(true);
+		// 감시탑 차단 상호작용 UI는 0번 플레이어에게만 보여진다.
+		if (CFramework::GetInstance()->GetSocketInfo().m_ID == 0)
+		{
+			m_InteractionUI->SetActive(true);
 
-		if (m_PanelAngle <= 0.0f)
-		{
-			m_InteractionUI->SetCellIndex(0, 1);
-		}
-		else if (m_PanelAngle <= 120.0f)
-		{
-			m_InteractionUI->SetCellIndex(0, 2);
+			if (m_PanelAngle <= 0.0f)
+			{
+				m_InteractionUI->SetCellIndex(0, 1);
+			}
+			else if (m_PanelAngle <= 120.0f)
+			{
+				m_InteractionUI->SetCellIndex(0, 2);
+			}
 		}
 	}
 }
 
-void CPowerDownEventTrigger::InteractEventTrigger()
+bool CPowerDownEventTrigger::InteractEventTrigger(UINT CallerIndex)
 {
-	if (!IsInteracted())
+	if (!m_IsInteracted)
 	{
-		CEventTrigger::InteractEventTrigger();
+		m_IsInteracted = true;
 
-		// 배전함이 열려있다면
-		if (IsOpened())
+		if (m_IsOpened)
 		{
 			shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
 			vector<LIGHT>& Lights{ GameScene->GetLights() };
-			vector<vector<shared_ptr<CBilboardObject>>>& BilboardObjects{ GameScene->GetBilboardObjects() };
 
 			// 감시탑의 조명을 끈다.
 			Lights[1].m_IsActive = false;
 
-			// 감시탑 차단 미션UI를 완료상태로 변경한다.
-			BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(0, 1);
+			// 0번 플레이어의 감시탑 차단 미션UI를 완료상태로 변경한다.
+			if (CFramework::GetInstance()->GetSocketInfo().m_ID == 0)
+			{
+				vector<vector<shared_ptr<CBilboardObject>>>& BilboardObjects{ GameScene->GetBilboardObjects() };
+
+				BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(0, 1);
+			}
 
 			CSoundManager::GetInstance()->Play(SOUND_TYPE_POWER_DOWN, 0.65f);
 		}
@@ -144,12 +145,16 @@ void CPowerDownEventTrigger::InteractEventTrigger()
 		{
 			CSoundManager::GetInstance()->Play(SOUND_TYPE_OPEN_EP, 0.65f);
 		}
+
+		return true;
 	}
+
+	return false;
 }
 
 void CPowerDownEventTrigger::Update(float ElapsedTime)
 {
-	if (IsActive() && IsInteracted())
+	if (m_IsActive && m_IsInteracted)
 	{
 		if (m_PanelAngle < 120.0f)
 		{
@@ -160,20 +165,14 @@ void CPowerDownEventTrigger::Update(float ElapsedTime)
 		}
 		else
 		{
-			if (!IsOpened())
+			if (!m_IsOpened)
 			{
+				m_IsInteracted = false;
 				m_IsOpened = true;
 				m_PanelAngle = 120.0f;
-
-				SetInteracted(false);
 			}
 		}
 	}
-}
-
-bool CPowerDownEventTrigger::IsOpened() const
-{
-	return m_IsOpened;
 }
 
 //=========================================================================================================================
@@ -184,29 +183,24 @@ CSirenEventTrigger::CSirenEventTrigger()
 	m_ActiveFOV = 40.0f;
 }
 
-void CSirenEventTrigger::Reset()
-{
-	CEventTrigger::Reset();
-
-	SetActive(true);
-
-	CSoundManager::GetInstance()->Stop(SOUND_TYPE_SIREN);
-}
-
 void CSirenEventTrigger::ShowInteractionUI()
 {
 	if (m_InteractionUI)
 	{
-		m_InteractionUI->SetActive(true);
-		m_InteractionUI->SetCellIndex(0, 3);
+		// 사이렌 작동 상호작용 UI는 1번 플레이어에게만 보여진다.
+		if (CFramework::GetInstance()->GetSocketInfo().m_ID == 1)
+		{
+			m_InteractionUI->SetActive(true);
+			m_InteractionUI->SetCellIndex(0, 3);
+		}
 	}
 }
 
-void CSirenEventTrigger::InteractEventTrigger()
+bool CSirenEventTrigger::InteractEventTrigger(UINT CallerIndex)
 {
-	if (!IsInteracted())
+	if (!m_IsInteracted)
 	{
-		CEventTrigger::InteractEventTrigger();
+		m_IsInteracted = true;
 
 		shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
 		vector<vector<shared_ptr<CGameObject>>>& GameObjects{ GameScene->GetGameObjects() };
@@ -238,8 +232,20 @@ void CSirenEventTrigger::InteractEventTrigger()
 			}
 		}
 
+		// 1번 플레이어의 사이렌 작동 미션UI를 완료상태로 변경한다.
+		if (CFramework::GetInstance()->GetSocketInfo().m_ID == 1)
+		{
+			vector<vector<shared_ptr<CBilboardObject>>>& BilboardObjects{ GameScene->GetBilboardObjects() };
+
+			BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(0, 3);
+		}
+
 		CSoundManager::GetInstance()->Play(SOUND_TYPE_SIREN, 0.25f);
+
+		return true;
 	}
+
+	return false;
 }
 
 //=========================================================================================================================
@@ -254,12 +260,11 @@ void COpenGateEventTrigger::Reset()
 {
 	CEventTrigger::Reset();
 
-	SetActive(true);
-
 	const XMFLOAT3 WorldUp{ 0.0f, 1.0f, 0.0f };
 
 	m_EventObjects[0]->Rotate(WorldUp, m_GateAngle);
 	m_EventObjects[1]->Rotate(WorldUp, -m_GateAngle);
+	m_UsedKeyIndices[0] = m_UsedKeyIndices[1] = false;
 	m_GateAngle = 0.0f;
 }
 
@@ -281,12 +286,13 @@ bool COpenGateEventTrigger::CanPassTriggerArea(const XMFLOAT3& Position, const X
 
 void COpenGateEventTrigger::ShowInteractionUI()
 {
-	// 열쇠를 획득한 경우에만, 트리거를 활성화 시킨다.
-	vector<vector<shared_ptr<CBilboardObject>>>& BilboardObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetBilboardObjects() };
-
-	if (static_pointer_cast<CKeyUI>(BilboardObjects[BILBOARD_OBJECT_TYPE_UI][5])->GetStateMachine()->IsInState(CKeyUIActivationState::GetInstance()))
+	if (m_InteractionUI)
 	{
-		if (m_InteractionUI)
+		UINT PlayerID{ CFramework::GetInstance()->GetSocketInfo().m_ID };
+		vector<vector<shared_ptr<CGameObject>>>& GameObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetGameObjects() };
+		shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(GameObjects[OBJECT_TYPE_PLAYER][PlayerID]) };
+
+		if (Player->HasKey() && !m_UsedKeyIndices[PlayerID])
 		{
 			m_InteractionUI->SetActive(true);
 			m_InteractionUI->SetCellIndex(0, 6);
@@ -294,24 +300,34 @@ void COpenGateEventTrigger::ShowInteractionUI()
 	}
 }
 
-void COpenGateEventTrigger::InteractEventTrigger()
+bool COpenGateEventTrigger::InteractEventTrigger(UINT CallerIndex)
 {
-	if (!IsInteracted())
+	if (!m_IsInteracted)
 	{
-		// 열쇠를 획득한 경우에만, 트리거를 활성화 시키도록 한다.
-		//vector<vector<shared_ptr<CBilboardObject>>>& BilboardObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetBilboardObjects() };
+		vector<vector<shared_ptr<CGameObject>>>& GameObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetGameObjects() };
+		shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(GameObjects[OBJECT_TYPE_PLAYER][CallerIndex]) };
 
-		//if (static_pointer_cast<CKeyUI>(BilboardObjects[BILBOARD_OBJECT_TYPE_UI][5])->GetStateMachine()->IsInState(CKeyUIActivationState::GetInstance()))
-		//{
-		//	CEventTrigger::InteractEventTrigger();
-		//	CSoundManager::GetInstance()->Play(SOUND_TYPE_OPEN_GATE, 0.35f);
-		//}
+		if (Player->HasKey() && !m_UsedKeyIndices[CallerIndex])
+		{
+			m_UsedKeyIndices[CallerIndex] = true;
+
+			if (m_UsedKeyIndices[0] && m_UsedKeyIndices[1])
+			{
+				m_IsInteracted = true;
+
+				CSoundManager::GetInstance()->Play(SOUND_TYPE_OPEN_GATE, 0.35f);
+			}
+
+			return true;
+		}
 	}
+
+	return false;
 }
 
 void COpenGateEventTrigger::Update(float ElapsedTime)
 {
-	if (IsActive() && IsInteracted())
+	if (m_IsActive && m_IsInteracted)
 	{
 		if (m_GateAngle < 120.0f)
 		{
@@ -335,7 +351,7 @@ void CGetPistolEventTrigger::Reset()
 {
 	CEventTrigger::Reset();
 
-	SetActive(false);
+	m_IsActive = false;
 }
 
 void CGetPistolEventTrigger::ShowInteractionUI()
@@ -347,11 +363,11 @@ void CGetPistolEventTrigger::ShowInteractionUI()
 	}
 }
 
-void CGetPistolEventTrigger::InteractEventTrigger(UINT CallerIndex)
+bool CGetPistolEventTrigger::InteractEventTrigger(UINT CallerIndex)
 {
-	if (!IsInteracted())
+	if (!m_IsInteracted)
 	{
-		CEventTrigger::InteractEventTrigger();
+		m_IsInteracted = true;
 
 		shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
 		vector<vector<shared_ptr<CGameObject>>>& GameObjects{ GameScene->GetGameObjects() };
@@ -374,7 +390,11 @@ void CGetPistolEventTrigger::InteractEventTrigger(UINT CallerIndex)
 			BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(true);  // 6: Pistol UI
 			BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetVertexCount(6);
 		}
+
+		return true;
 	}
+
+	return false;
 }
 
 //=========================================================================================================================
@@ -388,7 +408,7 @@ void CGetKeyEventTrigger::Reset()
 {
 	CEventTrigger::Reset();
 
-	SetActive(false);
+	m_IsActive = false;
 }
 
 void CGetKeyEventTrigger::ShowInteractionUI()
@@ -400,15 +420,21 @@ void CGetKeyEventTrigger::ShowInteractionUI()
 	}
 }
 
-void CGetKeyEventTrigger::InteractEventTrigger(UINT CallerIndex)
+bool CGetKeyEventTrigger::InteractEventTrigger(UINT CallerIndex)
 {
-	if (!IsInteracted())
+	if (!m_IsInteracted)
 	{
-		CEventTrigger::InteractEventTrigger();
+		m_IsInteracted = true;
+
+		shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene("GameScene")) };
+		vector<vector<shared_ptr<CGameObject>>>& GameObjects{ GameScene->GetGameObjects() };
+		shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(GameObjects[OBJECT_TYPE_PLAYER][CallerIndex]) };
+
+		Player->ManageKey(true);
 
 		if (CFramework::GetInstance()->GetSocketInfo().m_ID == CallerIndex)
 		{
-			vector<vector<shared_ptr<CBilboardObject>>>& BilboardObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetBilboardObjects() };
+			vector<vector<shared_ptr<CBilboardObject>>>& BilboardObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene("GameScene"))->GetBilboardObjects()};
 
 			// 열쇠 획득 애니메이션을 출력하도록 CKeyUIActivationState 상태로 전이한다.
 			static_pointer_cast<CKeyUI>(BilboardObjects[BILBOARD_OBJECT_TYPE_UI][5])->GetStateMachine()->SetCurrentState(CKeyUIActivationState::GetInstance());
@@ -416,5 +442,9 @@ void CGetKeyEventTrigger::InteractEventTrigger(UINT CallerIndex)
 			// 열쇠 획득 미션UI를 완료상태로 변경한다.
 			BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(1, 5);
 		}
+
+		return true;
 	}
+
+	return false;
 }

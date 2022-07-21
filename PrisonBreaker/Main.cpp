@@ -67,7 +67,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     
     AdjustWindowRect(&Rect, Style, FALSE);
     
-    HWND hWnd{ CreateWindowA(TEXT("WndClass"), TEXT("Prison Breaker"), Style, 0, 0, Rect.right - Rect.left, Rect.bottom - Rect.top, nullptr, nullptr, hInstance, nullptr) };
+    HWND hWnd{ CreateWindowA(TEXT("WndClass"), TEXT("PRISON BREAKER"), Style, 0, 0, Rect.right - Rect.left, Rect.bottom - Rect.top, nullptr, nullptr, hInstance, nullptr) };
 
     if (!hWnd)
     {

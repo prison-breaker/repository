@@ -555,7 +555,7 @@ void CFramework::ConnectServer()
 	}
 	else if (m_SocketInfo.m_ID == UINT_MAX)
 	{
-		MessageBox(m_hWnd, TEXT("현재 정원이 꽉찼거나, 게임이 이미 시작되어 참여할 수 없습니다."), TEXT("Prison Breaker"), MB_ICONSTOP | MB_OK);
+		MessageBox(m_hWnd, TEXT("현재 정원이 꽉찼거나, 게임이 이미 시작되어 참여할 수 없습니다."), TEXT("PRISON BREAKER"), MB_ICONSTOP | MB_OK);
 		PostQuitMessage(0);
 	}
 

@@ -27,9 +27,7 @@ public:
 
 	virtual void ShowInteractionUI();
 
-	virtual void InteractEventTrigger();
-	virtual void InteractEventTrigger(UINT CallerIndex);
-
+	virtual bool InteractEventTrigger(UINT CallerIndex);
 	virtual void Update(float ElapsedTime);
 
 	void LoadEventTriggerFromFile(tifstream& InFile);

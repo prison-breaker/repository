@@ -16,6 +16,8 @@ private:
 
 	shared_ptr<CGameObject>            m_PistolFrame{};
 									   
+	bool							   m_HasKey{};
+
 	shared_ptr<CCamera>                m_Camera{};
 
 	shared_ptr<CStateMachine<CPlayer>> m_StateMachine{};
@@ -45,9 +47,12 @@ public:
 
 	shared_ptr<CStateMachine<CPlayer>> GetStateMachine() const;
 
-	void ManagePistol(bool AcquirePistol);
+	void ManagePistol(bool HasPistol);
 	bool HasPistol() const;
 	bool IsEquippedPistol() const;
+
+	void ManageKey(bool HasKey);
+	bool HasKey() const;
 
 	bool SwapWeapon(WEAPON_TYPE WeaponType);
 
