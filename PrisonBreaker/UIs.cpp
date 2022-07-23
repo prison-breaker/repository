@@ -239,3 +239,13 @@ void CLoadingIconUI::Animate(float ElapsedTime)
 		SetCellIndex(0, GetCellIndex(0) + 12.0f * ElapsedTime);
 	}
 }
+
+//=========================================================================================================================
+
+void CGameOverUI::Animate(float ElapsedTime)
+{
+	if (IsActive())
+	{
+		SetCellIndex(0, GetCellIndex(0) + ElapsedTime);
+	}
+}

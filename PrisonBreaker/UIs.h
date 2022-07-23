@@ -130,3 +130,14 @@ public:
 
 	virtual void Animate(float ElapsedTime);
 };
+
+//=========================================================================================================================
+
+class CGameOverUI : public CBilboardObject
+{
+public:
+	CGameOverUI() = default;
+	virtual ~CGameOverUI() = default;
+
+	virtual void Animate(float ElapsedTime);
+};

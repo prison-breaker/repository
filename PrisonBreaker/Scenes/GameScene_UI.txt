@@ -236,4 +236,21 @@
 		</Animation>
 		<ChildCount> 0
 	</UIObject>
+	<UIObject>
+		<Type> 0
+		<IsActive> 0
+		<TextureName> Textures/Wasted.dds
+		<RectTransform> 1 959 539 0 524 364 
+		<AlphaColor> 1
+		<ChildCount> 1
+			<UIObject>
+				<Type> 8
+				<IsActive> 1
+				<TextureName> Textures/GameOvers.dds
+				<CellInfo> 5 1
+				<RectTransform> 1 959 779 0 300 66 
+				<AlphaColor> 1
+				<ChildCount> 0
+			</UIObject>
+	</UIObject>
 </UI>

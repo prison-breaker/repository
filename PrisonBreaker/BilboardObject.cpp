@@ -44,6 +44,9 @@ shared_ptr<CBilboardObject> CBilboardObject::LoadObjectInfoFromFile(ID3D12Device
 			case 7:
 				NewObject = make_shared<CLoadingIconUI>();
 				break;
+			case 8:
+				NewObject = make_shared<CGameOverUI>();
+				break;
 			default:
 				NewObject = make_shared<CBilboardObject>();
 			}

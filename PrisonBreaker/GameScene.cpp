@@ -59,7 +59,8 @@ void CGameScene::Initialize()
 			// 6 : Crosshair
 			// 7 : Interactions
 			// 8 : Hit
-			if (i == 4 || 6 <= i && i <= 8)
+			// 9 : GameOvers
+			if (i == 4 || 6 <= i && i <= 9)
 			{
 				m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][i]->SetActive(false);
 			}
@@ -710,6 +711,11 @@ void CGameScene::ProcessPacket()
 					break;
 				}
 			}
+		}
+
+		if (ReceivedPacketData.m_MsgType & MSG_TYPE_GAME_OVER)
+		{
+			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][9]->SetActive(true);
 		}
 
 		if (ReceivedPacketData.m_MsgType & MSG_TYPE_PLAYER1_WEAPON_SWAP)
