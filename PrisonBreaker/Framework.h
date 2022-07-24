@@ -1,11 +1,14 @@
 #pragma once
 #include "Timer.h"
 #include "UILayer.h"
+#include "PostProcessingShader.h"
 
 struct CB_FRAMEWORKINFO
 {
 	float m_TotalTime{};
 	float m_ElapsedTime{};
+
+	float m_FadeAmount{};
 };
 
 class CFramework
@@ -55,6 +58,9 @@ private:
 	ComPtr<ID3D12Resource>			  m_D3D12FrameworkInfo{};
 	CB_FRAMEWORKINFO*				  m_MappedFrameworkInfo{};
 
+	shared_ptr<CTexture>			  m_RenderingResultTexture{};
+	shared_ptr<CPostProcessingShader> m_PostProcessingShader{};
+	
 	shared_ptr<CUILayer>			  m_UILayer{};
 
 public:
@@ -64,6 +70,8 @@ public:
 	static CFramework* GetInstance();
 
 	void SetActive(bool IsActive);
+
+	void SetPostProcessingType(POST_PROCESSING_TYPE PostProcessingType);
 
 	void UpdateWindowTitle();
 

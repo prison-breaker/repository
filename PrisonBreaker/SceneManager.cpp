@@ -27,9 +27,23 @@ shared_ptr<CScene> CSceneManager::GetScene(const tstring& SceneName)
 	return nullptr;
 }
 
+void CSceneManager::SetCurrentScene(const tstring& SceneName)
+{
+	if (m_Scenes.count(SceneName))
+	{
+		m_CurrentScene = m_Scenes[SceneName];
+		m_CurrentScene->Enter(MSG_TYPE_NONE);
+	}
+}
+
 shared_ptr<CScene> CSceneManager::GetCurrentScene() const
 {
 	return m_CurrentScene;
+}
+
+shared_ptr<CScene> CSceneManager::GetReservedScene() const
+{
+	return m_ReservedScene;
 }
 
 void CSceneManager::RegisterScene(const tstring& SceneName, const shared_ptr<CScene>& Scene)
@@ -37,10 +51,17 @@ void CSceneManager::RegisterScene(const tstring& SceneName, const shared_ptr<CSc
 	if (Scene)
 	{
 		m_Scenes.emplace(SceneName, Scene);
+	}
+}
 
-		if (!m_CurrentScene)
+void CSceneManager::ReserveScene(const tstring& SceneName, MSG_TYPE MsgType)
+{
+	if (!m_ReservedScene)
+	{
+		if (m_Scenes.count(SceneName))
 		{
-			m_CurrentScene = m_Scenes[SceneName];
+			m_ReservedScene = m_Scenes[SceneName];
+			m_ReservedMsgType = MsgType;
 		}
 	}
 }
@@ -52,6 +73,19 @@ void CSceneManager::ChangeScene(const tstring& SceneName, MSG_TYPE MsgType)
 		m_CurrentScene->Exit();
 		m_CurrentScene = m_Scenes[SceneName];
 		m_CurrentScene->Enter(MsgType);
+	}
+}
+
+void CSceneManager::ChangeToReservedScene()
+{
+	if (m_ReservedScene)
+	{
+		m_CurrentScene->Exit();
+		m_CurrentScene = m_ReservedScene;
+		m_CurrentScene->Enter(m_ReservedMsgType);
+
+		m_ReservedScene = nullptr;
+		m_ReservedMsgType = MSG_TYPE_NONE;
 	}
 }
 

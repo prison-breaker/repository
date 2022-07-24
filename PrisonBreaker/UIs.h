@@ -128,6 +128,8 @@ public:
 	CLoadingIconUI() = default;
 	virtual ~CLoadingIconUI() = default;
 
+	virtual void Reset();
+
 	virtual void Animate(float ElapsedTime);
 };
 
@@ -138,6 +140,8 @@ class CGameOverUI : public CBilboardObject
 public:
 	CGameOverUI() = default;
 	virtual ~CGameOverUI() = default;
+
+	virtual void Reset();
 
 	virtual void Animate(float ElapsedTime);
 };

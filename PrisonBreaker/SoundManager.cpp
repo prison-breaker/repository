@@ -57,13 +57,6 @@ void CSoundManager::Initialize()
 		return;
 	}
 
-	Result = m_System->playSound(FMOD_CHANNEL_FREE, m_Sounds[SOUND_TYPE_TITLE_BGM], false, &m_Channels[SOUND_TYPE_TITLE_BGM]);
-	
-	if (Result != FMOD_OK)
-	{
-		return;
-	}
-	
 	Result = m_Channels[SOUND_TYPE_TITLE_BGM]->setVolume(0.65f);
 
 	if (Result != FMOD_OK)

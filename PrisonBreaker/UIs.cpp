@@ -37,6 +37,14 @@ void CMissionUI::Reset()
 {
 	m_StateMachine->SetCurrentState(CMissionUIShowingState::GetInstance());
 	m_UIAnimationController->SetKeyFrameIndex(0);
+
+	for (const auto& ChildObjects : m_ChildObjects)
+	{
+		if (ChildObjects)
+		{
+			ChildObjects->Reset();
+		}
+	}
 }
 
 void CMissionUI::Animate(float ElapsedTime)
@@ -67,6 +75,14 @@ void CKeyUI::Reset()
 	m_StateMachine->SetCurrentState(nullptr);
 	m_UIAnimationController->SetKeyFrameIndex(0);
 	m_UIAnimationController->UpdateAnimationClip(ANIMATION_TYPE_NONE); // Only Initialize Mapped Data
+
+	for (const auto& ChildObjects : m_ChildObjects)
+	{
+		if (ChildObjects)
+		{
+			ChildObjects->Reset();
+		}
+	}
 }
 
 void CKeyUI::Animate(float ElapsedTime)
@@ -95,6 +111,14 @@ void CHitUI::Initialize()
 void CHitUI::Reset()
 {
 	m_IsActive = false;
+
+	for (const auto& ChildObjects : m_ChildObjects)
+	{
+		if (ChildObjects)
+		{
+			ChildObjects->Reset();
+		}
+	}
 }
 
 void CHitUI::Animate(float ElapsedTime)
@@ -232,15 +256,41 @@ void CPanelButtonUI::ProcessMouseMessage(UINT Message, const XMINT2& ScreenPosit
 
 //=========================================================================================================================
 
+void CLoadingIconUI::Reset()
+{
+	SetCellIndex(0, 0);
+
+	for (const auto& ChildObjects : m_ChildObjects)
+	{
+		if (ChildObjects)
+		{
+			ChildObjects->Reset();
+		}
+	}
+}
+
 void CLoadingIconUI::Animate(float ElapsedTime)
 {
 	if (IsActive())
 	{
-		SetCellIndex(0, GetCellIndex(0) + 12.0f * ElapsedTime);
+		SetCellIndex(0, GetCellIndex(0) + 15.0f * ElapsedTime);
 	}
 }
 
 //=========================================================================================================================
+
+void CGameOverUI::Reset()
+{
+	SetCellIndex(0, 0);
+
+	for (const auto& ChildObjects : m_ChildObjects)
+	{
+		if (ChildObjects)
+		{
+			ChildObjects->Reset();
+		}
+	}
+}
 
 void CGameOverUI::Animate(float ElapsedTime)
 {

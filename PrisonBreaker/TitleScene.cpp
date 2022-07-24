@@ -42,10 +42,14 @@ void CTitleScene::Enter(MSG_TYPE MsgType)
 		m_BilboardObjects[5]->SetActive(true);
 		break;
 	}
+
+	CSoundManager::GetInstance()->Play(SOUND_TYPE_TITLE_BGM, 0.3f);
 }
 
 void CTitleScene::Exit()
 {
+	ShowCursor(FALSE);
+
 	UINT BilboardObjectCount{ static_cast<UINT>(m_BilboardObjects.size()) };
 
 	for (UINT i = 3; i < BilboardObjectCount; ++i)
@@ -55,6 +59,8 @@ void CTitleScene::Exit()
 			m_BilboardObjects[i]->SetActive(false);
 		}
 	}
+
+	CSoundManager::GetInstance()->Stop(SOUND_TYPE_TITLE_BGM);
 }
 
 void CTitleScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName)
@@ -224,11 +230,8 @@ void CTitleScene::ProcessPacket()
 		{
 			if (MsgType == MSG_TYPE_INGAME)
 			{
-				ShowCursor(FALSE);
-
-				CSceneManager::GetInstance()->ChangeScene(TEXT("GameScene"));
-				CSoundManager::GetInstance()->Stop(SOUND_TYPE_TITLE_BGM);
-				CSoundManager::GetInstance()->Play(SOUND_TYPE_INGAME_BGM_1, 0.3f);
+				CSceneManager::GetInstance()->ReserveScene(TEXT("GameScene"));
+				CFramework::GetInstance()->SetPostProcessingType(POST_PROCESSING_TYPE_FADE_OUT);
 			}
 		}
 	}

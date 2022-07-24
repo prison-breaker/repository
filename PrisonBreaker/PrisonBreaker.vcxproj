@@ -161,6 +161,7 @@
     <ClCompile Include="NavMesh.cpp" />
     <ClCompile Include="NavNode.cpp" />
     <ClCompile Include="Player.cpp" />
+    <ClCompile Include="PostProcessingShader.cpp" />
     <ClCompile Include="SoundManager.cpp" />
     <ClCompile Include="State_Background.cpp" />
     <ClCompile Include="State_Guard.cpp" />
@@ -208,6 +209,7 @@
     <ClInclude Include="NavMesh.h" />
     <ClInclude Include="NavNode.h" />
     <ClInclude Include="Player.h" />
+    <ClInclude Include="PostProcessingShader.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="D3DX12.h" />
     <ClInclude Include="DDSTextureLoader12.h" />

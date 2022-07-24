@@ -215,6 +215,14 @@ void CBilboardObject::Reset()
 {
 	m_IsActive = true;
 	m_VertexCount = m_MaxVertexCount;
+
+	for (const auto& ChildObjects : m_ChildObjects)
+	{
+		if (ChildObjects)
+		{
+			ChildObjects->Reset();
+		}
+	}
 }
 
 void CBilboardObject::ProcessMouseMessage(UINT Message, const XMINT2& ScreenPosition, UINT RootFrameIndex)

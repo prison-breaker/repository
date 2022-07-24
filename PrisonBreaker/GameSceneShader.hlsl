@@ -59,8 +59,10 @@ struct LIGHT
 
 cbuffer CB_FRAMEWORKINFO : register(b0)
 {
-	float TotalTime   : packoffset(c0.x);
-	float ElapsedTime : packoffset(c0.y);
+	float TotalTime    : packoffset(c0.x);
+	float ElapsedTime  : packoffset(c0.y);
+	
+    float FadeAmount : packoffset(c0.z);
 };
 
 cbuffer CB_CAMERA : register(b1)
@@ -547,4 +549,59 @@ float4 VS_Position_Skinning(VS_INPUT_DEPTH_SKINNING Input) : SV_POSITION
 float4 PS_BoundingBox(float4 Input : SV_POSITION) : SV_TARGET
 {
 	return float4(0.0f, 1.0f, 0.0f, 1.0f);
+}
+
+// ====================================== POST PROCESSING SHADER ======================================
+
+struct VS_OUTPUT_POST_PROCESSING
+{
+    float4 m_Position : SV_POSITION;
+    float2 m_TexCoord : TEXCOORD;
+};
+
+VS_OUTPUT_POST_PROCESSING VS_PostProcessing(uint VertexID : SV_VertexID)
+{
+    VS_OUTPUT_POST_PROCESSING Output = (VS_OUTPUT_POST_PROCESSING)0;
+
+    if (VertexID == 0)
+    {
+        Output.m_Position = float4(-1.0f, +1.0f, 0.0f, 1.0f);
+        Output.m_TexCoord = float2(0.0f, 0.0f);
+    }
+    else if (VertexID == 1)
+    {
+        Output.m_Position = float4(+1.0f, +1.0f, 0.0f, 1.0f);
+        Output.m_TexCoord = float2(1.0f, 0.0f);
+    }
+    else if (VertexID == 2)
+    {
+        Output.m_Position = float4(+1.0f, -1.0f, 0.0f, 1.0f);
+        Output.m_TexCoord = float2(1.0f, 1.0f);
+    }
+    else if (VertexID == 3)
+    {
+        Output.m_Position = float4(-1.0f, +1.0f, 0.0f, 1.0f);
+        Output.m_TexCoord = float2(0.0f, 0.0f);
+    }
+    else if (VertexID == 4)
+    {
+        Output.m_Position = float4(+1.0f, -1.0f, 0.0f, 1.0f);
+        Output.m_TexCoord = float2(1.0f, 1.0f);
+    }
+    else if (VertexID == 5)
+    {
+        Output.m_Position = float4(-1.0f, -1.0f, 0.0f, 1.0f);
+        Output.m_TexCoord = float2(0.0f, 1.0f);
+    }
+
+    return Output;
+}
+
+float4 PS_PostProcessing(VS_OUTPUT_POST_PROCESSING Input) : SV_TARGET
+{
+    float4 Color = AlbedoMapTexture.Sample(Sampler, Input.m_TexCoord);
+	
+    Color.rgb *= clamp(FadeAmount, 0.0f, 1.0f);
+
+    return Color;
 }

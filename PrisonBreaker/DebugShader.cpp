@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "DebugShader.h"
+#include "GameScene.h"
 
 D3D12_INPUT_LAYOUT_DESC CDebugShader::CreateInputLayout(UINT StateNum)
 {
@@ -45,7 +46,7 @@ D3D12_SHADER_BYTECODE CDebugShader::CreatePixelShader(ID3DBlob* D3D12ShaderBlob,
 	return CGraphicsShader::CompileShaderFromFile(L"GameSceneShader.hlsl", "PS_BoundingBox", "ps_5_1", D3D12ShaderBlob);
 }
 
-void CDebugShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, UINT StateNum)
+void CDebugShader::SetPipelineState(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, UINT StateNum)
 {
 	if (CShaderManager::GetInstance()->SetPipelineState(TEXT("DebugShader"), StateNum))
 	{
@@ -54,6 +55,14 @@ void CDebugShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, C
 			D3D12GraphicsCommandList->SetPipelineState(m_D3D12PipelineStates[StateNum].Get());
 		}
 	}
+}
+
+void CDebugShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera)
+{
+	SetPipelineState(D3D12GraphicsCommandList, 0);
+
+	shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene(TEXT("GameScene"))) };
+	vector<vector<shared_ptr<CGameObject>>>& GameObjects{ GameScene->GetGameObjects() };
 
 	for (UINT i = OBJECT_TYPE_PLAYER; i <= OBJECT_TYPE_STRUCTURE; ++i)
 	{

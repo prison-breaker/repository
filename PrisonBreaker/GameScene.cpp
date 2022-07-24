@@ -30,7 +30,7 @@ void CGameScene::Initialize()
 		}
 	}
 
-	// 0 ~ 1: Has Key Guard
+	// 0 ~ 1 : Has Key Guard
 	// Random 5 : Has Pistol Guard
 	for (UINT i = 0, j = 0; i < MAX_NPC_COUNT; ++i)
 	{
@@ -144,12 +144,17 @@ void CGameScene::ReleaseObjects()
 
 void CGameScene::Enter(MSG_TYPE MsgType)
 {
-
+	CSoundManager::GetInstance()->Play(SOUND_TYPE_INGAME_BGM_1, 0.3f);
 }
 
 void CGameScene::Exit()
 {
+	ShowCursor(TRUE);
 
+	CSoundManager::GetInstance()->Stop(SOUND_TYPE_SIREN);
+	CSoundManager::GetInstance()->Stop(SOUND_TYPE_INGAME_BGM_1);
+
+	CFramework::GetInstance()->DisconnectServer();
 }
 
 void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName)
@@ -500,7 +505,7 @@ void CGameScene::PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
 	CTextureManager::GetInstance()->SetDescriptorHeap(D3D12GraphicsCommandList);
 	
-	static_pointer_cast<CDepthWriteShader>(CShaderManager::GetInstance()->GetShader(TEXT("DepthWriteShader")))->PrepareShadowMap(D3D12GraphicsCommandList, m_Lights, m_GameObjects);
+	static_pointer_cast<CDepthWriteShader>(CShaderManager::GetInstance()->GetShader(TEXT("DepthWriteShader")))->Render(D3D12GraphicsCommandList, nullptr);
 
 	UpdateShaderVariables(D3D12GraphicsCommandList);
 }
@@ -550,7 +555,7 @@ void CGameScene::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 
 	if (m_RenderBoundingBox)
 	{
-		static_pointer_cast<CDebugShader>(CShaderManager::GetInstance()->GetShader(TEXT("DebugShader")))->Render(D3D12GraphicsCommandList, Player->GetCamera().get(), m_GameObjects, 0);
+		static_pointer_cast<CDebugShader>(CShaderManager::GetInstance()->GetShader(TEXT("DebugShader")))->Render(D3D12GraphicsCommandList, Player->GetCamera().get());
 	}
 }
 
@@ -613,14 +618,8 @@ void CGameScene::ProcessPacket()
 		{
 		case MSG_TYPE_DISCONNECTION:
 		case MSG_TYPE_TITLE:
-			ShowCursor(TRUE);
-
-			CSceneManager::GetInstance()->ChangeScene(TEXT("TitleScene"), ReceivedPacketData.m_MsgType);
-			CSoundManager::GetInstance()->Stop(SOUND_TYPE_SIREN);
-			CSoundManager::GetInstance()->Stop(SOUND_TYPE_INGAME_BGM_1);
-			CSoundManager::GetInstance()->Play(SOUND_TYPE_TITLE_BGM, 0.3f);
-			CFramework::GetInstance()->DisconnectServer();
-
+			CSceneManager::GetInstance()->ReserveScene(TEXT("TitleScene"), ReceivedPacketData.m_MsgType);
+			CFramework::GetInstance()->SetPostProcessingType(POST_PROCESSING_TYPE_FADE_OUT);
 			return;
 		}
 		

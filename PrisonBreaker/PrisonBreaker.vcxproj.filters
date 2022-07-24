@@ -225,6 +225,9 @@
     <ClCompile Include="UILayer.cpp">
       <Filter>소스 파일\UI &amp; SkyBox</Filter>
     </ClCompile>
+    <ClCompile Include="PostProcessingShader.cpp">
+      <Filter>소스 파일\Shader</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -355,6 +358,9 @@
     </ClInclude>
     <ClInclude Include="UILayer.h">
       <Filter>헤더 파일\UI &amp; SkyBox</Filter>
+    </ClInclude>
+    <ClInclude Include="PostProcessingShader.h">
+      <Filter>헤더 파일\Shader</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

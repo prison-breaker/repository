@@ -145,7 +145,7 @@ D3D12_PRIMITIVE_TOPOLOGY_TYPE CGraphicsShader::GetPrimitiveType(UINT StateNum)
 	return D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 }
 
-DXGI_FORMAT CGraphicsShader::GetRTVFormat(UINT StateNum, UINT RenderTargetNum)
+DXGI_FORMAT CGraphicsShader::GetRTVFormat(UINT RenderTargetNum, UINT StateNum)
 {
 	return DXGI_FORMAT_R8G8B8A8_UNORM;
 }
@@ -174,7 +174,7 @@ void CGraphicsShader::CreatePipelineState(ID3D12Device* D3D12Device, ID3D12RootS
 	D3D12GraphicsPipelineState.SampleMask = UINT_MAX;
 	D3D12GraphicsPipelineState.PrimitiveTopologyType = GetPrimitiveType(StateNum);
 	D3D12GraphicsPipelineState.NumRenderTargets = 1;
-	D3D12GraphicsPipelineState.RTVFormats[0] = GetRTVFormat(StateNum, 0);
+	D3D12GraphicsPipelineState.RTVFormats[0] = GetRTVFormat(0, StateNum);
 	D3D12GraphicsPipelineState.DSVFormat = GetDSVFormat(StateNum);
 	D3D12GraphicsPipelineState.SampleDesc.Count = 1;
 	D3D12GraphicsPipelineState.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
@@ -193,7 +193,7 @@ void CGraphicsShader::SetPipelineState(ID3D12GraphicsCommandList* D3D12GraphicsC
 
 }
 
-void CGraphicsShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, UINT StateNum)
+void CGraphicsShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera)
 {
 
 }

@@ -117,46 +117,11 @@ void CDepthWriteShader::SetPipelineState(ID3D12GraphicsCommandList* D3D12Graphic
 	}
 }
 
-void CDepthWriteShader::CreateRtvAndDsvDescriptorHeaps(ID3D12Device* D3D12Device)
+void CDepthWriteShader::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera)
 {
-	D3D12_DESCRIPTOR_HEAP_DESC D3D12DescriptorHeapDesc{};
+	shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene(TEXT("GameScene"))) };
+	vector<LIGHT>& Lights{ GameScene->GetLights() };
 
-	D3D12DescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-	D3D12DescriptorHeapDesc.NumDescriptors = 1;
-	D3D12DescriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	D3D12DescriptorHeapDesc.NodeMask = 0;
-	DX::ThrowIfFailed(D3D12Device->CreateDescriptorHeap(&D3D12DescriptorHeapDesc, __uuidof(ID3D12DescriptorHeap), reinterpret_cast<void**>(m_D3D12RtvDescriptorHeap.GetAddressOf())));
-
-	D3D12DescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-	DX::ThrowIfFailed(D3D12Device->CreateDescriptorHeap(&D3D12DescriptorHeapDesc, __uuidof(ID3D12DescriptorHeap), reinterpret_cast<void**>(m_D3D12DsvDescriptorHeap.GetAddressOf())));
-}
-
-void CDepthWriteShader::CreateRenderTargetViews(ID3D12Device* D3D12Device)
-{
-	D3D12_RENDER_TARGET_VIEW_DESC D3D12RenderTargetViewDesc{};
-
-	D3D12RenderTargetViewDesc.Format = DXGI_FORMAT_R32_FLOAT;
-	D3D12RenderTargetViewDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-	D3D12RenderTargetViewDesc.Texture2D.MipSlice = 0;
-	D3D12RenderTargetViewDesc.Texture2D.PlaneSlice = 0;
-
-	D3D12Device->CreateRenderTargetView(m_DepthTexture->GetResource(), &D3D12RenderTargetViewDesc, m_D3D12RtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-}
-
-void CDepthWriteShader::CreateDepthStencilView(ID3D12Device* D3D12Device)
-{
-	D3D12_DEPTH_STENCIL_VIEW_DESC D3D12DepthStencilViewDesc{};
-
-	D3D12DepthStencilViewDesc.Format = DXGI_FORMAT_D32_FLOAT;
-	D3D12DepthStencilViewDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-	D3D12DepthStencilViewDesc.Flags = D3D12_DSV_FLAG_NONE;
-
-	m_D3D12DepthBuffer = DX::CreateTexture2DResource(D3D12Device, DEPTH_BUFFER_WIDTH, DEPTH_BUFFER_HEIGHT, 1, 1, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, DXGI_FORMAT_D32_FLOAT, D3D12_CLEAR_VALUE{ DXGI_FORMAT_D32_FLOAT, { 1.0f, 0.0f } });
-	D3D12Device->CreateDepthStencilView(m_D3D12DepthBuffer.Get(), &D3D12DepthStencilViewDesc, m_D3D12DsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-}
-
-void CDepthWriteShader::PrepareShadowMap(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, vector<LIGHT>& Lights, const vector<vector<shared_ptr<CGameObject>>>& GameObjects)
-{
 	if (Lights[1].m_IsActive)
 	{
 		const float NearPlaneDistance{ 1.0f };
@@ -194,6 +159,8 @@ void CDepthWriteShader::PrepareShadowMap(ID3D12GraphicsCommandList* D3D12Graphic
 		m_LightCamera->RSSetViewportsAndScissorRects(D3D12GraphicsCommandList);
 		m_LightCamera->UpdateShaderVariables(D3D12GraphicsCommandList);
 
+		vector<vector<shared_ptr<CGameObject>>>& GameObjects{ GameScene->GetGameObjects() };
+
 		for (UINT i = OBJECT_TYPE_PLAYER; i <= OBJECT_TYPE_NPC; ++i)
 		{
 			for (const auto& GameObject : GameObjects[i])
@@ -219,6 +186,44 @@ void CDepthWriteShader::PrepareShadowMap(ID3D12GraphicsCommandList* D3D12Graphic
 
 		DX::ResourceTransition(D3D12GraphicsCommandList, DepthTexture, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COMMON);
 	}
+}
+
+void CDepthWriteShader::CreateRtvAndDsvDescriptorHeaps(ID3D12Device* D3D12Device)
+{
+	D3D12_DESCRIPTOR_HEAP_DESC D3D12DescriptorHeapDesc{};
+
+	D3D12DescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+	D3D12DescriptorHeapDesc.NumDescriptors = 1;
+	D3D12DescriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	D3D12DescriptorHeapDesc.NodeMask = 0;
+	DX::ThrowIfFailed(D3D12Device->CreateDescriptorHeap(&D3D12DescriptorHeapDesc, __uuidof(ID3D12DescriptorHeap), reinterpret_cast<void**>(m_D3D12RtvDescriptorHeap.GetAddressOf())));
+
+	D3D12DescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+	DX::ThrowIfFailed(D3D12Device->CreateDescriptorHeap(&D3D12DescriptorHeapDesc, __uuidof(ID3D12DescriptorHeap), reinterpret_cast<void**>(m_D3D12DsvDescriptorHeap.GetAddressOf())));
+}
+
+void CDepthWriteShader::CreateRenderTargetViews(ID3D12Device* D3D12Device)
+{
+	D3D12_RENDER_TARGET_VIEW_DESC D3D12RenderTargetViewDesc{};
+
+	D3D12RenderTargetViewDesc.Format = DXGI_FORMAT_R32_FLOAT;
+	D3D12RenderTargetViewDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+	D3D12RenderTargetViewDesc.Texture2D.MipSlice = 0;
+	D3D12RenderTargetViewDesc.Texture2D.PlaneSlice = 0;
+
+	D3D12Device->CreateRenderTargetView(m_DepthTexture->GetResource(), &D3D12RenderTargetViewDesc, m_D3D12RtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+}
+
+void CDepthWriteShader::CreateDepthStencilView(ID3D12Device* D3D12Device)
+{
+	D3D12_DEPTH_STENCIL_VIEW_DESC D3D12DepthStencilViewDesc{};
+
+	D3D12DepthStencilViewDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	D3D12DepthStencilViewDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+	D3D12DepthStencilViewDesc.Flags = D3D12_DSV_FLAG_NONE;
+
+	m_D3D12DepthBuffer = DX::CreateTexture2DResource(D3D12Device, DEPTH_BUFFER_WIDTH, DEPTH_BUFFER_HEIGHT, 1, 1, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, DXGI_FORMAT_D32_FLOAT, D3D12_CLEAR_VALUE{ DXGI_FORMAT_D32_FLOAT, { 1.0f, 0.0f } });
+	D3D12Device->CreateDepthStencilView(m_D3D12DepthBuffer.Get(), &D3D12DepthStencilViewDesc, m_D3D12DsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 }
 
 //=========================================================================================================================

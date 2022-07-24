@@ -357,8 +357,6 @@ shared_ptr<CSkinnedMesh> CGameObject::FindSkinnedMesh(const tstring& SkinnedMesh
 
 shared_ptr<CGameObject> CGameObject::PickObjectByRayIntersection(const XMFLOAT3& RayOrigin, const XMFLOAT3& RayDirection, float& HitDistance, float MaxDistance)
 {
-	shared_ptr<CGameObject> NearestIntersectedObject{};
-
 	if (m_Mesh && m_BoundingBox)
 	{
 		// 광선과 바운딩박스의 교차를 검사한다.
@@ -377,6 +375,7 @@ shared_ptr<CGameObject> CGameObject::PickObjectByRayIntersection(const XMFLOAT3&
 		}
 	}
 
+	shared_ptr<CGameObject> NearestIntersectedObject{};
 	float NearestHitDistance{ FLT_MAX };
 
 	for (const auto& ChildObject : m_ChildObjects)

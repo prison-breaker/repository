@@ -32,11 +32,11 @@ public:
 	virtual void CreatePipelineState(ID3D12Device* D3D12Device, ID3D12RootSignature* D3D12RootSignature, UINT StateNum);
 	virtual void SetPipelineState(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, UINT StateNum);
 
+	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera);
+
 	void CreateRtvAndDsvDescriptorHeaps(ID3D12Device* D3D12Device);
 	void CreateRenderTargetViews(ID3D12Device* D3D12Device);
 	void CreateDepthStencilView(ID3D12Device* D3D12Device);
-
-	void PrepareShadowMap(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, vector<LIGHT>& Lights, const vector<vector<shared_ptr<CGameObject>>>& GameObjects);
 };
 
 //=========================================================================================================================

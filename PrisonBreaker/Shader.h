@@ -36,13 +36,13 @@ public:
 	virtual D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob* D3D12ShaderBlob, UINT StateNum);
 
 	virtual D3D12_PRIMITIVE_TOPOLOGY_TYPE GetPrimitiveType(UINT StateNum);
-	virtual DXGI_FORMAT GetRTVFormat(UINT StateNum, UINT RenderTargetNum);
+	virtual DXGI_FORMAT GetRTVFormat(UINT RenderTargetNum, UINT StateNum);
 	virtual DXGI_FORMAT GetDSVFormat(UINT StateNum);
 
 	virtual void CreatePipelineState(ID3D12Device* D3D12Device, ID3D12RootSignature* D3D12RootSignature, UINT StateNum);
 	virtual void SetPipelineState(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, UINT StateNum);
 
-	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, const vector<vector<shared_ptr<CGameObject>>>& GameObjects, UINT StateNum);
+	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera);
 };
 
 //=========================================================================================================================
