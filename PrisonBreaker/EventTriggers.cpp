@@ -52,9 +52,6 @@ bool COpenDoorEventTrigger::InteractEventTrigger(UINT CallerIndex)
 		m_IsInteracted = true;
 
 		shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
-		vector<vector<shared_ptr<CGameObject>>>& GameObjects{ GameScene->GetGameObjects() };
-		shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(GameObjects[OBJECT_TYPE_PLAYER][CallerIndex]) };
-		shared_ptr<CPlayer> OtherPlayer{ static_pointer_cast<CPlayer>(GameObjects[OBJECT_TYPE_PLAYER][abs(int(CallerIndex - 1))]) };
 
 		if (CFramework::GetInstance()->GetSocketInfo().m_ID == CallerIndex)
 		{
@@ -62,9 +59,8 @@ bool COpenDoorEventTrigger::InteractEventTrigger(UINT CallerIndex)
 		}
 		else
 		{
-			float Distance{ Math::Distance(Player->GetPosition(), OtherPlayer->GetPosition()) };
-
-			CSoundManager::GetInstance()->Play(SOUND_TYPE_OPEN_DOOR, GameScene->MultiSound(Distance, 0.65f, 30.0f));
+			CSoundManager::GetInstance()->Play(SOUND_TYPE_OPEN_DOOR, 
+				GameScene->MultiSound(CallerIndex, abs(int(CallerIndex-1)), 0.65f, 30.0f, false));
 		}
 
 		return true;

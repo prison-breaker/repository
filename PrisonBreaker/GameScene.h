@@ -123,5 +123,5 @@ public:
 
 	void UpdatePerspective(HWND hWnd, float ElapsedTime, const shared_ptr<CPlayer>& Player);
 
-	float MultiSound(float DistanceBetweenPlayer, float MaxVolume, float MaxHearingDistance);
+	float MultiSound(int Id1, int Id2, float MaxVolume, float MaxHearingDistance, bool IsGuard);
 };

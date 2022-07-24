@@ -670,13 +670,8 @@ void CGameScene::ProcessPacket()
 
 						else
 						{
-							shared_ptr<CPlayer> OtherPlayer{};
-							OtherPlayer = static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][abs(int(Player->GetID() - 1))]);
-
-							float Distance{};
-							Distance = Math::Distance(Player->GetPosition(), OtherPlayer->GetPosition());
-
-							CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_SHOT, MultiSound(Distance, 0.45f, 100.0f));
+							CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_SHOT, MultiSound(Player->GetID(),
+								abs(int(Player->GetID() - 1)), 0.45f, 100.0f, false));
 						}
 					}
 					break;
@@ -795,29 +790,14 @@ void CGameScene::ProcessPacket()
 				{
 					if (PlayerAttackData.m_TargetIndices[i] != UINT_MAX)
 					{
-						shared_ptr<CGuard> Guard{};
-						Guard = static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][PlayerAttackData.m_TargetIndices[i]]);
-
 						if (SocketInfo.m_ID == i) 
 						{
-							shared_ptr<CPlayer> Player{};
-							Player = static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][i]);
-
-							float Distance{};
-							Distance = Math::Distance(Player->GetPosition(), Guard->GetPosition());
-
-							CSoundManager::GetInstance()->Play(SOUND_TYPE_GRUNT_2, MultiSound(Distance, 0.5f, 50.0f));
+							CSoundManager::GetInstance()->Play(SOUND_TYPE_GRUNT_2, MultiSound(i, PlayerAttackData.m_TargetIndices[i], 0.5f, 50.0f, true));
 						}
 						
 						else
 						{
-							shared_ptr<CPlayer> OtherPlayer{};
-							OtherPlayer = static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][abs(int(i - 1))]);
-
-							float Distance{};
-							Distance = Math::Distance(OtherPlayer->GetPosition(), Guard->GetPosition());
-
-							CSoundManager::GetInstance()->Play(SOUND_TYPE_GRUNT_2, MultiSound(Distance, 0.5f, 50.0f));
+							CSoundManager::GetInstance()->Play(SOUND_TYPE_GRUNT_2, MultiSound(abs(int(i-1)), PlayerAttackData.m_TargetIndices[i], 0.5f, 50.0f, true));
 						}
 					}
 				}
@@ -866,15 +846,8 @@ void CGameScene::ProcessPacket()
 
 						else if (CFramework::GetInstance()->GetSocketInfo().m_ID != GuardAttackData.m_TargetIndices[i] && GuardAttackData.m_TargetIndices[i] < 2)
 						{
-							shared_ptr<CPlayer> Player1{}, Player2{};
-							Player1 = static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][0]);
-							Player2 = static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][1]);
-
-							float Distance{};
-							Distance = Math::Distance(Player1->GetPosition(), Player2->GetPosition());
-
-							CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_SHOT, MultiSound(Distance, 0.35f, 100.0f));
-							CSoundManager::GetInstance()->Play(SOUND_TYPE_GRUNT_1, MultiSound(Distance, 0.3f, 50.0f));
+							CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_SHOT, MultiSound(0, 1, 0.35f, 100.0f, false));
+							CSoundManager::GetInstance()->Play(SOUND_TYPE_GRUNT_1, MultiSound(0, 1, 0.3f, 50.0f, false));
 						}
 					}
 				}
@@ -1183,9 +1156,25 @@ void CGameScene::UpdatePerspective(HWND hWnd, float ElapsedTime, const shared_pt
 	}
 }
 
-float CGameScene::MultiSound(float DistanceBetweenPlayer, float MaxVolume, float MaxHearingDistance)
+float CGameScene::MultiSound(int Id1, int Id2, float MaxVolume, float MaxHearingDistance, bool IsGuard)
 {
 	float SoundSize{};
+	float DistanceBetweenPlayer{};
+
+	if (IsGuard) 
+	{
+		shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][Id1]) };
+		shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][Id2]) };
+
+		DistanceBetweenPlayer = Math::Distance(Player->GetPosition(), Guard->GetPosition());
+	}
+	else
+	{
+		shared_ptr<CPlayer> Player1{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][Id1]) };
+		shared_ptr<CPlayer> Player2{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][Id2]) };
+
+		DistanceBetweenPlayer = Math::Distance(Player1->GetPosition(), Player2->GetPosition());
+	}
 
 	SoundSize = MaxVolume + ((2.0f - DistanceBetweenPlayer) * (MaxVolume / MaxHearingDistance));
 

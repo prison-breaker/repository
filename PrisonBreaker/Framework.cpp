@@ -589,7 +589,7 @@ int CFramework::recvn(SOCKET Socket, char* Buffer, int Length, int Flags)
 
 	while (Left > 0)
 	{
-		Received = recvn(Socket, Ptr, Left, Flags);
+		Received = recv(Socket, Ptr, Left, Flags);
 
 		if (Received == SOCKET_ERROR)
 		{
