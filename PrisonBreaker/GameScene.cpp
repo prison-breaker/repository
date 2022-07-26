@@ -665,6 +665,7 @@ void CGameScene::ProcessPacket()
 
 							m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetVertexCount(BulletCount - 1);
 
+							CSoundManager::GetInstance()->Stop(SOUND_TYPE_PISTOL_SHOT);
 							CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_SHOT, 0.45f);
 						}
 
@@ -839,7 +840,7 @@ void CGameScene::ProcessPacket()
 							{
 								m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][2]->SetVertexCount(LifeCount - 1);
 							}
-
+							CSoundManager::GetInstance()->Stop(SOUND_TYPE_PISTOL_SHOT);
 							CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_SHOT, 0.35f);
 							CSoundManager::GetInstance()->Play(SOUND_TYPE_GRUNT_1, 0.3f);
 						}
