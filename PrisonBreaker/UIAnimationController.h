@@ -1,20 +1,20 @@
 #pragma once
 
-class CBilboardMesh;
-class CBilboardObject;
+struct QUAD_INFO;
+class CQuadObject;
 
 class CUIAnimationClip
 {
 	friend class CUIAnimationController;
 
 private:
-	string                        m_ClipName{};
+	string                    m_ClipName{};
 				
-	UINT	                      m_FramePerSec{};
-	UINT	                      m_KeyFrameCount{};
-	float                         m_KeyFrameTime{};
+	UINT	                  m_FramePerSec{};
+	UINT	                  m_KeyFrameCount{};
+	float                     m_KeyFrameTime{};
 
-	vector<vector<CBilboardMesh>> m_TransformData{}; // [VertexIndex][KeyFrameIndex]
+	vector<vector<QUAD_INFO>> m_TransformData{}; // [VertexIndex][KeyFrameIndex]
 
 public:
 	CUIAnimationClip() = default;
@@ -30,7 +30,7 @@ class CUIAnimationController
 private:
 	bool								 m_IsActive{ true };
 
-	shared_ptr<CBilboardObject>			 m_Owner{};
+	shared_ptr<CQuadObject>			     m_Owner{};
 
 	UINT								 m_ClipNum{};
 	vector<shared_ptr<CUIAnimationClip>> m_AnimationClips{};
@@ -38,7 +38,7 @@ private:
 	UINT						         m_KeyFrameIndex{};
 
 public:
-	CUIAnimationController(const shared_ptr<CBilboardObject>& Owner, vector<shared_ptr<CUIAnimationClip>>& UIAnimationClips);
+	CUIAnimationController(const shared_ptr<CQuadObject>& Owner, vector<shared_ptr<CUIAnimationClip>>& UIAnimationClips);
 	~CUIAnimationController() = default;
 
 	void SetActive(bool IsActive);

@@ -2,11 +2,19 @@
 	<GameObject>
 		<Name> Models/prisoner_4.txt
 		<Type> 0
+		<IsActive> 1
 		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 -66 1.2 -121 1 
+	</GameObject>
+	<GameObject>
+		<Name> Models/prisoner_7.txt
+		<Type> 0
+		<IsActive> 1
+		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 13 1.2 -121 1 
 	</GameObject>
 	<GameObject>
 		<Name> Models/guards_6.txt
 		<Type> 1
+		<IsActive> 1
 		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 -170 1 35 1 
 			<TargetPosition> -90 1 6
 		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 -150 1 180 1 
@@ -15,6 +23,7 @@
 	<GameObject>
 		<Name> Models/guards_3.txt
 		<Type> 1
+		<IsActive> 1
 		<TransformMatrix> 0.5735761 0 0.8191524 0 0 1 0 0 -0.8191524 0 0.5735761 0 -50 1 -95 1 
 			<TargetPosition> -90 1 -63
 		<TransformMatrix> -0.5000001 0 -0.8660253 0 0 1 0 0 0.8660253 0 -0.5000001 0 25 1 -73 1 
@@ -45,76 +54,97 @@
 	<GameObject>
 		<Name> Models/terrain.txt
 		<Type> 2
+		<IsActive> 1
 		<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 1 0 1 
 	</GameObject>
 	<GameObject>
 		<Name> Models/containers.txt
 		<Type> 3
+		<IsActive> 1
 		<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 
 	</GameObject>
 	<GameObject>
 		<Name> Models/parking_lot.txt
 		<Type> 3
+		<IsActive> 1
 		<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 
 	</GameObject>
 	<GameObject>
 		<Name> Models/dummys.txt
 		<Type> 3
+		<IsActive> 1
 		<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 
 	</GameObject>
 	<GameObject>
 		<Name> Models/guardposts.txt
 		<Type> 3
+		<IsActive> 1
 		<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 
 	</GameObject>
 	<GameObject>
 		<Name> Models/concrete_slabs.txt
 		<Type> 3
+		<IsActive> 1
 		<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 
 	</GameObject>
 	<GameObject>
 		<Name> Models/barrels.txt
 		<Type> 3
+		<IsActive> 1
 		<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 
 	</GameObject>
 	<GameObject>
 		<Name> Models/barrieres_low.txt
 		<Type> 3
+		<IsActive> 1
 		<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 
 	</GameObject>
 	<GameObject>
 		<Name> Models/building.txt
 		<Type> 3
+		<IsActive> 1
 		<TransformMatrix> -1.192093E-07 0 -1 0 0 1 0 0 1 0 -1.192093E-07 0 90 1.2 -140 1 
 	</GameObject>
 	<GameObject>
 		<Name> Models/fences.txt
 		<Type> 3
+		<IsActive> 1
 		<TransformMatrix> 1 0 0 0 0 1 4.371139E-08 0 0 -4.371139E-08 1 0 0 0 0 1 
 	</GameObject>
 	<GameObject>
 		<Name> Models/electrical_panel_pr_1.txt
 		<Type> 3
+		<IsActive> 1
 		<TransformMatrix> -0.8660253 0 -0.5000001 0 0 1 0 0 0.5000001 0 -0.8660253 0 0.686 5.655 -1.188 1 
 	</GameObject>
 	<GameObject>
 		<Name> Models/field.txt
 		<Type> 3
+		<IsActive> 1
 		<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 
 	</GameObject>
 	<GameObject>
 		<Name> Models/cell.txt
 		<Type> 3
+		<IsActive> 1
 		<TransformMatrix> -1.192093E-07 0 -1 0 0 1 0 0 1 0 -1.192093E-07 0 90 1.2 -140 1 
 	</GameObject>
 	<GameObject>
 		<Name> Models/gate_1.txt
 		<Type> 3
+		<IsActive> 1
 		<TransformMatrix> -1 0 0 0 0 1 0 0 0 0 -1 0 142.62 4.499656 204.5578 1 
 	</GameObject>
 	<GameObject>
 		<Name> Models/tower.txt
 		<Type> 3
+		<IsActive> 1
 		<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 2.2 0 1 
+	</GameObject>
+	<GameObject>
+		<Name> Models/ending_road.txt
+		<Type> 2
+		<IsActive> 0
+		<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 
 	</GameObject>
 </GameScene>

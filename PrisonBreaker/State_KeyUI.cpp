@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "State_KeyUI.h"
-#include "UIs.h"
+#include "UIObjects.h"
+#include "UIAnimationController.h"
 
 CKeyUIActivationState* CKeyUIActivationState::GetInstance()
 {
@@ -21,7 +22,7 @@ void CKeyUIActivationState::ProcessInput(const shared_ptr<CKeyUI>& Entity, float
 
 void CKeyUIActivationState::Update(const shared_ptr<CKeyUI>& Entity, float ElapsedTime)
 {
-	Entity->GetUIAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE);
+	Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE);
 }
 
 void CKeyUIActivationState::Exit(const shared_ptr<CKeyUI>& Entity)

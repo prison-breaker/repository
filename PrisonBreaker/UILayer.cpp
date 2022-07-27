@@ -1,8 +1,6 @@
 ﻿#include "stdafx.h"
 #include "UILayer.h"
 
-using namespace std;
-
 CUILayer::CUILayer(ID3D12Device* D3D12Device, ID3D12CommandQueue* D3D12CommandQueue, UINT RenderTargetCount)
 {
     m_D3D11WrappedRenderTargets.resize(RenderTargetCount);
@@ -150,7 +148,7 @@ void CUILayer::Resize(ID3D12Resource** D3D12RenderTargets, UINT Width, UINT Heig
     
     DX::ThrowIfFailed(m_D2D1DeviceContext->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), reinterpret_cast<ID2D1SolidColorBrush**>(m_D2D1TextBrush.GetAddressOf())));
 
-    const float FontSize = m_Height / 30.0f;
+    const float FontSize = m_Height / 32.0f;
 
     DX::ThrowIfFailed(m_DWriteFactory->CreateTextFormat(L"capture it", nullptr, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, FontSize, L"en-us", &m_DWTextFormat));
     DX::ThrowIfFailed(m_DWTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER));

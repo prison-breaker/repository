@@ -1,6 +1,10 @@
 #include "stdafx.h"
 #include "TitleScene.h"
 #include "Framework.h"
+#include "QuadObject.h"
+#include "QuadShader.h"
+#include "PostProcessingShader.h"
+#include "UILayer.h"
 
 void CTitleScene::Initialize()
 {
@@ -20,10 +24,10 @@ void CTitleScene::OnDestroy()
 void CTitleScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, ID3D12RootSignature* D3D12RootSignature)
 {
 	// 렌더링에 필요한 셰이더 객체(PSO)를 생성한다.
-	shared_ptr<CGraphicsShader> Shader{ make_shared<CUIShader>() };
+	shared_ptr<CGraphicsShader> Shader{ make_shared<CQuadShader>() };
 
-	Shader->CreatePipelineState(D3D12Device, D3D12RootSignature, 0);
-	CShaderManager::GetInstance()->RegisterShader(TEXT("UIShader"), Shader);
+	Shader->CreatePipelineStates(D3D12Device, D3D12RootSignature, 3);
+	CShaderManager::GetInstance()->RegisterShader(TEXT("QuadShader"), Shader);
 
 	// 파일로부터 UI 객체들을 생성하고 배치한다.
 	LoadUIInfoFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Scenes/TitleScene_UI.bin"));
@@ -39,24 +43,30 @@ void CTitleScene::Enter(MSG_TYPE MsgType)
 	switch (MsgType)
 	{
 	case MSG_TYPE_DISCONNECTION:
-		m_BilboardObjects[5]->SetActive(true);
+		m_QuadObjects[5]->SetActive(true);
 		break;
 	}
 
+	if (MsgType != MSG_TYPE_NONE)
+	{
+		ShowCursor(TRUE);
+
+		CFramework::GetInstance()->DisconnectServer();
+	}
+
+	CSoundManager::GetInstance()->Stop(SOUND_TYPE_ENDING_BGM);
 	CSoundManager::GetInstance()->Play(SOUND_TYPE_TITLE_BGM, 0.3f);
 }
 
 void CTitleScene::Exit()
 {
-	ShowCursor(FALSE);
-
-	UINT BilboardObjectCount{ static_cast<UINT>(m_BilboardObjects.size()) };
+	UINT BilboardObjectCount{ static_cast<UINT>(m_QuadObjects.size()) };
 
 	for (UINT i = 3; i < BilboardObjectCount; ++i)
 	{
-		if (m_BilboardObjects[i])
+		if (m_QuadObjects[i])
 		{
-			m_BilboardObjects[i]->SetActive(false);
+			m_QuadObjects[i]->SetActive(false);
 		}
 	}
 
@@ -73,7 +83,7 @@ void CTitleScene::LoadUIInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCo
 	tstring Token{};
 
 	unordered_map<tstring, shared_ptr<CMaterial>> MaterialCaches{};
-	shared_ptr<CBilboardObject> Object{};
+	shared_ptr<CQuadObject> Object{};
 
 	tcout << FileName << TEXT(" 로드 시작...") << endl;
 
@@ -85,9 +95,9 @@ void CTitleScene::LoadUIInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCo
 
 		if (Token == TEXT("<UIObject>"))
 		{
-			Object = CBilboardObject::LoadObjectInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile, MaterialCaches);
+			Object = CQuadObject::LoadObjectInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile, MaterialCaches);
 
-			m_BilboardObjects.push_back(Object);
+			m_QuadObjects.push_back(Object);
 		}
 		else if (Token == TEXT("</UI>"))
 		{
@@ -115,11 +125,11 @@ void CTitleScene::ReleaseShaderVariables()
 
 void CTitleScene::ReleaseUploadBuffers()
 {
-	for (const auto& BilboardObject : m_BilboardObjects)
+	for (const auto& QuadObject : m_QuadObjects)
 	{
-		if (BilboardObject)
+		if (QuadObject)
 		{
-			BilboardObject->ReleaseUploadBuffers();
+			QuadObject->ReleaseUploadBuffers();
 		}
 	}
 }
@@ -134,18 +144,18 @@ void CTitleScene::ProcessMouseMessage(HWND hWnd, UINT Message, WPARAM wParam, LP
 	case WM_RBUTTONUP:
 	case WM_MOUSEMOVE:
 	{
-		UINT BilboardObjectCount{ static_cast<UINT>(m_BilboardObjects.size()) };
+		UINT BilboardObjectCount{ static_cast<UINT>(m_QuadObjects.size()) };
 
 		for (UINT i = 0; i < BilboardObjectCount; ++i)
 		{
-			if (m_BilboardObjects[i])
+			if (m_QuadObjects[i])
 			{
-				m_BilboardObjects[i]->ProcessMouseMessage(Message, XMINT2{ LOWORD(lParam), HIWORD(lParam) }, i);
+				m_QuadObjects[i]->ProcessMouseMessage(Message, XMINT2{ LOWORD(lParam), HIWORD(lParam) }, i);
 			}
 		}
 
 		// m_BilboardObject[3]: 서버 IP주소 입력 패널
-		CFramework::GetInstance()->GetUILayer()->SetActive(m_BilboardObjects[3]->IsActive());
+		CFramework::GetInstance()->GetUILayer()->SetActive(m_QuadObjects[3]->IsActive());
 	}
 	break;
 	}
@@ -168,11 +178,11 @@ void CTitleScene::ProcessInput(HWND hWnd, float ElapsedTime)
 
 void CTitleScene::Animate(float ElapsedTime)
 {
-	for (const auto& BilboardObject : m_BilboardObjects)
+	for (const auto& QuadObject : m_QuadObjects)
 	{
-		if (BilboardObject)
+		if (QuadObject)
 		{
-			BilboardObject->Animate(ElapsedTime);
+			QuadObject->Animate(ElapsedTime);
 		}
 	}
 }
@@ -185,13 +195,12 @@ void CTitleScene::PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 void CTitleScene::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
 	RSSetViewportsAndScissorRects(D3D12GraphicsCommandList);
-	CTextureManager::GetInstance()->SetDescriptorHeap(D3D12GraphicsCommandList);
 
-	for (const auto& BilboardObject : m_BilboardObjects)
+	for (const auto& QuadObject : m_QuadObjects)
 	{
-		if (BilboardObject)
+		if (QuadObject)
 		{
-			BilboardObject->Render(D3D12GraphicsCommandList, nullptr, RENDER_TYPE_STANDARD);
+			QuadObject->Render(D3D12GraphicsCommandList, nullptr, RENDER_TYPE_STANDARD);
 		}
 	}
 }
@@ -231,15 +240,15 @@ void CTitleScene::ProcessPacket()
 			if (MsgType == MSG_TYPE_INGAME)
 			{
 				CSceneManager::GetInstance()->ReserveScene(TEXT("GameScene"));
-				CFramework::GetInstance()->SetPostProcessingType(POST_PROCESSING_TYPE_FADE_OUT);
+				CFramework::GetInstance()->GetPostProcessingShader()->SetPostProcessingType(POST_PROCESSING_TYPE_FADE_OUT);
 			}
 		}
 	}
 }
 
-vector<shared_ptr<CBilboardObject>>& CTitleScene::GetBilboardObjects()
+vector<shared_ptr<CQuadObject>>& CTitleScene::GetQuadObjects()
 {
-	return m_BilboardObjects;
+	return m_QuadObjects;
 }
 
 void CTitleScene::RSSetViewportsAndScissorRects(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)

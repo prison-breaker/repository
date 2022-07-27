@@ -1,7 +1,8 @@
 #pragma once
 #include "GameObject.h"
-#include "State_Guard.h"
 
+template<typename T>
+class CStateMachine;
 class CEventTrigger;
 
 class CGuard : public CGameObject

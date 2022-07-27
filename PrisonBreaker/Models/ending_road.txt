@@ -1,0 +1,20 @@
+<Hierarchy>
+	<Frame> ending_road
+		<TransformMatrix> 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 
+		<ChildCount> 2
+			<Frame> road
+				<TransformMatrix> 10 0 0 0 0 1 0 0 0 0 50 0 0 1.05 0 1 
+				<Mesh> Plane.002
+				<Materials> 1
+					<Material> road 
+				<ChildCount> 0
+			</Frame>
+			<Frame> ground
+				<TransformMatrix> 20 0 0 0 0 1 0 0 0 0 50 0 0 1 0 1 
+				<Mesh> Plane.002
+				<Materials> 1
+					<Material> ground 
+				<ChildCount> 0
+			</Frame>
+	</Frame>
+</Hierarchy>

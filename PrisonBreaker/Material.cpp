@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Material.h"
+#include "Texture.h"
 #include "Shader.h"
 
 void CMaterial::LoadMaterialInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile)
@@ -134,15 +135,9 @@ const tstring& CMaterial::GetName() const
 	return m_Name;
 }
 
-void CMaterial::SetStateNum(SHADER_TYPE ShaderType)
+void CMaterial::SetStateNum(UINT StateNum)
 {
-	switch (ShaderType)
-	{
-	case SHADER_TYPE_STANDARD:
-	case SHADER_TYPE_WITH_SKINNING:
-		m_StateNum = ShaderType;
-		break;
-	}
+	m_StateNum = StateNum;
 }
 
 void CMaterial::SetPipelineState(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, RENDER_TYPE RenderType)

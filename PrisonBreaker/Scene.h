@@ -36,6 +36,5 @@ public:
 	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList) = 0;
 	virtual void PostRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList) = 0;
 
-	// Server Function
 	virtual void ProcessPacket() = 0;
 };

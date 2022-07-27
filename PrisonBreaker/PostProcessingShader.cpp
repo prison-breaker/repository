@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "PostProcessingShader.h"
+#include "Texture.h"
 
 D3D12_SHADER_BYTECODE CPostProcessingShader::CreateVertexShader(ID3DBlob* D3D12ShaderBlob, UINT StateNum)
 {
@@ -52,7 +53,7 @@ void CPostProcessingShader::UpdateFadeAmount(float ElapsedTime)
 	case POST_PROCESSING_TYPE_FADE_IN:
 		m_FadeAmount += ElapsedTime;
 
-		if (m_FadeAmount > 1.0f)
+		if (m_FadeAmount >= 1.0f)
 		{
 			m_FadeAmount = 1.0f;
 			m_PostProcessingType = POST_PROCESSING_TYPE_NONE;
@@ -61,7 +62,7 @@ void CPostProcessingShader::UpdateFadeAmount(float ElapsedTime)
 	case POST_PROCESSING_TYPE_FADE_OUT:
 		m_FadeAmount -= ElapsedTime;
 
-		if (m_FadeAmount < 0.0f)
+		if (m_FadeAmount <= 0.0f)
 		{
 			m_FadeAmount = 0.0f;
 			m_PostProcessingType = POST_PROCESSING_TYPE_NONE;

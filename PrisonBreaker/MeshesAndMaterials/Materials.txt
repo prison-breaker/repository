@@ -1,4 +1,4 @@
-<Materials> 60
+<Materials> 63
 	<Material> gun_pr_1
 		<StateNum> 0
 		<TextureScale> 1 1
@@ -371,6 +371,12 @@
 		<TextureScale> 1 1
 		<AlbedoColor> 0.8 0.8 0.8 0.566
 	</Material>
+	<Material> road
+		<StateNum> 0
+		<TextureScale> 1 1
+		<AlbedoColor> 1 1 1 1
+		<AlbedoMap> Textures/Asphalt.dds
+	</Material>
 	<Material> eye
 		<StateNum> 1
 		<TextureScale> 1 1
@@ -410,6 +416,22 @@
 		<AlbedoMap> Textures/clothes_1_tex_AlbedoTransparency.dds
 		<MetallicMap> Textures/clothes_1_tex_MetallicSmoothness.dds
 		<NormalMap> Textures/clothes_1_tex_2_Normal.dds
+	</Material>
+	<Material> hat_2
+		<StateNum> 1
+		<TextureScale> 1 1
+		<AlbedoColor> 1 1 1 1
+		<AlbedoMap> Textures/hat_2_AlbedoTransparency.dds
+		<MetallicMap> Textures/hat_2_MetallicSmoothness.dds
+		<NormalMap> Textures/hat_2_Normal.dds
+	</Material>
+	<Material> head_5
+		<StateNum> 1
+		<TextureScale> 1 1
+		<AlbedoColor> 1 1 1 1
+		<AlbedoMap> Textures/head_5_AlbedoTransparency.dds
+		<MetallicMap> Textures/head_5_MetallicSmoothness.dds
+		<NormalMap> Textures/head_5_Normal.dds
 	</Material>
 	<Material> police_1
 		<StateNum> 1

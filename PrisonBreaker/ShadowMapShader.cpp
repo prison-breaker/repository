@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include "ShadowMapShader.h"
 #include "GameScene.h"
+#include "GameObject.h"
+#include "Texture.h"
+#include "Camera.h"
 
 CDepthWriteShader::CDepthWriteShader(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList) :
 	m_ProjectionMatrixToTexture{ 0.5f,  0.0f, 0.0f, 0.0f,
@@ -29,12 +32,12 @@ D3D12_INPUT_LAYOUT_DESC CDepthWriteShader::CreateInputLayout(UINT StateNum)
 
 	switch (StateNum)
 	{
-	case SHADER_TYPE_STANDARD:
+	case 0: // Standard
 		InputElementCount = 1;
 		D3D12InputElementDescs = new D3D12_INPUT_ELEMENT_DESC[InputElementCount];
 		D3D12InputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
 		break;
-	case SHADER_TYPE_WITH_SKINNING:
+	case 1: // With Skinning
 		InputElementCount = 3;
 		D3D12InputElementDescs = new D3D12_INPUT_ELEMENT_DESC[InputElementCount];
 		D3D12InputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
@@ -74,9 +77,9 @@ D3D12_SHADER_BYTECODE CDepthWriteShader::CreateVertexShader(ID3DBlob* D3D12Shade
 {
 	switch (StateNum)
 	{
-	case SHADER_TYPE_STANDARD:
+	case 0: // Standard
 		return CGraphicsShader::CompileShaderFromFile(L"GameSceneShader.hlsl", "VS_Position", "vs_5_1", D3D12ShaderBlob);
-	case SHADER_TYPE_WITH_SKINNING:
+	case 1: // With Skinning
 		return CGraphicsShader::CompileShaderFromFile(L"GameSceneShader.hlsl", "VS_Position_Skinning", "vs_5_1", D3D12ShaderBlob);
 	}
 
@@ -96,14 +99,6 @@ DXGI_FORMAT CDepthWriteShader::GetRTVFormat(UINT StateNum, UINT RenderTargetNum)
 DXGI_FORMAT CDepthWriteShader::GetDSVFormat(UINT StateNum)
 {
 	return DXGI_FORMAT_D32_FLOAT;
-}
-
-void CDepthWriteShader::CreatePipelineState(ID3D12Device* D3D12Device, ID3D12RootSignature* D3D12RootSignature, UINT StateNum)
-{
-	for (UINT i = 0; i < StateNum; ++i)
-	{
-		CGraphicsShader::CreatePipelineState(D3D12Device, D3D12RootSignature, i);
-	}
 }
 
 void CDepthWriteShader::SetPipelineState(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, UINT StateNum)
@@ -235,7 +230,7 @@ D3D12_INPUT_LAYOUT_DESC CShadowMapShader::CreateInputLayout(UINT StateNum)
 
 	switch (StateNum)
 	{ 
-	case SHADER_TYPE_STANDARD:
+	case 0: // Standard
 		InputElementCount = 5;
 		D3D12InputElementDescs = new D3D12_INPUT_ELEMENT_DESC[InputElementCount];
 		D3D12InputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
@@ -244,7 +239,7 @@ D3D12_INPUT_LAYOUT_DESC CShadowMapShader::CreateInputLayout(UINT StateNum)
 		D3D12InputElementDescs[3] = { "BITANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 3, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
 		D3D12InputElementDescs[4] = { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 4, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
 		break;
-	case SHADER_TYPE_WITH_SKINNING:
+	case 1: // With Skinning
 		InputElementCount = 7;
 		D3D12InputElementDescs = new D3D12_INPUT_ELEMENT_DESC[InputElementCount];
 		D3D12InputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
@@ -289,9 +284,9 @@ D3D12_SHADER_BYTECODE CShadowMapShader::CreateVertexShader(ID3DBlob* D3D12Shader
 {
 	switch (StateNum)
 	{
-	case SHADER_TYPE_STANDARD:
+	case 0: // Standard
 		return CGraphicsShader::CompileShaderFromFile(L"GameSceneShader.hlsl", "VS_Main", "vs_5_1", D3D12ShaderBlob);
-	case SHADER_TYPE_WITH_SKINNING:
+	case 1: // With Skinning
 		return CGraphicsShader::CompileShaderFromFile(L"GameSceneShader.hlsl", "VS_Main_Skinning", "vs_5_1", D3D12ShaderBlob);
 	}
 
@@ -301,14 +296,6 @@ D3D12_SHADER_BYTECODE CShadowMapShader::CreateVertexShader(ID3DBlob* D3D12Shader
 D3D12_SHADER_BYTECODE CShadowMapShader::CreatePixelShader(ID3DBlob* D3D12ShaderBlob, UINT StateNum)
 {
 	return CGraphicsShader::CompileShaderFromFile(L"GameSceneShader.hlsl", "PS_Main", "ps_5_1", D3D12ShaderBlob);
-}
-
-void CShadowMapShader::CreatePipelineState(ID3D12Device* D3D12Device, ID3D12RootSignature* D3D12RootSignature, UINT StateNum)
-{
-	for (UINT i = 0; i < StateNum; ++i)
-	{
-		CGraphicsShader::CreatePipelineState(D3D12Device, D3D12RootSignature, i);
-	}
 }
 
 void CShadowMapShader::SetPipelineState(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, UINT StateNum)

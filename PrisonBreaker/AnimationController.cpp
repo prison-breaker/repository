@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "AnimationController.h"
 #include "GameObject.h"
+#include "Mesh.h"
 
 void CAnimationClip::LoadAnimationClipInfoFromFile(ifstream& InFile, const shared_ptr<LOADED_MODEL_INFO>& ModelInfo)
 {

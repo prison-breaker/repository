@@ -188,6 +188,16 @@ void CGraphicsShader::CreatePipelineState(ID3D12Device* D3D12Device, ID3D12RootS
 	}
 }
 
+void CGraphicsShader::CreatePipelineStates(ID3D12Device* D3D12Device, ID3D12RootSignature* D3D12RootSignature, UINT StateCount)
+{
+	m_D3D12PipelineStates.reserve(StateCount);
+
+	for (UINT i = 0; i < StateCount; ++i)
+	{
+		CreatePipelineState(D3D12Device, D3D12RootSignature, i);
+	}
+}
+
 void CGraphicsShader::SetPipelineState(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, UINT StateNum)
 {
 

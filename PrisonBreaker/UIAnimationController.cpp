@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "UIAnimationController.h"
-#include "BilboardObject.h"
+#include "QuadObject.h"
 
 void CUIAnimationClip::LoadAnimationClipInfoFromFile(ifstream& InFile, UINT VertexCount)
 {
@@ -41,13 +41,13 @@ void CUIAnimationClip::LoadAnimationClipInfoFromFile(ifstream& InFile, UINT Vert
 				InFile.read(reinterpret_cast<TCHAR*>(&CellIndex), sizeof(float));
 				InFile.read(reinterpret_cast<TCHAR*>(&Size), sizeof(XMFLOAT2));
 
-				CBilboardMesh BilboardMesh{};
+				QUAD_INFO QuadInfo{};
 
-				BilboardMesh.SetPosition(Position);
-				BilboardMesh.SetSize(Size);
-				BilboardMesh.SetCellIndex(CellIndex);
-
-				m_TransformData[i].push_back(BilboardMesh);
+				QuadInfo.m_Position = Position;
+				QuadInfo.m_Size = Size;
+				QuadInfo.m_CellIndex = CellIndex;
+					
+				m_TransformData[i].push_back(QuadInfo);
 			}
 		}
 		else if (Token == TEXT("<AlphaColor>"))
@@ -61,7 +61,7 @@ void CUIAnimationClip::LoadAnimationClipInfoFromFile(ifstream& InFile, UINT Vert
 
 				InFile.read(reinterpret_cast<TCHAR*>(&AlphaColor), sizeof(float));
 
-				m_TransformData[i][Count].SetAlphaColor(AlphaColor);
+				m_TransformData[i][Count].m_AlphaColor = AlphaColor;
 			}
 
 			++Count;
@@ -75,7 +75,7 @@ void CUIAnimationClip::LoadAnimationClipInfoFromFile(ifstream& InFile, UINT Vert
 
 //=========================================================================================================================
 
-CUIAnimationController::CUIAnimationController(const shared_ptr<CBilboardObject>& Owner, vector<shared_ptr<CUIAnimationClip>>& UIAnimationClips) :
+CUIAnimationController::CUIAnimationController(const shared_ptr<CQuadObject>& Owner, vector<shared_ptr<CUIAnimationClip>>& UIAnimationClips) :
 	m_Owner{ Owner },
 	m_AnimationClips{ move(UIAnimationClips) }
 {
@@ -118,9 +118,9 @@ bool CUIAnimationController::UpdateAnimationClip(ANIMATION_TYPE AnimationType)
 		for (UINT i = 0; i < VertexCount; ++i)
 		{
 			// CBilboardMesh의 Get 함수는 유일하게 GPU의 가상주소로 사용되지 않는 곳에서만 사용해야한다!!
-			m_Owner->SetPosition(i, m_AnimationClips[m_ClipNum]->m_TransformData[i][m_KeyFrameIndex].GetPosition());
-			m_Owner->SetSize(i, m_AnimationClips[m_ClipNum]->m_TransformData[i][m_KeyFrameIndex].GetSize());
-			m_Owner->SetAlphaColor(i, m_AnimationClips[m_ClipNum]->m_TransformData[i][m_KeyFrameIndex].GetAlphaColor());
+			m_Owner->SetPosition(i, m_AnimationClips[m_ClipNum]->m_TransformData[i][m_KeyFrameIndex].m_Position);
+			m_Owner->SetSize(i, m_AnimationClips[m_ClipNum]->m_TransformData[i][m_KeyFrameIndex].m_Size);
+			m_Owner->SetAlphaColor(i, m_AnimationClips[m_ClipNum]->m_TransformData[i][m_KeyFrameIndex].m_AlphaColor);
 		}
 
 		switch (AnimationType)

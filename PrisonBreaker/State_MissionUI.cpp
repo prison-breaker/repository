@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "State_MissionUI.h"
-#include "UIs.h"
+#include "StateMachine.h"
+#include "UIObjects.h"
+#include "UIAnimationController.h"
 
 CMissionUIShowingState* CMissionUIShowingState::GetInstance()
 {
@@ -24,7 +26,7 @@ void CMissionUIShowingState::ProcessInput(const shared_ptr<CMissionUI>& Entity, 
 
 void CMissionUIShowingState::Update(const shared_ptr<CMissionUI>& Entity, float ElapsedTime)
 {
-	Entity->GetUIAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE);
+	Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE);
 }
 
 void CMissionUIShowingState::Exit(const shared_ptr<CMissionUI>& Entity)
@@ -56,7 +58,7 @@ void CMissionUIHidingState::ProcessInput(const shared_ptr<CMissionUI>& Entity, f
 
 void CMissionUIHidingState::Update(const shared_ptr<CMissionUI>& Entity, float ElapsedTime)
 {
-	Entity->GetUIAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE_REVERSE);
+	Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE_REVERSE);
 }
 
 void CMissionUIHidingState::Exit(const shared_ptr<CMissionUI>& Entity)

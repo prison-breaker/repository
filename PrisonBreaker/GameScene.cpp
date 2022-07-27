@@ -1,6 +1,27 @@
 #include "stdafx.h"
 #include "GameScene.h"
 #include "Framework.h"
+#include "Player.h"
+#include "State_Player.h"
+#include "Guard.h"
+#include "State_Guard.h"
+#include "BilboardObjects.h"
+#include "UIObjects.h"
+#include "State_HitUI.h"
+#include "EventTriggers.h"
+#include "NavMesh.h"
+#include "ShadowMapShader.h"
+#include "QuadShader.h"
+#include "DebugShader.h"
+#include "StateMachine.h"
+#include "AnimationController.h"
+#include "Camera.h"
+#include "Mesh.h"
+#include "Texture.h"
+#include "Material.h"
+#include "NavMesh.h"
+#include "NavNode.h"
+#include "PostProcessingShader.h"
 
 void CGameScene::Initialize()
 {
@@ -47,13 +68,13 @@ void CGameScene::Initialize()
 		}
 	}
 
-	UINT UICount{ static_cast<UINT>(m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI].size()) };
+	UINT UICount{ static_cast<UINT>(m_QuadObjects[BILBOARD_OBJECT_TYPE_UI].size()) };
 
 	for (UINT i = 0; i < UICount; ++i)
 	{
-		if (m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][i])
+		if (m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][i])
 		{
-			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][i]->Reset();
+			m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][i]->Reset();
 
 			// 4 : Pistol & Bullet
 			// 6 : Crosshair
@@ -62,22 +83,22 @@ void CGameScene::Initialize()
 			// 9 : GameOvers
 			if (i == 4 || 6 <= i && i <= 9)
 			{
-				m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][i]->SetActive(false);
+				m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][i]->SetActive(false);
 			}
 		}
 	}
 
 	if (SocketInfo.m_ID == 0)
 	{
-		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(0, 0);
-		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(1, 4);
-		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][1]->SetCellIndex(0, 0);
+		m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(0, 0);
+		m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(1, 4);
+		m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][1]->SetCellIndex(0, 0);
 	}
 	else
 	{
-		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(0, 2);
-		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(1, 4);
-		m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][1]->SetCellIndex(0, 1);
+		m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(0, 2);
+		m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(1, 4);
+		m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][1]->SetCellIndex(0, 1);
 	}
 }
 
@@ -98,19 +119,15 @@ void CGameScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandLi
 	// 렌더링에 필요한 셰이더 객체(PSO)를 생성한다.
 	shared_ptr<CGraphicsShader> Shader{ make_shared<CDepthWriteShader>(D3D12Device, D3D12GraphicsCommandList) };
 
-	Shader->CreatePipelineState(D3D12Device, D3D12RootSignature, 2);
+	Shader->CreatePipelineStates(D3D12Device, D3D12RootSignature, 2);
 	CShaderManager::GetInstance()->RegisterShader(TEXT("DepthWriteShader"), Shader);
 
 	Shader = make_shared<CShadowMapShader>();
-	Shader->CreatePipelineState(D3D12Device, D3D12RootSignature, 2);
+	Shader->CreatePipelineStates(D3D12Device, D3D12RootSignature, 2);
 	CShaderManager::GetInstance()->RegisterShader(TEXT("ShadowMapShader"), Shader);
 
-	Shader = make_shared<CSkyBoxShader>();
-	Shader->CreatePipelineState(D3D12Device, D3D12RootSignature, 0);
-	CShaderManager::GetInstance()->RegisterShader(TEXT("SkyBoxShader"), Shader);
-
 	Shader = make_shared<CDebugShader>();
-	Shader->CreatePipelineState(D3D12Device, D3D12RootSignature, 0);
+	Shader->CreatePipelineStates(D3D12Device, D3D12RootSignature, 1);
 	CShaderManager::GetInstance()->RegisterShader(TEXT("DebugShader"), Shader);
 
 	// 파일로부터 NavMesh 객체를 생성한다.
@@ -119,20 +136,16 @@ void CGameScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandLi
 
 	// 타입 수만큼 각 벡터의 크기를 재할당한다.
 	m_GameObjects.resize(OBJECT_TYPE_STRUCTURE + 1);
-	m_BilboardObjects.resize(BILBOARD_OBJECT_TYPE_UI + 1);
+	m_QuadObjects.resize(BILBOARD_OBJECT_TYPE_UI + 1);
 
 	// 스카이박스 객체를 생성한다.
-	m_BilboardObjects[BILBOARD_OBJECT_TYPE_SKYBOX].push_back(make_shared<CSkyBox>(D3D12Device, D3D12GraphicsCommandList));
+	m_QuadObjects[BILBOARD_OBJECT_TYPE_SKYBOX].push_back(make_shared<CSkyBox>(D3D12Device, D3D12GraphicsCommandList));
 
 	// 파일로부터 씬 객체들을 생성하고 배치한다.
 	LoadSceneInfoFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Scenes/GameScene.bin"));
 
 	// 파일로부터 UI 객체들을 생성하고 배치한다.
 	LoadUIInfoFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Scenes/GameScene_UI.bin"));
-
-	// 모든 텍스처를 저장하는 힙과 각 텍스처의 SRV 리소스를 생성한다.
-	CTextureManager::GetInstance()->CreateCbvSrvUavDescriptorHeaps(D3D12Device);
-	CTextureManager::GetInstance()->CreateShaderResourceViews(D3D12Device);
 
 	CreateShaderVariables(D3D12Device, D3D12GraphicsCommandList);
 }
@@ -144,35 +157,34 @@ void CGameScene::ReleaseObjects()
 
 void CGameScene::Enter(MSG_TYPE MsgType)
 {
+	ShowCursor(FALSE);
+
 	CSoundManager::GetInstance()->Play(SOUND_TYPE_INGAME_BGM_1, 0.3f);
 }
 
 void CGameScene::Exit()
 {
-	ShowCursor(TRUE);
-
 	CSoundManager::GetInstance()->Stop(SOUND_TYPE_SIREN);
 	CSoundManager::GetInstance()->Stop(SOUND_TYPE_INGAME_BGM_1);
-
-	CFramework::GetInstance()->DisconnectServer();
 }
 
 void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName)
 {
-	tstring Token{};
-
-	shared_ptr<LOADED_MODEL_INFO> ModelInfo{};
-
-	UINT PlayerID{};
-	UINT ObjectType{};
-
 	unordered_map<tstring, shared_ptr<CMesh>> MeshCaches{};
 	unordered_map<tstring, shared_ptr<CMaterial>> MaterialCaches{};
 
 	LoadMeshCachesFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("MeshesAndMaterials/Meshes.bin"), MeshCaches);
 	LoadMaterialCachesFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("MeshesAndMaterials/Materials.bin"), MaterialCaches);
 
+	tstring Token{};
 	tifstream InFile{ FileName, ios::binary };
+
+	shared_ptr<LOADED_MODEL_INFO> ModelInfo{};
+
+	UINT ObjectType{};
+	bool IsActive{};
+
+	UINT PlayerID{};
 
 	while (true)
 	{
@@ -188,6 +200,10 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 		{
 			ObjectType = File::ReadIntegerFromFile(InFile);
 		}
+		else if (Token == TEXT("<IsActive>"))
+		{
+			IsActive = static_cast<bool>(File::ReadIntegerFromFile(InFile));
+		}
 		else if (Token == TEXT("<TransformMatrix>"))
 		{
 			XMFLOAT4X4 TransformMatrix{};
@@ -202,6 +218,7 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 				shared_ptr<CPlayer> Player{ make_shared<CPlayer>(D3D12Device, D3D12GraphicsCommandList) };
 
 				Player->SetID(PlayerID++);
+				Player->SetActive(IsActive);
 				Player->SetChild(ModelInfo->m_Model);
 				Player->SetTransformMatrix(TransformMatrix);
 				Player->UpdateTransform(Matrix4x4::Identity());
@@ -223,6 +240,7 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 				// 교도관 객체를 생성한다.
 				shared_ptr<CGuard> Guard{ make_shared<CGuard>() };
 
+				Guard->SetActive(IsActive);
 				Guard->SetChild(ModelInfo->m_Model);
 				Guard->SetTransformMatrix(TransformMatrix);
 				Guard->UpdateTransform(Matrix4x4::Identity());
@@ -240,6 +258,7 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 				// 지형 및 구조물 객체를 생성한다.
 				shared_ptr<CGameObject> Architecture{ make_shared<CGameObject>() };
 
+				Architecture->SetActive(IsActive);
 				Architecture->SetChild(ModelInfo->m_Model);
 				Architecture->SetTransformMatrix(TransformMatrix);
 				Architecture->UpdateTransform(Matrix4x4::Identity());
@@ -263,7 +282,7 @@ void CGameScene::LoadUIInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCom
 	tstring Token{};
 
 	unordered_map<tstring, shared_ptr<CMaterial>> MaterialCaches{};
-	shared_ptr<CBilboardObject> Object{};
+	shared_ptr<CQuadObject> Object{};
 
 	tcout << FileName << TEXT(" 로드 시작...") << endl;
 
@@ -275,9 +294,9 @@ void CGameScene::LoadUIInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCom
 
 		if (Token == TEXT("<UIObject>"))
 		{
-			Object = CBilboardObject::LoadObjectInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile, MaterialCaches);
+			Object = CQuadObject::LoadObjectInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile, MaterialCaches);
 
-			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI].push_back(Object);
+			m_QuadObjects[BILBOARD_OBJECT_TYPE_UI].push_back(Object);
 		}
 		else if (Token == TEXT("</UI>"))
 		{
@@ -334,11 +353,11 @@ void CGameScene::ReleaseUploadBuffers()
 
 	for (UINT i = BILBOARD_OBJECT_TYPE_SKYBOX; i <= BILBOARD_OBJECT_TYPE_UI; ++i)
 	{
-		for (const auto& BilboardObject : m_BilboardObjects[i])
+		for (const auto& QuadObject : m_QuadObjects[i])
 		{
-			if (BilboardObject)
+			if (QuadObject)
 			{
-				BilboardObject->ReleaseUploadBuffers();
+				QuadObject->ReleaseUploadBuffers();
 			}
 		}
 	}
@@ -427,8 +446,8 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	{
 		m_InputMask |= INPUT_MASK_TAB;
 
-		// m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]: Mission
-		static_pointer_cast<CMissionUI>(m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0])->GetStateMachine()->ProcessInput(ElapsedTime, m_InputMask);
+		// m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][0]: Mission
+		static_pointer_cast<CMissionUI>(m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][0])->GetStateMachine()->ProcessInput(ElapsedTime, m_InputMask);
 	}
 
 	if (GetAsyncKeyState(VK_LBUTTON) & 0x0001)
@@ -456,9 +475,9 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	{
 		if (Player->IsEquippedPistol())
 		{
-			UINT BulletCount{ m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->GetVertexCount() };
+			UINT BulletCount{ m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][4]->GetVertexCount() };
 
-			// m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]: StatueIcons_Pistol
+			// m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][4]: StatueIcons_Pistol
 			// 1은 Pistol Icon Vertex
 			if (BulletCount <= 1)
 			{
@@ -484,11 +503,11 @@ void CGameScene::Animate(float ElapsedTime)
 		}
 	}
 
-	for (const auto& BilboardObject : m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI])
+	for (const auto& QuadObject : m_QuadObjects[BILBOARD_OBJECT_TYPE_UI])
 	{
-		if (BilboardObject)
+		if (QuadObject)
 		{
-			BilboardObject->Animate(ElapsedTime);
+			QuadObject->Animate(ElapsedTime);
 		}
 	}
 	
@@ -503,8 +522,6 @@ void CGameScene::Animate(float ElapsedTime)
 
 void CGameScene::PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
-	CTextureManager::GetInstance()->SetDescriptorHeap(D3D12GraphicsCommandList);
-	
 	static_pointer_cast<CDepthWriteShader>(CShaderManager::GetInstance()->GetShader(TEXT("DepthWriteShader")))->Render(D3D12GraphicsCommandList, nullptr);
 
 	UpdateShaderVariables(D3D12GraphicsCommandList);
@@ -544,11 +561,11 @@ void CGameScene::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 
 	for (UINT i = BILBOARD_OBJECT_TYPE_SKYBOX; i <= BILBOARD_OBJECT_TYPE_UI; ++i)
 	{
-		for (const auto& BilboardObject : m_BilboardObjects[i])
+		for (const auto& QuadObject : m_QuadObjects[i])
 		{
-			if (BilboardObject)
+			if (QuadObject)
 			{
-				BilboardObject->Render(D3D12GraphicsCommandList, Player->GetCamera().get(), RENDER_TYPE_STANDARD);
+				QuadObject->Render(D3D12GraphicsCommandList, Player->GetCamera().get(), RENDER_TYPE_STANDARD);
 			}
 		}
 	}
@@ -619,7 +636,11 @@ void CGameScene::ProcessPacket()
 		case MSG_TYPE_DISCONNECTION:
 		case MSG_TYPE_TITLE:
 			CSceneManager::GetInstance()->ReserveScene(TEXT("TitleScene"), ReceivedPacketData.m_MsgType);
-			CFramework::GetInstance()->SetPostProcessingType(POST_PROCESSING_TYPE_FADE_OUT);
+			CFramework::GetInstance()->GetPostProcessingShader()->SetPostProcessingType(POST_PROCESSING_TYPE_FADE_OUT);
+			return;
+		case MSG_TYPE_ENDING:
+			CSceneManager::GetInstance()->ReserveScene(TEXT("EndingScene"), ReceivedPacketData.m_MsgType);
+			CFramework::GetInstance()->GetPostProcessingShader()->SetPostProcessingType(POST_PROCESSING_TYPE_FADE_OUT);
 			return;
 		}
 		
@@ -662,9 +683,9 @@ void CGameScene::ProcessPacket()
 					{
 						if (CFramework::GetInstance()->GetSocketInfo().m_ID == Player->GetID())
 						{
-							UINT BulletCount{ m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->GetVertexCount() };
+							UINT BulletCount{ m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][4]->GetVertexCount() };
 
-							m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetVertexCount(BulletCount - 1);
+							m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetVertexCount(BulletCount - 1);
 
 							CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_SHOT, 0.45f);
 						}
@@ -714,7 +735,7 @@ void CGameScene::ProcessPacket()
 
 		if (ReceivedPacketData.m_MsgType & MSG_TYPE_GAME_OVER)
 		{
-			m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][9]->SetActive(true);
+			m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][9]->SetActive(true);
 		}
 
 		if (ReceivedPacketData.m_MsgType & MSG_TYPE_PLAYER1_WEAPON_SWAP)
@@ -727,8 +748,8 @@ void CGameScene::ProcessPacket()
 
 				if (Player->GetID() == SocketInfo.m_ID)
 				{
-					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(true);  // 3: Punch
-					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(false); // 4: Pistol
+					m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(true);  // 3: Punch
+					m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(false); // 4: Pistol
 				}
 			}
 			else
@@ -737,8 +758,8 @@ void CGameScene::ProcessPacket()
 
 				if (Player->GetID() == SocketInfo.m_ID)
 				{
-					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(false); // 3: Punch
-					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(true);  // 4: Pistol
+					m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(false); // 3: Punch
+					m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(true);  // 4: Pistol
 				}
 			}
 		}
@@ -753,8 +774,8 @@ void CGameScene::ProcessPacket()
 
 				if (Player->GetID() == SocketInfo.m_ID)
 				{
-					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(true);  // 3: Punch
-					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(false); // 4: Pistol
+					m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(true);  // 3: Punch
+					m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(false); // 4: Pistol
 				}
 			}
 			else
@@ -763,8 +784,8 @@ void CGameScene::ProcessPacket()
 
 				if (Player->GetID() == SocketInfo.m_ID)
 				{
-					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(false); // 3: Punch
-					m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(true);  // 4: Pistol
+					m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(false); // 3: Punch
+					m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(true);  // 4: Pistol
 				}
 			}
 		}
@@ -822,14 +843,14 @@ void CGameScene::ProcessPacket()
 						if (CFramework::GetInstance()->GetSocketInfo().m_ID == GuardAttackData.m_TargetIndices[i])
 						{
 							// 피격 UI 애니메이션을 재생시키고, UI 체력을 1감소시킨다.
-							static_pointer_cast<CHitUI>(m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][8])->GetStateMachine()->SetCurrentState(CHitUIActivationState::GetInstance());
+							static_pointer_cast<CHitUI>(m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][8])->GetStateMachine()->SetCurrentState(CHitUIActivationState::GetInstance());
 
-							UINT LifeCount{ m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][2]->GetVertexCount() };
+							UINT LifeCount{ m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][2]->GetVertexCount() };
 
 							// 첫번째 정점은 하트 아이콘이므로 2이상부터 체력 아이콘임
 							if (LifeCount > 1)
 							{
-								m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][2]->SetVertexCount(LifeCount - 1);
+								m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][2]->SetVertexCount(LifeCount - 1);
 							}
 
 							CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_SHOT, 0.35f);
@@ -871,7 +892,7 @@ void CGameScene::ProcessPacket()
 
 		Player = static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][SocketInfo.m_ID]);
 		Player->IsCollidedByEventTrigger(Player->GetPosition());
-		(Player->GetCamera()->IsZoomIn()) ? m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(true) : m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(false); // 6: Crosshair
+		(Player->GetCamera()->IsZoomIn()) ? m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(true) : m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(false); // 6: Crosshair
 
 		m_Lights[1].m_Direction = ReceivedPacketData.m_TowerLightDirection;
 	}
@@ -882,9 +903,9 @@ vector<vector<shared_ptr<CGameObject>>>& CGameScene::GetGameObjects()
 	return m_GameObjects;
 }
 
-vector<vector<shared_ptr<CBilboardObject>>>& CGameScene::GetBilboardObjects()
+vector<vector<shared_ptr<CQuadObject>>>& CGameScene::GetQuadObjects()
 {
-	return m_BilboardObjects;
+	return m_QuadObjects;
 }
 
 vector<shared_ptr<CEventTrigger>>& CGameScene::GetEventTriggers()
@@ -1057,7 +1078,7 @@ void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
 		if (EventTrigger)
 		{
 			// [BILBOARD_OBJECT_TYPE_UI][7]: Interactions
-			EventTrigger->SetInteractionUI(m_BilboardObjects[BILBOARD_OBJECT_TYPE_UI][7]);
+			EventTrigger->SetInteractionUI(m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][7]);
 		}
 	}
 }

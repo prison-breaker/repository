@@ -1,16 +1,16 @@
 #pragma once
 #include "Scene.h"
-#include "UIs.h"
-#include "UIShader.h"
+
+class CQuadObject;
 
 class CTitleScene : public CScene
 {
 private:
 	// TilteScene에는 별도의 카메라가 없기 때문에 뷰포트와 시져렉트 영역을 멤버변수로 갖는다.
-	D3D12_VIEWPORT						m_ViewPort{ 0, 0, CLIENT_WIDTH, CLIENT_HEIGHT, 0.0f, 1.0f };
-	D3D12_RECT							m_ScissorRect{ 0, 0, CLIENT_WIDTH, CLIENT_HEIGHT };
+	D3D12_VIEWPORT					m_ViewPort{ 0, 0, CLIENT_WIDTH, CLIENT_HEIGHT, 0.0f, 1.0f };
+	D3D12_RECT						m_ScissorRect{ 0, 0, CLIENT_WIDTH, CLIENT_HEIGHT };
 
-	vector<shared_ptr<CBilboardObject>> m_BilboardObjects{};
+	vector<shared_ptr<CQuadObject>> m_QuadObjects{};
 
 public:
 	CTitleScene() = default;
@@ -46,10 +46,9 @@ public:
 	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 	virtual void PostRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 
-	// Server Function
 	virtual void ProcessPacket();
 
-	vector<shared_ptr<CBilboardObject>>& GetBilboardObjects();
+	vector<shared_ptr<CQuadObject>>& GetQuadObjects();
 
 	void RSSetViewportsAndScissorRects(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
 };

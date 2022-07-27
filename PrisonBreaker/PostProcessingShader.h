@@ -6,7 +6,6 @@ class CPostProcessingShader : public CGraphicsShader
 private:
 	POST_PROCESSING_TYPE m_PostProcessingType{ POST_PROCESSING_TYPE_FADE_IN };
 
-	bool				 m_FadeInOut{};
 	float				 m_FadeAmount{};
 
 public:

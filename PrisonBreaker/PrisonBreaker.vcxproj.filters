@@ -88,11 +88,11 @@
     <Filter Include="헤더 파일\Entity">
       <UniqueIdentifier>{c3e7e4c0-5e26-4772-b11f-3e77fc2719e0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="헤더 파일\UI &amp; SkyBox">
-      <UniqueIdentifier>{885e37f3-c910-4ea3-8f02-8f764b0bbcfd}</UniqueIdentifier>
-    </Filter>
     <Filter Include="소스 파일\UI &amp; SkyBox">
       <UniqueIdentifier>{d9bee6e8-5b9c-474c-9df4-83a30240bb20}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\UI &amp; Bilboard">
+      <UniqueIdentifier>{885e37f3-c910-4ea3-8f02-8f764b0bbcfd}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -134,12 +134,6 @@
     </ClCompile>
     <ClCompile Include="TextureManager.cpp">
       <Filter>소스 파일\Manager</Filter>
-    </ClCompile>
-    <ClCompile Include="BilboardMesh.cpp">
-      <Filter>소스 파일\Mesh</Filter>
-    </ClCompile>
-    <ClCompile Include="SkyBoxShader.cpp">
-      <Filter>소스 파일\Shader</Filter>
     </ClCompile>
     <ClCompile Include="ShadowMapShader.cpp">
       <Filter>소스 파일\Shader</Filter>
@@ -198,9 +192,6 @@
     <ClCompile Include="State_HitUI.cpp">
       <Filter>소스 파일\State</Filter>
     </ClCompile>
-    <ClCompile Include="UIShader.cpp">
-      <Filter>소스 파일\Shader</Filter>
-    </ClCompile>
     <ClCompile Include="TitleScene.cpp">
       <Filter>소스 파일\Scene</Filter>
     </ClCompile>
@@ -210,13 +201,10 @@
     <ClCompile Include="Texture.cpp">
       <Filter>소스 파일\Material</Filter>
     </ClCompile>
-    <ClCompile Include="BilboardObject.cpp">
+    <ClCompile Include="QuadObject.cpp">
       <Filter>소스 파일\UI &amp; SkyBox</Filter>
     </ClCompile>
-    <ClCompile Include="SkyBox.cpp">
-      <Filter>소스 파일\UI &amp; SkyBox</Filter>
-    </ClCompile>
-    <ClCompile Include="UIs.cpp">
+    <ClCompile Include="UIObjects.cpp">
       <Filter>소스 파일\UI &amp; SkyBox</Filter>
     </ClCompile>
     <ClCompile Include="SoundManager.cpp">
@@ -227,6 +215,18 @@
     </ClCompile>
     <ClCompile Include="PostProcessingShader.cpp">
       <Filter>소스 파일\Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="EndingScene.cpp">
+      <Filter>소스 파일\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="CreditScene.cpp">
+      <Filter>소스 파일\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="QuadShader.cpp">
+      <Filter>소스 파일\Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="BilboardObjects.cpp">
+      <Filter>소스 파일\UI &amp; SkyBox</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -272,12 +272,6 @@
     <ClInclude Include="TextureManager.h">
       <Filter>헤더 파일\Manager</Filter>
     </ClInclude>
-    <ClInclude Include="BilboardMesh.h">
-      <Filter>헤더 파일\Mesh</Filter>
-    </ClInclude>
-    <ClInclude Include="SkyBoxShader.h">
-      <Filter>헤더 파일\Shader</Filter>
-    </ClInclude>
     <ClInclude Include="ShadowMapShader.h">
       <Filter>헤더 파일\Shader</Filter>
     </ClInclude>
@@ -292,9 +286,6 @@
     </ClInclude>
     <ClInclude Include="ShaderManager.h">
       <Filter>헤더 파일\Manager</Filter>
-    </ClInclude>
-    <ClInclude Include="UIShader.h">
-      <Filter>헤더 파일\Shader</Filter>
     </ClInclude>
     <ClInclude Include="UIAnimationController.h">
       <Filter>헤더 파일\Animation</Filter>
@@ -344,23 +335,32 @@
     <ClInclude Include="Texture.h">
       <Filter>헤더 파일\Material</Filter>
     </ClInclude>
-    <ClInclude Include="BilboardObject.h">
-      <Filter>헤더 파일\UI &amp; SkyBox</Filter>
-    </ClInclude>
-    <ClInclude Include="UIs.h">
-      <Filter>헤더 파일\UI &amp; SkyBox</Filter>
-    </ClInclude>
-    <ClInclude Include="SkyBox.h">
-      <Filter>헤더 파일\UI &amp; SkyBox</Filter>
+    <ClInclude Include="UIObjects.h">
+      <Filter>헤더 파일\UI &amp; Bilboard</Filter>
     </ClInclude>
     <ClInclude Include="SoundManager.h">
       <Filter>헤더 파일\Manager</Filter>
     </ClInclude>
     <ClInclude Include="UILayer.h">
-      <Filter>헤더 파일\UI &amp; SkyBox</Filter>
+      <Filter>헤더 파일\UI &amp; Bilboard</Filter>
     </ClInclude>
     <ClInclude Include="PostProcessingShader.h">
       <Filter>헤더 파일\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="EndingScene.h">
+      <Filter>헤더 파일\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="CreditScene.h">
+      <Filter>헤더 파일\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="QuadShader.h">
+      <Filter>헤더 파일\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="QuadObject.h">
+      <Filter>헤더 파일\UI &amp; Bilboard</Filter>
+    </ClInclude>
+    <ClInclude Include="BilboardObjects.h">
+      <Filter>헤더 파일\UI &amp; Bilboard</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

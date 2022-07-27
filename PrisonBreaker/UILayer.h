@@ -1,6 +1,6 @@
 #pragma once
 
-struct TextBlock
+struct TEXT_BLOCK
 {
     tstring                   m_Text{};
     int                       m_TextPos{};
@@ -31,7 +31,7 @@ private:
     vector<ComPtr<ID3D11Resource>> m_D3D11WrappedRenderTargets{};
     vector<ComPtr<ID2D1Bitmap1>>   m_D2D1RenderTargets{};
 
-    TextBlock                      m_TextBlock{};
+    TEXT_BLOCK                     m_TextBlock{};
 
 public:
     CUILayer(ID3D12Device* D3D12Device, ID3D12CommandQueue* D3D12CommandQueue, UINT RenderTargetCount);

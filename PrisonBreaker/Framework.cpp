@@ -1,12 +1,18 @@
 #include "stdafx.h"
 #include "Framework.h"
+#include "Timer.h"
+#include "PostProcessingShader.h"
+#include "UILayer.h"
+#include "Texture.h"
 #include "TitleScene.h"
 #include "GameScene.h"
+#include "EndingScene.h"
+#include "CreditScene.h"
 
 CFramework::CFramework()
 {
 	m_Timer = make_unique<CTimer>();
-	_tcscpy_s(m_Title, TEXT("PrisonBreaker ("));
+	_tcscpy_s(m_Title, TEXT("PRISON BREAKER ("));
 
 	CSoundManager::GetInstance()->Initialize();
 }
@@ -32,17 +38,9 @@ void CFramework::SetActive(bool IsActive)
 	m_IsActive = IsActive;
 }
 
-void CFramework::SetPostProcessingType(POST_PROCESSING_TYPE PostProcessingType)
-{
-	if (m_PostProcessingShader)
-	{
-		m_PostProcessingShader->SetPostProcessingType(PostProcessingType);
-	}
-}
-
 void CFramework::UpdateWindowTitle()
 {
-	m_Timer->GetFrameRate(m_Title + 15, 48);
+	m_Timer->GetFrameRate(m_Title + 16, 48);
 	SetWindowText(m_hWnd, m_Title);
 }
 
@@ -83,16 +81,31 @@ void CFramework::BuildObjects()
 
 	DX::ThrowIfFailed(m_D3D12GraphicsCommandList->Reset(m_D3D12CommandAllocator.Get(), nullptr));
 
-	// 타이틀 씬과 게임 씬의 데이터를 모두 로드해서 SceneManager에 추가한다.
-	shared_ptr<CScene> Scene{ make_shared<CTitleScene>() };
+	shared_ptr<CTitleScene> TtileScene{ make_shared<CTitleScene>() };
 
-	CSceneManager::GetInstance()->RegisterScene(TEXT("TitleScene"), Scene);
+	CSceneManager::GetInstance()->RegisterScene(TEXT("TitleScene"), TtileScene);
+	TtileScene->OnCreate(m_D3D12Device.Get(), m_D3D12GraphicsCommandList.Get(), m_D3D12RootSignature.Get());
+
+	shared_ptr<CGameScene> GameScene{ make_shared<CGameScene>() };
+
+	CSceneManager::GetInstance()->RegisterScene(TEXT("GameScene"), GameScene);
+	GameScene->OnCreate(m_D3D12Device.Get(), m_D3D12GraphicsCommandList.Get(), m_D3D12RootSignature.Get());
+
+	shared_ptr<CEndingScene> EndingScene{ make_shared<CEndingScene>(GameScene->GetGameObjects(), GameScene->GetQuadObjects()[BILBOARD_OBJECT_TYPE_SKYBOX][0]) };
+
+	CSceneManager::GetInstance()->RegisterScene(TEXT("EndingScene"), EndingScene);
+	EndingScene->OnCreate(m_D3D12Device.Get(), m_D3D12GraphicsCommandList.Get(), m_D3D12RootSignature.Get());
+
+	shared_ptr<CCreditScene> CreditScene{ make_shared<CCreditScene>() };
+
+	CSceneManager::GetInstance()->RegisterScene(TEXT("CreditScene"), CreditScene);
+	CreditScene->OnCreate(m_D3D12Device.Get(), m_D3D12GraphicsCommandList.Get(), m_D3D12RootSignature.Get());
+
 	CSceneManager::GetInstance()->SetCurrentScene(TEXT("TitleScene"));
-	Scene->OnCreate(m_D3D12Device.Get(), m_D3D12GraphicsCommandList.Get(), m_D3D12RootSignature.Get());
 
-	Scene = make_shared<CGameScene>();
-	CSceneManager::GetInstance()->RegisterScene(TEXT("GameScene"), Scene);
-	Scene->OnCreate(m_D3D12Device.Get(), m_D3D12GraphicsCommandList.Get(), m_D3D12RootSignature.Get());
+	// 모든 텍스처를 저장하는 힙과 각 텍스처의 SRV 리소스를 생성한다.
+	CTextureManager::GetInstance()->CreateCbvSrvUavDescriptorHeaps(m_D3D12Device.Get());
+	CTextureManager::GetInstance()->CreateShaderResourceViews(m_D3D12Device.Get());
 
 	DX::ThrowIfFailed(m_D3D12GraphicsCommandList->Close());
 
@@ -500,6 +513,7 @@ void CFramework::Animate()
 
 void CFramework::PreRender()
 {
+	CTextureManager::GetInstance()->SetDescriptorHeap(m_D3D12GraphicsCommandList.Get());
 	CSceneManager::GetInstance()->PreRender(m_D3D12GraphicsCommandList.Get());
 }
 
@@ -576,7 +590,12 @@ void CFramework::FrameAdvance()
 	UpdateWindowTitle();
 }
 
-shared_ptr<CUILayer> CFramework::GetUILayer()
+shared_ptr<CPostProcessingShader> CFramework::GetPostProcessingShader() const
+{
+	return m_PostProcessingShader;
+}
+
+shared_ptr<CUILayer> CFramework::GetUILayer() const
 {
 	return m_UILayer;
 }
@@ -622,16 +641,18 @@ void CFramework::ConnectServer()
 		PostQuitMessage(0);
 	}
 
-	CSceneManager::GetInstance()->GetScene(TEXT("TitleScene"))->Initialize();
 	CSceneManager::GetInstance()->GetScene(TEXT("GameScene"))->Initialize();
 }
 
 void CFramework::DisconnectServer()
 {
-	closesocket(m_SocketInfo.m_Socket);
-	WSACleanup();
+	if (m_SocketInfo.m_Socket)
+	{
+		closesocket(m_SocketInfo.m_Socket);
+		WSACleanup();
 
-	memset(&m_SocketInfo, NULL, sizeof(SOCKET_INFO));
+		memset(&m_SocketInfo, NULL, sizeof(SOCKET_INFO));
+	}
 }
 
 void CFramework::ProcessPacket()

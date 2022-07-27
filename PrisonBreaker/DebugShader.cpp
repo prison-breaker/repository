@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "DebugShader.h"
 #include "GameScene.h"
+#include "GameObject.h"
 
 D3D12_INPUT_LAYOUT_DESC CDebugShader::CreateInputLayout(UINT StateNum)
 {

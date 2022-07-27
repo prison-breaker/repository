@@ -1,0 +1,11 @@
+<UI>
+	<UIObject>
+		<Type> 9
+		<IsActive> 1
+		<TextureName> Textures/EndingCredits.dds
+		<CellInfo> 6 1
+		<RectTransform> 6 959 1139 0 708 68 509 1589 1 708 68 1409 1589 2 708 68 1409 1789 3 708 68 1409 1989 4 708 68 959 2389 5 708 68 
+		<AlphaColor> 1 1 1 1 1 1 
+		<ChildCount> 0
+	</UIObject>
+</UI>

@@ -2,6 +2,12 @@
 #include "EventTriggers.h"
 #include "Framework.h"
 #include "GameScene.h"
+#include "Player.h"
+#include "Guard.h"
+#include "StateMachine.h"
+#include "State_Guard.h"
+#include "State_KeyUI.h"
+#include "UIObjects.h"
 
 COpenDoorEventTrigger::COpenDoorEventTrigger()
 {
@@ -134,9 +140,9 @@ bool CPowerDownEventTrigger::InteractEventTrigger(UINT CallerIndex)
 			// 0번 플레이어의 감시탑 차단 미션UI를 완료상태로 변경한다.
 			if (CFramework::GetInstance()->GetSocketInfo().m_ID == 0)
 			{
-				vector<vector<shared_ptr<CBilboardObject>>>& BilboardObjects{ GameScene->GetBilboardObjects() };
+				vector<vector<shared_ptr<CQuadObject>>>& QuadObjects{ GameScene->GetQuadObjects() };
 
-				BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(0, 1);
+				QuadObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(0, 1);
 			}
 
 			CSoundManager::GetInstance()->Play(SOUND_TYPE_POWER_DOWN, 0.65f);
@@ -235,9 +241,9 @@ bool CSirenEventTrigger::InteractEventTrigger(UINT CallerIndex)
 		// 1번 플레이어의 사이렌 작동 미션UI를 완료상태로 변경한다.
 		if (CFramework::GetInstance()->GetSocketInfo().m_ID == 1)
 		{
-			vector<vector<shared_ptr<CBilboardObject>>>& BilboardObjects{ GameScene->GetBilboardObjects() };
+			vector<vector<shared_ptr<CQuadObject>>>& QuadObjects{ GameScene->GetQuadObjects() };
 
-			BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(0, 3);
+			QuadObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(0, 3);
 		}
 
 		CSoundManager::GetInstance()->Play(SOUND_TYPE_SIREN, 0.25f);
@@ -310,6 +316,8 @@ bool COpenGateEventTrigger::InteractEventTrigger(UINT CallerIndex)
 		if (Player->HasKey() && !m_UsedKeyIndices[CallerIndex])
 		{
 			m_UsedKeyIndices[CallerIndex] = true;
+
+			CSoundManager::GetInstance()->Play(SOUND_TYPE_UNLOCK, 0.5f);
 
 			if (m_UsedKeyIndices[0] && m_UsedKeyIndices[1])
 			{
@@ -384,11 +392,11 @@ bool CGetPistolEventTrigger::InteractEventTrigger(UINT CallerIndex)
 
 		if (CFramework::GetInstance()->GetSocketInfo().m_ID == CallerIndex)
 		{
-			vector<vector<shared_ptr<CBilboardObject>>>& BilboardObjects{ GameScene->GetBilboardObjects() };
+			vector<vector<shared_ptr<CQuadObject>>>& QuadObjects{ GameScene->GetQuadObjects() };
 
-			BilboardObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(false); // 4: Punch UI
-			BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(true);  // 6: Pistol UI
-			BilboardObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetVertexCount(6);
+			QuadObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(false); // 4: Punch UI
+			QuadObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(true);  // 6: Pistol UI
+			QuadObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetVertexCount(6);
 		}
 
 		return true;
@@ -434,13 +442,13 @@ bool CGetKeyEventTrigger::InteractEventTrigger(UINT CallerIndex)
 
 		if (CFramework::GetInstance()->GetSocketInfo().m_ID == CallerIndex)
 		{
-			vector<vector<shared_ptr<CBilboardObject>>>& BilboardObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene("GameScene"))->GetBilboardObjects()};
+			vector<vector<shared_ptr<CQuadObject>>>& QuadObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene("GameScene"))->GetQuadObjects()};
 
 			// 열쇠 획득 애니메이션을 출력하도록 CKeyUIActivationState 상태로 전이한다.
-			static_pointer_cast<CKeyUI>(BilboardObjects[BILBOARD_OBJECT_TYPE_UI][5])->GetStateMachine()->SetCurrentState(CKeyUIActivationState::GetInstance());
+			static_pointer_cast<CKeyUI>(QuadObjects[BILBOARD_OBJECT_TYPE_UI][5])->GetStateMachine()->SetCurrentState(CKeyUIActivationState::GetInstance());
 
 			// 열쇠 획득 미션UI를 완료상태로 변경한다.
-			BilboardObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(1, 5);
+			QuadObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(1, 5);
 		}
 
 		return true;

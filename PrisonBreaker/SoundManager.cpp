@@ -38,6 +38,7 @@ void CSoundManager::Initialize()
 	Result = m_System->createSound("Sounds/01. Beginning.mp3", FMOD_LOOP_NORMAL, nullptr, &m_Sounds[SOUND_TYPE_TITLE_BGM]);
 	Result = m_System->createSound("Sounds/04. On The Run.mp3", FMOD_LOOP_NORMAL, nullptr, &m_Sounds[SOUND_TYPE_INGAME_BGM_1]);
 	Result = m_System->createSound("Sounds/05. Getaway.mp3", FMOD_LOOP_NORMAL, nullptr, &m_Sounds[SOUND_TYPE_INGAME_BGM_2]);
+	Result = m_System->createSound("Sounds/02. Farewell.mp3", FMOD_LOOP_NORMAL, nullptr, &m_Sounds[SOUND_TYPE_ENDING_BGM]);
 
 	// SFX
 	Result = m_System->createSound("Sounds/ButtonOver.wav", FMOD_LOOP_OFF, nullptr, &m_Sounds[SOUND_TYPE_BUTTON_OVER]);
@@ -51,18 +52,7 @@ void CSoundManager::Initialize()
 	Result = m_System->createSound("Sounds/PistolShot.wav", FMOD_LOOP_OFF, nullptr, &m_Sounds[SOUND_TYPE_PISTOL_SHOT]);
 	Result = m_System->createSound("Sounds/PistolDryFire.wav", FMOD_LOOP_OFF, nullptr, &m_Sounds[SOUND_TYPE_PISTOL_EMPTY]);
 	Result = m_System->createSound("Sounds/EvacuationSiren.wav", FMOD_LOOP_NORMAL, nullptr, &m_Sounds[SOUND_TYPE_SIREN]);
-
-	if (Result != FMOD_OK)
-	{
-		return;
-	}
-
-	Result = m_Channels[SOUND_TYPE_TITLE_BGM]->setVolume(0.65f);
-
-	if (Result != FMOD_OK)
-	{
-		return;
-	}
+	Result = m_System->createSound("Sounds/Unlock.wav", FMOD_LOOP_OFF, nullptr, &m_Sounds[SOUND_TYPE_UNLOCK]);
 }
 
 void CSoundManager::Play(SOUND_TYPE SoundType, float Volume)

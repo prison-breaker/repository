@@ -1,5 +1,11 @@
 #include "stdafx.h"
 #include "GameObject.h"
+#include "Mesh.h"
+#include "Material.h"
+#include "AnimationController.h"
+#include "Camera.h"
+#include "NavMesh.h"
+#include "NavNode.h"
 
 shared_ptr<LOADED_MODEL_INFO> CGameObject::LoadObjectFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName, unordered_map<tstring, shared_ptr<CMesh>>& MeshCaches, unordered_map<tstring, shared_ptr<CMaterial>>& MaterialCaches)
 {

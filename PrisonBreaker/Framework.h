@@ -1,7 +1,8 @@
 #pragma once
-#include "Timer.h"
-#include "UILayer.h"
-#include "PostProcessingShader.h"
+
+class CTimer;
+class CPostProcessingShader;
+class CUILayer;
 
 struct CB_FRAMEWORKINFO
 {
@@ -71,8 +72,6 @@ public:
 
 	void SetActive(bool IsActive);
 
-	void SetPostProcessingType(POST_PROCESSING_TYPE PostProcessingType);
-
 	void UpdateWindowTitle();
 
 	void OnCreate(HINSTANCE hInstance, HWND hWnd);
@@ -112,9 +111,10 @@ public:
 	void PopulateCommandList();
 	void FrameAdvance();
 
-	shared_ptr<CUILayer> GetUILayer();
+	shared_ptr<CPostProcessingShader> GetPostProcessingShader() const;
 
-	// Server Function
+	shared_ptr<CUILayer> GetUILayer() const;
+
 	void ConnectServer();
 	void DisconnectServer();
 

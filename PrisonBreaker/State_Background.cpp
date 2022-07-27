@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "State_Background.h"
-#include "UIs.h"
+#include "UIAnimationController.h"
+#include "UIObjects.h"
 
 CBackgroundUIFadeState* CBackgroundUIFadeState::GetInstance()
 {
@@ -21,7 +22,7 @@ void CBackgroundUIFadeState::ProcessInput(const shared_ptr<CBackgroundUI>& Entit
 
 void CBackgroundUIFadeState::Update(const shared_ptr<CBackgroundUI>& Entity, float ElapsedTime)
 {
-	Entity->GetUIAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
+	Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
 }
 
 void CBackgroundUIFadeState::Exit(const shared_ptr<CBackgroundUI>& Entity)

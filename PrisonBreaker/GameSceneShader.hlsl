@@ -315,119 +315,191 @@ VS_OUTPUT VS_Main_Skinning(VS_INPUT_SKINNING Input)
 	return Output;
 }
 
-// ====================================== SKYBOX SHADER ======================================
+// ====================================== QUAD SHADER ======================================
 
-struct VS_INPUT_SKYBOX
+struct VS_INPUT_QUAD
 {
-	float3 m_PositionW : POSITION;
-	float2 m_SizeW	   : SIZE;
+    float3 m_Position   : POSITION;
+    float2 m_Size       : SIZE;
+    float  m_AlphaColor : ALPHACOLOR;
+    uint2  m_CellCount  : CELLCOUNT;
+    float  m_CellIndex  : CELLINDEX;
 };
 
-struct VS_OUTPUT_SKYBOX
+struct VS_OUTPUT_QUAD
 {
-	float3 m_CenterW : POSITION;
-	float2 m_SizeW	 : SIZE;
+    float3 m_Position   : POSITION;
+    float2 m_Size       : SIZE;
+    float  m_AlphaColor : ALPHACOLOR;
+    uint2  m_CellCount  : CELLCOUNT;
+    float  m_CellIndex  : CELLINDEX;
 };
 
-struct GS_OUTPUT_SKYBOX
+struct GS_OUTPUT_QUAD
 {
-	float4 m_Position : SV_POSITION;
-	float2 m_TexCoord : TEXCOORD;
+    float4 m_Position   : SV_POSITION;
+    float2 m_TexCoord   : TEXCOORD;
+    float  m_AlphaColor : ALPHACOLOR;
 };
 
-VS_OUTPUT_SKYBOX VS_SkyBox(VS_INPUT_SKYBOX Input)
+VS_OUTPUT_QUAD VS_Quad(VS_INPUT_QUAD Input)
 {
-	VS_OUTPUT_SKYBOX Output = (VS_OUTPUT_SKYBOX)0;
+    VS_OUTPUT_QUAD Output = (VS_OUTPUT_QUAD) 0;
 
-	float4x4 CameraWorldMatrix = {
-		1.0f, 0.0f, 0.0f, 0.0f,
-		0.0f, 1.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f, 0.0f,
-		 CameraPosition,  1.0f
-	};
+    Output.m_Position = Input.m_Position;
+    Output.m_Size = Input.m_Size;
+    Output.m_AlphaColor = Input.m_AlphaColor;
+    Output.m_CellCount = Input.m_CellCount;
+    Output.m_CellIndex = Input.m_CellIndex;
 
-	Output.m_CenterW = (float3)mul(float4(Input.m_PositionW, 1.0f), CameraWorldMatrix);
-	Output.m_SizeW = Input.m_SizeW;
-
-	return Output;
+    return Output;
 }
 
-[maxvertexcount(4)]
-void GS_SkyBox(point VS_OUTPUT_SKYBOX Input[1], inout TriangleStream<GS_OUTPUT_SKYBOX> OutStream)
+float4 PS_Quad(GS_OUTPUT_QUAD Input) : SV_TARGET
 {
-	float3 Look = normalize(CameraPosition - Input[0].m_CenterW);
-	float3 Up = float3(0.0f, 1.0f, 0.0f);
+    float4 Color = AlbedoMapTexture.Sample(Sampler, Input.m_TexCoord);
+	
+    Color.a *= Input.m_AlphaColor;
+	
+    return Color;
+}
 
-	if (Look.y < 0.0f)
-	{
-		Up = float3(0.0f, 0.0f, -1.0f);
-	}
-	else if (Look.y > 0.0f)
-	{
-		Up = float3(0.0f, 0.0f, +1.0f);
-	}
+// ====================================== BILBOARD SHADER ======================================
 
-	float3 Right = cross(Up, Look);
+[maxvertexcount(4)]
+void GS_Bilboard(point VS_OUTPUT_QUAD Input[1], inout TriangleStream<GS_OUTPUT_QUAD> OutStream)
+{
+    float3 ToCamera = CameraPosition - Input[0].m_Position;
+	
+    float3 Up = float3(0.0f, 1.0f, 0.0f);
+    float3 Look = normalize(ToCamera);
+    float3 Right = cross(Up, Look);
 
-	float HalfWidth = 0.5f * Input[0].m_SizeW.x;
-	float HalfHeight = 0.5f * Input[0].m_SizeW.y;
+    float HalfWidth = 0.5f * Input[0].m_Size.x;
+    float HalfHeight = 0.5f * Input[0].m_Size.y;
 
-	float4 Vertices[4] = {
-		float4(Input[0].m_CenterW + HalfWidth * Right - HalfHeight * Up, 1.0f),
-		float4(Input[0].m_CenterW + HalfWidth * Right + HalfHeight * Up, 1.0f),
-		float4(Input[0].m_CenterW - HalfWidth * Right - HalfHeight * Up, 1.0f),
-		float4(Input[0].m_CenterW - HalfWidth * Right + HalfHeight * Up, 1.0f)
-	};
+    float4 Vertices[4] =
+    {
+        float4(Input[0].m_Position + HalfWidth * Right - HalfHeight * Up, 1.0f),
+		float4(Input[0].m_Position + HalfWidth * Right + HalfHeight * Up, 1.0f),
+		float4(Input[0].m_Position - HalfWidth * Right - HalfHeight * Up, 1.0f),
+		float4(Input[0].m_Position - HalfWidth * Right + HalfHeight * Up, 1.0f)
+    };
 
-	float2 TexCoords[4] = {
-		float2(0.0f, 1.0f),
+    float2 TexCoords[4] =
+    {
+        float2(0.0f, 1.0f),
 		float2(0.0f, 0.0f),
 		float2(1.0f, 1.0f),
 		float2(1.0f, 0.0f)
-	};
+    };
 
-	GS_OUTPUT_SKYBOX Output = (GS_OUTPUT_SKYBOX)0;
+    if (Input[0].m_CellCount.x > 0 && Input[0].m_CellCount.y > 0)
+    {
+        float2 CellSize = float2(1.0f / Input[0].m_CellCount.y, 1.0f / Input[0].m_CellCount.x);
 
-	for (int i = 0; i < 4; ++i)
-	{
-		Output.m_Position = mul(mul(Vertices[i], ViewMatrix), ProjectionMatrix).xyww;
-		Output.m_TexCoord = TexCoords[i];
+        for (int i = 0; i < 4; ++i)
+        {
+            TexCoords[i].x = CellSize.x * TexCoords[i].x + CellSize.x * (int) ((Input[0].m_CellIndex) % Input[0].m_CellCount.y);
+            TexCoords[i].y = CellSize.y * TexCoords[i].y + CellSize.y * (int) ((Input[0].m_CellIndex) / Input[0].m_CellCount.y);
+        }
+    }
+	
+    GS_OUTPUT_QUAD Output = (GS_OUTPUT_QUAD) 0;
 
-		OutStream.Append(Output);
-	}
+    float Attenuation = clamp(1.0f - length(ToCamera) / 30.0f, 0.0f, 1.0f);
+	
+    for (int j = 0; j < 4; ++j)
+    {
+        Output.m_Position = mul(mul(Vertices[j], ViewMatrix), ProjectionMatrix);
+        Output.m_TexCoord = TexCoords[j];
+        Output.m_AlphaColor = Attenuation;
+		
+        OutStream.Append(Output);
+    }
 }
 
-float4 PS_SkyBox(GS_OUTPUT_SKYBOX Input) : SV_TARGET
+float4 PS_Bilboard(GS_OUTPUT_QUAD Input) : SV_TARGET
 {
-	return AlbedoMapTexture.Sample(Sampler, Input.m_TexCoord);
+    float4 Color = AlbedoMapTexture.Sample(Sampler, Input.m_TexCoord);
+	
+    Color.rgb *= Input.m_AlphaColor;
+	
+    return Color;
 }
 
-// ====================================== UI IMAGE SHADER ======================================
+// ====================================== SKYBOX SHADER ======================================
 
-struct VS_INPUT_IMAGE
+VS_OUTPUT_QUAD VS_SkyBox(VS_INPUT_QUAD Input)
 {
-	float3 m_PositionS  : POSITION;
-	float2 m_SizeS      : SIZE;
-    float  m_AlphaColor : ALPHACOLOR;
-	uint2  m_CellCount  : CELLCOUNT;
-	float  m_CellIndex  : CELLINDEX;
-};
+    VS_OUTPUT_QUAD Output = (VS_OUTPUT_QUAD) 0;
 
-struct VS_OUTPUT_IMAGE
-{
-	float3 m_CenterS    : POSITION;
-	float2 m_SizeS      : SIZE;
-    float  m_AlphaColor : ALPHACOLOR;
-	uint2  m_CellCount  : CELLCOUNT;
-    float m_CellIndex   : CELLINDEX;
-};
+    float4x4 CameraWorldMatrix =
+    {
+        1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		  CameraPosition, 1.0f
+    };
 
-struct GS_OUTPUT_IMAGE
+    Output.m_Position = (float3) mul(float4(Input.m_Position, 1.0f), CameraWorldMatrix);
+    Output.m_Size = Input.m_Size;
+    Output.m_AlphaColor = Input.m_AlphaColor;
+    Output.m_CellCount = Input.m_CellCount;
+    Output.m_CellIndex = Input.m_CellIndex;
+	
+    return Output;
+}
+
+[maxvertexcount(4)]
+void GS_SkyBox(point VS_OUTPUT_QUAD Input[1], inout TriangleStream<GS_OUTPUT_QUAD> OutStream)
 {
-	float4 m_Position   : SV_POSITION;
-	float2 m_TexCoord   : TEXCOORD;
-    float  m_AlphaColor : ALPHACOLOR;
-};
+    float3 Look = normalize(CameraPosition - Input[0].m_Position);
+    float3 Up = float3(0.0f, 1.0f, 0.0f);
+
+    if (Look.y < 0.0f)
+    {
+        Up = float3(0.0f, 0.0f, -1.0f);
+    }
+    else if (Look.y > 0.0f)
+    {
+        Up = float3(0.0f, 0.0f, +1.0f);
+    }
+
+    float3 Right = cross(Up, Look);
+
+    float HalfWidth = 0.5f * Input[0].m_Size.x;
+    float HalfHeight = 0.5f * Input[0].m_Size.y;
+
+    float4 Vertices[4] =
+    {
+        float4(Input[0].m_Position + HalfWidth * Right - HalfHeight * Up, 1.0f),
+		float4(Input[0].m_Position + HalfWidth * Right + HalfHeight * Up, 1.0f),
+		float4(Input[0].m_Position - HalfWidth * Right - HalfHeight * Up, 1.0f),
+		float4(Input[0].m_Position - HalfWidth * Right + HalfHeight * Up, 1.0f)
+    };
+
+    float2 TexCoords[4] =
+    {
+        float2(0.0f, 1.0f),
+		float2(0.0f, 0.0f),
+		float2(1.0f, 1.0f),
+		float2(1.0f, 0.0f)
+    };
+
+    GS_OUTPUT_QUAD Output = (GS_OUTPUT_QUAD) 0;
+
+    for (int i = 0; i < 4; ++i)
+    {
+        Output.m_Position = mul(mul(Vertices[i], ViewMatrix), ProjectionMatrix).xyww;
+        Output.m_TexCoord = TexCoords[i];
+        Output.m_AlphaColor = Input[0].m_AlphaColor;
+
+        OutStream.Append(Output);
+    }
+}
+
+// ====================================== UI SHADER ======================================
 
 float3 TransScreenToCamera(float Xpos, float Ypos)
 {
@@ -435,69 +507,49 @@ float3 TransScreenToCamera(float Xpos, float Ypos)
 	return float3(2.0f * Xpos / CLIENT_WIDTH - 1.0f, -2.0f * Ypos / CLIENT_HEIGHT + 1.0f, 0.0f);
 }
 
-VS_OUTPUT_IMAGE VS_Image(VS_INPUT_IMAGE Input)
-{
-	VS_OUTPUT_IMAGE Output = (VS_OUTPUT_IMAGE)0;
-
-	Output.m_CenterS = Input.m_PositionS;
-	Output.m_SizeS = Input.m_SizeS;
-    Output.m_AlphaColor = Input.m_AlphaColor;
-	Output.m_CellCount = Input.m_CellCount;
-	Output.m_CellIndex = Input.m_CellIndex;
-
-	return Output;
-}
-
 [maxvertexcount(4)]
-void GS_Image(point VS_OUTPUT_IMAGE Input[1], inout TriangleStream<GS_OUTPUT_IMAGE> OutStream)
+void GS_UI(point VS_OUTPUT_QUAD Input[1], inout TriangleStream<GS_OUTPUT_QUAD> OutStream)
 {
-	float2 ScreenCoord = float2(Input[0].m_CenterS.x, Input[0].m_CenterS.y);
-	float2 HalfLength = float2(0.5f * Input[0].m_SizeS.x, 0.5f * Input[0].m_SizeS.y); // x: Width, y: Height
+    float2 ScreenCoord = float2(Input[0].m_Position.x, Input[0].m_Position.y);
+    float2 HalfLength = float2(0.5f * Input[0].m_Size.x, 0.5f * Input[0].m_Size.y);
 
-	float4 Vertices[4] = {
-		float4(TransScreenToCamera(ScreenCoord.x - HalfLength.x, ScreenCoord.y + HalfLength.y), 1.0f),
+    float4 Vertices[4] =
+    {
+        float4(TransScreenToCamera(ScreenCoord.x - HalfLength.x, ScreenCoord.y + HalfLength.y), 1.0f),
 		float4(TransScreenToCamera(ScreenCoord.x - HalfLength.x, ScreenCoord.y - HalfLength.y), 1.0f),
 		float4(TransScreenToCamera(ScreenCoord.x + HalfLength.x, ScreenCoord.y + HalfLength.y), 1.0f),
 		float4(TransScreenToCamera(ScreenCoord.x + HalfLength.x, ScreenCoord.y - HalfLength.y), 1.0f)
-	};
+    };
 
-	float2 TexCoords[4] = {
-		float2(0.0f, 1.0f),
+    float2 TexCoords[4] =
+    {
+        float2(0.0f, 1.0f),
 		float2(0.0f, 0.0f),
 		float2(1.0f, 1.0f),
 		float2(1.0f, 0.0f)
-	};
+    };
 
-	if (Input[0].m_CellCount.x > 0 && Input[0].m_CellCount.y > 0)
-	{
-		float2 CellSize = float2(1.0f / Input[0].m_CellCount.y, 1.0f / Input[0].m_CellCount.x);
+    if (Input[0].m_CellCount.x > 0 && Input[0].m_CellCount.y > 0)
+    {
+        float2 CellSize = float2(1.0f / Input[0].m_CellCount.y, 1.0f / Input[0].m_CellCount.x);
 
-		for (int i = 0; i < 4; ++i)
-		{
-            TexCoords[i].x = CellSize.x * TexCoords[i].x + CellSize.x * (int)((Input[0].m_CellIndex) % Input[0].m_CellCount.y);
-            TexCoords[i].y = CellSize.y * TexCoords[i].y + CellSize.y * (int)((Input[0].m_CellIndex) / Input[0].m_CellCount.y);
+        for (int i = 0; i < 4; ++i)
+        {
+            TexCoords[i].x = CellSize.x * TexCoords[i].x + CellSize.x * (int) ((Input[0].m_CellIndex) % Input[0].m_CellCount.y);
+            TexCoords[i].y = CellSize.y * TexCoords[i].y + CellSize.y * (int) ((Input[0].m_CellIndex) / Input[0].m_CellCount.y);
         }
-	}
+    }
 
-	GS_OUTPUT_IMAGE Output = (GS_OUTPUT_IMAGE)0;
+    GS_OUTPUT_QUAD Output = (GS_OUTPUT_QUAD) 0;
 
-	for (int j = 0; j < 4; ++j)
-	{
-		Output.m_Position = Vertices[j];
-		Output.m_TexCoord = TexCoords[j];
+    for (int j = 0; j < 4; ++j)
+    {
+        Output.m_Position = Vertices[j];
+        Output.m_TexCoord = TexCoords[j];
         Output.m_AlphaColor = Input[0].m_AlphaColor;
 
-		OutStream.Append(Output);
-	}
-}
-
-float4 PS_Image(GS_OUTPUT_IMAGE Input) : SV_TARGET
-{
-    float4 Color = AlbedoMapTexture.Sample(Sampler, Input.m_TexCoord);
-	
-    Color.a *= Input.m_AlphaColor;
-	
-    return Color;
+        OutStream.Append(Output);
+    }
 }
 
 // ====================================== STANDARD DEPTH WRITE SHADER ======================================
@@ -599,7 +651,7 @@ VS_OUTPUT_POST_PROCESSING VS_PostProcessing(uint VertexID : SV_VertexID)
 
 float4 PS_PostProcessing(VS_OUTPUT_POST_PROCESSING Input) : SV_TARGET
 {
-    float4 Color = AlbedoMapTexture.Sample(Sampler, Input.m_TexCoord);
+    float4 Color = AlbedoMapTexture.Sample(Sampler, Input.m_TexCoord); // * ceil(clamp(-cos(2.0f * 3.14f * Input.m_TexCoord.y) + 0.9f, 0.0f, 1.0f));
 	
     Color.rgb *= clamp(FadeAmount, 0.0f, 1.0f);
 

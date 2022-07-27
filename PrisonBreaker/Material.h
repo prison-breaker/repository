@@ -1,7 +1,6 @@
 #pragma once
-#include "Texture.h"
 
-class CCamera;
+class CTexture;
 class CShader;
 
 class CMaterial
@@ -32,7 +31,7 @@ public:
 	void SetName(const tstring & Name);
 	const tstring& GetName() const;
 
-	void SetStateNum(SHADER_TYPE ShaderType);
+	void SetStateNum(UINT StateNum);
 
 	void SetPipelineState(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, RENDER_TYPE RenderType);
 };

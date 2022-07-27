@@ -1,7 +1,6 @@
 #pragma once
-#include "Player.h"
-#include "Guard.h"
-#include "SkyBox.h"
+
+class CCamera;
 
 class CShader
 {
@@ -40,6 +39,7 @@ public:
 	virtual DXGI_FORMAT GetDSVFormat(UINT StateNum);
 
 	virtual void CreatePipelineState(ID3D12Device* D3D12Device, ID3D12RootSignature* D3D12RootSignature, UINT StateNum);
+	virtual void CreatePipelineStates(ID3D12Device* D3D12Device, ID3D12RootSignature* D3D12RootSignature, UINT StateCount);
 	virtual void SetPipelineState(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, UINT StateNum);
 
 	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera);

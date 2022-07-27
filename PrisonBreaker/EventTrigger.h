@@ -1,7 +1,7 @@
 #pragma once
 
 class CGameObject;
-class CBilboardObject;
+class CQuadObject;
 
 class CEventTrigger : public enable_shared_from_this<CEventTrigger>
 {
@@ -15,7 +15,7 @@ protected:
 	XMFLOAT3						m_TriggerArea[4]{}; // Vertices
 
 	vector<shared_ptr<CGameObject>> m_EventObjects{};
-	shared_ptr<CBilboardObject>		m_InteractionUI{};
+	shared_ptr<CQuadObject>		m_InteractionUI{};
 
 public:
 	CEventTrigger() = default;
@@ -43,8 +43,8 @@ public:
 	void InsertEventObject(const shared_ptr<CGameObject>& EventObject);
 	shared_ptr<CGameObject> GetEventObject(UINT Index);
 
-	void SetInteractionUI(const shared_ptr<CBilboardObject>& InteractionUI);
-	shared_ptr<CBilboardObject> GetInteractionUI() const;
+	void SetInteractionUI(const shared_ptr<CQuadObject>& InteractionUI);
+	shared_ptr<CQuadObject> GetInteractionUI() const;
 
 	bool IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& LookDirection);
 

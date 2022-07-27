@@ -1,11 +1,13 @@
 #pragma once
 #include "Scene.h"
-#include "UIs.h"
-#include "EventTriggers.h"
-#include "ShadowMapShader.h"
-#include "SkyBoxShader.h"
-#include "UIShader.h"
-#include "DebugShader.h"
+
+class CGameObject;
+class CPlayer;
+class CQuadObject;
+class CEventTrigger;
+class CNavMesh;
+class CMesh;
+class CMaterial;
 
 struct FOG
 {
@@ -49,25 +51,25 @@ struct CB_LIGHT
 class CGameScene : public CScene
 {
 private:
-	UINT										m_InputMask{};
+	UINT									m_InputMask{};
 
-	INIT_GAME_DATA								m_InitGameData{};
+	INIT_GAME_DATA							m_InitGameData{};
 
-	vector<vector<shared_ptr<CGameObject>>>     m_GameObjects{};
-	vector<vector<shared_ptr<CBilboardObject>>> m_BilboardObjects{};
+	vector<vector<shared_ptr<CGameObject>>> m_GameObjects{};
+	vector<vector<shared_ptr<CQuadObject>>> m_QuadObjects{};
 
-	vector<shared_ptr<CEventTrigger>>			m_EventTriggers{};
+	vector<shared_ptr<CEventTrigger>>		m_EventTriggers{};
 
-	shared_ptr<CNavMesh>					    m_NavMesh{};
+	shared_ptr<CNavMesh>					m_NavMesh{};
 
-	vector<LIGHT>						        m_Lights{};
-	ComPtr<ID3D12Resource>				        m_D3D12Lights{};
-	CB_LIGHT*							        m_MappedLights{};
+	vector<LIGHT>						    m_Lights{};
+	ComPtr<ID3D12Resource>				    m_D3D12Lights{};
+	CB_LIGHT*							    m_MappedLights{};
 
-	ComPtr<ID3D12Resource>						m_D3D12Fog{};
-	CB_FOG*										m_MappedFog{};
+	ComPtr<ID3D12Resource>					m_D3D12Fog{};
+	CB_FOG*									m_MappedFog{};
 
-	bool										m_RenderBoundingBox{};
+	bool									m_RenderBoundingBox{};
 
 public:
 	CGameScene() = default;
@@ -106,12 +108,9 @@ public:
 	virtual void ProcessPacket();
 
 	vector<vector<shared_ptr<CGameObject>>>& GetGameObjects();
-	vector<vector<shared_ptr<CBilboardObject>>>& GetBilboardObjects();
-
+	vector<vector<shared_ptr<CQuadObject>>>& GetQuadObjects();
 	vector<shared_ptr<CEventTrigger>>& GetEventTriggers();
-
 	vector<LIGHT>& GetLights();
-
 	shared_ptr<CNavMesh>& GetNavMesh();
 
 	void LoadMeshCachesFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName, unordered_map<tstring, shared_ptr<CMesh>>& MeshCaches);

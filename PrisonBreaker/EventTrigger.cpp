@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "EventTrigger.h"
 #include "GameScene.h"
+#include "GameObject.h"
+#include "QuadObject.h"
 
 void CEventTrigger::Reset()
 {
@@ -135,7 +137,7 @@ shared_ptr<CGameObject> CEventTrigger::GetEventObject(UINT Index)
 	return m_EventObjects[Index];
 }
 
-void CEventTrigger::SetInteractionUI(const shared_ptr<CBilboardObject>& InteractionUI)
+void CEventTrigger::SetInteractionUI(const shared_ptr<CQuadObject>& InteractionUI)
 {
 	if (InteractionUI)
 	{
@@ -143,7 +145,7 @@ void CEventTrigger::SetInteractionUI(const shared_ptr<CBilboardObject>& Interact
 	}
 }
 
-shared_ptr<CBilboardObject> CEventTrigger::GetInteractionUI() const
+shared_ptr<CQuadObject> CEventTrigger::GetInteractionUI() const
 {
 	return m_InteractionUI;
 }

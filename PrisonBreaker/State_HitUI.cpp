@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "State_HitUI.h"
-#include "UIs.h"
+#include "UIObjects.h"
+#include "UIAnimationController.h"
 
 CHitUIActivationState* CHitUIActivationState::GetInstance()
 {
@@ -12,7 +13,7 @@ CHitUIActivationState* CHitUIActivationState::GetInstance()
 void CHitUIActivationState::Enter(const shared_ptr<CHitUI>& Entity)
 {
 	Entity->SetActive(true);
-	Entity->GetUIAnimationController()->SetKeyFrameIndex(0);
+	Entity->GetAnimationController()->SetKeyFrameIndex(0);
 }
 
 void CHitUIActivationState::ProcessInput(const shared_ptr<CHitUI>& Entity, float ElapsedTime, UINT InputMask)
@@ -22,7 +23,7 @@ void CHitUIActivationState::ProcessInput(const shared_ptr<CHitUI>& Entity, float
 
 void CHitUIActivationState::Update(const shared_ptr<CHitUI>& Entity, float ElapsedTime)
 {
-	if (Entity->GetUIAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE))
+	if (Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_ONCE))
 	{
 		Entity->SetActive(false);
 	}

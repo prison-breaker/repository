@@ -1,6 +1,13 @@
 #include "stdafx.h"
 #include "Player.h"
+#include "State_Player.h"
 #include "GameScene.h"
+#include "Guard.h"
+#include "StateMachine.h"
+#include "EventTrigger.h"
+#include "Camera.h"
+#include "NavMesh.h"
+#include "NavNode.h"
 
 CPlayer::CPlayer(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
