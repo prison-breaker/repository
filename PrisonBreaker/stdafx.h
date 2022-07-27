@@ -274,6 +274,12 @@ struct CLIENT_TO_SERVER_DATA
 	XMFLOAT4X4 m_WorldMatrix{};
 };
 
+struct CAMERA_DATA
+{
+	XMFLOAT3 m_CameraPosition{};
+	XMFLOAT3 m_CameraDirection{};
+};
+
 struct PLAYER_ATTACK_DATA
 {
 	UINT m_TargetIndices[MAX_PLAYER_CAPACITY]{};

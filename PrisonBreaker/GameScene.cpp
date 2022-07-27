@@ -603,11 +603,15 @@ void CGameScene::ProcessPacket()
 		Server::ErrorDisplay("send()");
 	}
 
+	shared_ptr<CPlayer> Player{};
+
 	if ((m_InputMask & INPUT_MASK_LMB) && (m_InputMask & INPUT_MASK_RMB))
 	{
-		XMFLOAT3 CameraPosition{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][SocketInfo.m_ID])->GetCamera()->GetPosition() };
+		Player = static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][SocketInfo.m_ID]);
 
-		ReturnValue = send(SocketInfo.m_Socket, (char*)&CameraPosition, sizeof(CameraPosition), 0);
+		CAMERA_DATA CameraData{ Player->GetCamera()->GetPosition(), Player->GetCamera()->GetLook() };
+
+		ReturnValue = send(SocketInfo.m_Socket, (char*)&CameraData, sizeof(CameraData), 0);
 
 		if (ReturnValue == SOCKET_ERROR)
 		{
@@ -644,8 +648,6 @@ void CGameScene::ProcessPacket()
 			return;
 		}
 		
-		shared_ptr<CPlayer> Player{};
-
 		for (UINT i = 0; i < MAX_PLAYER_CAPACITY; ++i)
 		{
 			if (m_GameObjects[OBJECT_TYPE_PLAYER][i]->IsActive())
