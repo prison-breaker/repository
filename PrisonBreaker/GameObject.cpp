@@ -655,7 +655,9 @@ void CGameObject::PlaySound(SOUND_TYPE SoundType, float Volume, float MaxHearing
 	vector<vector<shared_ptr<CGameObject>>>& GameObjects{ GameScene->GetGameObjects() };
 	shared_ptr<CGameObject> MyPlayer{ GameObjects[OBJECT_TYPE_PLAYER][CFramework::GetInstance()->GetSocketInfo().m_ID] };
 
-	float Distance{ Math::Distance(GetPosition(), MyPlayer->GetPosition()) }; float SoundSize{ Volume + ((2.0f - Distance) * (Volume / MaxHearingDistance)) };
+	float Distance{ Math::Distance(GetPosition(), MyPlayer->GetPosition()) };
+
+	Volume = Volume + ((2.0f - Distance) * (Volume / MaxHearingDistance));
 	
-	CSoundManager::GetInstance()->Play(SoundType, SoundSize);
+	CSoundManager::GetInstance()->Play(SoundType, Volume);
 }
