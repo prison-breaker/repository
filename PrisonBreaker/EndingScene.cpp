@@ -233,8 +233,7 @@ void CEndingScene::ProcessPacket()
 			switch (MsgType)
 			{
 			case MSG_TYPE_DISCONNECTION:
-				CSceneManager::GetInstance()->ReserveScene(TEXT("TitleScene"), MsgType);
-				CFramework::GetInstance()->GetPostProcessingShader()->SetPostProcessingType(POST_PROCESSING_TYPE_FADE_OUT);
+				CSceneManager::GetInstance()->ChangeScene(TEXT("TitleScene"), MsgType);
 				return;
 			}
 

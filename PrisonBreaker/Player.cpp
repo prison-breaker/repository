@@ -267,7 +267,7 @@ void CPlayer::Rotate(float Pitch, float Yaw, float Roll, float ElapsedTime, floa
 
 bool CPlayer::IsCollidedByGuard(const XMFLOAT3& NewPosition)
 {
-	vector<vector<shared_ptr<CGameObject>>>& GameObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetGameObjects() };
+	vector<vector<shared_ptr<CGameObject>>>& GameObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene("GameScene"))->GetGameObjects() };
 
 	for (const auto& GameObject : GameObjects[OBJECT_TYPE_NPC])
 	{
@@ -290,7 +290,7 @@ bool CPlayer::IsCollidedByGuard(const XMFLOAT3& NewPosition)
 
 bool CPlayer::IsCollidedByEventTrigger(const XMFLOAT3& NewPosition)
 {
-	vector<shared_ptr<CEventTrigger>>& EventTriggers{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetEventTriggers() };
+	vector<shared_ptr<CEventTrigger>>& EventTriggers{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene("GameScene"))->GetEventTriggers() };
 	UINT TriggerCount{ static_cast<UINT>(EventTriggers.size()) };
 
 	for (UINT i = 0; i < TriggerCount; ++i)

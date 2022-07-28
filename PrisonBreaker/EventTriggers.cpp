@@ -130,7 +130,7 @@ bool CPowerDownEventTrigger::InteractEventTrigger(UINT CallerIndex)
 
 		if (m_IsOpened)
 		{
-			shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
+			shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene("GameScene")) };
 			vector<LIGHT>& Lights{ GameScene->GetLights() };
 
 			// 감시탑의 조명을 끈다.
@@ -207,7 +207,7 @@ bool CSirenEventTrigger::InteractEventTrigger(UINT CallerIndex)
 	{
 		m_IsInteracted = true;
 
-		shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
+		shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene("GameScene")) };
 		vector<vector<shared_ptr<CGameObject>>>& GameObjects{ GameScene->GetGameObjects() };
 		shared_ptr<CNavMesh> NavMesh{ GameScene->GetNavMesh() };
 
@@ -294,7 +294,7 @@ void COpenGateEventTrigger::ShowInteractionUI()
 	if (m_InteractionUI)
 	{
 		UINT PlayerID{ CFramework::GetInstance()->GetSocketInfo().m_ID };
-		vector<vector<shared_ptr<CGameObject>>>& GameObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetGameObjects() };
+		vector<vector<shared_ptr<CGameObject>>>& GameObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene("GameScene"))->GetGameObjects() };
 		shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(GameObjects[OBJECT_TYPE_PLAYER][PlayerID]) };
 
 		if (Player->HasKey() && !m_UsedKeyIndices[PlayerID])
@@ -309,23 +309,18 @@ bool COpenGateEventTrigger::InteractEventTrigger(UINT CallerIndex)
 {
 	if (!m_IsInteracted)
 	{
-		vector<vector<shared_ptr<CGameObject>>>& GameObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene())->GetGameObjects() };
+		vector<vector<shared_ptr<CGameObject>>>& GameObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene("GameScene"))->GetGameObjects() };
 		shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(GameObjects[OBJECT_TYPE_PLAYER][CallerIndex]) };
 
 		if (Player->HasKey() && !m_UsedKeyIndices[CallerIndex])
 		{
 			m_UsedKeyIndices[CallerIndex] = true;
-
-			if (CFramework::GetInstance()->GetSocketInfo().m_ID == CallerIndex)
-			{
-				CSoundManager::GetInstance()->Play(SOUND_TYPE_UNLOCK, 0.5f);
-			}
-				
+			m_EventObjects[0]->PlaySound(SOUND_TYPE_UNLOCK, 0.5f, 20.0f);
+			
 			if (m_UsedKeyIndices[0] && m_UsedKeyIndices[1])
 			{
 				m_IsInteracted = true;
-
-				CSoundManager::GetInstance()->Play(SOUND_TYPE_OPEN_GATE, 0.35f);
+				m_EventObjects[0]->PlaySound(SOUND_TYPE_OPEN_GATE, 0.35f, 20.0f);
 			}
 
 			return true;
@@ -379,7 +374,7 @@ bool CGetPistolEventTrigger::InteractEventTrigger(UINT CallerIndex)
 	{
 		m_IsInteracted = true;
 
-		shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
+		shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene("GameScene")) };
 		vector<vector<shared_ptr<CGameObject>>>& GameObjects{ GameScene->GetGameObjects() };
 
 		// 권총을 획득한 경우, 권총으로 무기를 교체하고 UI 또한 주먹에서 권총으로 변경시킨다.

@@ -674,6 +674,8 @@ void CGameScene::ProcessPacket()
 		switch (ReceivedPacketData.m_MsgType)
 		{
 		case MSG_TYPE_DISCONNECTION:
+			CSceneManager::GetInstance()->ChangeScene(TEXT("TitleScene"), ReceivedPacketData.m_MsgType);
+			return;
 		case MSG_TYPE_TITLE:
 			CSceneManager::GetInstance()->ReserveScene(TEXT("TitleScene"), ReceivedPacketData.m_MsgType);
 			CFramework::GetInstance()->GetPostProcessingShader()->SetPostProcessingType(POST_PROCESSING_TYPE_FADE_OUT);

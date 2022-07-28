@@ -651,7 +651,7 @@ void CGameObject::Rotate(const XMFLOAT3& Axis, float Angle)
 
 void CGameObject::PlaySound(SOUND_TYPE SoundType, float Volume, float MaxHearingDistance)
 {
-	shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
+	shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene("GameScene")) };
 	vector<vector<shared_ptr<CGameObject>>>& GameObjects{ GameScene->GetGameObjects() };
 	shared_ptr<CGameObject> MyPlayer{ GameObjects[OBJECT_TYPE_PLAYER][CFramework::GetInstance()->GetSocketInfo().m_ID] };
 
