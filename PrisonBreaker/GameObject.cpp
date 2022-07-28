@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "GameObject.h"
+#include "GameScene.h"
+#include "Framework.h"
 #include "Mesh.h"
 #include "Material.h"
 #include "AnimationController.h"
@@ -645,4 +647,15 @@ void CGameObject::Rotate(const XMFLOAT3& Axis, float Angle)
 	m_TransformMatrix = Matrix4x4::Multiply(RotationMatrix, m_TransformMatrix);
 
 	UpdateTransform(Matrix4x4::Identity());
+}
+
+void CGameObject::PlaySound(SOUND_TYPE SoundType, float Volume, float MaxHearingDistance)
+{
+	shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetCurrentScene()) };
+	vector<vector<shared_ptr<CGameObject>>>& GameObjects{ GameScene->GetGameObjects() };
+	shared_ptr<CGameObject> MyPlayer{ GameObjects[OBJECT_TYPE_PLAYER][CFramework::GetInstance()->GetSocketInfo().m_ID] };
+
+	float Distance{ Math::Distance(GetPosition(), MyPlayer->GetPosition()) }; float SoundSize{ Volume + ((2.0f - Distance) * (Volume / MaxHearingDistance)) };
+	
+	CSoundManager::GetInstance()->Play(SoundType, SoundSize);
 }
