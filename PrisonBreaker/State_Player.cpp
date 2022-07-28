@@ -83,13 +83,13 @@ void CPlayerRunningState::ProcessInput(const shared_ptr<CPlayer>& Entity, float 
 
 void CPlayerRunningState::Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime)
 {
-	if (CFramework::GetInstance()->GetSocketInfo().m_ID) 
+	if (CFramework::GetInstance()->GetSocketInfo().m_ID == Entity->GetID())
 	{
 		Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP, SOUND_TYPE_BREATH, 0.8f, 0.96f, ElapsedTime);
 	}
 	else
 	{
-		Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP, SOUND_TYPE_BREATH, 0.0f, 0.96f, ElapsedTime);
+		Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP);
 	}
 }
 

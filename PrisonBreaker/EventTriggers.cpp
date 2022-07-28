@@ -56,8 +56,7 @@ bool COpenDoorEventTrigger::InteractEventTrigger(UINT CallerIndex)
 	if (!m_IsInteracted)
 	{
 		m_IsInteracted = true;
-		
-		m_EventObjects[0]->PlaySound(SOUND_TYPE_OPEN_DOOR, 0.65f, 35.0f);
+		m_EventObjects[0]->PlaySound(SOUND_TYPE_OPEN_DOOR, 0.65f, 20.0f);
 
 		return true;
 	}
@@ -143,17 +142,13 @@ bool CPowerDownEventTrigger::InteractEventTrigger(UINT CallerIndex)
 				vector<vector<shared_ptr<CQuadObject>>>& QuadObjects{ GameScene->GetQuadObjects() };
 
 				QuadObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(0, 1);
-
-				CSoundManager::GetInstance()->Play(SOUND_TYPE_POWER_DOWN, 0.65f);
 			}
-			
+
+			m_EventObjects[0]->PlaySound(SOUND_TYPE_POWER_DOWN, 0.65f, 20.0f);
 		}
 		else
 		{
-			if (CFramework::GetInstance()->GetSocketInfo().m_ID == 0)
-			{
-				CSoundManager::GetInstance()->Play(SOUND_TYPE_OPEN_EP, 0.65f);
-			}
+			m_EventObjects[0]->PlaySound(SOUND_TYPE_OPEN_EP, 0.65f, 20.0f);
 		}
 
 		return true;
