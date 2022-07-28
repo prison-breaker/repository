@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "State_Player.h"
 #include "Player.h"
+#include "Framework.h"
 #include "Camera.h"
 #include "AnimationController.h"
 
@@ -82,7 +83,14 @@ void CPlayerRunningState::ProcessInput(const shared_ptr<CPlayer>& Entity, float 
 
 void CPlayerRunningState::Update(const shared_ptr<CPlayer>& Entity, float ElapsedTime)
 {
-	Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP, SOUND_TYPE_BREATH, 0.8f, 0.96f, ElapsedTime);
+	if (CFramework::GetInstance()->GetSocketInfo().m_ID) 
+	{
+		Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP, SOUND_TYPE_BREATH, 0.8f, 0.96f, ElapsedTime);
+	}
+	else
+	{
+		Entity->GetAnimationController()->UpdateAnimationClip(ANIMATION_TYPE_LOOP, SOUND_TYPE_BREATH, 0.0f, 0.96f, ElapsedTime);
+	}
 }
 
 void CPlayerRunningState::Exit(const shared_ptr<CPlayer>& Entity)

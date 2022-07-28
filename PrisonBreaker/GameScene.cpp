@@ -689,7 +689,7 @@ void CGameScene::ProcessPacket()
 
 							m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetVertexCount(BulletCount - 1);
 						}
-
+						CSoundManager::GetInstance()->Stop(SOUND_TYPE_PISTOL_SHOT);
 						Player->PlaySound(SOUND_TYPE_PISTOL_SHOT, 0.45f, 100.0f);
 					}
 					break;
@@ -813,6 +813,7 @@ void CGameScene::ProcessPacket()
 				{
 					if (PlayerAttackData.m_TargetIndices[i] != UINT_MAX)
 					{
+						CSoundManager::GetInstance()->Stop(SOUND_TYPE_GRUNT_2);
 						m_GameObjects[OBJECT_TYPE_NPC][PlayerAttackData.m_TargetIndices[i]]->PlaySound(SOUND_TYPE_GRUNT_2, 0.5f, 50.0f);
 					}
 				}
@@ -857,7 +858,10 @@ void CGameScene::ProcessPacket()
 						}	
 						if (GuardAttackData.m_TargetIndices[i] < 2)
 						{
+							CSoundManager::GetInstance()->Stop(SOUND_TYPE_PISTOL_SHOT);
 							Guard->PlaySound(SOUND_TYPE_PISTOL_SHOT, 0.35f, 100.0f);
+							
+							CSoundManager::GetInstance()->Stop(SOUND_TYPE_GRUNT_1);
 							m_GameObjects[OBJECT_TYPE_PLAYER][GuardAttackData.m_TargetIndices[i]]->PlaySound(SOUND_TYPE_GRUNT_1, 0.3f, 50.0f);
 						}
 					}
