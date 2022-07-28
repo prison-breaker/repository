@@ -111,4 +111,6 @@ public:
 	void Scale(float Pitch, float Yaw, float Roll);
 	void Rotate(float Pitch, float Yaw, float Roll);
 	void Rotate(const XMFLOAT3& Axis, float Angle);
+
+	void PlaySound(SOUND_TYPE SoundType, float Volume, float MaxHearingDistance);
 };
