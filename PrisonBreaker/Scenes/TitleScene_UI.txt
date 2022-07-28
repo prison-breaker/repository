@@ -7,127 +7,187 @@
 		<AlphaColor> 1
 		<Animation>
 			<AnimationClips> 1
-				<AnimationClip> Fade 60 60 1
+				<AnimationClip> Fade 60 90 1.5
 					<RectTransform> 0.01666667 959 539 0 1920 1080 
-					<AlphaColor> 0.01666667 0.9983703
+					<AlphaColor> 0.01666667 0.9991243
 					<RectTransform> 0.03333334 959 539 0 1920 1080 
-					<AlphaColor> 0.03333334 0.9936296
+					<AlphaColor> 0.03333334 0.9965498
 					<RectTransform> 0.05 959 539 0 1920 1080 
-					<AlphaColor> 0.05 0.986
+					<AlphaColor> 0.05 0.9923555
 					<RectTransform> 0.06666667 959 539 0 1920 1080 
-					<AlphaColor> 0.06666667 0.9757037
+					<AlphaColor> 0.06666667 0.9866205
 					<RectTransform> 0.08333334 959 539 0 1920 1080 
-					<AlphaColor> 0.08333334 0.962963
+					<AlphaColor> 0.08333334 0.9794239
 					<RectTransform> 0.1 959 539 0 1920 1080 
-					<AlphaColor> 0.1 0.948
+					<AlphaColor> 0.1 0.9708444
 					<RectTransform> 0.1166667 959 539 0 1920 1080 
-					<AlphaColor> 0.1166667 0.9310371
+					<AlphaColor> 0.1166667 0.9609613
 					<RectTransform> 0.1333333 959 539 0 1920 1080 
-					<AlphaColor> 0.1333333 0.9122963
+					<AlphaColor> 0.1333333 0.9498535
 					<RectTransform> 0.15 959 539 0 1920 1080 
-					<AlphaColor> 0.15 0.892
+					<AlphaColor> 0.15 0.9376
 					<RectTransform> 0.1666667 959 539 0 1920 1080 
-					<AlphaColor> 0.1666667 0.8703704
+					<AlphaColor> 0.1666667 0.9242798
 					<RectTransform> 0.1833333 959 539 0 1920 1080 
-					<AlphaColor> 0.1833333 0.8476296
+					<AlphaColor> 0.1833333 0.909972
 					<RectTransform> 0.2 959 539 0 1920 1080 
-					<AlphaColor> 0.2 0.824
+					<AlphaColor> 0.2 0.8947555
 					<RectTransform> 0.2166667 959 539 0 1920 1080 
-					<AlphaColor> 0.2166667 0.7997037
+					<AlphaColor> 0.2166667 0.8787094
 					<RectTransform> 0.2333333 959 539 0 1920 1080 
-					<AlphaColor> 0.2333333 0.774963
+					<AlphaColor> 0.2333333 0.8619127
 					<RectTransform> 0.25 959 539 0 1920 1080 
-					<AlphaColor> 0.25 0.75
+					<AlphaColor> 0.25 0.8444445
 					<RectTransform> 0.2666667 959 539 0 1920 1080 
-					<AlphaColor> 0.2666667 0.725037
+					<AlphaColor> 0.2666667 0.8263835
 					<RectTransform> 0.2833334 959 539 0 1920 1080 
-					<AlphaColor> 0.2833334 0.7002963
+					<AlphaColor> 0.2833334 0.807809
 					<RectTransform> 0.3 959 539 0 1920 1080 
-					<AlphaColor> 0.3 0.6759999
+					<AlphaColor> 0.3 0.7887999
 					<RectTransform> 0.3166667 959 539 0 1920 1080 
-					<AlphaColor> 0.3166667 0.6523703
+					<AlphaColor> 0.3166667 0.7694353
 					<RectTransform> 0.3333334 959 539 0 1920 1080 
-					<AlphaColor> 0.3333334 0.6296295
+					<AlphaColor> 0.3333334 0.7497942
 					<RectTransform> 0.3500001 959 539 0 1920 1080 
-					<AlphaColor> 0.3500001 0.6079999
+					<AlphaColor> 0.3500001 0.7299554
 					<RectTransform> 0.3666668 959 539 0 1920 1080 
-					<AlphaColor> 0.3666668 0.5877036
+					<AlphaColor> 0.3666668 0.7099983
 					<RectTransform> 0.3833334 959 539 0 1920 1080 
-					<AlphaColor> 0.3833334 0.5689628
+					<AlphaColor> 0.3833334 0.6900015
 					<RectTransform> 0.4000001 959 539 0 1920 1080 
-					<AlphaColor> 0.4000001 0.5519999
+					<AlphaColor> 0.4000001 0.6700443
 					<RectTransform> 0.4166668 959 539 0 1920 1080 
-					<AlphaColor> 0.4166668 0.5370369
+					<AlphaColor> 0.4166668 0.6502056
 					<RectTransform> 0.4333335 959 539 0 1920 1080 
-					<AlphaColor> 0.4333335 0.5242962
+					<AlphaColor> 0.4333335 0.6305645
 					<RectTransform> 0.4500002 959 539 0 1920 1080 
-					<AlphaColor> 0.4500002 0.5139999
+					<AlphaColor> 0.4500002 0.6111998
 					<RectTransform> 0.4666668 959 539 0 1920 1080 
-					<AlphaColor> 0.4666668 0.5063703
+					<AlphaColor> 0.4666668 0.5921907
 					<RectTransform> 0.4833335 959 539 0 1920 1080 
-					<AlphaColor> 0.4833335 0.5016296
+					<AlphaColor> 0.4833335 0.5736163
 					<RectTransform> 0.5000002 959 539 0 1920 1080 
-					<AlphaColor> 0.5000002 0.5
+					<AlphaColor> 0.5000002 0.5555553
 					<RectTransform> 0.5166668 959 539 0 1920 1080 
-					<AlphaColor> 0.5166668 0.5016297
+					<AlphaColor> 0.5166668 0.5380871
 					<RectTransform> 0.5333335 959 539 0 1920 1080 
-					<AlphaColor> 0.5333335 0.5063704
+					<AlphaColor> 0.5333335 0.5212904
 					<RectTransform> 0.5500001 959 539 0 1920 1080 
-					<AlphaColor> 0.5500001 0.5140001
+					<AlphaColor> 0.5500001 0.5052443
 					<RectTransform> 0.5666668 959 539 0 1920 1080 
-					<AlphaColor> 0.5666668 0.5242964
+					<AlphaColor> 0.5666668 0.4900279
 					<RectTransform> 0.5833334 959 539 0 1920 1080 
-					<AlphaColor> 0.5833334 0.5370371
+					<AlphaColor> 0.5833334 0.47572
 					<RectTransform> 0.6000001 959 539 0 1920 1080 
-					<AlphaColor> 0.6000001 0.552
+					<AlphaColor> 0.6000001 0.4624
 					<RectTransform> 0.6166667 959 539 0 1920 1080 
-					<AlphaColor> 0.6166667 0.5689631
+					<AlphaColor> 0.6166667 0.4501464
 					<RectTransform> 0.6333334 959 539 0 1920 1080 
-					<AlphaColor> 0.6333334 0.5877038
+					<AlphaColor> 0.6333334 0.4390386
 					<RectTransform> 0.65 959 539 0 1920 1080 
-					<AlphaColor> 0.65 0.608
+					<AlphaColor> 0.65 0.4291555
 					<RectTransform> 0.6666667 959 539 0 1920 1080 
-					<AlphaColor> 0.6666667 0.6296297
+					<AlphaColor> 0.6666667 0.4205761
 					<RectTransform> 0.6833333 959 539 0 1920 1080 
-					<AlphaColor> 0.6833333 0.6523704
+					<AlphaColor> 0.6833333 0.4133794
 					<RectTransform> 0.7 959 539 0 1920 1080 
-					<AlphaColor> 0.7 0.676
+					<AlphaColor> 0.7 0.4076445
 					<RectTransform> 0.7166666 959 539 0 1920 1080 
-					<AlphaColor> 0.7166666 0.7002963
+					<AlphaColor> 0.7166666 0.4034502
 					<RectTransform> 0.7333333 959 539 0 1920 1080 
-					<AlphaColor> 0.7333333 0.725037
+					<AlphaColor> 0.7333333 0.4008757
 					<RectTransform> 0.7499999 959 539 0 1920 1080 
-					<AlphaColor> 0.7499999 0.7499999
+					<AlphaColor> 0.7499999 0.4
 					<RectTransform> 0.7666666 959 539 0 1920 1080 
-					<AlphaColor> 0.7666666 0.7749628
+					<AlphaColor> 0.7666666 0.4008757
 					<RectTransform> 0.7833332 959 539 0 1920 1080 
-					<AlphaColor> 0.7833332 0.7997036
+					<AlphaColor> 0.7833332 0.4034502
 					<RectTransform> 0.7999999 959 539 0 1920 1080 
-					<AlphaColor> 0.7999999 0.8239999
+					<AlphaColor> 0.7999999 0.4076444
 					<RectTransform> 0.8166665 959 539 0 1920 1080 
-					<AlphaColor> 0.8166665 0.8476294
+					<AlphaColor> 0.8166665 0.4133794
 					<RectTransform> 0.8333332 959 539 0 1920 1080 
-					<AlphaColor> 0.8333332 0.8703701
+					<AlphaColor> 0.8333332 0.4205761
 					<RectTransform> 0.8499998 959 539 0 1920 1080 
-					<AlphaColor> 0.8499998 0.8919998
+					<AlphaColor> 0.8499998 0.4291555
 					<RectTransform> 0.8666665 959 539 0 1920 1080 
-					<AlphaColor> 0.8666665 0.9122961
+					<AlphaColor> 0.8666665 0.4390386
 					<RectTransform> 0.8833331 959 539 0 1920 1080 
-					<AlphaColor> 0.8833331 0.9310368
+					<AlphaColor> 0.8833331 0.4501464
 					<RectTransform> 0.8999998 959 539 0 1920 1080 
-					<AlphaColor> 0.8999998 0.9479998
+					<AlphaColor> 0.8999998 0.4623998
 					<RectTransform> 0.9166664 959 539 0 1920 1080 
-					<AlphaColor> 0.9166664 0.9629628
+					<AlphaColor> 0.9166664 0.47572
 					<RectTransform> 0.9333331 959 539 0 1920 1080 
-					<AlphaColor> 0.9333331 0.9757035
+					<AlphaColor> 0.9333331 0.4900278
 					<RectTransform> 0.9499997 959 539 0 1920 1080 
-					<AlphaColor> 0.9499997 0.9859998
+					<AlphaColor> 0.9499997 0.5052442
 					<RectTransform> 0.9666664 959 539 0 1920 1080 
-					<AlphaColor> 0.9666664 0.9936295
+					<AlphaColor> 0.9666664 0.5212903
 					<RectTransform> 0.9833331 959 539 0 1920 1080 
-					<AlphaColor> 0.9833331 0.9983703
+					<AlphaColor> 0.9833331 0.538087
 					<RectTransform> 0.9999997 959 539 0 1920 1080 
-					<AlphaColor> 0.9999997 1
+					<AlphaColor> 0.9999997 0.5555552
+					<RectTransform> 1.016666 959 539 0 1920 1080 
+					<AlphaColor> 1.016666 0.5736162
+					<RectTransform> 1.033333 959 539 0 1920 1080 
+					<AlphaColor> 1.033333 0.5921906
+					<RectTransform> 1.05 959 539 0 1920 1080 
+					<AlphaColor> 1.05 0.6111997
+					<RectTransform> 1.066666 959 539 0 1920 1080 
+					<AlphaColor> 1.066666 0.6305643
+					<RectTransform> 1.083333 959 539 0 1920 1080 
+					<AlphaColor> 1.083333 0.6502054
+					<RectTransform> 1.1 959 539 0 1920 1080 
+					<AlphaColor> 1.1 0.6700441
+					<RectTransform> 1.116666 959 539 0 1920 1080 
+					<AlphaColor> 1.116666 0.6900012
+					<RectTransform> 1.133333 959 539 0 1920 1080 
+					<AlphaColor> 1.133333 0.7099979
+					<RectTransform> 1.15 959 539 0 1920 1080 
+					<AlphaColor> 1.15 0.7299551
+					<RectTransform> 1.166666 959 539 0 1920 1080 
+					<AlphaColor> 1.166666 0.7497938
+					<RectTransform> 1.183333 959 539 0 1920 1080 
+					<AlphaColor> 1.183333 0.7694349
+					<RectTransform> 1.2 959 539 0 1920 1080 
+					<AlphaColor> 1.2 0.7887995
+					<RectTransform> 1.216666 959 539 0 1920 1080 
+					<AlphaColor> 1.216666 0.8078086
+					<RectTransform> 1.233333 959 539 0 1920 1080 
+					<AlphaColor> 1.233333 0.8263831
+					<RectTransform> 1.25 959 539 0 1920 1080 
+					<AlphaColor> 1.25 0.8444439
+					<RectTransform> 1.266666 959 539 0 1920 1080 
+					<AlphaColor> 1.266666 0.8619123
+					<RectTransform> 1.283333 959 539 0 1920 1080 
+					<AlphaColor> 1.283333 0.878709
+					<RectTransform> 1.299999 959 539 0 1920 1080 
+					<AlphaColor> 1.299999 0.8947551
+					<RectTransform> 1.316666 959 539 0 1920 1080 
+					<AlphaColor> 1.316666 0.9099716
+					<RectTransform> 1.333333 959 539 0 1920 1080 
+					<AlphaColor> 1.333333 0.9242793
+					<RectTransform> 1.349999 959 539 0 1920 1080 
+					<AlphaColor> 1.349999 0.9375995
+					<RectTransform> 1.366666 959 539 0 1920 1080 
+					<AlphaColor> 1.366666 0.9498531
+					<RectTransform> 1.383333 959 539 0 1920 1080 
+					<AlphaColor> 1.383333 0.960961
+					<RectTransform> 1.399999 959 539 0 1920 1080 
+					<AlphaColor> 1.399999 0.9708441
+					<RectTransform> 1.416666 959 539 0 1920 1080 
+					<AlphaColor> 1.416666 0.9794236
+					<RectTransform> 1.433333 959 539 0 1920 1080 
+					<AlphaColor> 1.433333 0.9866203
+					<RectTransform> 1.449999 959 539 0 1920 1080 
+					<AlphaColor> 1.449999 0.9923553
+					<RectTransform> 1.466666 959 539 0 1920 1080 
+					<AlphaColor> 1.466666 0.9965497
+					<RectTransform> 1.483333 959 539 0 1920 1080 
+					<AlphaColor> 1.483333 0.9991243
+					<RectTransform> 1.499999 959 539 0 1920 1080 
+					<AlphaColor> 1.499999 1
 				</AnimationClip>
 			</AnimationClips>
 		</Animation>
@@ -142,7 +202,7 @@
 		<ChildCount> 0
 	</UIObject>
 	<UIObject>
-		<Type> 0
+		<Type> 5
 		<IsActive> 1
 		<TextureName> Textures/MainButtons.dds
 		<CellInfo> 2 2
@@ -169,18 +229,17 @@
 			<UIObject>
 				<Type> 0
 				<IsActive> 1
-				<TextureName> Textures/InputBars.dds
-				<CellInfo> 2 1
-				<RectTransform> 2 959 539 0 300 38 959 539 1 300 38 
-				<AlphaColor> 1 1 
+				<TextureName> Textures/InputBar.dds
+				<RectTransform> 1 959 539 1 300 40 
+				<AlphaColor> 1
 				<ChildCount> 0
 			</UIObject>
 			<UIObject>
-				<Type> 0
+				<Type> 6
 				<IsActive> 1
 				<TextureName> Textures/PanelButtons.dds
 				<CellInfo> 2 2
-				<RectTransform> 2 819 609 0 125 27 1109 609 2 125 27 
+				<RectTransform> 2 1039 599 2 125 27 879 599 0 125 27 
 				<AlphaColor> 1 1 
 				<ChildCount> 0
 			</UIObject>
@@ -202,7 +261,7 @@
 				<ChildCount> 0
 			</UIObject>
 			<UIObject>
-				<Type> 0
+				<Type> 7
 				<IsActive> 1
 				<TextureName> Textures/LoadingIcons.dds
 				<CellInfo> 1 6
@@ -211,7 +270,7 @@
 				<ChildCount> 0
 			</UIObject>
 			<UIObject>
-				<Type> 0
+				<Type> 6
 				<IsActive> 1
 				<TextureName> Textures/PanelButtons.dds
 				<CellInfo> 2 2
@@ -237,7 +296,7 @@
 				<ChildCount> 0
 			</UIObject>
 			<UIObject>
-				<Type> 0
+				<Type> 6
 				<IsActive> 1
 				<TextureName> Textures/PanelButtons.dds
 				<CellInfo> 2 2

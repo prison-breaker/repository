@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "EndingScene.h"
 #include "Framework.h"
-#include "GameScene.h"
 #include "Player.h"
 #include "State_Player.h"
 #include "BilboardObjects.h"
@@ -64,12 +63,20 @@ void CEndingScene::Enter(MSG_TYPE MsgType)
 		}
 	}
 
+	if (m_GameObjects[OBJECT_TYPE_TERRAIN][1])
+	{
+		m_GameObjects[OBJECT_TYPE_TERRAIN][1]->SetActive(true);
+	}
+
 	CSoundManager::GetInstance()->Play(SOUND_TYPE_ENDING_BGM, 1.0f);
 }
 
 void CEndingScene::Exit()
 {
-
+	if (m_GameObjects[OBJECT_TYPE_TERRAIN][1])
+	{
+		m_GameObjects[OBJECT_TYPE_TERRAIN][1]->SetActive(false);
+	}
 }
 
 void CEndingScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName)
@@ -99,7 +106,24 @@ void CEndingScene::ReleaseShaderVariables()
 
 void CEndingScene::ReleaseUploadBuffers()
 {
+	for (UINT i = OBJECT_TYPE_PLAYER; i <= OBJECT_TYPE_STRUCTURE; ++i)
+	{
+		for (const auto& GameObject : m_GameObjects[i])
+		{
+			if (GameObject)
+			{
+				GameObject->ReleaseUploadBuffers();
+			}
+		}
+	}
 
+	for (const auto& QuadObject : m_QuadObjects)
+	{
+		if (QuadObject)
+		{
+			QuadObject->ReleaseUploadBuffers();
+		}
+	}
 }
 
 void CEndingScene::ProcessMouseMessage(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
@@ -148,6 +172,10 @@ void CEndingScene::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 	Player->GetCamera()->RSSetViewportsAndScissorRects(D3D12GraphicsCommandList);
 	Player->GetCamera()->UpdateShaderVariables(D3D12GraphicsCommandList);
 
+	shared_ptr<CScene> GameScene{ CSceneManager::GetInstance()->GetScene(TEXT("GameScene")) };
+
+	GameScene->UpdateShaderVariables(D3D12GraphicsCommandList);
+
 	for (const auto& GameObject : m_GameObjects[OBJECT_TYPE_PLAYER])
 	{
 		if (GameObject)
@@ -156,7 +184,10 @@ void CEndingScene::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 		}
 	}
 
-	m_GameObjects[OBJECT_TYPE_TERRAIN].back()->Render(D3D12GraphicsCommandList, Player->GetCamera().get(), RENDER_TYPE_STANDARD);
+	if (m_GameObjects[OBJECT_TYPE_TERRAIN][1])
+	{
+		m_GameObjects[OBJECT_TYPE_TERRAIN][1]->Render(D3D12GraphicsCommandList, Player->GetCamera().get(), RENDER_TYPE_STANDARD);
+	}
 
 	for (const auto& QuadObject : m_QuadObjects)
 	{

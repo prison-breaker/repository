@@ -18,6 +18,7 @@ private:
 public:
 	static CSceneManager* GetInstance();
 
+	void ReleaseShaderVariables();
 	void ReleaseUploadBuffers();
 
 	shared_ptr<CScene> GetScene(const tstring& SceneName);

@@ -15,10 +15,8 @@ struct CB_FRAMEWORKINFO
 class CFramework
 {
 private:
-	// Server Data
 	SOCKET_INFO						  m_SocketInfo{};
 
-	// Client Data
 	TCHAR							  m_Title[MAX_TITLE_LENGTH]{};
 			
 	bool							  m_IsActive{};

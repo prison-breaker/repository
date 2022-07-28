@@ -21,27 +21,27 @@ void CMesh::ReleaseUploadBuffers()
 {
 	if (m_D3D12PositionUploadBuffer)
 	{
-		m_D3D12PositionUploadBuffer.ReleaseAndGetAddressOf();
+		m_D3D12PositionUploadBuffer.Reset();
 	}
 
 	if (m_D3D12NormalUploadBuffer)
 	{
-		m_D3D12NormalUploadBuffer.ReleaseAndGetAddressOf();
+		m_D3D12NormalUploadBuffer.Reset();
 	}
 
 	if (m_D3D12TangentUploadBuffer)
 	{
-		m_D3D12TangentUploadBuffer.ReleaseAndGetAddressOf();
+		m_D3D12TangentUploadBuffer.Reset();
 	}
 
 	if (m_D3D12BiTangentUploadBuffer)
 	{
-		m_D3D12BiTangentUploadBuffer.ReleaseAndGetAddressOf();
+		m_D3D12BiTangentUploadBuffer.Reset();
 	}
 
 	if (m_D3D12TexCoordUploadBuffer)
 	{
-		m_D3D12TexCoordUploadBuffer.ReleaseAndGetAddressOf();
+		m_D3D12TexCoordUploadBuffer.Reset();
 	}
 
 	if (!m_D3D12IndexUploadBuffers.empty())
@@ -50,7 +50,7 @@ void CMesh::ReleaseUploadBuffers()
 		{
 			if (UploadBuffer)
 			{
-				UploadBuffer.ReleaseAndGetAddressOf();
+				UploadBuffer.Reset();
 			}
 		}
 
@@ -452,12 +452,12 @@ void CSkinnedMesh::ReleaseUploadBuffers()
 
 	if (m_D3D12BoneIndexUploadBuffer)
 	{
-		m_D3D12BoneIndexUploadBuffer.ReleaseAndGetAddressOf();
+		m_D3D12BoneIndexUploadBuffer.Reset();
 	}
 
 	if (m_D3D12BoneWeightUploadBuffer)
 	{
-		m_D3D12BoneWeightUploadBuffer.ReleaseAndGetAddressOf();
+		m_D3D12BoneWeightUploadBuffer.Reset();
 	}
 }
 

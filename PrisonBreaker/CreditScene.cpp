@@ -93,7 +93,13 @@ void CCreditScene::ReleaseShaderVariables()
 
 void CCreditScene::ReleaseUploadBuffers()
 {
-
+	for (const auto& QuadObject : m_QuadObjects)
+	{
+		if (QuadObject)
+		{
+			QuadObject->ReleaseUploadBuffers();
+		}
+	}
 }
 
 void CCreditScene::ProcessMouseMessage(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)

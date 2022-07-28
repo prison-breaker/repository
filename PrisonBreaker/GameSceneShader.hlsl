@@ -271,6 +271,7 @@ float4 PS_Main(VS_OUTPUT Input) : SV_TARGET
 		NormalW = normalize(Input.m_NormalW);
 
 	}
+	
 	float4 Illumination = Lighting(Input.m_PositionW, NormalW, Input.m_ShadowTexCoord);
 
 	Color = float4(lerp(Color.rgb, Illumination.rgb, 0.75f).rgb, Color.a);

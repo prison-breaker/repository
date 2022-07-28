@@ -82,9 +82,9 @@ public:
 class CButtonUI : public CQuadObject
 {
 protected:
-	bool	 m_IsMouseOver{};
+	bool	         m_IsMouseOver{};
 
-	XMFLOAT4 m_ButtonAreas[2]{};
+	vector<XMFLOAT4> m_ButtonAreas{};
 
 public:
 	CButtonUI() = default;
@@ -146,6 +146,9 @@ public:
 
 class CEndingCreditUI : public CQuadObject
 {
+private:
+	vector<XMFLOAT3> m_InitPosition{};
+
 public:
 	CEndingCreditUI() = default;
 	virtual ~CEndingCreditUI() = default;
@@ -153,4 +156,7 @@ public:
 	virtual void Reset();
 
 	virtual void Animate(float ElapsedTime);
+
+	void SetInitPosition(UINT Index, const XMFLOAT3& InitPosition);
+	const XMFLOAT3& GetInitPositio(UINT Index) const;
 };

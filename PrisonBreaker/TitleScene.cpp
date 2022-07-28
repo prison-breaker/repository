@@ -35,7 +35,7 @@ void CTitleScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandL
 
 void CTitleScene::ReleaseObjects()
 {
-
+	ReleaseShaderVariables();
 }
 
 void CTitleScene::Enter(MSG_TYPE MsgType)
@@ -154,7 +154,7 @@ void CTitleScene::ProcessMouseMessage(HWND hWnd, UINT Message, WPARAM wParam, LP
 			}
 		}
 
-		// m_BilboardObject[3]: 서버 IP주소 입력 패널
+		// 3 : 서버 IP주소 입력 패널
 		CFramework::GetInstance()->GetUILayer()->SetActive(m_QuadObjects[3]->IsActive());
 	}
 	break;

@@ -15,6 +15,7 @@ void CAnimationClip::LoadAnimationClipInfoFromFile(ifstream& InFile, const share
 		if (Token == TEXT("<AnimationClip>"))
 		{
 			File::ReadStringFromFile(InFile, m_ClipName);
+
 			m_FramePerSec = File::ReadIntegerFromFile(InFile);
 			m_KeyFrameCount = File::ReadIntegerFromFile(InFile);
 			m_KeyFrameTime = File::ReadFloatFromFile(InFile);

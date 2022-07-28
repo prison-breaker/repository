@@ -9,6 +9,14 @@ CSceneManager* CSceneManager::GetInstance()
 	return &Instance;
 }
 
+void CSceneManager::ReleaseShaderVariables()
+{
+	for (const auto& Scene : m_Scenes)
+	{
+		Scene.second->ReleaseShaderVariables();
+	}
+}
+
 void CSceneManager::ReleaseUploadBuffers()
 {
 	for (const auto& Scene : m_Scenes)

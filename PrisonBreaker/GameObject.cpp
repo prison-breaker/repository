@@ -194,12 +194,12 @@ void CGameObject::LoadAnimationInfoFromFile(tifstream& InFile, const shared_ptr<
 
 void CGameObject::Initialize()
 {
-	SetActive(true);
+
 }
 
 void CGameObject::Reset(const XMFLOAT4X4& TransformMatrix)
 {
-	SetActive(true);
+	
 }
 
 void CGameObject::CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
@@ -243,7 +243,7 @@ void CGameObject::Animate(float ElapsedTime)
 
 void CGameObject::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType)
 {
-	if (IsActive())
+	if (m_IsActive)
 	{
 		if (m_AnimationController)
 		{
@@ -283,7 +283,7 @@ void CGameObject::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CC
 
 void CGameObject::RenderBoundingBox(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera)
 {
-	if (IsActive())
+	if (m_IsActive)
 	{
 		if (m_AnimationController)
 		{

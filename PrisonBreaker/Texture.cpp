@@ -46,7 +46,7 @@ void CTexture::ReleaseUploadBuffers()
 {
 	if (m_D3D12TextureUploadBuffer)
 	{
-		m_D3D12TextureUploadBuffer.ReleaseAndGetAddressOf();
+		m_D3D12TextureUploadBuffer.Reset();
 	}
 }
 

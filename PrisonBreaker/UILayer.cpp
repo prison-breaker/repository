@@ -135,7 +135,7 @@ void CUILayer::Resize(ID3D12Resource** D3D12RenderTargets, UINT Width, UINT Heig
 
     if (m_D2D1DeviceContext)
     {
-        m_D2D1DeviceContext.ReleaseAndGetAddressOf();
+        m_D2D1DeviceContext.Reset();
     }
 
     DX::ThrowIfFailed(m_D2D1Device->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, reinterpret_cast<ID2D1DeviceContext2**>(m_D2D1DeviceContext.GetAddressOf())));
@@ -143,7 +143,7 @@ void CUILayer::Resize(ID3D12Resource** D3D12RenderTargets, UINT Width, UINT Heig
     
     if (m_D2D1TextBrush)
     {
-        m_D2D1TextBrush.ReleaseAndGetAddressOf();
+        m_D2D1TextBrush.Reset();
     }
     
     DX::ThrowIfFailed(m_D2D1DeviceContext->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), reinterpret_cast<ID2D1SolidColorBrush**>(m_D2D1TextBrush.GetAddressOf())));

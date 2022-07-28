@@ -164,6 +164,9 @@ void CGameScene::Enter(MSG_TYPE MsgType)
 
 void CGameScene::Exit()
 {
+	// 엔딩씬에서는 감시탑의 조명이 비춰지면 안되기 때문에 게임씬을 나갈 때, 꺼준다.
+	m_Lights[1].m_IsActive = false;
+
 	CSoundManager::GetInstance()->Stop(SOUND_TYPE_SIREN);
 	CSoundManager::GetInstance()->Stop(SOUND_TYPE_INGAME_BGM_1);
 }
@@ -181,10 +184,7 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 
 	shared_ptr<LOADED_MODEL_INFO> ModelInfo{};
 
-	UINT ObjectType{};
-	bool IsActive{};
-
-	UINT PlayerID{};
+	UINT Type{};
 
 	while (true)
 	{
@@ -198,75 +198,106 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 		}
 		else if (Token == TEXT("<Type>"))
 		{
-			ObjectType = File::ReadIntegerFromFile(InFile);
+			Type = File::ReadIntegerFromFile(InFile);
 		}
-		else if (Token == TEXT("<IsActive>"))
+		else if (Token == TEXT("<Instances>"))
 		{
-			IsActive = static_cast<bool>(File::ReadIntegerFromFile(InFile));
-		}
-		else if (Token == TEXT("<TransformMatrix>"))
-		{
-			XMFLOAT4X4 TransformMatrix{};
+			const UINT InstanceCount{ File::ReadIntegerFromFile(InFile) };
 
-			InFile.read(reinterpret_cast<TCHAR*>(&TransformMatrix), sizeof(XMFLOAT4X4));
+			// <IsActive>
+			vector<UINT> IsActive(InstanceCount);
 
-			switch (ObjectType)
+			File::ReadStringFromFile(InFile, Token);
+			InFile.read(reinterpret_cast<TCHAR*>(IsActive.data()), sizeof(UINT) * InstanceCount);
+
+			// <TransformMatrix>
+			vector<XMFLOAT4X4> TransformMatrixes(InstanceCount);
+
+			File::ReadStringFromFile(InFile, Token);
+			InFile.read(reinterpret_cast<TCHAR*>(TransformMatrixes.data()), sizeof(XMFLOAT4X4) * InstanceCount);
+
+			switch (Type)
 			{
 			case OBJECT_TYPE_PLAYER:
 			{
-				// 플레이어 객체를 생성한다.
-				shared_ptr<CPlayer> Player{ make_shared<CPlayer>(D3D12Device, D3D12GraphicsCommandList) };
+				UINT PlayerID{};
 
-				Player->SetID(PlayerID++);
-				Player->SetActive(IsActive);
-				Player->SetChild(ModelInfo->m_Model);
-				Player->SetTransformMatrix(TransformMatrix);
-				Player->UpdateTransform(Matrix4x4::Identity());
-				Player->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
-				Player->Initialize();
+				for (UINT i = 0; i < InstanceCount; ++i)
+				{
+					shared_ptr<CPlayer> Player{ make_shared<CPlayer>(D3D12Device, D3D12GraphicsCommandList) };
 
-				m_GameObjects[ObjectType].push_back(Player);
-				m_InitGameData.m_PlayerInitTransformMatrixes.push_back(TransformMatrix);
+					Player->SetID(PlayerID++);
+					Player->SetActive(IsActive[i]);
+					Player->SetChild(ModelInfo->m_Model);
+					Player->SetTransformMatrix(TransformMatrixes[i]);
+					Player->UpdateTransform(Matrix4x4::Identity());
+					Player->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
+					Player->Initialize();
+
+					m_GameObjects[Type].push_back(Player);
+					m_InitGameData.m_PlayerInitTransformMatrixes.push_back(TransformMatrixes[i]);
+				}
 			}
 			break;
 			case OBJECT_TYPE_NPC:
 			{
-				XMFLOAT3 TargetPosition{};
-
 				// <TargetPosition>
+				vector<XMFLOAT3> TargetPositions(InstanceCount);
+
 				File::ReadStringFromFile(InFile, Token);
-				InFile.read(reinterpret_cast<TCHAR*>(&TargetPosition), sizeof(XMFLOAT3));
+				InFile.read(reinterpret_cast<TCHAR*>(TargetPositions.data()), sizeof(XMFLOAT3) * InstanceCount);
 
-				// 교도관 객체를 생성한다.
-				shared_ptr<CGuard> Guard{ make_shared<CGuard>() };
+				for (UINT i = 0; i < InstanceCount; ++i)
+				{
+					shared_ptr<CGuard> Guard{ make_shared<CGuard>() };
 
-				Guard->SetActive(IsActive);
-				Guard->SetChild(ModelInfo->m_Model);
-				Guard->SetTransformMatrix(TransformMatrix);
-				Guard->UpdateTransform(Matrix4x4::Identity());
-				Guard->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
-				Guard->FindPatrolNavPath(m_NavMesh, TargetPosition);
-				Guard->Initialize();
+					Guard->SetActive(IsActive[i]);
+					Guard->SetChild(ModelInfo->m_Model);
+					Guard->SetTransformMatrix(TransformMatrixes[i]);
+					Guard->UpdateTransform(Matrix4x4::Identity());
+					Guard->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
+					Guard->FindPatrolNavPath(m_NavMesh, TargetPositions[i]);
+					Guard->Initialize();
 
-				m_GameObjects[ObjectType].push_back(Guard);
-				m_InitGameData.m_NPCInitTransformMatrixes.push_back(TransformMatrix);
+					m_GameObjects[Type].push_back(Guard);
+					m_InitGameData.m_NPCInitTransformMatrixes.push_back(TransformMatrixes[i]);
+				}
 			}
 			break;
 			case OBJECT_TYPE_TERRAIN:
+			{
+				for (UINT i = 0; i < InstanceCount; ++i)
+				{
+					// 지형 및 구조물 객체를 생성한다.
+					shared_ptr<CGameObject> Architecture{ make_shared<CGameObject>() };
+
+					Architecture->SetActive(IsActive[i]);
+					Architecture->SetChild(ModelInfo->m_Model);
+					Architecture->SetTransformMatrix(TransformMatrixes[i]);
+					Architecture->UpdateTransform(Matrix4x4::Identity());
+					Architecture->Initialize();
+
+					m_GameObjects[Type].push_back(Architecture);
+				}
+			}
+			break;
 			case OBJECT_TYPE_STRUCTURE:
 			{
-				// 지형 및 구조물 객체를 생성한다.
-				shared_ptr<CGameObject> Architecture{ make_shared<CGameObject>() };
+				for (UINT i = 0; i < InstanceCount; ++i)
+				{
+					// 지형 및 구조물 객체를 생성한다.
+					shared_ptr<CGameObject> Architecture{ make_shared<CGameObject>() };
 
-				Architecture->SetActive(IsActive);
-				Architecture->SetChild(ModelInfo->m_Model);
-				Architecture->SetTransformMatrix(TransformMatrix);
-				Architecture->UpdateTransform(Matrix4x4::Identity());
-				Architecture->Initialize();
+					Architecture->SetActive(IsActive[i]);
+					Architecture->SetChild(ModelInfo->m_Model);
+					Architecture->SetTransformMatrix(TransformMatrixes[i]);
+					Architecture->UpdateTransform(Matrix4x4::Identity());
+					Architecture->Initialize();
 
-				m_GameObjects[ObjectType].push_back(Architecture);
+					m_GameObjects[Type].push_back(Architecture);
+				}
 			}
-				break;
+			break;
 			}
 		}
 		else if (Token == TEXT("</GameScene>"))
@@ -324,7 +355,7 @@ void CGameScene::CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12Graphics
 
 void CGameScene::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 {
-	memcpy(m_MappedLights->m_Lights, m_Lights.data(), sizeof(CB_LIGHT) * (UINT)m_Lights.size());
+	memcpy(m_MappedLights->m_Lights, m_Lights.data(), sizeof(CB_LIGHT) * static_cast<UINT>(m_Lights.size()));
 
 	D3D12GraphicsCommandList->SetGraphicsRootConstantBufferView(ROOT_PARAMETER_TYPE_LIGHT, m_D3D12Lights->GetGPUVirtualAddress());
 	D3D12GraphicsCommandList->SetGraphicsRootConstantBufferView(ROOT_PARAMETER_TYPE_FOG, m_D3D12Fog->GetGPUVirtualAddress());
@@ -335,6 +366,11 @@ void CGameScene::ReleaseShaderVariables()
 	if (m_D3D12Lights)
 	{
 		m_D3D12Lights->Unmap(0, nullptr);
+	}
+
+	if (m_D3D12Fog)
+	{
+		m_D3D12Fog->Unmap(0, nullptr);
 	}
 }
 	
@@ -656,7 +692,7 @@ void CGameScene::ProcessPacket()
 
 				ANIMATION_CLIP_TYPE PrevAnimationClipType{ Player->GetAnimationController()->GetAnimationClipType() };
 
-				Player->SetTransformMatrix(ReceivedPacketData.m_PlayerWorldMatrices[i]);
+				Player->SetTransformMatrix(ReceivedPacketData.m_PlayerWorldMatrixes[i]);
 				Player->GetAnimationController()->SetAnimationClipType(ReceivedPacketData.m_PlayerAnimationClipTypes[i]);
 
 				switch (ReceivedPacketData.m_PlayerAnimationClipTypes[i])
@@ -708,7 +744,7 @@ void CGameScene::ProcessPacket()
 			{
 				Guard = static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][i]);
 
-				Guard->SetTransformMatrix(ReceivedPacketData.m_NPCWorldMatrices[i]);
+				Guard->SetTransformMatrix(ReceivedPacketData.m_NPCWorldMatrixes[i]);
 				Guard->GetAnimationController()->SetAnimationClipType(ReceivedPacketData.m_NPCAnimationClipTypes[i]);
 
 				switch (ReceivedPacketData.m_NPCAnimationClipTypes[i])

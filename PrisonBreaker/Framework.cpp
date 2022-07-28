@@ -123,6 +123,9 @@ void CFramework::BuildObjects()
 
 void CFramework::ReleaseObjects()
 {
+	ReleaseShaderVariables();
+	CSceneManager::GetInstance()->ReleaseShaderVariables();
+
 	if (m_UILayer)
 	{
 		m_UILayer->ReleaseResources();
@@ -384,7 +387,10 @@ void CFramework::UpdateShaderVariables()
 
 void CFramework::ReleaseShaderVariables()
 {
-	m_D3D12FrameworkInfo->Unmap(0, nullptr);
+	if (m_D3D12FrameworkInfo)
+	{
+		m_D3D12FrameworkInfo->Unmap(0, nullptr);
+	}
 }
 
 void CFramework::ChangeSwapChainState()

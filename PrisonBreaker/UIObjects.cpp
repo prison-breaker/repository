@@ -150,6 +150,11 @@ void CButtonUI::SetButtonArea(UINT Index, const XMFLOAT4& Area)
 		return;
 	}
 	
+	if (m_ButtonAreas.empty())
+	{
+		m_ButtonAreas.resize(m_MaxVertexCount);
+	}
+
 	m_ButtonAreas[Index] = Area;
 }
 
@@ -162,45 +167,49 @@ const XMFLOAT4& CButtonUI::GetButtonArea(UINT Index) const
 
 void CMainButtonUI::ProcessMouseMessage(UINT Message, const XMINT2& ScreenPosition, UINT RootFrameIndex)
 {
-	for (UINT i = 0; i < m_MaxVertexCount; ++i)
+	vector<shared_ptr<CQuadObject>>& QuadObjects{ static_pointer_cast<CTitleScene>(CSceneManager::GetInstance()->GetScene("TitleScene"))->GetQuadObjects() };
+
+	// 3 ~ 5 : Panel
+	if (!QuadObjects[3]->IsActive() && !QuadObjects[4]->IsActive() && !QuadObjects[5]->IsActive())
 	{
-		if ((m_ButtonAreas[i].x <= ScreenPosition.x) && (ScreenPosition.x <= m_ButtonAreas[i].y) &&
-			(m_ButtonAreas[i].z <= ScreenPosition.y) && (ScreenPosition.y <= m_ButtonAreas[i].w))
+		for (UINT i = 0; i < m_MaxVertexCount; ++i)
 		{
-			SetCellIndex(i, static_cast<float>(2 * i + 1));
-
-			if (!m_IsMouseOver)
+			if ((m_ButtonAreas[i].x <= ScreenPosition.x) && (ScreenPosition.x <= m_ButtonAreas[i].y) &&
+				(m_ButtonAreas[i].z <= ScreenPosition.y) && (ScreenPosition.y <= m_ButtonAreas[i].w))
 			{
-				m_IsMouseOver = true;
+				SetCellIndex(i, static_cast<float>(2 * i + 1));
 
-				CSoundManager::GetInstance()->Play(SOUND_TYPE_BUTTON_OVER, 0.7f);
-			}
-
-			if (Message == WM_LBUTTONUP)
-			{
-				switch (i)
+				if (!m_IsMouseOver)
 				{
-				case 0:
+					m_IsMouseOver = true;
+
+					CSoundManager::GetInstance()->Play(SOUND_TYPE_BUTTON_OVER, 0.7f);
+				}
+
+				if (Message == WM_LBUTTONUP)
 				{
-					vector<shared_ptr<CQuadObject>>& QuadObjects{ static_pointer_cast<CTitleScene>(CSceneManager::GetInstance()->GetScene("TitleScene"))->GetQuadObjects() };
-
-					QuadObjects[3]->SetActive(true);
-				}
+					switch (i)
+					{
+					case 0: // GameStart Button
+					{
+						QuadObjects[3]->SetActive(true);
+					}
 					break;
-				case 1:
-					PostQuitMessage(0);
-					break;
+					case 1: // Exit Button
+						PostQuitMessage(0);
+						break;
+					}
 				}
+				break;
 			}
-			break;
-		}
-		else
-		{
-			SetCellIndex(i, static_cast<float>(2 * i));
-
-			if (i == m_VertexCount - 1)
+			else
 			{
-				m_IsMouseOver = false;
+				SetCellIndex(i, static_cast<float>(2 * i));
+
+				if (i == m_VertexCount - 1)
+				{
+					m_IsMouseOver = false;
+				}
 			}
 		}
 	}
@@ -232,8 +241,11 @@ void CPanelButtonUI::ProcessMouseMessage(UINT Message, const XMINT2& ScreenPosit
 
 				switch (i)
 				{
+				case 0: // Close Button
+					CFramework::GetInstance()->DisconnectServer();
+					break;
 				case 1: // Connect Button
-					QuadObjects[RootFrameIndex + 1]->SetActive(true);
+					QuadObjects[RootFrameIndex + 1]->SetActive(true); // Open Waiting Popup
 
 					CFramework::GetInstance()->ConnectServer();
 					break;
@@ -303,7 +315,10 @@ void CGameOverUI::Animate(float ElapsedTime)
 
 void CEndingCreditUI::Reset()
 {
-
+	for (UINT i = 0; i < m_MaxVertexCount; ++i)
+	{
+		m_MappedQuadInfo[i].m_Position = m_InitPosition[i];
+	}
 }
 
 void CEndingCreditUI::Animate(float ElapsedTime)
@@ -318,4 +333,24 @@ void CEndingCreditUI::Animate(float ElapsedTime)
 			m_MappedQuadInfo[i].m_Position = NewPosition;
 		}
 	}
+}
+
+void CEndingCreditUI::SetInitPosition(UINT Index, const XMFLOAT3& InitPosition)
+{
+	if (Index < 0 || Index >= m_MaxVertexCount)
+	{
+		return;
+	}
+
+	if (m_InitPosition.empty())
+	{
+		m_InitPosition.resize(m_MaxVertexCount);
+	}
+
+	m_InitPosition[Index] = InitPosition;
+}
+
+const XMFLOAT3& CEndingCreditUI::GetInitPositio(UINT Index) const
+{
+	return m_InitPosition[Index];
 }

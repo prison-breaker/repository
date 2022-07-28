@@ -23,6 +23,9 @@ shared_ptr<CQuadObject> CQuadObject::LoadObjectInfoFromFile(ID3D12Device* D3D12D
 
 			switch (Type)
 			{
+			case 0:
+				NewObject = make_shared<CQuadObject>();
+				break;
 			case 1:
 				NewObject = make_shared<CBackgroundUI>();
 				break;
@@ -50,8 +53,6 @@ shared_ptr<CQuadObject> CQuadObject::LoadObjectInfoFromFile(ID3D12Device* D3D12D
 			case 9:
 				NewObject = make_shared<CEndingCreditUI>();
 				break;
-			default:
-				NewObject = make_shared<CQuadObject>();
 			}
 		}
 		else if (Token == TEXT("<IsActive>"))
@@ -99,14 +100,20 @@ shared_ptr<CQuadObject> CQuadObject::LoadObjectInfoFromFile(ID3D12Device* D3D12D
 			NewObject->m_D3D12VertexBufferView.StrideInBytes = sizeof(QUAD_INFO);
 			NewObject->m_D3D12VertexBufferView.SizeInBytes = sizeof(QUAD_INFO) * NewObject->m_VertexCount;
 
+			// 버튼 영역이나, 크레딧의 초기 위치 등을 저장한다.
 			shared_ptr<CButtonUI> ButtonUI{};
+			shared_ptr<CEndingCreditUI> EndingCreditUI{};
 
 			if (typeid(*NewObject) == typeid(CMainButtonUI) || typeid(*NewObject) == typeid(CPanelButtonUI))
 			{
 				ButtonUI = static_pointer_cast<CButtonUI>(NewObject);
 			}
+			else if (typeid(*NewObject) == typeid(CEndingCreditUI))
+			{
+				EndingCreditUI = static_pointer_cast<CEndingCreditUI>(NewObject);
+			}
 
-			for (UINT i = 0; i < NewObject->m_VertexCount; ++i)
+			for (UINT i = 0; i < NewObject->m_MaxVertexCount; ++i)
 			{
 				QUAD_INFO* MappedQuadInfo{ NewObject->m_MappedQuadInfo + i };
 				XMFLOAT3 Position{};
@@ -128,6 +135,10 @@ shared_ptr<CQuadObject> CQuadObject::LoadObjectInfoFromFile(ID3D12Device* D3D12D
 					XMFLOAT4 ButtonArea{ Position.x - 0.5f * Size.x, Position.x + 0.5f * Size.x, Position.y - 0.5f * Size.y, Position.y + 0.5f * Size.y };
 
 					ButtonUI->SetButtonArea(i, ButtonArea);
+				}
+				else if (EndingCreditUI)
+				{
+					EndingCreditUI->SetInitPosition(i, Position);
 				}
 			}
 		}
@@ -293,7 +304,7 @@ void CQuadObject::ReleaseUploadBuffers()
 {
 	if (m_D3D12VertexUploadBuffer)
 	{
-		m_D3D12VertexUploadBuffer.ReleaseAndGetAddressOf();
+		m_D3D12VertexUploadBuffer.Reset();
 	}
 
 	for (const auto& ChildObject : m_ChildObjects)
