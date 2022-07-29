@@ -10,9 +10,6 @@ private:
 	vector<vector<shared_ptr<CGameObject>>>& m_GameObjects;
 	vector<shared_ptr<CQuadObject>>		     m_QuadObjects{};
 
-	const float								 m_TimeToCreditScene{ 35.0f };
-	float									 m_ElapsedTime{};
-
 public:
 	CEndingScene(vector<vector<shared_ptr<CGameObject>>>& GameObjects, shared_ptr<CQuadObject>& SkyBox);
 	virtual ~CEndingScene() = default;

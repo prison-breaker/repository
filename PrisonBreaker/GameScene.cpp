@@ -943,6 +943,7 @@ void CGameScene::ProcessPacket()
 		(Player->GetCamera()->IsZoomIn()) ? m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(true) : m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(false); // 6: Crosshair
 
 		m_Lights[1].m_Direction = ReceivedPacketData.m_TowerLightDirection;
+		CalculateTowerLightCollision();
 	}
 }
 
@@ -1209,4 +1210,52 @@ void CGameScene::UpdatePerspective(HWND hWnd, float ElapsedTime, const shared_pt
 
 		Player->GetCamera()->Move(Vector3::ScalarProduct(2.5f * ElapsedTime, XMFLOAT3(Direction.x, 0.3f, Direction.z), false));
 	}
+}
+
+void CGameScene::CalculateTowerLightCollision()
+{
+	if (m_Lights[1].m_IsActive)
+	{
+		shared_ptr<CGameObject> Player = m_GameObjects[OBJECT_TYPE_PLAYER][CFramework::GetInstance()->GetSocketInfo().m_ID];
+
+		// 광원 포지션과 방향벡터를 활용해 평면에 도달하는 중심점을 계산한다. 
+		float LightAngle{ Vector3::Angle(m_Lights[1].m_Direction, XMFLOAT3(0.0f, -1.0f, 0.0f)) };  // 빗변과 변의 각도 계산
+		float HypotenuseLength{ m_Lights[1].m_Position.y / cosf(XMConvertToRadians(LightAngle)) }; // 빗변의 길이 계산
+		float Radian{ HypotenuseLength * tanf(XMConvertToRadians(10.0f)) };                        // 광원이 쏘아지는 원의 반지름
+
+		// 평면에 도달하는 점 계산
+		XMFLOAT3 LightedPosition{ Vector3::Add(m_Lights[1].m_Position , Vector3::ScalarProduct(HypotenuseLength, m_Lights[1].m_Direction, false)) };
+					
+		if (Math::Distance(Player->GetPosition(), LightedPosition) < Radian)
+		{
+			/*XMFLOAT3 Direction = Vector3::Normalize(Vector3::Subtract(Player->GetPosition(), m_Lights[1].m_Position));
+
+			float NearestHitDistance{ FLT_MAX };
+			float HitDistance{};
+			bool HitCheck{};
+
+			for (const auto& GameObject : m_GameObjects[OBJECT_TYPE_STRUCTURE])
+			{
+				if (GameObject)
+				{
+					shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(m_Lights[1].m_Position, Direction, HitDistance, HypotenuseLength) };
+
+					if (IntersectedObject && HitDistance < HypotenuseLength)
+					{
+						HitCheck = true;
+						break;
+					}
+				}
+			}
+
+			if (!HitCheck)
+			{
+
+			}*/
+			CSoundManager::GetInstance()->Play(SOUND_TYPE_SIREN, 0.5f);
+			return;
+		}
+	}
+
+	CSoundManager::GetInstance()->Stop(SOUND_TYPE_SIREN);
 }

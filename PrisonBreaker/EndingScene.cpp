@@ -143,21 +143,9 @@ void CEndingScene::ProcessInput(HWND hWnd, float ElapsedTime)
 
 void CEndingScene::Animate(float ElapsedTime)
 {
-	m_ElapsedTime += ElapsedTime;
+	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][CFramework::GetInstance()->GetSocketInfo().m_ID]) };
 
-	if (m_ElapsedTime >= m_TimeToCreditScene)
-	{
-		m_ElapsedTime = 0.0f;
-
-		CSceneManager::GetInstance()->ReserveScene(TEXT("CreditScene"));
-		CFramework::GetInstance()->GetPostProcessingShader()->SetPostProcessingType(POST_PROCESSING_TYPE_FADE_OUT);
-	}
-	else
-	{
-		shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][CFramework::GetInstance()->GetSocketInfo().m_ID]) };
-
-		Player->GetCamera()->Rotate(-2.5f * ElapsedTime, 0.0f, 0.0f);
-	}
+	Player->GetCamera()->Rotate(-2.5f * ElapsedTime, 0.0f, 0.0f);
 }
 
 void CEndingScene::PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
@@ -234,6 +222,10 @@ void CEndingScene::ProcessPacket()
 			{
 			case MSG_TYPE_DISCONNECTION:
 				CSceneManager::GetInstance()->ChangeScene(TEXT("TitleScene"), MsgType);
+				return;
+			case MSG_TYPE_CREDIT:
+				CSceneManager::GetInstance()->ReserveScene(TEXT("CreditScene"));
+				CFramework::GetInstance()->GetPostProcessingShader()->SetPostProcessingType(POST_PROCESSING_TYPE_FADE_OUT);
 				return;
 			}
 
