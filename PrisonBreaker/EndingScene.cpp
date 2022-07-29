@@ -77,6 +77,8 @@ void CEndingScene::Exit()
 	{
 		m_GameObjects[OBJECT_TYPE_TERRAIN][1]->SetActive(false);
 	}
+
+	CFramework::GetInstance()->GetPostProcessingShader()->SetLetterboxAmount(0.0f);
 }
 
 void CEndingScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName)
@@ -143,6 +145,8 @@ void CEndingScene::ProcessInput(HWND hWnd, float ElapsedTime)
 
 void CEndingScene::Animate(float ElapsedTime)
 {
+	shared_ptr<CPostProcessingShader> PostProcessingShader{ CFramework::GetInstance()->GetPostProcessingShader() };
+
 	m_ElapsedTime += ElapsedTime;
 
 	if (m_ElapsedTime >= m_TimeToCreditScene)
@@ -150,13 +154,15 @@ void CEndingScene::Animate(float ElapsedTime)
 		m_ElapsedTime = 0.0f;
 
 		CSceneManager::GetInstance()->ReserveScene(TEXT("CreditScene"));
-		CFramework::GetInstance()->GetPostProcessingShader()->SetPostProcessingType(POST_PROCESSING_TYPE_FADE_OUT);
+		PostProcessingShader->SetPostProcessingType(POST_PROCESSING_TYPE_FADE_OUT);
 	}
 	else
 	{
 		shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][CFramework::GetInstance()->GetSocketInfo().m_ID]) };
 
 		Player->GetCamera()->Rotate(-2.5f * ElapsedTime, 0.0f, 0.0f);
+
+		PostProcessingShader->SetLetterboxAmount(PostProcessingShader->GetLetterboxAmount() + 0.05f * ElapsedTime);
 	}
 }
 

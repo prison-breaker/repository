@@ -75,3 +75,18 @@ float CPostProcessingShader::GetFadeAmount() const
 {
 	return m_FadeAmount;
 }
+
+void CPostProcessingShader::SetLetterboxAmount(float LetterboxAmount)
+{
+	m_LetterboxAmount = LetterboxAmount;
+
+	if (m_LetterboxAmount > 0.15f)
+	{
+		m_LetterboxAmount = 0.15f;
+	}
+}
+
+float CPostProcessingShader::GetLetterboxAmount() const
+{
+	return m_LetterboxAmount;
+}

@@ -394,6 +394,8 @@ bool CGetPistolEventTrigger::InteractEventTrigger(UINT CallerIndex)
 			QuadObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(false); // 4: Punch UI
 			QuadObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(true);  // 6: Pistol UI
 			QuadObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetVertexCount(6);
+
+			CSoundManager::GetInstance()->Play(SOUND_TYPE_GET_PISTOL, 0.5f);
 		}
 
 		return true;
@@ -446,6 +448,8 @@ bool CGetKeyEventTrigger::InteractEventTrigger(UINT CallerIndex)
 
 			// ¿­¼è È¹µæ ¹Ì¼ÇUI¸¦ ¿Ï·á»óÅÂ·Î º¯°æÇÑ´Ù.
 			QuadObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(1, 5);
+
+			CSoundManager::GetInstance()->Play(SOUND_TYPE_GET_KEY, 0.6f);
 		}
 
 		return true;

@@ -53,6 +53,8 @@ void CSoundManager::Initialize()
 	Result = m_System->createSound("Sounds/PistolDryFire.wav", FMOD_LOOP_OFF, nullptr, &m_Sounds[SOUND_TYPE_PISTOL_EMPTY]);
 	Result = m_System->createSound("Sounds/EvacuationSiren.wav", FMOD_LOOP_NORMAL, nullptr, &m_Sounds[SOUND_TYPE_SIREN]);
 	Result = m_System->createSound("Sounds/Unlock.wav", FMOD_LOOP_OFF, nullptr, &m_Sounds[SOUND_TYPE_UNLOCK]);
+	Result = m_System->createSound("Sounds/GetPistol.wav", FMOD_LOOP_OFF, nullptr, &m_Sounds[SOUND_TYPE_GET_PISTOL]);
+	Result = m_System->createSound("Sounds/GetKey.wav", FMOD_LOOP_OFF, nullptr, &m_Sounds[SOUND_TYPE_GET_KEY]);
 }
 
 void CSoundManager::Play(SOUND_TYPE SoundType, float Volume)

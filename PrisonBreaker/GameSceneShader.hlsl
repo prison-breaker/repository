@@ -59,10 +59,11 @@ struct LIGHT
 
 cbuffer CB_FRAMEWORKINFO : register(b0)
 {
-	float TotalTime    : packoffset(c0.x);
-	float ElapsedTime  : packoffset(c0.y);
+    float TotalTime;
+    float ElapsedTime;
 	
-    float FadeAmount : packoffset(c0.z);
+    float FadeAmount;
+    float LetterboxAmount;
 };
 
 cbuffer CB_CAMERA : register(b1)
@@ -652,7 +653,7 @@ VS_OUTPUT_POST_PROCESSING VS_PostProcessing(uint VertexID : SV_VertexID)
 
 float4 PS_PostProcessing(VS_OUTPUT_POST_PROCESSING Input) : SV_TARGET
 {
-    float4 Color = AlbedoMapTexture.Sample(Sampler, Input.m_TexCoord); // * ceil(clamp(-cos(2.0f * 3.14f * Input.m_TexCoord.y) + 0.9f, 0.0f, 1.0f));
+    float4 Color = AlbedoMapTexture.Sample(Sampler, Input.m_TexCoord) * ceil(clamp(-cos(2.0f * 3.14f * Input.m_TexCoord.y) + 1.0f - LetterboxAmount, 0.0f, 1.0f));
 	
     Color.rgb *= clamp(FadeAmount, 0.0f, 1.0f);
 

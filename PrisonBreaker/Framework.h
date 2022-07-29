@@ -10,6 +10,7 @@ struct CB_FRAMEWORKINFO
 	float m_ElapsedTime{};
 
 	float m_FadeAmount{};
+	float m_LetterboxAmount{};
 };
 
 class CFramework

@@ -7,6 +7,7 @@ private:
 	POST_PROCESSING_TYPE m_PostProcessingType{ POST_PROCESSING_TYPE_FADE_IN };
 
 	float				 m_FadeAmount{};
+	float				 m_LetterboxAmount{};
 
 public:
 	CPostProcessingShader() = default;
@@ -24,4 +25,7 @@ public:
 
 	void UpdateFadeAmount(float ElapsedTime);
 	float GetFadeAmount() const;
+
+	void SetLetterboxAmount(float LetterboxAmount);
+	float GetLetterboxAmount() const;
 };

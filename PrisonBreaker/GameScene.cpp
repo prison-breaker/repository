@@ -179,12 +179,13 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 	LoadMeshCachesFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("MeshesAndMaterials/Meshes.bin"), MeshCaches);
 	LoadMaterialCachesFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("MeshesAndMaterials/Materials.bin"), MaterialCaches);
 
-	tstring Token{};
 	tifstream InFile{ FileName, ios::binary };
+	tstring Token{};
 
 	shared_ptr<LOADED_MODEL_INFO> ModelInfo{};
 
 	UINT Type{};
+	UINT PlayerID{};
 
 	while (true)
 	{
@@ -220,8 +221,6 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 			{
 			case OBJECT_TYPE_PLAYER:
 			{
-				UINT PlayerID{};
-
 				for (UINT i = 0; i < InstanceCount; ++i)
 				{
 					shared_ptr<CPlayer> Player{ make_shared<CPlayer>(D3D12Device, D3D12GraphicsCommandList) };
@@ -1133,7 +1132,7 @@ void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
 
 void CGameScene::BuildLights()
 {
-	float m_SpotLightAngle{ XMConvertToRadians(90.0f) };
+	const float m_SpotLightAngle{ XMConvertToRadians(90.0f) };
 
 	m_Lights.resize(MAX_LIGHTS);
 

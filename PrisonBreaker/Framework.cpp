@@ -378,7 +378,9 @@ void CFramework::UpdateShaderVariables()
 	if (m_PostProcessingShader)
 	{
 		m_PostProcessingShader->UpdateFadeAmount(ElapsedTime);
+
 		m_MappedFrameworkInfo->m_FadeAmount = m_PostProcessingShader->GetFadeAmount();
+		m_MappedFrameworkInfo->m_LetterboxAmount = m_PostProcessingShader->GetLetterboxAmount();
 	}
 
 	m_D3D12GraphicsCommandList->SetGraphicsRootSignature(m_D3D12RootSignature.Get());
