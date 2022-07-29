@@ -15,6 +15,6 @@ public:
 class CTree : public CQuadObject
 {
 public:
-	CTree(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
+	CTree(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& SceneName);
 	virtual ~CTree() = default;
 };

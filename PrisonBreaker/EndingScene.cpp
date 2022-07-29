@@ -36,7 +36,7 @@ void CEndingScene::OnDestroy()
 
 void CEndingScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, ID3D12RootSignature* D3D12RootSignature)
 {
-	shared_ptr<CTree> Tree{ make_shared<CTree>(D3D12Device, D3D12GraphicsCommandList) };
+	shared_ptr<CTree> Tree{ make_shared<CTree>(D3D12Device, D3D12GraphicsCommandList, TEXT("EndingScene")) };
 
 	m_QuadObjects[0] = Tree;
 }

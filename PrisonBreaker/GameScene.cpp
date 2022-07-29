@@ -138,8 +138,11 @@ void CGameScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandLi
 	m_GameObjects.resize(OBJECT_TYPE_STRUCTURE + 1);
 	m_QuadObjects.resize(BILBOARD_OBJECT_TYPE_UI + 1);
 
+	// 빌보드 나무 객체를 생성한다.
+	m_QuadObjects[BILBOARD_OBJECT_TYPE_BILBOARD].push_back(make_shared<CTree>(D3D12Device, D3D12GraphicsCommandList, TEXT("GameScene")));
+
 	// 스카이박스 객체를 생성한다.
-	m_QuadObjects[BILBOARD_OBJECT_TYPE_SKYBOX].push_back(make_shared<CSkyBox>(D3D12Device, D3D12GraphicsCommandList));
+	m_QuadObjects[BILBOARD_OBJECT_TYPE_BILBOARD].push_back(make_shared<CSkyBox>(D3D12Device, D3D12GraphicsCommandList));
 
 	// 파일로부터 씬 객체들을 생성하고 배치한다.
 	LoadSceneInfoFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Scenes/GameScene.bin"));
@@ -386,7 +389,7 @@ void CGameScene::ReleaseUploadBuffers()
 		}
 	}
 
-	for (UINT i = BILBOARD_OBJECT_TYPE_SKYBOX; i <= BILBOARD_OBJECT_TYPE_UI; ++i)
+	for (UINT i = BILBOARD_OBJECT_TYPE_BILBOARD; i <= BILBOARD_OBJECT_TYPE_UI; ++i)
 	{
 		for (const auto& QuadObject : m_QuadObjects[i])
 		{
@@ -594,7 +597,7 @@ void CGameScene::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 		}
 	}
 
-	for (UINT i = BILBOARD_OBJECT_TYPE_SKYBOX; i <= BILBOARD_OBJECT_TYPE_UI; ++i)
+	for (UINT i = BILBOARD_OBJECT_TYPE_BILBOARD; i <= BILBOARD_OBJECT_TYPE_UI; ++i)
 	{
 		for (const auto& QuadObject : m_QuadObjects[i])
 		{

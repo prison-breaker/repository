@@ -116,30 +116,73 @@ void CSkyBox::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamer
 
 //=========================================================================================================================
 
-CTree::CTree(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
+CTree::CTree(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& SceneName)
 {
 	m_IsActive = true;
-	m_VertexCount = m_MaxVertexCount = 40;
 
 	vector<QUAD_INFO> Vertices{};
-
-	Vertices.reserve(m_MaxVertexCount);
-
 	QUAD_INFO QuadInfo{};
 
-	for (UINT i = 0; i < m_MaxVertexCount / 2; ++i)
+	if (SceneName == TEXT("GameScene"))
 	{
-		float RandomValue{ Random::Range(5.0f, 7.0f) };
+		m_VertexCount = m_MaxVertexCount = 480;
 
-		QuadInfo.m_Position = { -15.0f, 1.05f + 0.5f * RandomValue, -25.0f + 2.0f * i };
-		QuadInfo.m_Size = { RandomValue, RandomValue };
-		Vertices.push_back(QuadInfo);
+		Vertices.reserve(m_MaxVertexCount);
 
-		RandomValue = Random::Range(5.0f, 8.0f);
+		for (UINT j = 0; j < m_MaxVertexCount / 4; ++j)
+		{
+			float RandomSize{ Random::Range(10.0f, 14.0f) };
+			float RandomOffset{ Random::Range(-5.0f, 0.0f) };
 
-		QuadInfo.m_Position = { 15.0f, 1.05f + 0.5f * RandomValue, -25.0f + 2.0f * i };
-		QuadInfo.m_Size = { RandomValue, RandomValue };
-		Vertices.push_back(QuadInfo);
+			QuadInfo.m_Position = { -215.0f + 3.8f * j, 1.05f + 0.5f * RandomSize, -215.0f + RandomOffset };
+			QuadInfo.m_Size = { RandomSize, RandomSize };
+			Vertices.push_back(QuadInfo);
+
+			RandomSize = Random::Range(10.0f, 14.0f);
+			RandomOffset = Random::Range(0.0f, 5.0f);
+
+			QuadInfo.m_Position = { -215.0f + 3.8f * j, 1.05f + 0.5f * RandomSize, 215.0f + RandomOffset };
+			QuadInfo.m_Size = { RandomSize, RandomSize };
+			Vertices.push_back(QuadInfo);
+		}
+
+		for (UINT j = 0; j < m_MaxVertexCount / 4; ++j)
+		{
+			float RandomSize{ Random::Range(10.0f, 14.0f) };
+			float RandomOffset{ Random::Range(-5.0f, 0.0f) };
+
+			QuadInfo.m_Position = { -215.0f + RandomOffset, 1.05f + 0.5f * RandomSize, -215.0f + 3.8f * j };
+			QuadInfo.m_Size = { RandomSize, RandomSize };
+			Vertices.push_back(QuadInfo);
+
+			RandomSize = Random::Range(10.0f, 14.0f);
+			RandomOffset = Random::Range(0.0f, 5.0f);
+
+			QuadInfo.m_Position = { 215.0f + RandomOffset, 1.05f + 0.5f * RandomSize, -215.0f + 3.8f * j };
+			QuadInfo.m_Size = { RandomSize, RandomSize };
+			Vertices.push_back(QuadInfo);
+		}
+	}
+	else if (SceneName == TEXT("EndingScene"))
+	{
+		m_VertexCount = m_MaxVertexCount = 40;
+
+		Vertices.reserve(m_MaxVertexCount);
+
+		for (UINT i = 0; i < m_MaxVertexCount / 2; ++i)
+		{
+			float RandomSize{ Random::Range(5.0f, 7.0f) };
+
+			QuadInfo.m_Position = { -15.0f, 1.05f + 0.5f * RandomSize, -25.0f + 2.0f * i };
+			QuadInfo.m_Size = { RandomSize, RandomSize };
+			Vertices.push_back(QuadInfo);
+
+			RandomSize = Random::Range(5.0f, 8.0f);
+
+			QuadInfo.m_Position = { 15.0f, 1.05f + 0.5f * RandomSize, -25.0f + 2.0f * i };
+			QuadInfo.m_Size = { RandomSize, RandomSize };
+			Vertices.push_back(QuadInfo);
+		}
 	}
 
 	m_D3D12VertexBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, Vertices.data(), sizeof(QUAD_INFO) * m_MaxVertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_D3D12VertexUploadBuffer.GetAddressOf());
@@ -148,10 +191,15 @@ CTree::CTree(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12Graphics
 	m_D3D12VertexBufferView.SizeInBytes = sizeof(QUAD_INFO) * m_MaxVertexCount;
 
 	shared_ptr<CMaterial> Material{ make_shared<CMaterial>() };
-	shared_ptr<CTexture> Texture{ make_shared<CTexture>() };
+	shared_ptr<CTexture> Texture{ CTextureManager::GetInstance()->GetTexture(TEXT("Tree")) };
 	shared_ptr<CShader> Shader{ CShaderManager::GetInstance()->GetShader(TEXT("QuadShader")) };
 
-	Texture->LoadTextureFromDDSFile(D3D12Device, D3D12GraphicsCommandList, TEXTURE_TYPE_ALBEDO_MAP, TEXT("Textures/Tree.dds"));
+	if (!Texture)
+	{
+		Texture = make_shared<CTexture>();
+		Texture->LoadTextureFromDDSFile(D3D12Device, D3D12GraphicsCommandList, TEXTURE_TYPE_ALBEDO_MAP, TEXT("Textures/Tree.dds"));
+	}
+		
 	Material->RegisterTexture(Texture);
 	Material->RegisterShader(Shader);
 	Material->SetStateNum(0);

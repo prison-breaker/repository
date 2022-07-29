@@ -91,7 +91,7 @@ void CFramework::BuildObjects()
 	CSceneManager::GetInstance()->RegisterScene(TEXT("GameScene"), GameScene);
 	GameScene->OnCreate(m_D3D12Device.Get(), m_D3D12GraphicsCommandList.Get(), m_D3D12RootSignature.Get());
 
-	shared_ptr<CEndingScene> EndingScene{ make_shared<CEndingScene>(GameScene->GetGameObjects(), GameScene->GetQuadObjects()[BILBOARD_OBJECT_TYPE_SKYBOX][0]) };
+	shared_ptr<CEndingScene> EndingScene{ make_shared<CEndingScene>(GameScene->GetGameObjects(), GameScene->GetQuadObjects()[BILBOARD_OBJECT_TYPE_BILBOARD][1]) };
 
 	CSceneManager::GetInstance()->RegisterScene(TEXT("EndingScene"), EndingScene);
 	EndingScene->OnCreate(m_D3D12Device.Get(), m_D3D12GraphicsCommandList.Get(), m_D3D12RootSignature.Get());

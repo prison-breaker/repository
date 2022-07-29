@@ -1,9 +1,0 @@
-<Hierarchy>
-	<Frame> terrain
-		<TransformMatrix> 250 0 0 0 0 1 0 0 0 0 250 0 0 0 0 1 
-		<Mesh> Plane.002
-		<Materials> 1
-			<Material> terrain 
-		<ChildCount> 0
-	</Frame>
-</Hierarchy>
