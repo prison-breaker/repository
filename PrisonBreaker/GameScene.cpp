@@ -721,7 +721,7 @@ void CGameScene::ProcessPacket()
 				case ANIMATION_CLIP_TYPE_PLAYER_SHOOT:
 					if (PrevAnimationClipType != ReceivedPacketData.m_PlayerAnimationClipTypes[i])
 					{
-						if (CFramework::GetInstance()->GetSocketInfo().m_ID == Player->GetID())
+						if (SocketInfo.m_ID == Player->GetID())
 						{
 							UINT BulletCount{ m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][4]->GetVertexCount() };
 
@@ -847,11 +847,11 @@ void CGameScene::ProcessPacket()
 				closesocket(SocketInfo.m_Socket);
 			}
 			else
-			{
+			{				
 				for (UINT i = 0; i < MAX_PLAYER_CAPACITY; ++i)
 				{
 					if (PlayerAttackData.m_TargetIndices[i] != UINT_MAX)
-					{
+					{						
 						CSoundManager::GetInstance()->Stop(SOUND_TYPE_GRUNT_2);
 						m_GameObjects[OBJECT_TYPE_NPC][PlayerAttackData.m_TargetIndices[i]]->PlaySound(SOUND_TYPE_GRUNT_2, 0.5f, 50.0f);
 					}
@@ -1228,7 +1228,7 @@ void CGameScene::CalculateTowerLightCollision()
 					
 		if (Math::Distance(Player->GetPosition(), LightedPosition) < Radian)
 		{
-			/*XMFLOAT3 Direction = Vector3::Normalize(Vector3::Subtract(Player->GetPosition(), m_Lights[1].m_Position));
+			XMFLOAT3 Direction = Vector3::Normalize(Vector3::Subtract(Player->GetPosition(), m_Lights[1].m_Position));
 
 			float NearestHitDistance{ FLT_MAX };
 			float HitDistance{};
@@ -1250,12 +1250,22 @@ void CGameScene::CalculateTowerLightCollision()
 
 			if (!HitCheck)
 			{
-
-			}*/
-			CSoundManager::GetInstance()->Play(SOUND_TYPE_SIREN, 0.5f);
-			return;
+				if (!m_BGMSwitch)
+				{
+					CSoundManager::GetInstance()->Stop(SOUND_TYPE_INGAME_BGM_1);
+					CSoundManager::GetInstance()->Play(SOUND_TYPE_INGAME_BGM_2, 0.3f);
+					m_BGMSwitch = true;
+				}
+				
+				return;
+			}
 		}
 	}
 
-	CSoundManager::GetInstance()->Stop(SOUND_TYPE_SIREN);
+	if (m_BGMSwitch)
+	{
+		CSoundManager::GetInstance()->Stop(SOUND_TYPE_INGAME_BGM_2);
+		CSoundManager::GetInstance()->Play(SOUND_TYPE_INGAME_BGM_1, 0.3f);
+		m_BGMSwitch = false;
+	}
 }

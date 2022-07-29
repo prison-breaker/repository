@@ -70,6 +70,7 @@ private:
 	CB_FOG*									m_MappedFog{};
 
 	bool									m_RenderBoundingBox{};
+	bool                                    m_BGMSwitch{};
 
 public:
 	CGameScene() = default;
