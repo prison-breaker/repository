@@ -720,7 +720,7 @@ void CGameScene::ProcessPacket()
 				case ANIMATION_CLIP_TYPE_PLAYER_SHOOT:
 					if (PrevAnimationClipType != ReceivedPacketData.m_PlayerAnimationClipTypes[i])
 					{
-						if (CFramework::GetInstance()->GetSocketInfo().m_ID == Player->GetID())
+						if (SocketInfo.m_ID == Player->GetID())
 						{
 							UINT BulletCount{ m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][4]->GetVertexCount() };
 

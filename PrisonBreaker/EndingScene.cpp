@@ -145,25 +145,13 @@ void CEndingScene::ProcessInput(HWND hWnd, float ElapsedTime)
 
 void CEndingScene::Animate(float ElapsedTime)
 {
+	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][CFramework::GetInstance()->GetSocketInfo().m_ID]) };
+
+	Player->GetCamera()->Rotate(-2.5f * ElapsedTime, 0.0f, 0.0f);
+
 	shared_ptr<CPostProcessingShader> PostProcessingShader{ CFramework::GetInstance()->GetPostProcessingShader() };
 
-	m_ElapsedTime += ElapsedTime;
-
-	if (m_ElapsedTime >= m_TimeToCreditScene)
-	{
-		m_ElapsedTime = 0.0f;
-
-		CSceneManager::GetInstance()->ReserveScene(TEXT("CreditScene"));
-		PostProcessingShader->SetPostProcessingType(POST_PROCESSING_TYPE_FADE_OUT);
-	}
-	else
-	{
-		shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][CFramework::GetInstance()->GetSocketInfo().m_ID]) };
-
-		Player->GetCamera()->Rotate(-2.5f * ElapsedTime, 0.0f, 0.0f);
-
-		PostProcessingShader->SetLetterboxAmount(PostProcessingShader->GetLetterboxAmount() + 0.05f * ElapsedTime);
-	}
+	PostProcessingShader->SetLetterboxAmount(PostProcessingShader->GetLetterboxAmount() + 0.05f * ElapsedTime);
 }
 
 void CEndingScene::PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
@@ -240,6 +228,10 @@ void CEndingScene::ProcessPacket()
 			{
 			case MSG_TYPE_DISCONNECTION:
 				CSceneManager::GetInstance()->ChangeScene(TEXT("TitleScene"), MsgType);
+				return;
+			case MSG_TYPE_CREDIT:
+				CSceneManager::GetInstance()->ReserveScene(TEXT("CreditScene"));
+				CFramework::GetInstance()->GetPostProcessingShader()->SetPostProcessingType(POST_PROCESSING_TYPE_FADE_OUT);
 				return;
 			}
 
