@@ -315,7 +315,7 @@ bool COpenGateEventTrigger::InteractEventTrigger(UINT CallerIndex)
 		if (Player->HasKey() && !m_UsedKeyIndices[CallerIndex])
 		{
 			m_UsedKeyIndices[CallerIndex] = true;
-			m_EventObjects[0]->PlaySound(SOUND_TYPE_UNLOCK, 0.5f, 20.0f);
+			m_EventObjects[0]->PlaySound(SOUND_TYPE_UNLOCK, 0.6f, 20.0f);
 			
 			if (m_UsedKeyIndices[0] && m_UsedKeyIndices[1])
 			{

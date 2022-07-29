@@ -57,6 +57,20 @@ void CSoundManager::Initialize()
 	Result = m_System->createSound("Sounds/GetKey.wav", FMOD_LOOP_OFF, nullptr, &m_Sounds[SOUND_TYPE_GET_KEY]);
 }
 
+bool CSoundManager::IsPlaying(SOUND_TYPE SoundType)
+{
+	if (SoundType < 0)
+	{
+		return false;
+	}
+
+	bool IsPlaying{};
+
+	m_Channels[SoundType]->isPlaying(&IsPlaying);
+
+	return IsPlaying;
+}
+
 void CSoundManager::Play(SOUND_TYPE SoundType, float Volume)
 {
 	if (SoundType < 0)

@@ -18,6 +18,8 @@ public:
 
 	void Initialize();
 
+	bool IsPlaying(SOUND_TYPE SoundType);
+
 	void Play(SOUND_TYPE SoundType, float Volume);
 	void Stop(SOUND_TYPE SoundType);
 	void Pause(SOUND_TYPE SoundType);

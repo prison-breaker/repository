@@ -940,11 +940,26 @@ void CGameScene::ProcessPacket()
 			}
 		}
 
+		m_Lights[1].m_Direction = ReceivedPacketData.m_TowerLightDirection;
+					
+		if (ReceivedPacketData.m_MsgType & MSG_TYPE_PLAYER1_BGM_SWAP && SocketInfo.m_ID == 0 ||
+			ReceivedPacketData.m_MsgType & MSG_TYPE_PLAYER2_BGM_SWAP && SocketInfo.m_ID == 1)
+		{
+			if (CSoundManager::GetInstance()->IsPlaying(SOUND_TYPE_INGAME_BGM_1))
+			{
+				CSoundManager::GetInstance()->Stop(SOUND_TYPE_INGAME_BGM_1);
+				CSoundManager::GetInstance()->Play(SOUND_TYPE_INGAME_BGM_2, 0.3f);
+			}
+			else
+			{
+				CSoundManager::GetInstance()->Stop(SOUND_TYPE_INGAME_BGM_2);
+				CSoundManager::GetInstance()->Play(SOUND_TYPE_INGAME_BGM_1, 0.3f);
+			}
+		}
+		
 		Player = static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][SocketInfo.m_ID]);
 		Player->IsCollidedByEventTrigger(Player->GetPosition());
 		(Player->GetCamera()->IsZoomIn()) ? m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(true) : m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(false); // 6: Crosshair
-
-		m_Lights[1].m_Direction = ReceivedPacketData.m_TowerLightDirection;
 	}
 }
 
