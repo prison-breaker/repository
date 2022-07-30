@@ -624,6 +624,11 @@ void CFramework::ConnectServer()
 	{
 		Server::ErrorQuit("socket()");
 	}
+	
+	// Nagle 알고리즘을 중지시킨다.
+	BOOL SocketOption{ TRUE };
+
+	setsockopt(m_SocketInfo.m_Socket, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<const char*>(&SocketOption), sizeof(SocketOption));
 
 	m_SocketInfo.m_SocketAddress.sin_family = AF_INET;
 	m_SocketInfo.m_SocketAddress.sin_addr.s_addr = inet_addr(m_UILayer->GetText().c_str());
