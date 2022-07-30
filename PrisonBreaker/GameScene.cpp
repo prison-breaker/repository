@@ -621,8 +621,17 @@ void CGameScene::PostRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 
 void CGameScene::ProcessPacket()
 {
+	int sizebuf{16*1024};
+	int on = 1;
 	// Send to msg data.
 	SOCKET_INFO SocketInfo{ CFramework::GetInstance()->GetSocketInfo() };
+	int data_size = sizeof(struct SERVER_TO_CLIENT_DATA);
+	
+	setsockopt(SocketInfo.m_Socket, SOL_SOCKET, SO_SNDBUF, (char*)&sizebuf, sizeof(sizebuf));
+	setsockopt(SocketInfo.m_Socket, SOL_SOCKET, SO_RCVBUF, (char*)&sizebuf, sizeof(sizebuf));
+
+	setsockopt(SocketInfo.m_Socket, IPPROTO_TCP, TCP_NODELAY, (char*)&on, sizeof(on));
+
 	MSG_TYPE MsgType{ MSG_TYPE_INGAME };
 	int ReturnValue{ send(SocketInfo.m_Socket, (char*)&MsgType, sizeof(MsgType), 0) };
 
@@ -635,7 +644,7 @@ void CGameScene::ProcessPacket()
 	CLIENT_TO_SERVER_DATA SendedPacketData{ m_InputMask, m_GameObjects[OBJECT_TYPE_PLAYER][SocketInfo.m_ID]->GetWorldMatrix() };
 
 	ReturnValue = send(SocketInfo.m_Socket, (char*)&SendedPacketData, sizeof(SendedPacketData), 0);
-
+	
 	if (ReturnValue == SOCKET_ERROR)
 	{
 		Server::ErrorDisplay("send()");
