@@ -59,12 +59,7 @@ public:
 
 	bool SwapWeapon(WEAPON_TYPE WeaponType);
 
-	void ApplySlidingVectorToPosition(const shared_ptr<CNavMesh>& NavMesh, XMFLOAT3& NewPosition);
-
 	void Rotate(float Pitch, float Yaw, float Roll, float ElapsedTime, float NearestHitDistance);
 
-	bool IsCollidedByGuard(const XMFLOAT3& NewPosition);
-	bool IsCollidedByEventTrigger(const XMFLOAT3& NewPosition);
-
-	void ProcessInput(float ElapsedTime, UINT InputMask);
+	void IsCollidedByEventTrigger(const XMFLOAT3& NewPosition);
 };

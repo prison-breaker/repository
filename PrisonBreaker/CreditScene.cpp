@@ -7,7 +7,13 @@
 
 void CCreditScene::Initialize()
 {
-
+	for (const auto& QuadObject : m_QuadObjects)
+	{
+		if (QuadObject)
+		{
+			QuadObject->Reset();
+		}
+	}
 }
 
 void CCreditScene::OnCreate(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, ID3D12RootSignature* D3D12RootSignature)

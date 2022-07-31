@@ -147,7 +147,7 @@ void CEndingScene::Animate(float ElapsedTime)
 {
 	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][CFramework::GetInstance()->GetSocketInfo().m_ID]) };
 
-	Player->GetCamera()->Rotate(-2.5f * ElapsedTime, 0.0f, 0.0f);
+	Player->GetCamera()->Rotate(-3.0f * ElapsedTime, 0.0f, 0.0f);
 
 	shared_ptr<CPostProcessingShader> PostProcessingShader{ CFramework::GetInstance()->GetPostProcessingShader() };
 

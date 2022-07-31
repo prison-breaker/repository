@@ -230,7 +230,7 @@ void CGuardDyingState::Update(const shared_ptr<CGuard>& Entity, float ElapsedTim
 	{
 		Entity->SetElapsedTime(Entity->GetElapsedTime() + ElapsedTime);
 
-		if (Entity->GetElapsedTime() > 10.0f)
+		if (Entity->GetElapsedTime() > 6.0f)
 		{
 			Entity->SetActive(false);
 		}

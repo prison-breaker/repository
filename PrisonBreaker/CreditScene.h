@@ -12,7 +12,7 @@ private:
 
 	vector<shared_ptr<CQuadObject>> m_QuadObjects{};
 							    
-	const float						m_TimeToTitleScene{ 55.0f };
+	const float						m_TimeToTitleScene{ 50.0f };
 	float							m_ElapsedTime{};
 public:
 	CCreditScene() = default;

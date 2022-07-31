@@ -328,7 +328,7 @@ void CEndingCreditUI::Animate(float ElapsedTime)
 		for (UINT i = 0; i < m_MaxVertexCount; ++i)
 		{
 			XMFLOAT3 PrevPosition{ m_MappedQuadInfo[i].m_Position };
-			XMFLOAT3 NewPosition{ PrevPosition.x, PrevPosition.y - 45.0f * ElapsedTime, 0.0f };
+			XMFLOAT3 NewPosition{ PrevPosition.x, PrevPosition.y - 50.0f * ElapsedTime, 0.0f };
 
 			m_MappedQuadInfo[i].m_Position = NewPosition;
 		}

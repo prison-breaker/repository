@@ -41,6 +41,7 @@ void CPlayer::Reset(const XMFLOAT4X4& TransformMatrix)
 	UpdateTransform(Matrix4x4::Identity());
 
 	m_StateMachine->SetCurrentState(CPlayerIdleState::GetInstance());
+	m_Camera->SetZoomIn(false);
 }
 
 void CPlayer::Animate(float ElapsedTime)
@@ -171,50 +172,6 @@ bool CPlayer::SwapWeapon(WEAPON_TYPE WeaponType)
 	return IsSwapped;
 }
 
-void CPlayer::ApplySlidingVectorToPosition(const shared_ptr<CNavMesh>& NavMesh, XMFLOAT3& NewPosition)
-{
-	XMFLOAT3 Shift{ Vector3::Subtract(NewPosition, GetPosition()) };
-
-	shared_ptr<CNavNode> NavNode{ NavMesh->GetNavNodes()[NavMesh->GetNodeIndex(GetPosition())] };
-
-	XMFLOAT3 SlidingVector{};
-	XMFLOAT3 Vertices[3]{ NavNode->GetTriangle().m_Vertices[0], NavNode->GetTriangle().m_Vertices[1], NavNode->GetTriangle().m_Vertices[2] };
-	XMFLOAT3 Edge{};
-	XMFLOAT3 ContactNormal{};
-
-	if (Math::LineIntersection(Vertices[0], Vertices[1], NewPosition, GetPosition()))
-	{
-		Edge = Vector3::Subtract(Vertices[0], Vertices[1]);
-		ContactNormal = Vector3::Normalize(Vector3::TransformNormal(Edge, Matrix4x4::RotationYawPitchRoll(0.0f, 90.0f, 0.0f)));
-
-		SlidingVector = Vector3::Subtract(Shift, Vector3::ScalarProduct(Vector3::DotProduct(Shift, ContactNormal), ContactNormal, false));
-		NewPosition = Vector3::Add(GetPosition(), SlidingVector);
-	}
-	else if (Math::LineIntersection(Vertices[1], Vertices[2], NewPosition, GetPosition()))
-	{
-		Edge = Vector3::Subtract(Vertices[1], Vertices[2]);
-		ContactNormal = Vector3::Normalize(Vector3::TransformNormal(Edge, Matrix4x4::RotationYawPitchRoll(0.0f, 90.0f, 0.0f)));
-
-		SlidingVector = Vector3::Subtract(Shift, Vector3::ScalarProduct(Vector3::DotProduct(Shift, ContactNormal), ContactNormal, false));
-		NewPosition = Vector3::Add(GetPosition(), SlidingVector);
-	}
-	else if (Math::LineIntersection(Vertices[2], Vertices[0], NewPosition, GetPosition()))
-	{
-		Edge = Vector3::Subtract(Vertices[2], Vertices[0]);
-		ContactNormal = Vector3::Normalize(Vector3::TransformNormal(Edge, Matrix4x4::RotationYawPitchRoll(0.0f, 90.0f, 0.0f)));
-
-		SlidingVector = Vector3::Subtract(Shift, Vector3::ScalarProduct(Vector3::DotProduct(Shift, ContactNormal), ContactNormal, false));
-		NewPosition = Vector3::Add(GetPosition(), SlidingVector);
-	}
-
-	// 보정된 NewPosition도 NavMesh 위에 없다면, 기존 위치로 설정한다.
-	if (!IsInNavMesh(NavMesh, NewPosition))
-	{
-		NewPosition = GetPosition();
-		//tcout << TEXT("Not in NavMesh!") << endl;
-	}
-}
-
 void CPlayer::Rotate(float Pitch, float Yaw, float Roll, float ElapsedTime, float NearestHitDistance)
 {
 	if (!Math::IsZero(Pitch))
@@ -265,30 +222,7 @@ void CPlayer::Rotate(float Pitch, float Yaw, float Roll, float ElapsedTime, floa
 	m_Camera->Rotate(RotationMatrix, ElapsedTime, NearestHitDistance);
 }
 
-bool CPlayer::IsCollidedByGuard(const XMFLOAT3& NewPosition)
-{
-	vector<vector<shared_ptr<CGameObject>>>& GameObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene("GameScene"))->GetGameObjects() };
-
-	for (const auto& GameObject : GameObjects[OBJECT_TYPE_NPC])
-	{
-		if (GameObject)
-		{
-			shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(GameObject) };
-
-			if (Guard->GetHealth() > 0)
-			{
-				if (Math::Distance(Guard->GetPosition(), NewPosition) <= 2.0f)
-				{
-					return true;
-				}
-			}
-		}
-	}
-
-	return false;
-}
-
-bool CPlayer::IsCollidedByEventTrigger(const XMFLOAT3& NewPosition)
+void CPlayer::IsCollidedByEventTrigger(const XMFLOAT3& NewPosition)
 {
 	vector<shared_ptr<CEventTrigger>>& EventTriggers{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene("GameScene"))->GetEventTriggers() };
 	UINT TriggerCount{ static_cast<UINT>(EventTriggers.size()) };
@@ -309,7 +243,7 @@ bool CPlayer::IsCollidedByEventTrigger(const XMFLOAT3& NewPosition)
 
 			if (EventTriggers[i]->IsInTriggerArea(GetPosition(), GetLook()))
 			{
-				return true;
+				return;
 			}
 		}
 	}
@@ -317,11 +251,4 @@ bool CPlayer::IsCollidedByEventTrigger(const XMFLOAT3& NewPosition)
 	// 반복문을 모두 돌았다면, 플레이어는 트리거 영역안에 없는 것이므로 상호작용 UI를 렌더링되지 않도록 만든다.
 	// 이때, 모든 트리거는 상호작용 UI(m_InteractionUI)를 공유하여 사용하므로 0번 트리거를 이용하여 함수를 호출하였다.
 	EventTriggers[0]->HideInteractionUI();
-
-	return false;
-}
-
-void CPlayer::ProcessInput(float ElapsedTime, UINT InputMask)
-{
-
 }

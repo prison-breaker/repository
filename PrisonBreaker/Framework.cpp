@@ -655,6 +655,7 @@ void CFramework::ConnectServer()
 	}
 
 	CSceneManager::GetInstance()->GetScene(TEXT("GameScene"))->Initialize();
+	CSceneManager::GetInstance()->GetScene(TEXT("CreditScene"))->Initialize();
 }
 
 void CFramework::DisconnectServer()
