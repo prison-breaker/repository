@@ -19,7 +19,7 @@
 #define MAX_PLAYER_CAPACITY		  2
 #define MAX_NPC_COUNT			  15	
 #define MAX_TITLE_LENGTH	      64
-#define MAX_LIGHTS                2
+#define MAX_LIGHTS                3
 #define MAX_BOUNDINGBOX_INDICES	  36
 #define MAX_BONES				  100
 #define MAX_BGM_SOUNDS			  4

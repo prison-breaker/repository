@@ -199,6 +199,11 @@ void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12Graphics
 			File::ReadStringFromFile(InFile, Token);
 
 			ModelInfo = CGameObject::LoadObjectFromFile(D3D12Device, D3D12GraphicsCommandList, Token, MeshCaches, MaterialCaches);
+
+			if (ModelInfo->m_Model->GetName() == TEXT("tower"))
+			{
+				m_TowerLightFrame = ModelInfo->m_Model->FindFrame(TEXT("spotlight_pr_1"));
+			}
 		}
 		else if (Token == TEXT("<Type>"))
 		{
@@ -939,9 +944,7 @@ void CGameScene::ProcessPacket()
 				}
 			}
 		}
-
-		m_Lights[1].m_Direction = ReceivedPacketData.m_TowerLightDirection;
-					
+				
 		if (ReceivedPacketData.m_MsgType & MSG_TYPE_PLAYER1_BGM_SWAP && SocketInfo.m_ID == 0 ||
 			ReceivedPacketData.m_MsgType & MSG_TYPE_PLAYER2_BGM_SWAP && SocketInfo.m_ID == 1)
 		{
@@ -957,6 +960,16 @@ void CGameScene::ProcessPacket()
 			}
 		}
 		
+		m_Lights[1].m_Direction = ReceivedPacketData.m_TowerLightDirection;
+
+		if (m_TowerLightFrame)
+		{
+			const XMFLOAT3 Extents{ m_TowerLightFrame->GetBoundingBox()->Extents };
+			
+			m_Lights[2].m_Position = XMFLOAT3((m_Lights[2].m_Range + Extents.x) * ReceivedPacketData.m_TowerLightDirection.x, m_TowerLightFrame->GetPosition().y, (m_Lights[2].m_Range + Extents.z) * ReceivedPacketData.m_TowerLightDirection.z);
+			m_TowerLightFrame->UpdateLocalCoord(Vector3::Inverse(ReceivedPacketData.m_TowerLightDirection));
+		}
+
 		Player = static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][SocketInfo.m_ID]);
 		Player->IsCollidedByEventTrigger(Player->GetPosition());
 		(Player->GetCamera()->IsZoomIn()) ? m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(true) : m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(false); // 6: Crosshair
@@ -1150,8 +1163,6 @@ void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
 
 void CGameScene::BuildLights()
 {
-	const float m_SpotLightAngle{ XMConvertToRadians(90.0f) };
-
 	m_Lights.resize(MAX_LIGHTS);
 
 	m_Lights[0].m_IsActive = true;
@@ -1160,6 +1171,8 @@ void CGameScene::BuildLights()
 	m_Lights[0].m_Position = XMFLOAT3(0.0f, 500.0f, 100.0f);
 	m_Lights[0].m_Direction = XMFLOAT3(0.0f, -1.0f, -1.0f);
 	m_Lights[0].m_Color = XMFLOAT4(0.1f, 0.1f, 0.1f, 0.0f);
+
+	const float m_SpotLightAngle{ XMConvertToRadians(90.0f) };
 
 	m_Lights[1].m_IsActive = true;
 	m_Lights[1].m_ShadowMapping = true;
@@ -1172,6 +1185,16 @@ void CGameScene::BuildLights()
 	m_Lights[1].m_Range = 500.0f;
 	m_Lights[1].m_Theta = cosf(XMConvertToRadians(5.0f));
 	m_Lights[1].m_Phi = cosf(XMConvertToRadians(10.0f));
+
+	const XMFLOAT3 Extents{ m_TowerLightFrame->GetBoundingBox()->Extents };
+
+	m_Lights[2].m_IsActive = true;
+	m_Lights[2].m_ShadowMapping = false;
+	m_Lights[2].m_Type = LIGHT_TYPE_POINT;
+	m_Lights[2].m_Position = XMFLOAT3((m_Lights[2].m_Range + Extents.x) * m_Lights[1].m_Direction.x, m_TowerLightFrame->GetPosition().y, (m_Lights[2].m_Range + Extents.z) * m_Lights[1].m_Direction.z);
+	m_Lights[2].m_Color = XMFLOAT4(1.0f, 1.0f, 0.6f, 0.0f);
+	m_Lights[2].m_Attenuation = XMFLOAT3(0.5f, 0.01f, 0.0f);
+	m_Lights[2].m_Range = 7.0f;
 }
 
 void CGameScene::BuildFog()

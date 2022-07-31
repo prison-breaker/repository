@@ -1,4 +1,4 @@
-#define MAX_LIGHTS		             2
+#define MAX_LIGHTS		             3
 #define LIGHT_TYPE_POINT		     1
 #define LIGHT_TYPE_SPOT		         2
 #define LIGHT_TYPE_DIRECTIONAL	     3
@@ -131,22 +131,40 @@ float Get3x3ShadowFactor(float2 ShadowTexCoord, float Depth)
 
 float4 Fogging(float4 Color, float3 Position)
 {
-	float3 ToCamera = CameraPosition - Position;
-	float DistanceToCamera = length(ToCamera);
-	float FogFactor = 1.0f / exp(pow(DistanceToCamera * Fog.m_Density, 2));
-	float4 FoggedColor = float4(lerp(Fog.m_Color.rgb, Color.rgb, FogFactor), Color.a);
-
-	return FoggedColor;
+    float3 ToLight = Lights[2].m_Position - Position;
+    float Distance = length(ToLight);
+	
+    if (Distance > Lights[2].m_Range)
+    {
+        float3 ToCamera = CameraPosition - Position;
+        float DistanceToCamera = length(ToCamera);
+        float FogFactor = 1.0f / exp(pow(DistanceToCamera * Fog.m_Density, 2));
+        float4 FoggedColor = float4(lerp(Fog.m_Color.rgb, Color.rgb, FogFactor), Color.a);
+		
+        return FoggedColor;
+    }
+	
+    return Color;
 }
 
 // ====================================== LIGHT FUNCTION ======================================
 
-float4 DirectionalLight(int Index, float3 Normal, float3 ToCamera)
+float4 PointLight(int Index, float3 Position, float3 Normal, float3 ToCamera)
 {
-	float3 ToLight = -Lights[Index].m_Direction;
-	float AlbedoFactor = dot(ToLight, Normal);
+    float3 ToLight = Lights[Index].m_Position - Position;
+    float Distance = length(ToLight);
+	
+    if (Distance <= Lights[Index].m_Range)
+    {
+        ToLight /= Distance;
 
-	return Lights[Index].m_Color * AlbedoFactor;
+        float AlbedoFactor = dot(ToLight, Normal);
+        float AttenuationFactor = 1.0f / dot(Lights[Index].m_Attenuation, float3(1.0f, Distance, Distance * Distance));
+		
+        return Lights[Index].m_Color * AlbedoFactor * AttenuationFactor;
+    }
+	
+    return float4(0.0f, 0.0f, 0.0f, 0.0f);
 }
 
 float4 SpotLight(int Index, float3 Position, float3 Normal, float3 ToCamera)
@@ -169,12 +187,21 @@ float4 SpotLight(int Index, float3 Position, float3 Normal, float3 ToCamera)
 	return float4(0.0f, 0.0f, 0.0f, 0.0f);
 }
 
+float4 DirectionalLight(int Index, float3 Normal, float3 ToCamera)
+{
+    float3 ToLight = -Lights[Index].m_Direction;
+    float AlbedoFactor = dot(ToLight, Normal);
+
+    return Lights[Index].m_Color * AlbedoFactor;
+}
+
 float4 Lighting(float3 Position, float3 Normal, float4 ShadowTexCoord)
 {
 	float3 ToCamera = normalize(CameraPosition - Position);
 	float4 Color = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
-	[unroll(MAX_LIGHTS)] for (int i = 0; i < MAX_LIGHTS; ++i)
+	[unroll(MAX_LIGHTS)]
+    for (int i = 0; i < MAX_LIGHTS; ++i)
 	{
 		if (Lights[i].m_IsActive)
 		{
@@ -188,6 +215,7 @@ float4 Lighting(float3 Position, float3 Normal, float4 ShadowTexCoord)
 			switch (Lights[i].m_Type)
 			{
 			case LIGHT_TYPE_POINT:
+                Color += ShadowFactor * PointLight(i, Position, Normal, ToCamera);
 				break;
 			case LIGHT_TYPE_SPOT:
 				Color += ShadowFactor * SpotLight(i, Position, Normal, ToCamera);
