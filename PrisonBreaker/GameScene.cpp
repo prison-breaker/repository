@@ -162,13 +162,14 @@ void CGameScene::Enter(MSG_TYPE MsgType)
 {
 	ShowCursor(FALSE);
 
-	CSoundManager::GetInstance()->Play(SOUND_TYPE_INGAME_BGM_1, 0.3f);
+	CSoundManager::GetInstance()->Play(SOUND_TYPE_INGAME_BGM_1, 0.3f, false);
 }
 
 void CGameScene::Exit()
 {
 	// 엔딩씬에서는 감시탑의 조명이 비춰지면 안되기 때문에 게임씬을 나갈 때, 꺼준다.
 	m_Lights[1].m_IsActive = false;
+	m_Lights[2].m_IsActive = false;
 
 	CSoundManager::GetInstance()->Stop(SOUND_TYPE_SIREN);
 	CSoundManager::GetInstance()->Stop(SOUND_TYPE_INGAME_BGM_1);
@@ -527,7 +528,7 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 				// 총알이 없는 경우일 때는 IMPUT_MASK_LMB를 제거한다.
 				m_InputMask &= ~INPUT_MASK_LMB;
 
-				CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_EMPTY, 0.45f);
+				CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_EMPTY, 0.45f, false);
 			}
 		}
 	}
@@ -735,7 +736,6 @@ void CGameScene::ProcessPacket()
 							m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetVertexCount(BulletCount - 1);
 						}
 
-						CSoundManager::GetInstance()->Stop(SOUND_TYPE_PISTOL_SHOT);
 						Player->PlaySound(SOUND_TYPE_PISTOL_SHOT, 0.45f, 80.0f);
 					}
 					break;
@@ -859,7 +859,6 @@ void CGameScene::ProcessPacket()
 				{
 					if (PlayerAttackData.m_TargetIndices[i] != UINT_MAX)
 					{
-						CSoundManager::GetInstance()->Stop(SOUND_TYPE_GRUNT_2);
 						m_GameObjects[OBJECT_TYPE_NPC][PlayerAttackData.m_TargetIndices[i]]->PlaySound(SOUND_TYPE_GRUNT_2, 0.5f, 40.0f);
 					}
 				}
@@ -905,10 +904,7 @@ void CGameScene::ProcessPacket()
 
 						if (GuardAttackData.m_TargetIndices[i] != UINT_MAX)
 						{
-							CSoundManager::GetInstance()->Stop(SOUND_TYPE_PISTOL_SHOT);
 							Guard->PlaySound(SOUND_TYPE_PISTOL_SHOT, 0.35f, 80.0f);
-							
-							CSoundManager::GetInstance()->Stop(SOUND_TYPE_GRUNT_1);
 							m_GameObjects[OBJECT_TYPE_PLAYER][GuardAttackData.m_TargetIndices[i]]->PlaySound(SOUND_TYPE_GRUNT_1, 0.3f, 40.0f);
 						}
 					}
@@ -950,13 +946,11 @@ void CGameScene::ProcessPacket()
 		{
 			if (CSoundManager::GetInstance()->IsPlaying(SOUND_TYPE_INGAME_BGM_1))
 			{
-				CSoundManager::GetInstance()->Stop(SOUND_TYPE_INGAME_BGM_1);
-				CSoundManager::GetInstance()->Play(SOUND_TYPE_INGAME_BGM_2, 0.3f);
+				CSoundManager::GetInstance()->Play(SOUND_TYPE_INGAME_BGM_2, 0.3f, false);
 			}
 			else
 			{
-				CSoundManager::GetInstance()->Stop(SOUND_TYPE_INGAME_BGM_2);
-				CSoundManager::GetInstance()->Play(SOUND_TYPE_INGAME_BGM_1, 0.3f);
+				CSoundManager::GetInstance()->Play(SOUND_TYPE_INGAME_BGM_1, 0.3f, false);
 			}
 		}
 		

@@ -208,7 +208,7 @@ bool CAnimationController::UpdateAnimationClip(ANIMATION_TYPE AnimationType, SOU
 		if (m_ElapsedTime >= PlayTime)
 		{
 			m_ElapsedTime = 0.0f;
-			CSoundManager::GetInstance()->Play(SoundType, Volume);
+			CSoundManager::GetInstance()->Play(SoundType, Volume, false);
 		}
 	}
 

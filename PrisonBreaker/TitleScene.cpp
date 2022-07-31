@@ -55,7 +55,7 @@ void CTitleScene::Enter(MSG_TYPE MsgType)
 	}
 
 	CSoundManager::GetInstance()->Stop(SOUND_TYPE_ENDING_BGM);
-	CSoundManager::GetInstance()->Play(SOUND_TYPE_TITLE_BGM, 0.3f);
+	CSoundManager::GetInstance()->Play(SOUND_TYPE_TITLE_BGM, 0.3f, false);
 }
 
 void CTitleScene::Exit()

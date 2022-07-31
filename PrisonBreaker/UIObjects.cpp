@@ -183,7 +183,7 @@ void CMainButtonUI::ProcessMouseMessage(UINT Message, const XMINT2& ScreenPositi
 				{
 					m_IsMouseOver = true;
 
-					CSoundManager::GetInstance()->Play(SOUND_TYPE_BUTTON_OVER, 0.7f);
+					CSoundManager::GetInstance()->Play(SOUND_TYPE_BUTTON_OVER, 0.7f, false);
 				}
 
 				if (Message == WM_LBUTTONUP)
@@ -230,7 +230,7 @@ void CPanelButtonUI::ProcessMouseMessage(UINT Message, const XMINT2& ScreenPosit
 			{
 				m_IsMouseOver = true;
 
-				CSoundManager::GetInstance()->Play(SOUND_TYPE_BUTTON_OVER, 0.7f);
+				CSoundManager::GetInstance()->Play(SOUND_TYPE_BUTTON_OVER, 0.7f, false);
 			}
 
 			if (Message == WM_LBUTTONUP)

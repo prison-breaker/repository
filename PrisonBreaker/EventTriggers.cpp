@@ -95,6 +95,7 @@ void CPowerDownEventTrigger::Reset()
 	const XMFLOAT3 WorldUp{ 0.0f, 1.0f, 0.0f };
 
 	Lights[1].m_IsActive = true;
+	Lights[2].m_IsActive = true;
 
 	m_EventObjects[0]->Rotate(WorldUp, m_PanelAngle);
 	m_IsOpened = false;
@@ -135,6 +136,7 @@ bool CPowerDownEventTrigger::InteractEventTrigger(UINT CallerIndex)
 
 			// 감시탑의 조명을 끈다.
 			Lights[1].m_IsActive = false;
+			Lights[2].m_IsActive = false;
 
 			// 0번 플레이어의 감시탑 차단 미션UI를 완료상태로 변경한다.
 			if (CFramework::GetInstance()->GetSocketInfo().m_ID == 0)
@@ -245,7 +247,7 @@ bool CSirenEventTrigger::InteractEventTrigger(UINT CallerIndex)
 			QuadObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(0, 3);
 		}
 
-		CSoundManager::GetInstance()->Play(SOUND_TYPE_SIREN, 0.25f);
+		CSoundManager::GetInstance()->Play(SOUND_TYPE_SIREN, 0.25f, false);
 
 		return true;
 	}
@@ -395,7 +397,7 @@ bool CGetPistolEventTrigger::InteractEventTrigger(UINT CallerIndex)
 			QuadObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(true);  // 6: Pistol UI
 			QuadObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetVertexCount(6);
 
-			CSoundManager::GetInstance()->Play(SOUND_TYPE_GET_PISTOL, 0.5f);
+			CSoundManager::GetInstance()->Play(SOUND_TYPE_GET_PISTOL, 0.5f, false);
 		}
 
 		return true;
@@ -449,7 +451,7 @@ bool CGetKeyEventTrigger::InteractEventTrigger(UINT CallerIndex)
 			// 열쇠 획득 미션UI를 완료상태로 변경한다.
 			QuadObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(1, 5);
 
-			CSoundManager::GetInstance()->Play(SOUND_TYPE_GET_KEY, 0.6f);
+			CSoundManager::GetInstance()->Play(SOUND_TYPE_GET_KEY, 0.6f, false);
 		}
 
 		return true;

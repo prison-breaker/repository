@@ -71,21 +71,29 @@ bool CSoundManager::IsPlaying(SOUND_TYPE SoundType)
 	return IsPlaying;
 }
 
-void CSoundManager::Play(SOUND_TYPE SoundType, float Volume)
+void CSoundManager::Play(SOUND_TYPE SoundType, float Volume, bool Overlap)
 {
 	if (SoundType < 0)
 	{
 		return;
 	}
 
-	bool IsPlaying{};
-
-	m_Channels[SoundType]->isPlaying(&IsPlaying);
-
-	if (!IsPlaying)
+	if (Overlap)
 	{
 		m_System->playSound(FMOD_CHANNEL_FREE, m_Sounds[SoundType], false, &m_Channels[SoundType]);
 		m_Channels[SoundType]->setVolume(Volume);
+	}
+	else
+	{
+		bool IsPlaying{};
+
+		m_Channels[SoundType]->isPlaying(&IsPlaying);
+
+		if (!IsPlaying)
+		{
+			m_System->playSound(FMOD_CHANNEL_FREE, m_Sounds[SoundType], false, &m_Channels[SoundType]);
+			m_Channels[SoundType]->setVolume(Volume);
+		}
 	}
 }
 

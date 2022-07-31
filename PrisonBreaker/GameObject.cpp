@@ -659,5 +659,5 @@ void CGameObject::PlaySound(SOUND_TYPE SoundType, float Volume, float MaxHearing
 
 	Volume = Volume + ((2.0f - Distance) * (Volume / MaxHearingDistance));
 	
-	CSoundManager::GetInstance()->Play(SoundType, Volume);
+	CSoundManager::GetInstance()->Play(SoundType, Volume, true);
 }

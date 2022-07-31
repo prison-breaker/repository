@@ -20,7 +20,7 @@ public:
 
 	bool IsPlaying(SOUND_TYPE SoundType);
 
-	void Play(SOUND_TYPE SoundType, float Volume);
+	void Play(SOUND_TYPE SoundType, float Volume, bool Overlap);
 	void Stop(SOUND_TYPE SoundType);
 	void Pause(SOUND_TYPE SoundType);
 	void Resume(SOUND_TYPE SoundType);

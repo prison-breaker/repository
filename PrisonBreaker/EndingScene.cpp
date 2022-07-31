@@ -68,7 +68,7 @@ void CEndingScene::Enter(MSG_TYPE MsgType)
 		m_GameObjects[OBJECT_TYPE_TERRAIN][1]->SetActive(true);
 	}
 
-	CSoundManager::GetInstance()->Play(SOUND_TYPE_ENDING_BGM, 1.0f);
+	CSoundManager::GetInstance()->Play(SOUND_TYPE_ENDING_BGM, 1.0f, false);
 }
 
 void CEndingScene::Exit()
