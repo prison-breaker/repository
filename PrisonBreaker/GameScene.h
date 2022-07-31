@@ -69,7 +69,7 @@ private:
 	bool										m_InvincibleMode{};
 	bool										m_RenderBoundingBox{};
 
-	float                                       m_SpotLightAngle{ XMConvertToRadians(90.0f) };
+	float                                       m_SpotLightAngle{ XMConvertToRadians(270.0f) };
 
 public:
 	CGameScene() = default;

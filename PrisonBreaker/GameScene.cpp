@@ -422,11 +422,12 @@ void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
 	UpdatePerspective(hWnd, ElapsedTime, Player);
 
 	// 1인칭 모드
-	//if (GetAsyncKeyState('W') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(15.0f * ElapsedTime, Player->GetCamera()->GetLook(), false));
-	//if (GetAsyncKeyState('S') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(-15.0f * ElapsedTime, Player->GetCamera()->GetLook(), false));
-	//if (GetAsyncKeyState('A') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(-15.0f * ElapsedTime, Player->GetCamera()->GetRight(), false));
-	//if (GetAsyncKeyState('D') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(15.0f * ElapsedTime, Player->GetCamera()->GetRight(), false));
-	//return;
+	if (GetAsyncKeyState('W') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(15.0f * ElapsedTime, Player->GetCamera()->GetLook(), false));
+	if (GetAsyncKeyState('S') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(-15.0f * ElapsedTime, Player->GetCamera()->GetLook(), false));
+	if (GetAsyncKeyState('A') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(-15.0f * ElapsedTime, Player->GetCamera()->GetRight(), false));
+	if (GetAsyncKeyState('D') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(15.0f * ElapsedTime, Player->GetCamera()->GetRight(), false));
+
+	return;
 
 	m_InputMask = INPUT_MASK_NONE;
 
@@ -536,12 +537,24 @@ void CGameScene::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
 
 	CTextureManager::GetInstance()->GetTexture(TEXT("ShadowMap"))->UpdateShaderVariable(D3D12GraphicsCommandList);
 
-	for (UINT i = OBJECT_TYPE_PLAYER; i <= OBJECT_TYPE_STRUCTURE; ++i)
+	for (UINT i = OBJECT_TYPE_PLAYER; i <= OBJECT_TYPE_NPC; ++i)
 	{
 		for (const auto& GameObject : m_GameObjects[i])
 		{
 			if (GameObject)
 			{
+				GameObject->Render(D3D12GraphicsCommandList, Player->GetCamera().get(), RENDER_TYPE_STANDARD);
+			}
+		}
+	}
+
+	for (UINT i = OBJECT_TYPE_TERRAIN; i <= OBJECT_TYPE_STRUCTURE; ++i)
+	{
+		for (const auto& GameObject : m_GameObjects[i])
+		{
+			if (GameObject)
+			{
+				GameObject->UpdateTransform(Matrix4x4::Identity());
 				GameObject->Render(D3D12GraphicsCommandList, Player->GetCamera().get(), RENDER_TYPE_STANDARD);
 			}
 		}
@@ -975,10 +988,10 @@ void CGameScene::BuildLights()
 	m_Lights[2].m_IsActive = true;
 	m_Lights[2].m_ShadowMapping = false;
 	m_Lights[2].m_Type = LIGHT_TYPE_POINT;
-	m_Lights[2].m_Position = XMFLOAT3(20.0f * cosf(m_SpotLightAngle), m_TowerLightFrame->GetPosition().y, 20.0f * sinf(m_SpotLightAngle));
-	m_Lights[2].m_Color = XMFLOAT4(0.3f, 0.3f, 0.0f, 0.0f);
-	m_Lights[2].m_Attenuation = XMFLOAT3(0.5f, 0.01f, 0.0f);
-	m_Lights[2].m_Range = 20.0f;
+	m_Lights[2].m_Position = XMFLOAT3(15.0f * cosf(m_SpotLightAngle), m_TowerLightFrame->GetPosition().y + 2.0f, 15.0f * sinf(m_SpotLightAngle));
+	m_Lights[2].m_Color = XMFLOAT4(0.5f, 0.5f, 0.0f, 0.0f);
+	m_Lights[2].m_Attenuation = XMFLOAT3(0.2f, 0.02f, 0.01f);
+	m_Lights[2].m_Range = 9.0f;
 }
 
 void CGameScene::BuildFog()
@@ -1023,9 +1036,9 @@ void CGameScene::UpdatePerspective(HWND hWnd, float ElapsedTime, const shared_pt
 		//}
 
 		// 1인칭 모드
-		//Player->GetCamera()->Rotate(Delta.y, Delta.x, 0.0f);
+		Player->GetCamera()->Rotate(Delta.y, Delta.x, 0.0f);
 
-		Player->Rotate(Delta.y, Delta.x, 0.0f, ElapsedTime, NearestHitDistance);
+		//Player->Rotate(Delta.y, Delta.x, 0.0f, ElapsedTime, NearestHitDistance);
 	}
 	else
 	{
@@ -1038,7 +1051,7 @@ void CGameScene::UpdatePerspective(HWND hWnd, float ElapsedTime, const shared_pt
 void CGameScene::InteractSpotLight(float ElapsedTime)
 {
 	if (m_Lights[1].m_IsActive)
-	{ 	
+	{
 		// 광원 포지션과 방향벡터를 활용해 평면에 도달하는 중심점을 계산한다. 
 		float LightAngle{ Vector3::Angle(m_Lights[1].m_Direction, XMFLOAT3(0.0f, -1.0f, 0.0f)) };  // 빗변과 변의 각도 계산
 		float HypotenuseLength{ m_Lights[1].m_Position.y / cosf(XMConvertToRadians(LightAngle)) }; // 빗변의 길이 계산
@@ -1111,9 +1124,14 @@ void CGameScene::InteractSpotLight(float ElapsedTime)
 		}
 
 		m_SpotLightAngle += ElapsedTime;
+
 		m_Lights[1].m_Direction = Vector3::Normalize(XMFLOAT3(cosf(m_SpotLightAngle), -1.0f, sinf(m_SpotLightAngle)));
-		m_Lights[2].m_Position = XMFLOAT3(20.0f * cosf(m_SpotLightAngle), m_TowerLightFrame->GetPosition().y, 20.0f * sinf(m_SpotLightAngle));
-		m_TowerLightFrame->SubRotate(XMFLOAT3(0.0f, 1.0f, 0.0f), -40.0f * ElapsedTime);
+		m_Lights[2].m_Position = XMFLOAT3(8.0f * cosf(m_SpotLightAngle), m_TowerLightFrame->GetPosition().y + 2.0f, 8.0f * sinf(m_SpotLightAngle));
+
+		const XMFLOAT3 Direction{ -m_Lights[1].m_Direction.x, 0.0f, -m_Lights[1].m_Direction.z };
+
+		m_TowerLightFrame->UpdateLocalCoord(Direction);
+		m_TowerLightFrame->Scale(1.5f, 1.5f, 1.5f);
 	}
 }
 
