@@ -173,6 +173,7 @@ void CGameScene::Exit()
 
 	CSoundManager::GetInstance()->Stop(SOUND_TYPE_SIREN);
 	CSoundManager::GetInstance()->Stop(SOUND_TYPE_INGAME_BGM_1);
+	CSoundManager::GetInstance()->Stop(SOUND_TYPE_INGAME_BGM_2);
 }
 
 void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName)
