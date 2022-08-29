@@ -942,15 +942,17 @@ void CGameScene::ProcessPacket()
 			}
 		}
 				
-		if (ReceivedPacketData.m_MsgType & MSG_TYPE_PLAYER1_BGM_SWAP && SocketInfo.m_ID == 0 ||
-			ReceivedPacketData.m_MsgType & MSG_TYPE_PLAYER2_BGM_SWAP && SocketInfo.m_ID == 1)
+		if ((ReceivedPacketData.m_MsgType & MSG_TYPE_PLAYER1_BGM_SWAP && SocketInfo.m_ID == 0) ||
+			(ReceivedPacketData.m_MsgType & MSG_TYPE_PLAYER2_BGM_SWAP && SocketInfo.m_ID == 1))
 		{
 			if (CSoundManager::GetInstance()->IsPlaying(SOUND_TYPE_INGAME_BGM_1))
 			{
+				CSoundManager::GetInstance()->Stop(SOUND_TYPE_INGAME_BGM_1);
 				CSoundManager::GetInstance()->Play(SOUND_TYPE_INGAME_BGM_2, 0.3f, false);
 			}
 			else
 			{
+				CSoundManager::GetInstance()->Stop(SOUND_TYPE_INGAME_BGM_2);
 				CSoundManager::GetInstance()->Play(SOUND_TYPE_INGAME_BGM_1, 0.3f, false);
 			}
 		}
