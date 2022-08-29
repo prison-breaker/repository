@@ -65,11 +65,11 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     hInst = hInstance;
 
     RECT Rect{ 0, 0, CLIENT_WIDTH, CLIENT_HEIGHT };
-    DWORD Style{ WS_OVERLAPPED | WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU | WS_BORDER };
+    DWORD Style{ WS_POPUP };
     
     AdjustWindowRect(&Rect, Style, FALSE);
     
-    HWND hWnd{ CreateWindowA(TEXT("WndClass"), TEXT("PRISON BREAKER"), Style, 0, 0, Rect.right - Rect.left, Rect.bottom - Rect.top, nullptr, nullptr, hInstance, nullptr) };
+    HWND hWnd{ CreateWindowEx(WS_EX_APPWINDOW, TEXT("WndClass"), TEXT("PRISON BREAKER"), Style, 0, 0, Rect.right - Rect.left, Rect.bottom - Rect.top, nullptr, nullptr, hInstance, nullptr) };
 
     if (!hWnd)
     {
