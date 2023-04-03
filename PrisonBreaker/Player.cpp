@@ -1,254 +1,253 @@
-#include "stdafx.h"
+#include "pch.h"
 #include "Player.h"
-#include "State_Player.h"
-#include "GameScene.h"
+
+#include "Core.h"
+
+#include "TimeManager.h"
+#include "InputManager.h"
+#include "CameraManager.h"
+#include "SceneManager.h"
+
+#include "Scene.h"
+
 #include "Guard.h"
-#include "StateMachine.h"
-#include "EventTrigger.h"
+
 #include "Camera.h"
-#include "NavMesh.h"
-#include "NavNode.h"
 
-CPlayer::CPlayer(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
+#include "StateMachine.h"
+
+#include "PlayerStates.h"
+#include "GuardStates.h"
+
+CPlayer::CPlayer() :
+	m_rotation(),
+	m_isAiming()
 {
-	// 카메라 객체를 생성한다.
-	m_Camera = make_shared<CCamera>();
-	m_Camera->CreateShaderVariables(D3D12Device, D3D12GraphicsCommandList);
-	m_Camera->GeneratePerspectiveProjectionMatrix(90.0f, static_cast<float>(CLIENT_WIDTH) / static_cast<float>(CLIENT_HEIGHT), 1.0f, 200.0f);
-	m_Camera->GenerateViewMatrix(XMFLOAT3(0.0f, 5.0f, -150.0f), XMFLOAT3(0.0f, 0.0f, 1.0f));
 }
 
-void CPlayer::Initialize()
+CPlayer::~CPlayer()
 {
-	CGameObject::Initialize();
-
-	// 상태머신 객체를 생성한다.
-	m_StateMachine = make_shared<CStateMachine<CPlayer>>(static_pointer_cast<CPlayer>(shared_from_this()));
-	m_StateMachine->SetCurrentState(CPlayerIdleState::GetInstance());
-
-	FindFrame(TEXT("gun_pr_1"))->SetActive(false);
 }
 
-void CPlayer::Reset(const XMFLOAT4X4& TransformMatrix)
+const XMFLOAT3& CPlayer::GetRotation()
 {
-	m_Health = 100;
-
-	SwapWeapon(WEAPON_TYPE_PUNCH);
-	ManagePistol(false);
-	ManageKey(false);
-
-	SetTransformMatrix(TransformMatrix);
-	UpdateTransform(Matrix4x4::Identity());
-
-	m_StateMachine->SetCurrentState(CPlayerIdleState::GetInstance());
-	m_Camera->SetZoomIn(false);
+	return m_rotation;
 }
 
-void CPlayer::Animate(float ElapsedTime)
+void CPlayer::SetAiming(bool isAiming)
 {
-	if (IsActive())
+	m_isAiming = isAiming;
+}
+
+bool CPlayer::IsAiming()
+{
+	return m_isAiming;
+}
+
+void CPlayer::Init()
+{
+	// 시작 시, 들고있는 권총을 비활성화 시킨다.
+	CObject* weapon = FindFrame("gun_pr_1");
+
+	SetWeapon(weapon);
+	//weapon->SetActive(false);
+
+	GetStateMachine()->SetCurrentState(CPlayerIdleState::GetInstance());
+}
+
+void CPlayer::OnCollisionEnter(CObject* collidedObject)
+{
+}
+
+void CPlayer::OnCollision(CObject* collidedObject)
+{
+}
+
+void CPlayer::OnCollisionExit(CObject* collidedObject)
+{
+}
+
+void CPlayer::Update()
+{
+	// 현재 윈도우가 포커싱 상태인지 알아낸다.
+	HWND hWnd = GetFocus();
+
+	if (hWnd != nullptr)
 	{
-		if (m_StateMachine)
+		// 윈도우 영역 계산
+		RECT rect = {};
+
+		GetWindowRect(hWnd, &rect);
+
+		// 마우스 커서 위치 계산
+		POINT oldCursor = { (LONG)(rect.right / 2), (LONG)(rect.bottom / 2) };
+		POINT cursor = {};
+
+		// 이 함수는 윈도우 전체 영역을 기준으로 커서의 위치를 계산한다.
+		GetCursorPos(&cursor);
+
+		XMFLOAT2 delta = {};
+
+		delta.x = (cursor.x - oldCursor.x) * 20.0f * DT;
+		delta.y = (cursor.y - oldCursor.y) * 20.0f * DT;
+
+		SetCursorPos(oldCursor.x, oldCursor.y);
+
+		// X축 회전(카메라만)
+		if (!Math::IsZero(delta.y))
 		{
-			m_StateMachine->Update(ElapsedTime);
-		}
-	}
-}
+			m_rotation.x += delta.y;
 
-void CPlayer::SetID(UINT ID)
-{
-	m_ID = ID;
-}
-
-UINT CPlayer::GetID() const
-{
-	return m_ID;
-}
-
-void CPlayer::SetHealth(UINT Health)
-{
-	// UINT UnderFlow
-	if (Health > 100)
-	{
-		m_Health = 0;
-	}
-	else
-	{
-		m_Health = Health;
-	}
-}
-
-UINT CPlayer::GetHealth() const
-{
-	return m_Health;
-}
-
-void CPlayer::SetSpeed(float Speed)
-{
-	m_Speed = Speed;
-}
-
-float CPlayer::GetSpeed() const
-{
-	return m_Speed;
-}
-
-void CPlayer::SetMovingDirection(const XMFLOAT3& MovingDirection)
-{
-	m_MovingDirection = MovingDirection;
-}
-
-const XMFLOAT3& CPlayer::GetMovingDirection() const
-{
-	return m_MovingDirection;
-}
-
-shared_ptr<CCamera> CPlayer::GetCamera() const
-{
-	return m_Camera;
-}
-
-shared_ptr<CStateMachine<CPlayer>> CPlayer::GetStateMachine() const
-{
-	return m_StateMachine;
-}
-
-void CPlayer::ManagePistol(bool HasPistol)
-{
-	if (HasPistol)
-	{
-		m_PistolFrame = FindFrame(TEXT("gun_pr_1"));
-	}
-	else
-	{
-		m_PistolFrame = nullptr;
-	}
-}
-
-bool CPlayer::HasPistol() const
-{
-	return (m_PistolFrame) ? true : false;
-}
-
-bool CPlayer::IsEquippedPistol() const
-{
-	if (m_PistolFrame)
-	{
-		return m_PistolFrame->IsActive();
-	}
-
-	return false;
-}
-
-void CPlayer::ManageKey(bool HasKey)
-{
-	m_HasKey = HasKey;
-}
-
-bool CPlayer::HasKey() const
-{
-	return m_HasKey;
-}
-
-bool CPlayer::SwapWeapon(WEAPON_TYPE WeaponType)
-{
-	bool IsSwapped{};
-
-	if (m_PistolFrame)
-	{
-		switch (WeaponType)
-		{
-		case WEAPON_TYPE_PUNCH:
-			m_PistolFrame->SetActive(false);
-			IsSwapped = true;
-			break;
-		case WEAPON_TYPE_PISTOL:
-			m_PistolFrame->SetActive(true);
-			IsSwapped = true;
-			break;
-		}
-	}
-
-	return IsSwapped;
-}
-
-void CPlayer::Rotate(float Pitch, float Yaw, float Roll, float ElapsedTime, float NearestHitDistance)
-{
-	if (!Math::IsZero(Pitch))
-	{
-		m_Rotation.x += Pitch;
-
-		if (m_Rotation.x > 15.0f)
-		{
-			Pitch -= (Pitch - 15.0f);
-			m_Rotation.x = 15.0f;
-
-		}
-
-		if (m_Rotation.x < -15.0f)
-		{
-			Pitch -= (Pitch + 15.0f);
-			m_Rotation.x = -15.0f;
-		}
-	}
-
-	if (!Math::IsZero(Yaw))
-	{
-		m_Rotation.y += Yaw;
-
-		if (m_Rotation.y > 360.0f)
-		{
-			m_Rotation.y -= 360.0f;
-		}
-
-		if (m_Rotation.y < 0.0f)
-		{
-			m_Rotation.y += 360.0f;
-		}
-	}
-
-	if (!Math::IsZero(Yaw))
-	{
-		XMFLOAT4X4 RotationMatrix{ Matrix4x4::RotationAxis(GetUp(), Yaw) };
-
-		SetRight(Vector3::TransformNormal(GetRight(), RotationMatrix));
-		SetLook(Vector3::TransformNormal(GetLook(), RotationMatrix));
-	}
-
-	CGameObject::UpdateLocalCoord(Vector3::Normalize(GetLook()));
-
-	XMFLOAT4X4 RotationMatrix{ Matrix4x4::Multiply(Matrix4x4::RotationYawPitchRoll(m_Rotation.x, 0.0f, 0.0f), GetWorldMatrix()) };
-	
-	m_Camera->Rotate(RotationMatrix, ElapsedTime, NearestHitDistance);
-}
-
-void CPlayer::IsCollidedByEventTrigger(const XMFLOAT3& NewPosition)
-{
-	vector<shared_ptr<CEventTrigger>>& EventTriggers{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene("GameScene"))->GetEventTriggers() };
-	UINT TriggerCount{ static_cast<UINT>(EventTriggers.size()) };
-
-	for (UINT i = 0; i < TriggerCount; ++i)
-	{
-		if (EventTriggers[i])
-		{
-			// 0 ~ 1: Key EventTriggers
-			// 열쇠를 가지고 있는 경우, 해당 트리거는 건너뛴다.
-			if (i <= 1)
+			if (m_rotation.x < -15.0f)
 			{
-				if (m_HasKey)
+				m_rotation.x = -15.0f;
+			}
+			else if (m_rotation.x > 15.0f)
+			{
+				m_rotation.x = 15.0f;
+			}
+		}
+
+		// Y축 회전(플레이어와 카메라 모두)
+		if (!Math::IsZero(delta.x))
+		{
+			m_rotation.y += delta.x;
+
+			if (m_rotation.y < 0.0f)
+			{
+				m_rotation.y += 360.0f;
+			}
+			else if (m_rotation.y > 360.0f)
+			{
+				m_rotation.y -= 360.0f;
+			}
+
+			XMFLOAT4X4 rotationMatrix = Matrix4x4::RotationAxis(GetUp(), delta.x);
+
+			SetRight(Vector3::TransformNormal(GetRight(), rotationMatrix));
+			SetForward(Vector3::TransformNormal(GetForward(), rotationMatrix));
+		}
+	}
+
+	if (KEY_TAP(KEY::NUM1))
+	{
+		if (IsEquippedWeapon())
+		{
+			SwapWeapon(WEAPON_TYPE::PUNCH);
+		}
+	}
+
+	if (KEY_TAP(KEY::NUM2))
+	{
+		if (!IsEquippedWeapon())
+		{
+			SwapWeapon(WEAPON_TYPE::PISTOL);
+		}
+	}
+
+	CObject::Update();
+}
+
+void CPlayer::Punch()
+{
+	const vector<CObject*>& guards = CSceneManager::GetInstance()->GetCurrentScene()->GetGroupObject(GROUP_TYPE::ENEMY);
+
+	for (const auto& object : guards)
+	{
+		CGuard* guard = (CGuard*)object;
+
+		if (guard->GetHealth() > 0)
+		{
+			XMFLOAT3 toGuard = Vector3::Subtract(guard->GetPosition(), GetPosition());
+			float dist = Vector3::Length(toGuard);
+
+			if (dist <= 3.0f)
+			{
+				toGuard = Vector3::Normalize(toGuard);
+
+				XMFLOAT3 forward = GetForward();
+				float angle = Vector3::Angle(forward, toGuard);
+
+				// forward 벡터와 toGaurd 벡터가 이루는 각이 80도 이하일 때 공격한다.
+				if (angle <= 80.0f)
 				{
-					continue;
+					// 플레이어의 forward 벡터와 교도관의 forward 벡터 간의 각이 40도 이하일 때 후면 타격(즉사)으로 처리한다.
+					angle = Vector3::Angle(forward, guard->GetForward());
+
+					if (angle <= 40.0f)
+					{
+						guard->SetHealth(0);
+						guard->GetStateMachine()->ChangeState(CGuardDieState::GetInstance());
+					}
+					else
+					{
+						guard->SetHealth(guard->GetHealth() - 40);
+						guard->SetTarget(this);
+						guard->GetStateMachine()->ChangeState(CGuardHitState::GetInstance());
+					}
 				}
 			}
+		}
+	}
+}
 
-			if (EventTriggers[i]->IsInTriggerArea(GetPosition(), GetLook()))
+void CPlayer::Shoot()
+{
+	CObject* nearestIntersectedRootObject = nullptr;
+	CObject* nearestIntersectedObject = nullptr;
+	float nearestHitDist = FLT_MAX;
+
+	CCamera* camera = CCameraManager::GetInstance()->GetMainCamera();
+	const XMFLOAT3& rayOrigin = camera->GetPosition();
+	const XMFLOAT3& rayDirection = camera->GetFoward();
+
+	for (int i = (int)GROUP_TYPE::STRUCTURE; i <= (int)GROUP_TYPE::ENEMY; ++i)
+	{
+		const vector<CObject*>& objects = CSceneManager::GetInstance()->GetCurrentScene()->GetGroupObject((GROUP_TYPE)i);
+
+		for (const auto& object : objects)
+		{
+			if (object->IsActive())
 			{
-				return;
+				if (i == (int)GROUP_TYPE::ENEMY)
+				{
+					CGuard* guard = (CGuard*)object;
+
+					if (guard->GetHealth() <= 0)
+					{
+						continue;
+					}
+				}
+
+				float hitDist = 0.0f, maxDist = 400.0f;
+				CObject* intersectedObject = object->CheckRayIntersection(rayOrigin, rayDirection, hitDist, maxDist);
+
+				if ((intersectedObject != nullptr) && (hitDist < nearestHitDist))
+				{
+					nearestIntersectedRootObject = object;
+					nearestIntersectedObject = intersectedObject;
+					nearestHitDist = hitDist;
+				}
+			}
+		}
+
+		if ((nearestIntersectedRootObject != nullptr) && (typeid(*nearestIntersectedRootObject) == typeid(CGuard)))
+		{
+			CGuard* guard = (CGuard*)nearestIntersectedRootObject;
+			const string& hitFrameName = nearestIntersectedObject->GetName();
+
+			// 머리에 맞은 경우, 즉사시킨다.
+			if (hitFrameName == "hat" || hitFrameName == "head_1" || hitFrameName == "head_2")
+			{
+				guard->SetHealth(0);
+				guard->GetStateMachine()->ChangeState(CGuardDieState::GetInstance());
+			}
+			else
+			{
+				guard->SetHealth(guard->GetHealth() - 70);
+				guard->SetTarget(this);
+				guard->GetStateMachine()->ChangeState(CGuardHitState::GetInstance());
 			}
 		}
 	}
-
-	// 반복문을 모두 돌았다면, 플레이어는 트리거 영역안에 없는 것이므로 상호작용 UI를 렌더링되지 않도록 만든다.
-	// 이때, 모든 트리거는 상호작용 UI(m_InteractionUI)를 공유하여 사용하므로 0번 트리거를 이용하여 함수를 호출하였다.
-	EventTriggers[0]->HideInteractionUI();
 }

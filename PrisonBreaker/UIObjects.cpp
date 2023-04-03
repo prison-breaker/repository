@@ -1,7 +1,7 @@
-#include "stdafx.h"
+#include "pch.h"
 #include "UIObjects.h"
 #include "TitleScene.h"
-#include "Framework.h"
+#include "Core.h"
 #include "StateMachine.h"
 #include "State_Background.h"
 #include "State_MissionUI.h"
@@ -242,12 +242,12 @@ void CPanelButtonUI::ProcessMouseMessage(UINT Message, const XMINT2& ScreenPosit
 				switch (i)
 				{
 				case 0: // Close Button
-					CFramework::GetInstance()->DisconnectServer();
+					CCore::GetInstance()->DisconnectServer();
 					break;
 				case 1: // Connect Button
 					QuadObjects[RootFrameIndex + 1]->SetActive(true); // Open Waiting Popup
 
-					CFramework::GetInstance()->ConnectServer();
+					CCore::GetInstance()->ConnectServer();
 					break;
 				}
 			}

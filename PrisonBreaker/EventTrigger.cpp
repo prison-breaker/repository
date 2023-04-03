@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "pch.h"
 #include "EventTrigger.h"
 #include "GameScene.h"
 #include "GameObject.h"
@@ -40,39 +40,39 @@ void CEventTrigger::Update(float ElapsedTime)
 
 }
 
-void CEventTrigger::LoadEventTriggerFromFile(tifstream& InFile)
+void CEventTrigger::LoadEventTriggerFromFile(ifstream& in)
 {
-	tstring Token{};
+	string str{};
 	UINT TargetRootIndex{};
 
 	while (true)
 	{
-		File::ReadStringFromFile(InFile, Token);
+		File::ReadStringFromFile(in, str);
 
-		if (Token == TEXT("<TriggerAreas>"))
+		if (str == TEXT("<TriggerAreas>"))
 		{
-			InFile.read(reinterpret_cast<TCHAR*>(m_TriggerArea), 4 * sizeof(XMFLOAT3));
+			in.read(reinterpret_cast<char*>(m_TriggerArea), 4 * sizeof(XMFLOAT3));
 		}
-		else if (Token == TEXT("<ToTrigger>"))
+		else if (str == TEXT("<ToTrigger>"))
 		{
-			InFile.read(reinterpret_cast<TCHAR*>(&m_ToTrigger), sizeof(XMFLOAT3));
+			in.read(reinterpret_cast<char*>(&m_ToTrigger), sizeof(XMFLOAT3));
 		}
-		else if (Token == TEXT("<TargetRootIndex>"))
+		else if (str == TEXT("<TargetRootIndex>"))
 		{
-			TargetRootIndex = File::ReadIntegerFromFile(InFile);
+			TargetRootIndex = File::ReadIntegerFromFile(in);
 		}
-		else if (Token == TEXT("<TargetObject>"))
+		else if (str == TEXT("<TargetObject>"))
 		{
-			UINT TargetObjectCount{ File::ReadIntegerFromFile(InFile) };
-			vector<vector<shared_ptr<CGameObject>>>& GameObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene(TEXT("GameScene")))->GetGameObjects()};
+			UINT TargetObjectCount{ File::ReadIntegerFromFile(in) };
+			vector<vector<shared_ptr<CObject>>>& GameObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene(TEXT("GameScene")))->GetGameObjects()};
 
 			m_EventObjects.reserve(TargetObjectCount);
 
 			for (UINT i = 0; i < TargetObjectCount; ++i)
 			{
-				File::ReadStringFromFile(InFile, Token);
+				File::ReadStringFromFile(in, str);
 
-				shared_ptr<CGameObject> TargetObject{ GameObjects[OBJECT_TYPE_STRUCTURE][TargetRootIndex]->FindFrame(Token) };
+				shared_ptr<CObject> TargetObject{ GameObjects[OBJECT_TYPE_STRUCTURE][TargetRootIndex]->FindFrame(str) };
 
 				if (TargetObject)
 				{
@@ -119,7 +119,7 @@ void CEventTrigger::CalculateTriggerAreaByGuard(const XMFLOAT3& Position)
 	m_TriggerArea[3].z = Position.z - 3.0f;
 }
 
-void CEventTrigger::InsertEventObject(const shared_ptr<CGameObject>& EventObject)
+void CEventTrigger::InsertEventObject(const shared_ptr<CObject>& EventObject)
 {
 	if (EventObject)
 	{
@@ -127,7 +127,7 @@ void CEventTrigger::InsertEventObject(const shared_ptr<CGameObject>& EventObject
 	}
 }
 
-shared_ptr<CGameObject> CEventTrigger::GetEventObject(UINT Index)
+shared_ptr<CObject> CEventTrigger::GetEventObject(UINT Index)
 {
 	if (Index < 0 || Index >= m_EventObjects.size())
 	{

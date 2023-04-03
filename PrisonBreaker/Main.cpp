@@ -1,5 +1,5 @@
-#include "stdafx.h"
-#include "Framework.h"
+#include "pch.h"
+#include "Core.h"
 
 HINSTANCE hInst;
 
@@ -7,12 +7,19 @@ ATOM MyRegisterClass(HINSTANCE hInstance);
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow);
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPTSTR lpCmdLine, _In_ int nCmdShow)
+int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
+                      _In_opt_ HINSTANCE hPrevInstance,
+                      _In_ LPTSTR lpCmdLine,
+                      _In_ int nCmdShow)
 {
+    // 메모리 누수 체크
+    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+
     srand(unsigned int(time(nullptr)));
 
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
+
     MyRegisterClass(hInstance);
 
     if (!InitInstance(hInstance, nCmdShow))
@@ -20,31 +27,42 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
         return FALSE;
     }
 
-    MSG msg{};
+    // 기본 메시지 루프입니다:
+    // 1. GetMessage
+    // - 메세지 큐에서 메세지가 확인될 때까지 대기한다.
+    // - msg.messge == WM_QUIT인 경우, false를 반환한다.(프로그램을 종료한다.)
+    //
+    // 2. PeekMessage
+    // - 메세지 큐에 메세지의 유무와 관계 없이 대기하지 않는다.
+    // - 메세지가 있을 경우 true, 없을 경우 false를 반환한다.
+    MSG msg = {};
 
-    while (msg.message != WM_QUIT)
+    while (true)
     {
-        if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+        if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
         {
+            if (msg.message == WM_QUIT)
+            {
+                break;
+            }
+
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
-        else
+        else // 메세지가 없는 경우 호출
         {
-            CFramework::GetInstance()->FrameAdvance();
+            CCore::GetInstance()->AdvanceFrame();
         }
     }
-
-    CFramework::GetInstance()->OnDestroy();
 
     return (int)msg.wParam;
 }
 
 ATOM MyRegisterClass(HINSTANCE hInstance)
 {
-    WNDCLASSEX wcex{};
+    WNDCLASSEXW wcex = {};
 
-    wcex.cbSize = sizeof(WNDCLASSEX);
+    wcex.cbSize = sizeof(WNDCLASSEXW);
     wcex.style = CS_HREDRAW | CS_VREDRAW;
     wcex.lpfnWndProc = WndProc;
     wcex.cbClsExtra = 0;
@@ -54,32 +72,32 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
     wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wcex.lpszMenuName = nullptr;
-    wcex.lpszClassName = TEXT("WndClass");
+    wcex.lpszClassName = L"WndClass";
     wcex.hIconSm = nullptr;
 
-    return RegisterClassExA(&wcex);
+    return RegisterClassExW(&wcex);
 }
 
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
     hInst = hInstance;
 
-    RECT Rect{ 0, 0, CLIENT_WIDTH, CLIENT_HEIGHT };
-    DWORD Style{ WS_POPUP };
-    
-    AdjustWindowRect(&Rect, Style, FALSE);
-    
-    HWND hWnd{ CreateWindowEx(WS_EX_APPWINDOW, TEXT("WndClass"), TEXT("PRISON BREAKER"), Style, 0, 0, Rect.right - Rect.left, Rect.bottom - Rect.top, nullptr, nullptr, hInstance, nullptr) };
+    RECT rect = { 0, 0, 1920, 1080 };
 
-    if (!hWnd)
+    AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
+
+    XMFLOAT2 resolution = { (float)(rect.right - rect.left), (float)(rect.bottom - rect.top) };
+    HWND hWnd = CreateWindowW(L"WndClass", L"PRISON BREAKER", WS_OVERLAPPEDWINDOW, 0, 0, (int)resolution.x, (int)resolution.y, nullptr, nullptr, hInstance, nullptr);
+
+    if (hWnd == nullptr)
     {
         return FALSE;
     }
 
-    CFramework::GetInstance()->OnCreate(hInstance, hWnd);
-
     ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);
+
+    CCore::GetInstance()->Init(hWnd, resolution);
 
     return TRUE;
 }
@@ -88,21 +106,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
-    case WM_ACTIVATE:
-        CFramework::GetInstance()->SetActive(static_cast<bool>(wParam));
-        break;
-    case WM_LBUTTONDOWN:
-    case WM_RBUTTONDOWN:
-    case WM_LBUTTONUP:
-    case WM_RBUTTONUP:
-    case WM_MOUSEMOVE:
-        CFramework::GetInstance()->ProcessMouseMessage(hWnd, message, wParam, lParam);
-        break;
-    case WM_CHAR:
-    case WM_KEYDOWN:
-    case WM_KEYUP:
-        CFramework::GetInstance()->ProcessKeyboardMessage(hWnd, message, wParam, lParam);
-        break;
     case WM_DESTROY:
         PostQuitMessage(0);
         break;

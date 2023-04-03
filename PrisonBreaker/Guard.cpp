@@ -1,485 +1,351 @@
-#include "stdafx.h"
+#include "pch.h"
 #include "Guard.h"
-#include "State_Guard.h"
-#include "GameScene.h"
-#include "Player.h"
+
+#include "TimeManager.h"
+#include "AssetManager.h"
+#include "SceneManager.h"
+
+#include "Scene.h"
+
+#include "RigidBody.h"
 #include "StateMachine.h"
-#include "EventTrigger.h"
+
 #include "NavMesh.h"
 #include "NavNode.h"
 
-void CGuard::Initialize()
-{
-	CGameObject::Initialize();
+#include "GuardStates.h"
 
-	// 상태머신 객체를 생성한다.
-	m_StateMachine = make_shared<CStateMachine<CGuard>>(static_pointer_cast<CGuard>(shared_from_this()));
-	m_StateMachine->SetCurrentState(CGuardPatrolState::GetInstance());
+CGuard::CGuard() :
+	m_idleEntryTime(Random::Range(7.0f, 10.0f)),
+	m_targetUpdateTime(3.0f),
+	m_elapsedTime(),
+	m_movePath(),
+	m_patrolPath(),
+	m_patrolIndex(),
+	m_target()
+{
 }
 
-void CGuard::Reset(const XMFLOAT4X4& TransformMatrix)
+CGuard::~CGuard()
 {
-	m_IsActive = true;
-	m_Health = 100;
-	m_NavPath.clear();
-	m_PatrolIndex = 0;
-	m_EventTrigger = nullptr;
-
-	SetTransformMatrix(TransformMatrix);
-	UpdateTransform(Matrix4x4::Identity());
-
-	m_StateMachine->SetCurrentState(CGuardPatrolState::GetInstance());
 }
 
-void CGuard::Animate(float ElapsedTime)
+float CGuard::GetIdleEntryTime()
 {
-	if (IsActive())
+	return m_idleEntryTime;
+}
+
+float CGuard::GetTargetUpdateTime()
+{
+	return m_targetUpdateTime;
+}
+
+void CGuard::SetElapsedTime(float elapsedTime)
+{
+	m_elapsedTime = elapsedTime;
+}
+
+float CGuard::GetElapsedTime()
+{
+	return m_elapsedTime;
+}
+
+bool CGuard::IsFinishedMovePath()
+{
+	return m_movePath.empty();
+}
+
+const XMFLOAT3& CGuard::GetNextPatrolPosition()
+{
+	return m_patrolPath[m_patrolIndex];
+}
+
+void CGuard::SetTarget(CCharacter* target)
+{
+	m_target = target;
+}
+
+CCharacter* CGuard::GetTarget()
+{
+	return m_target;
+}
+
+void CGuard::Init()
+{
+	GetStateMachine()->SetCurrentState(CGuardIdleState::GetInstance());
+}
+
+CCharacter* CGuard::FindTarget(float maxDist, float fov)
+{
+	CCharacter* target = nullptr;
+	float nearestDist = FLT_MAX;
+	const vector<CObject*>& players = CSceneManager::GetInstance()->GetCurrentScene()->GetGroupObject(GROUP_TYPE::PLAYER);
+	const vector<CObject*>& structures = CSceneManager::GetInstance()->GetCurrentScene()->GetGroupObject(GROUP_TYPE::STRUCTURE);
+
+	for (const auto& object : players)
 	{
-		if (m_StateMachine)
+		CCharacter* player = (CCharacter*)object;
+
+		if (player->GetHealth() > 0)
 		{
-			m_StateMachine->Update(ElapsedTime);
-		}
-	}
-}
+			XMFLOAT3 toPlayer = Vector3::Subtract(player->GetPosition(), GetPosition());
+			float dist = Vector3::Length(toPlayer);
 
-void CGuard::SetHealth(UINT Health)
-{
-	// UINT UnderFlow
-	if (Health > 100)
-	{
-		m_Health = 0;
-	}
-	else
-	{
-		m_Health = Health;
-	}
-}
-
-UINT CGuard::GetHealth() const
-{
-	return m_Health;
-}
-
-void CGuard::SetSpeed(float Speed)
-{
-	m_Speed = Speed;
-}
-
-float CGuard::GetSpeed() const
-{
-	return m_Speed;
-}
-
-void CGuard::SetMovingDirection(const XMFLOAT3& MovingDirection)
-{
-	m_MovingDirection = MovingDirection;
-}
-
-const XMFLOAT3& CGuard::GetMovingDirection() const
-{
-	return m_MovingDirection;
-}
-
-shared_ptr<CStateMachine<CGuard>> CGuard::GetStateMachine() const
-{
-	return m_StateMachine;
-}
-
-void CGuard::SetRecentTransition(bool RecentTransition)
-{
-	m_RecentTransition = RecentTransition;
-}
-
-bool CGuard::GetRecentTransition() const
-{
-	return m_RecentTransition;
-}
-
-void CGuard::SetElapsedTime(float ElapsedTime)
-{
-	m_ElapsedTime = ElapsedTime;
-
-	if (m_ElapsedTime >= 3.0f)
-	{
-		m_RecentTransition = true;
-	}
-}
-
-float CGuard::GetElapsedTime() const
-{
-	return m_ElapsedTime;
-}
-
-float CGuard::GetToIdleEntryTime() const
-{
-	return m_ToIdleEntryTime;
-}
-
-float CGuard::GetUpdateTargetTime() const
-{
-	return m_UpdateTargetTime;
-}
-
-void CGuard::SetTarget(const shared_ptr<CGameObject>& Target)
-{
-	m_Target = Target;
-}
-
-shared_ptr<CGameObject> CGuard::GetTarget() const
-{
-	return m_Target;
-}
-
-void CGuard::SetEventTrigger(const shared_ptr<CEventTrigger>& EventTrigger)
-{
-	m_EventTrigger = EventTrigger;
-}
-
-shared_ptr<CEventTrigger> CGuard::GetEventTrigger()
-{
-	return m_EventTrigger;
-}
-
-vector<XMFLOAT3>& CGuard::GetNavPath()
-{
-	return m_NavPath;
-}
-
-vector<XMFLOAT3>& CGuard::GetPatrolNavPath()
-{
-	return m_PatrolNavPath;
-}
-
-UINT CGuard::GetPatrolIndex() const
-{
-	return m_PatrolIndex;
-}
-
-shared_ptr<CGameObject> CGuard::IsFoundPlayer(const vector<vector<shared_ptr<CGameObject>>>& GameObjects) const
-{
-	shared_ptr<CGameObject> NearestPlayer{};
-	float NearestDistance{ FLT_MAX };
-	float Distance{};
-
-	// 더 가까운 플레이어를 찾는다.
-	for (const auto& GameObject : GameObjects[OBJECT_TYPE_PLAYER])
-	{
-		if (GameObject)
-		{
-			shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(GameObject) };
-
-			if (Player->GetHealth() > 0)
+			if (dist <= maxDist)
 			{
-				XMFLOAT3 ToPlayer{ Vector3::Subtract(Player->GetPosition(), GetPosition()) };
+				// 플레이어와의 사이각을 구한다.
+				toPlayer = Vector3::Normalize(toPlayer);
 
-				Distance = Vector3::Length(ToPlayer);
+				float angle = Vector3::Angle(GetForward(), toPlayer);
 
-				if (Distance < 30.0f)
+				// 사이각이 fov도 이하라면, toPlayer 방향으로 광선을 쏘아 차폐 여부를 파악하여 타겟을 설정한다.
+				if (angle <= fov)
 				{
-					float BetweenDegree{ Vector3::Angle(Vector3::Normalize(GetLook()), Vector3::Normalize(ToPlayer)) };
+					float nearestHitDist = FLT_MAX;
+					bool isHit = false;
+					XMFLOAT3 rayOrigin = GetPosition();
 
-					if (BetweenDegree < 100.0f)
+					rayOrigin.y = 5.0f;
+
+					for (const auto& structure : structures)
 					{
-						float NearestHitDistance{ FLT_MAX };
-						float HitDistance{};
-						bool IsHit{};
+						float hitDist = 0.0f, maxDist = 30.0f;
+						CObject* intersectedObject = structure->CheckRayIntersection(rayOrigin, toPlayer, hitDist, maxDist);
 
-						for (const auto& GameObject : GameObjects[OBJECT_TYPE_STRUCTURE])
+						if ((intersectedObject != nullptr) && (hitDist <= maxDist))
 						{
-							if (GameObject)
-							{
-								XMFLOAT3 RayOrigin{ GetPosition() };
-								RayOrigin.y = 5.0f;
-
-								shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(RayOrigin, Vector3::Normalize(ToPlayer), HitDistance, 30.0f)};
-
-								if (IntersectedObject && HitDistance < 30.0f)
-								{
-									IsHit = true;
-									break;
-								}
-							}
+							isHit = true;
+							break;
 						}
+					}
 
-						if (!IsHit)
-						{
-							if (Distance < NearestDistance)
-							{
-								NearestPlayer = Player;
-								NearestDistance = Distance;
-							}
-						}
+					if ((!isHit) && (dist < nearestDist))
+					{
+						target = player;
+						nearestDist = dist;
 					}
 				}
 			}
 		}
 	}
 
-	return NearestPlayer;
+	return target;
 }
 
-void CGuard::FindNavPath(const shared_ptr<CNavMesh>& NavMesh, const XMFLOAT3& TargetPosition, const vector<vector<shared_ptr<CGameObject>>>& GameObjects)
+void CGuard::CreateMovePath(const XMFLOAT3& targetPosition)
 {
-	priority_queue<shared_ptr<CNavNode>, vector<shared_ptr<CNavNode>>, compare> NavNodeQueue{};
+	m_movePath.clear();
 
-	UINT StartNavNodeIndex{ NavMesh->GetNodeIndex(GetPosition()) };
-	UINT TargetNavNodeIndex{ NavMesh->GetNodeIndex(TargetPosition) };
+	CreatePath(m_movePath, targetPosition);
+	OptimizePath(m_movePath);
+}
 
-	shared_ptr<CNavNode> StartNavNode{ NavMesh->GetNavNodes()[StartNavNodeIndex] };
-	shared_ptr<CNavNode> TargetNavNode{ NavMesh->GetNavNodes()[TargetNavNodeIndex] };
+void CGuard::CreatePatrolPath(const XMFLOAT3& targetPosition)
+{
+	CreatePath(m_patrolPath, targetPosition);
 
-	for (const auto& NavNode : NavMesh->GetNavNodes())
+	// patrolPath의 경우에는, 영구적인 경로이므로 index를 사용하여 접근하며 마지막 인덱스에 도달했을 경우 reverse 함수를 통해 벡터를 뒤집어 되돌아가도록 한다.
+	reverse(m_patrolPath.begin(), m_patrolPath.end());
+}
+
+void CGuard::CreatePath(vector<XMFLOAT3>& path, const XMFLOAT3& targetPosition)
+{
+	CNavMesh* navMesh = (CNavMesh*)CAssetManager::GetInstance()->GetMesh("NavMesh");
+	const vector<CNavNode*>& navNodes = navMesh->GetNavNodes();
+
+	for (int i = 0; i < navNodes.size(); ++i)
 	{
-		NavNode->Reset();
+		navNodes[i]->Reset();
 	}
 
-	StartNavNode->CalculateF(StartNavNode, TargetNavNode);
-	NavNodeQueue.push(StartNavNode);
+	CNavNode* startNode = navNodes[navMesh->GetNodeIndex(GetPosition())];
+	CNavNode* targetNode = navNodes[navMesh->GetNodeIndex(targetPosition)];
+	CNavNode* currentNode = nullptr;
 
-	shared_ptr<CNavNode> CurrentNavNode{};
-	UINT CurrentIndex{};
+	priority_queue<CNavNode*, vector<CNavNode*>, compare> priorityQueue;
+
+	startNode->CalculateF(targetNode, startNode);
+	priorityQueue.push(startNode);
 
 	while (true)
 	{
-		if (NavNodeQueue.empty())
+		if (priorityQueue.empty())
 		{
-			//tcout << TEXT("목적지를 찾지 못했습니다.") << endl;
 			break;
 		}
 
-		CurrentNavNode = NavNodeQueue.top();
-		NavNodeQueue.pop();
+		currentNode = priorityQueue.top();
+		priorityQueue.pop();
 
-		if (CurrentNavNode->IsVisited())
+		if (currentNode->IsVisited())
 		{
 			continue;
 		}
 
-		CurrentNavNode->SetVisit(true);
+		currentNode->SetVisited(true);
 
-		if (Vector3::IsEqual(CurrentNavNode->GetTriangle().m_Centroid, TargetNavNode->GetTriangle().m_Centroid))
+		if (Vector3::IsEqual(currentNode->GetTriangle().m_centroid, targetNode->GetTriangle().m_centroid))
 		{
-			//tcout << TEXT("목적지를 찾았습니다.") << endl;
 			break;
 		}
 
-		for (const auto& NeighborNavNode : CurrentNavNode->GetNeighborNavNodes())
+		for (const auto& nearNode : currentNode->GetNearNodes())
 		{
-			if (!NeighborNavNode->IsVisited())
+			if (!nearNode->IsVisited())
 			{
-				NeighborNavNode->SetParent(CurrentNavNode);
-				NeighborNavNode->CalculateF(CurrentNavNode, TargetNavNode);
-				NavNodeQueue.push(NeighborNavNode);
+				nearNode->SetParent(currentNode);
+				nearNode->CalculateF(targetNode, currentNode);
+				priorityQueue.push(nearNode);
 			}
 		}
 	}
 
-	m_NavPath.clear();
-	m_NavPath.push_back(TargetPosition);
+	// 목표 지점의 노드부터 출발 지점의 노드까지 역순으로 벡터에 대입한다.
+	path.push_back(targetPosition);
 
 	while (true)
 	{
-		if (!CurrentNavNode->GetParent())
+		CNavNode* parentNode = currentNode->GetParent();
+
+		if (parentNode == nullptr)
 		{
-			m_NavPath.push_back(GetPosition());
 			break;
 		}
 
-		UINT NeighborSideIndex{ CurrentNavNode->CalculateNeighborSideIndex(CurrentNavNode->GetParent()) };
+		// 부모 노드와 인접한 변들 중에서 두 정점을 공유하는 변의 위치를 찾아 Path에 추가한다.
+		int nearSideIndex = currentNode->CalculateNearSideIndex(currentNode->GetParent());
 
-		m_NavPath.push_back(CurrentNavNode->GetTriangle().m_CenterSides[NeighborSideIndex]);
-		CurrentNavNode = CurrentNavNode->GetParent();
+		path.push_back(currentNode->GetTriangle().m_centerSides[nearSideIndex]);
+		currentNode = parentNode;
 	}
 
-	// 경로를 만들었다면, 노드를 순회하며 광선을 쏴 더 최적화된 경로를 구한다.
-	FindRayCastingNavPath(GameObjects);
+	path.push_back(GetPosition());
 }
 
-void CGuard::FindRayCastingNavPath(const vector<vector<shared_ptr<CGameObject>>>& GameObjects)
+void CGuard::OptimizePath(vector<XMFLOAT3>& path)
 {
-	vector<XMFLOAT3> RayCastingNavPath{};
+	vector<XMFLOAT3> optimizedPath;
 
-	UINT NavPathSize{ static_cast<UINT>(m_NavPath.size()) };
+	// targetPosition을 최적화 벡터에 추가한다.
+	optimizedPath.push_back(path.front());
 
-	RayCastingNavPath.push_back(m_NavPath.front());
-
-	for (UINT SearchIndex = 0; SearchIndex < NavPathSize - 1; ++SearchIndex)
+	// i는 광선을 쏘는 위치의 인덱스 값으로, 현재 위치부터 순회한다.
+	for (int i = 0; i < path.size() - 1; ++i)
 	{
-		XMFLOAT3 SearchPosition{ m_NavPath[SearchIndex] };
+		XMFLOAT3 rayOrigin = path[i];
 
-		for (UINT CheckIndex = NavPathSize - 1; CheckIndex > SearchIndex; --CheckIndex)
+		// j는 광선을 쏘는 대상이 되는 위치의 인덱스 값으로, 목표 위치에 근접한 위치부터 순회한다.
+		for (int j = (int)path.size() - 1; j > i; --j)
 		{
-			XMFLOAT3 CheckPosition{ m_NavPath[CheckIndex] };
+			XMFLOAT3 rayTarget = path[j];
 
-			// 바운딩 박스와 충돌이 일어나기 위한 최소 높이이다.
-			SearchPosition.y = CheckPosition.y = 5.0f;
+			// 광선과 바운딩 박스가 충돌할 수 있는 최소 높이이다.
+			rayOrigin.y = rayTarget.y = 2.6f;
 
-			// Normalize 안하니까 터지지? 반대 방향은 왜 안되는지?
-			XMFLOAT3 ToNextPosition{ Vector3::Subtract(SearchPosition, CheckPosition) }; 
-			float Distance{ Vector3::Length(ToNextPosition) };
-			float HitDistance{};
-			bool IsHit{};
+			XMFLOAT3 rayDirection = Vector3::Subtract(rayTarget, rayOrigin);
+			float dist = Vector3::Length(rayDirection);
+			bool isHit = false;
 
-			for (const auto& GameObject : GameObjects[OBJECT_TYPE_STRUCTURE])
+			const vector<CObject*>& structures = CSceneManager::GetInstance()->GetCurrentScene()->GetGroupObject(GROUP_TYPE::STRUCTURE);
+
+			for (const auto& structure : structures)
 			{
-				if (GameObject)
-				{
-					shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(CheckPosition, Vector3::Normalize(ToNextPosition), HitDistance, Distance) };
+				float hitDist = 0.0f;
+				CObject* intersectedObject = structure->CheckRayIntersection(rayOrigin, Vector3::Normalize(rayDirection), hitDist, dist);
 
-					if (IntersectedObject && (HitDistance < Distance))
-					{
-						IsHit = true;
-						break;
-					}
+				if ((intersectedObject != nullptr) && (hitDist <= dist))
+				{
+					isHit = true;
+					break;
 				}
 			}
 
-			if (!IsHit)
+			if (!isHit)
 			{
-				RayCastingNavPath.push_back(m_NavPath[CheckIndex]);
-				SearchIndex = CheckIndex - 1;
+				optimizedPath.push_back(path[j]);
+				i = j - 1;
 				break;
 			}
 		}
 	}
 
-	if (!RayCastingNavPath.empty())
+	path = move(optimizedPath);
+}
+
+void CGuard::FollowMovePath(float force)
+{
+	XMFLOAT3 position = GetPosition();
+	XMFLOAT3 forward = GetForward();
+
+	XMFLOAT3 toNextNode = Vector3::Subtract(m_movePath.back(), position);
+	float restDist = Vector3::Length(toNextNode);
+
+	// 다음 노드에 도착한 경우
+	if (restDist <= 1.0f)
 	{
-		m_NavPath.clear();
-		m_NavPath = RayCastingNavPath;
+		m_movePath.pop_back();
+
+		if (m_movePath.empty())
+		{
+			return;
+		}
+
+		toNextNode = Vector3::Normalize(Vector3::Subtract(m_movePath.back(), position));
+
+		float angle = Vector3::Angle(forward, toNextNode);
+
+		// 두 벡터를 외적하여 회전축을 구해 최소 회전 방향으로 회전시킨다.
+		float axis = Vector3::CrossProduct(forward, toNextNode, false).y;
+
+		if (axis < 0.0f)
+		{
+			angle = -angle;
+		}
+
+		Rotate(GetUp(), angle);
 	}
 	else
 	{
-		tcout << "터지는 이유" << endl;
+		GetRigidBody()->AddForce(Vector3::ScalarProduct(force, forward, false));
 	}
 }
 
-void CGuard::FindPatrolNavPath(const shared_ptr<CNavMesh>& NavMesh, const XMFLOAT3& TargetPosition)
+void CGuard::FollowPatrolPath(float force)
 {
-	priority_queue<shared_ptr<CNavNode>, vector<shared_ptr<CNavNode>>, compare> NavNodeQueue{};
+	XMFLOAT3 position = GetPosition();
+	XMFLOAT3 forward = GetForward();
 
-	UINT StartNavNodeIndex{ NavMesh->GetNodeIndex(GetPosition()) };
-	UINT TargetNavNodeIndex{ NavMesh->GetNodeIndex(TargetPosition) };
+	XMFLOAT3 toNextNode = Vector3::Subtract(m_patrolPath[m_patrolIndex], position);
+	float restDist = Vector3::Length(toNextNode);
 
-	shared_ptr<CNavNode> StartNavNode{ NavMesh->GetNavNodes()[StartNavNodeIndex] };
-	shared_ptr<CNavNode> TargetNavNode{ NavMesh->GetNavNodes()[TargetNavNodeIndex] };
-
-	for (const auto& NavNode : NavMesh->GetNavNodes())
+	// 다음 노드에 도착한 경우
+	if (restDist <= 1.0f)
 	{
-		NavNode->Reset();
-	}
+		++m_patrolIndex;
 
-	StartNavNode->CalculateF(StartNavNode, TargetNavNode);
-	NavNodeQueue.push(StartNavNode);
-
-	shared_ptr<CNavNode> CurrentNavNode{};
-	UINT CurrentIndex{};
-
-	while (true)
-	{
-		if (NavNodeQueue.empty())
+		// 마지막 노드에 도달했다면, 경로를 뒤집어 돌아간다.
+		if (m_patrolIndex >= m_patrolPath.size())
 		{
-			//tcout << TEXT("목적지를 찾지 못했습니다.") << endl;
-			break;
+			reverse(m_patrolPath.begin(), m_patrolPath.end());
+			m_patrolIndex = 0;
 		}
 
-		CurrentNavNode = NavNodeQueue.top();
-		NavNodeQueue.pop();
+		toNextNode = Vector3::Normalize(Vector3::Subtract(m_patrolPath[m_patrolIndex], position));
 
-		if (CurrentNavNode->IsVisited())
+		float angle = Vector3::Angle(forward, toNextNode);
+
+		// 두 벡터를 외적하여 회전축을 구해 최소 회전 방향으로 회전시킨다.
+		float axis = Vector3::CrossProduct(forward, toNextNode, false).y;
+
+		if (axis < 0.0f)
 		{
-			continue;
+			angle = -angle;
 		}
 
-		CurrentNavNode->SetVisit(true);
-
-		if (Vector3::IsEqual(CurrentNavNode->GetTriangle().m_Centroid, TargetNavNode->GetTriangle().m_Centroid))
-		{
-			//tcout << TEXT("목적지를 찾았습니다.") << endl;
-			break;
-		}
-
-		for (const auto& NeighborNavNode : CurrentNavNode->GetNeighborNavNodes())
-		{
-			if (!NeighborNavNode->IsVisited())
-			{
-				NeighborNavNode->SetParent(CurrentNavNode);
-				NeighborNavNode->CalculateF(CurrentNavNode, TargetNavNode);
-				NavNodeQueue.push(NeighborNavNode);
-			}
-		}
-	}
-
-	m_PatrolNavPath.clear();
-	m_PatrolNavPath.push_back(TargetPosition);
-
-	while (true)
-	{
-		if (!CurrentNavNode->GetParent())
-		{
-			m_PatrolNavPath.push_back(GetPosition());
-			break;
-		}
-
-		UINT NeighborSideIndex{ CurrentNavNode->CalculateNeighborSideIndex(CurrentNavNode->GetParent()) };
-
-		m_PatrolNavPath.push_back(CurrentNavNode->GetTriangle().m_CenterSides[NeighborSideIndex]);
-		CurrentNavNode = CurrentNavNode->GetParent();
-	}
-
-	reverse(m_PatrolNavPath.begin(), m_PatrolNavPath.end());
-}
-
-void CGuard::MoveToNavPath(float ElapsedTime)
-{
-	if (!m_NavPath.empty())
-	{
-		if (Math::Distance(m_NavPath.back(), GetPosition()) < 1.0f)
-		{
-			m_NavPath.pop_back();
-
-			if (!m_NavPath.empty())
-			{
-				m_MovingDirection = Vector3::Normalize(Vector3::Subtract(m_NavPath.back(), GetPosition()));
-				
-				UpdateLocalCoord(m_MovingDirection);
-			}
-		}
-		else
-		{
-			CGameObject::Move(m_MovingDirection, m_Speed * ElapsedTime);
-		}
-	}
-}
-
-void CGuard::Patrol(float ElapsedTime)
-{
-	if (Math::Distance(m_PatrolNavPath[m_PatrolIndex], GetPosition()) < 1.0f)
-	{
-		m_PatrolIndex += 1;
-
-		if (m_PatrolIndex == m_PatrolNavPath.size())
-		{
-			m_PatrolIndex = 0;
-
-			reverse(m_PatrolNavPath.begin(), m_PatrolNavPath.end());
-		}
-
-		m_MovingDirection = Vector3::Normalize(Vector3::Subtract(m_PatrolNavPath[m_PatrolIndex], GetPosition()));
-
-		UpdateLocalCoord(m_MovingDirection);
+		Rotate(GetUp(), angle);
 	}
 	else
 	{
-		CGameObject::Move(m_MovingDirection, m_Speed * ElapsedTime);
-	}
-}
-
-void CGuard::GenerateTrigger()
-{
-	if (m_EventTrigger)
-	{
-		m_EventTrigger->SetActive(true);
-		m_EventTrigger->CalculateTriggerAreaByGuard(GetPosition());
+		GetRigidBody()->AddForce(Vector3::ScalarProduct(force, forward, false));
 	}
 }

@@ -1,163 +1,81 @@
-#include "stdafx.h"
+#include "pch.h"
 #include "SceneManager.h"
-#include "Scene.h"
 
-CSceneManager* CSceneManager::GetInstance()
+#include "TitleScene.h"
+#include "GameScene.h"
+
+CSceneManager::CSceneManager() :
+	m_scenes(),
+	m_currentScene()
 {
-	static CSceneManager Instance{};
-
-	return &Instance;
 }
 
-void CSceneManager::ReleaseShaderVariables()
+CSceneManager::~CSceneManager()
 {
-	for (const auto& Scene : m_Scenes)
-	{
-		Scene.second->ReleaseShaderVariables();
-	}
+	Utility::SafeDelete(m_scenes);
+}
+
+void CSceneManager::ChangeScene(SCENE_TYPE sceneType)
+{
+	m_currentScene->Exit();
+	m_currentScene = m_scenes[(int)sceneType];
+	m_currentScene->Enter();
+}
+
+CScene* CSceneManager::GetCurrentScene()
+{
+	return m_currentScene;
+}
+
+void CSceneManager::Init(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+{
+	// ¾À »ý¼º
+	m_scenes.resize((int)SCENE_TYPE::COUNT);
+
+	//m_scenes[(int)SCENE_TYPE::TITLE] = new CTitleScene();
+	//m_scenes[(int)SCENE_TYPE::TITLE]->Init(d3d12Device, d3d12GraphicsCommandList, D3D12RootSignature);
+
+	m_scenes[(int)SCENE_TYPE::GAME] = new CGameScene();
+	m_scenes[(int)SCENE_TYPE::GAME]->Init(d3d12Device, d3d12GraphicsCommandList);
+
+	// ÇöÀç ¾À ¼³Á¤
+	m_currentScene = m_scenes[(int)SCENE_TYPE::GAME];
+	m_currentScene->Enter();
 }
 
 void CSceneManager::ReleaseUploadBuffers()
 {
-	for (const auto& Scene : m_Scenes)
+	for (int i = 0; i < (int)SCENE_TYPE::COUNT; ++i)
 	{
-		Scene.second->ReleaseUploadBuffers();
-	}
-}
-
-shared_ptr<CScene> CSceneManager::GetScene(const tstring& SceneName)
-{
-	if (m_Scenes.count(SceneName))
-	{
-		return m_Scenes[SceneName];
-	}
-
-	return nullptr;
-}
-
-void CSceneManager::SetCurrentScene(const tstring& SceneName)
-{
-	if (m_Scenes.count(SceneName))
-	{
-		m_CurrentScene = m_Scenes[SceneName];
-		m_CurrentScene->Enter(MSG_TYPE_NONE);
-	}
-}
-
-shared_ptr<CScene> CSceneManager::GetCurrentScene() const
-{
-	return m_CurrentScene;
-}
-
-shared_ptr<CScene> CSceneManager::GetReservedScene() const
-{
-	return m_ReservedScene;
-}
-
-void CSceneManager::RegisterScene(const tstring& SceneName, const shared_ptr<CScene>& Scene)
-{
-	if (Scene)
-	{
-		m_Scenes.emplace(SceneName, Scene);
-	}
-}
-
-void CSceneManager::ReserveScene(const tstring& SceneName, MSG_TYPE MsgType)
-{
-	if (!m_ReservedScene)
-	{
-		if (m_Scenes.count(SceneName))
+		if (m_scenes[i] != nullptr)
 		{
-			m_ReservedScene = m_Scenes[SceneName];
-			m_ReservedMsgType = MsgType;
+			m_scenes[i]->ReleaseUploadBuffers();
 		}
 	}
 }
 
-void CSceneManager::ChangeScene(const tstring& SceneName, MSG_TYPE MsgType)
+void CSceneManager::Update()
 {
-	if (m_Scenes.count(SceneName))
-	{
-		m_CurrentScene->Exit();
-		m_CurrentScene = m_Scenes[SceneName];
-		m_CurrentScene->Enter(MsgType);
-	}
+	m_currentScene->Update();
+	m_currentScene->LateUpdate();
 }
 
-void CSceneManager::ChangeToReservedScene()
+void CSceneManager::PreRender(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
 {
-	if (m_ReservedScene)
-	{
-		m_CurrentScene->Exit();
-		m_CurrentScene = m_ReservedScene;
-		m_CurrentScene->Enter(m_ReservedMsgType);
-
-		m_ReservedScene = nullptr;
-		m_ReservedMsgType = MSG_TYPE_NONE;
-	}
+	m_currentScene->PreRender(d3d12GraphicsCommandList);
 }
 
-void CSceneManager::ProcessMouseMessage(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
+void CSceneManager::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
 {
-	if (m_CurrentScene)
-	{
-		m_CurrentScene->ProcessMouseMessage(hWnd, Message, wParam, lParam);
-	}
+	m_currentScene->Render(d3d12GraphicsCommandList);
 }
 
-void CSceneManager::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
+void CSceneManager::PostRender(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
 {
-	if (m_CurrentScene)
-	{
-		m_CurrentScene->ProcessKeyboardMessage(hWnd, Message, wParam, lParam);
-	}
+	m_currentScene->PostRender(d3d12GraphicsCommandList);
 }
 
-void CSceneManager::ProcessInput(HWND hWnd, float ElapsedTime)
-{
-	if (m_CurrentScene)
-	{
-		m_CurrentScene->ProcessInput(hWnd, ElapsedTime);
-	}
-}
-
-void CSceneManager::Animate(float ElapsedTime)
-{
-	if (m_CurrentScene)
-	{
-		m_CurrentScene->Animate(ElapsedTime);
-	}
-}
-
-void CSceneManager::PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
-{
-	if (m_CurrentScene)
-	{
-		m_CurrentScene->PreRender(D3D12GraphicsCommandList);
-	}
-}
-
-void CSceneManager::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
-{
-	if (m_CurrentScene)
-	{
-		m_CurrentScene->Render(D3D12GraphicsCommandList);
-	}
-}
-
-void CSceneManager::PostRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
-{
-	if (m_CurrentScene)
-	{
-		m_CurrentScene->PostRender(D3D12GraphicsCommandList);
-	}
-}
-
-void CSceneManager::ProcessPacket()
-{
-	if (m_CurrentScene)
-	{
-		m_CurrentScene->ProcessPacket();
-	}
-}
-
+//void CSceneManager::ProcessPacket()
+//{
+//	m_currentScene->ProcessPacket();
+//}

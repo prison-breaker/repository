@@ -1,1249 +1,409 @@
-#include "stdafx.h"
+#include "pch.h"
 #include "GameScene.h"
-#include "Framework.h"
+
+#include "Core.h"
+
+#include "TimeManager.h"
+#include "InputManager.h"
+#include "AssetManager.h"
+#include "CameraManager.h"
+#include "CollisionManager.h"
+
 #include "Player.h"
-#include "State_Player.h"
 #include "Guard.h"
-#include "State_Guard.h"
-#include "BilboardObjects.h"
-#include "UIObjects.h"
-#include "State_HitUI.h"
-#include "EventTriggers.h"
-#include "NavMesh.h"
-#include "ShadowMapShader.h"
-#include "QuadShader.h"
-#include "DebugShader.h"
-#include "StateMachine.h"
-#include "AnimationController.h"
-#include "Camera.h"
-#include "Mesh.h"
+#include "BilboardObject.h"
+
 #include "Texture.h"
-#include "Material.h"
+#include "Shader.h"
+
+#include "StateMachine.h"
+
+#include "Camera.h"
+
 #include "NavMesh.h"
 #include "NavNode.h"
-#include "PostProcessingShader.h"
 
-void CGameScene::Initialize()
+#include "GuardStates.h"
+
+CGameScene::CGameScene() :
+	m_lights(),
+	m_d3d12Lights(),
+	m_mappedLights(),
+	m_towerLight(),
+	m_towerLightAngle(),
+	m_d3d12Fog(),
+	m_mappedFog()
 {
-	SOCKET_INFO SocketInfo{ CFramework::GetInstance()->GetSocketInfo() };
-	UINT HasPistolGuardIndices[5]{};
-
-	int ReturnValue{ recv(SocketInfo.m_Socket, (char*)HasPistolGuardIndices, sizeof(HasPistolGuardIndices), MSG_WAITALL) };
-
-	if (ReturnValue == SOCKET_ERROR)
-	{
-		Server::ErrorDisplay("recv()");
-	}
-
-	for (const auto& EventTrigger : m_EventTriggers)
-	{
-		if (EventTrigger)
-		{
-			EventTrigger->Reset();
-		}
-	}
-
-	for (UINT i = 0; i < MAX_PLAYER_CAPACITY; ++i)
-	{
-		if (m_GameObjects[OBJECT_TYPE_PLAYER][i])
-		{
-			m_GameObjects[OBJECT_TYPE_PLAYER][i]->Reset(m_InitGameData.m_PlayerInitTransformMatrixes[i]);
-		}
-	}
-
-	// 0 ~ 1 : Has Key Guard
-	// Random 5 : Has Pistol Guard
-	for (UINT i = 0, j = 0; i < MAX_NPC_COUNT; ++i)
-	{
-		if (m_GameObjects[OBJECT_TYPE_NPC][i])
-		{
-			m_GameObjects[OBJECT_TYPE_NPC][i]->Reset(m_InitGameData.m_NPCInitTransformMatrixes[i]);
-
-			if (i <= 1 || i == HasPistolGuardIndices[j - 2])
-			{
-				shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][i]) };
-
-				Guard->SetEventTrigger(m_EventTriggers[j++]);
-			}
-		}
-	}
-
-	UINT UICount{ static_cast<UINT>(m_QuadObjects[BILBOARD_OBJECT_TYPE_UI].size()) };
-
-	for (UINT i = 0; i < UICount; ++i)
-	{
-		if (m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][i])
-		{
-			m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][i]->Reset();
-
-			// 4 : Pistol & Bullet
-			// 6 : Crosshair
-			// 7 : Interactions
-			// 8 : Hit
-			// 9 : GameOvers
-			if (i == 4 || 6 <= i && i <= 9)
-			{
-				m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][i]->SetActive(false);
-			}
-		}
-	}
-
-	if (SocketInfo.m_ID == 0)
-	{
-		m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(0, 0);
-		m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(1, 4);
-		m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][1]->SetCellIndex(0, 0);
-	}
-	else
-	{
-		m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(0, 2);
-		m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][0]->SetCellIndex(1, 4);
-		m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][1]->SetCellIndex(0, 1);
-	}
+	SetName("GameScene");
 }
 
-void CGameScene::OnCreate(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, ID3D12RootSignature* D3D12RootSignature)
-{
-	BuildObjects(D3D12Device, D3D12GraphicsCommandList, D3D12RootSignature);
-	BuildLights();
-	BuildFog();
-}
-
-void CGameScene::OnDestroy()
-{
-
-}
-
-void CGameScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, ID3D12RootSignature* D3D12RootSignature)
-{
-	// 렌더링에 필요한 셰이더 객체(PSO)를 생성한다.
-	shared_ptr<CGraphicsShader> Shader{ make_shared<CDepthWriteShader>(D3D12Device, D3D12GraphicsCommandList) };
-
-	Shader->CreatePipelineStates(D3D12Device, D3D12RootSignature, 2);
-	CShaderManager::GetInstance()->RegisterShader(TEXT("DepthWriteShader"), Shader);
-
-	Shader = make_shared<CShadowMapShader>();
-	Shader->CreatePipelineStates(D3D12Device, D3D12RootSignature, 2);
-	CShaderManager::GetInstance()->RegisterShader(TEXT("ShadowMapShader"), Shader);
-
-	Shader = make_shared<CDebugShader>();
-	Shader->CreatePipelineStates(D3D12Device, D3D12RootSignature, 1);
-	CShaderManager::GetInstance()->RegisterShader(TEXT("DebugShader"), Shader);
-
-	// 파일로부터 NavMesh 객체를 생성한다.
-	m_NavMesh = make_shared<CNavMesh>();
-	m_NavMesh->LoadNavMeshFromFile(TEXT("Navigation/NavMesh.bin"));
-
-	// 타입 수만큼 각 벡터의 크기를 재할당한다.
-	m_GameObjects.resize(OBJECT_TYPE_STRUCTURE + 1);
-	m_QuadObjects.resize(BILBOARD_OBJECT_TYPE_UI + 1);
-
-	// 빌보드 나무 객체를 생성한다.
-	m_QuadObjects[BILBOARD_OBJECT_TYPE_BILBOARD].push_back(make_shared<CTree>(D3D12Device, D3D12GraphicsCommandList, TEXT("GameScene")));
-
-	// 스카이박스 객체를 생성한다.
-	m_QuadObjects[BILBOARD_OBJECT_TYPE_BILBOARD].push_back(make_shared<CSkyBox>(D3D12Device, D3D12GraphicsCommandList));
-
-	// 파일로부터 씬 객체들을 생성하고 배치한다.
-	LoadSceneInfoFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Scenes/GameScene.bin"));
-
-	// 파일로부터 UI 객체들을 생성하고 배치한다.
-	LoadUIInfoFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("Scenes/GameScene_UI.bin"));
-
-	CreateShaderVariables(D3D12Device, D3D12GraphicsCommandList);
-}
-
-void CGameScene::ReleaseObjects()
+CGameScene::~CGameScene()
 {
 	ReleaseShaderVariables();
 }
 
-void CGameScene::Enter(MSG_TYPE MsgType)
+void CGameScene::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, const string& fileName)
 {
-	ShowCursor(FALSE);
+	CScene::Load(d3d12Device, d3d12GraphicsCommandList, fileName);
 
-	CSoundManager::GetInstance()->Play(SOUND_TYPE_INGAME_BGM_1, 0.3f, false);
-}
+	// 구조물을 순회하며, 감시탑의 조명 프레임을 찾아 저장한다.
+	const vector<CObject*>& structures = GetGroupObject(GROUP_TYPE::STRUCTURE);
 
-void CGameScene::Exit()
-{
-	// 엔딩씬에서는 감시탑의 조명이 비춰지면 안되기 때문에 게임씬을 나갈 때, 꺼준다.
-	m_Lights[1].m_IsActive = false;
-	m_Lights[2].m_IsActive = false;
-
-	CSoundManager::GetInstance()->Stop(SOUND_TYPE_SIREN);
-	CSoundManager::GetInstance()->Stop(SOUND_TYPE_INGAME_BGM_1);
-	CSoundManager::GetInstance()->Stop(SOUND_TYPE_INGAME_BGM_2);
-}
-
-void CGameScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName)
-{
-	unordered_map<tstring, shared_ptr<CMesh>> MeshCaches{};
-	unordered_map<tstring, shared_ptr<CMaterial>> MaterialCaches{};
-
-	LoadMeshCachesFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("MeshesAndMaterials/Meshes.bin"), MeshCaches);
-	LoadMaterialCachesFromFile(D3D12Device, D3D12GraphicsCommandList, TEXT("MeshesAndMaterials/Materials.bin"), MaterialCaches);
-
-	tifstream InFile{ FileName, ios::binary };
-	tstring Token{};
-
-	shared_ptr<LOADED_MODEL_INFO> ModelInfo{};
-
-	UINT Type{};
-	UINT PlayerID{};
-
-	while (true)
+	for (const auto& structure : structures)
 	{
-		File::ReadStringFromFile(InFile, Token);
+		CObject* towerLight = structure->FindFrame("spotlight_pr_1");
 
-		if (Token == TEXT("<Name>"))
+		if (towerLight != nullptr)
 		{
-			File::ReadStringFromFile(InFile, Token);
-
-			ModelInfo = CGameObject::LoadObjectFromFile(D3D12Device, D3D12GraphicsCommandList, Token, MeshCaches, MaterialCaches);
-
-			if (ModelInfo->m_Model->GetName() == TEXT("tower"))
-			{
-				m_TowerLightFrame = ModelInfo->m_Model->FindFrame(TEXT("spotlight_pr_1"));
-			}
-		}
-		else if (Token == TEXT("<Type>"))
-		{
-			Type = File::ReadIntegerFromFile(InFile);
-		}
-		else if (Token == TEXT("<Instances>"))
-		{
-			const UINT InstanceCount{ File::ReadIntegerFromFile(InFile) };
-
-			// <IsActive>
-			vector<UINT> IsActive(InstanceCount);
-
-			File::ReadStringFromFile(InFile, Token);
-			InFile.read(reinterpret_cast<TCHAR*>(IsActive.data()), sizeof(UINT) * InstanceCount);
-
-			// <TransformMatrix>
-			vector<XMFLOAT4X4> TransformMatrixes(InstanceCount);
-
-			File::ReadStringFromFile(InFile, Token);
-			InFile.read(reinterpret_cast<TCHAR*>(TransformMatrixes.data()), sizeof(XMFLOAT4X4) * InstanceCount);
-
-			switch (Type)
-			{
-			case OBJECT_TYPE_PLAYER:
-			{
-				for (UINT i = 0; i < InstanceCount; ++i)
-				{
-					shared_ptr<CPlayer> Player{ make_shared<CPlayer>(D3D12Device, D3D12GraphicsCommandList) };
-
-					Player->SetID(PlayerID++);
-					Player->SetActive(IsActive[i]);
-					Player->SetChild(ModelInfo->m_Model);
-					Player->SetTransformMatrix(TransformMatrixes[i]);
-					Player->UpdateTransform(Matrix4x4::Identity());
-					Player->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
-					Player->Initialize();
-
-					m_GameObjects[Type].push_back(Player);
-					m_InitGameData.m_PlayerInitTransformMatrixes.push_back(TransformMatrixes[i]);
-				}
-			}
-			break;
-			case OBJECT_TYPE_NPC:
-			{
-				// <TargetPosition>
-				vector<XMFLOAT3> TargetPositions(InstanceCount);
-
-				File::ReadStringFromFile(InFile, Token);
-				InFile.read(reinterpret_cast<TCHAR*>(TargetPositions.data()), sizeof(XMFLOAT3) * InstanceCount);
-
-				for (UINT i = 0; i < InstanceCount; ++i)
-				{
-					shared_ptr<CGuard> Guard{ make_shared<CGuard>() };
-
-					Guard->SetActive(IsActive[i]);
-					Guard->SetChild(ModelInfo->m_Model);
-					Guard->SetTransformMatrix(TransformMatrixes[i]);
-					Guard->UpdateTransform(Matrix4x4::Identity());
-					Guard->SetAnimationController(D3D12Device, D3D12GraphicsCommandList, ModelInfo);
-					Guard->FindPatrolNavPath(m_NavMesh, TargetPositions[i]);
-					Guard->Initialize();
-
-					m_GameObjects[Type].push_back(Guard);
-					m_InitGameData.m_NPCInitTransformMatrixes.push_back(TransformMatrixes[i]);
-				}
-			}
-			break;
-			case OBJECT_TYPE_TERRAIN:
-			{
-				for (UINT i = 0; i < InstanceCount; ++i)
-				{
-					// 지형 및 구조물 객체를 생성한다.
-					shared_ptr<CGameObject> Architecture{ make_shared<CGameObject>() };
-
-					Architecture->SetActive(IsActive[i]);
-					Architecture->SetChild(ModelInfo->m_Model);
-					Architecture->SetTransformMatrix(TransformMatrixes[i]);
-					Architecture->UpdateTransform(Matrix4x4::Identity());
-					Architecture->Initialize();
-
-					m_GameObjects[Type].push_back(Architecture);
-				}
-			}
-			break;
-			case OBJECT_TYPE_STRUCTURE:
-			{
-				for (UINT i = 0; i < InstanceCount; ++i)
-				{
-					// 지형 및 구조물 객체를 생성한다.
-					shared_ptr<CGameObject> Architecture{ make_shared<CGameObject>() };
-
-					Architecture->SetActive(IsActive[i]);
-					Architecture->SetChild(ModelInfo->m_Model);
-					Architecture->SetTransformMatrix(TransformMatrixes[i]);
-					Architecture->UpdateTransform(Matrix4x4::Identity());
-					Architecture->Initialize();
-
-					m_GameObjects[Type].push_back(Architecture);
-				}
-			}
-			break;
-			}
-		}
-		else if (Token == TEXT("</GameScene>"))
-		{
-			tcout << endl;
+			m_towerLight = towerLight;
 			break;
 		}
 	}
 }
 
-void CGameScene::LoadUIInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName)
+void CGameScene::CreateShaderVariables(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
 {
-	tstring Token{};
+	UINT bytes = (sizeof(CB_Light) + 255) & ~255;
 
-	unordered_map<tstring, shared_ptr<CMaterial>> MaterialCaches{};
-	shared_ptr<CQuadObject> Object{};
+	m_d3d12Lights = DX::CreateBufferResource(d3d12Device, d3d12GraphicsCommandList, nullptr, bytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, nullptr);
+	DX::ThrowIfFailed(m_d3d12Lights->Map(0, nullptr, reinterpret_cast<void**>(&m_mappedLights)));
 
-	tcout << FileName << TEXT(" 로드 시작...") << endl;
+	bytes = (sizeof(CB_Fog) + 255) & ~255;
 
-	tifstream InFile{ FileName, ios::binary };
-
-	while (true)
-	{
-		File::ReadStringFromFile(InFile, Token);
-
-		if (Token == TEXT("<UIObject>"))
-		{
-			Object = CQuadObject::LoadObjectInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile, MaterialCaches);
-
-			m_QuadObjects[BILBOARD_OBJECT_TYPE_UI].push_back(Object);
-		}
-		else if (Token == TEXT("</UI>"))
-		{
-			break;
-		}
-	}
-
-	tcout << FileName << TEXT(" 로드 완료...") << endl << endl;
-
-	LoadEventTriggerFromFile(TEXT("Triggers/EventTriggers.bin"));
+	m_d3d12Fog = DX::CreateBufferResource(d3d12Device, d3d12GraphicsCommandList, nullptr, bytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, nullptr);
+	DX::ThrowIfFailed(m_d3d12Fog->Map(0, nullptr, reinterpret_cast<void**>(&m_mappedFog)));
+	m_mappedFog->m_fog.m_color = XMFLOAT4(0.025f, 0.025f, 0.05f, 1.0f);
+	m_mappedFog->m_fog.m_density = 0.015f;
 }
 
-void CGameScene::CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
+void CGameScene::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
 {
-	UINT Bytes{ (sizeof(CB_LIGHT) + 255) & ~255 };
+	memcpy(m_mappedLights->m_lights, m_lights.data(), sizeof(CB_Light) * MAX_LIGHTS);
 
-	m_D3D12Lights = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, nullptr, Bytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, nullptr);
-	DX::ThrowIfFailed(m_D3D12Lights->Map(0, nullptr, reinterpret_cast<void**>(&m_MappedLights)));
-
-	Bytes = (sizeof(CB_FOG) + 255) & ~255;
-
-	m_D3D12Fog = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, nullptr, Bytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, nullptr);
-	DX::ThrowIfFailed(m_D3D12Fog->Map(0, nullptr, reinterpret_cast<void**>(&m_MappedFog)));
-}
-
-void CGameScene::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
-{
-	memcpy(m_MappedLights->m_Lights, m_Lights.data(), sizeof(CB_LIGHT) * static_cast<UINT>(m_Lights.size()));
-
-	D3D12GraphicsCommandList->SetGraphicsRootConstantBufferView(ROOT_PARAMETER_TYPE_LIGHT, m_D3D12Lights->GetGPUVirtualAddress());
-	D3D12GraphicsCommandList->SetGraphicsRootConstantBufferView(ROOT_PARAMETER_TYPE_FOG, m_D3D12Fog->GetGPUVirtualAddress());
+	d3d12GraphicsCommandList->SetGraphicsRootConstantBufferView((UINT)ROOT_PARAMETER_TYPE::LIGHT, m_d3d12Lights->GetGPUVirtualAddress());
+	d3d12GraphicsCommandList->SetGraphicsRootConstantBufferView((UINT)ROOT_PARAMETER_TYPE::FOG, m_d3d12Fog->GetGPUVirtualAddress());
 }
 
 void CGameScene::ReleaseShaderVariables()
 {
-	if (m_D3D12Lights)
+	if (m_d3d12Lights)
 	{
-		m_D3D12Lights->Unmap(0, nullptr);
+		m_d3d12Lights->Unmap(0, nullptr);
 	}
 
-	if (m_D3D12Fog)
+	if (m_d3d12Fog)
 	{
-		m_D3D12Fog->Unmap(0, nullptr);
+		m_d3d12Fog->Unmap(0, nullptr);
 	}
 }
-	
-void CGameScene::ReleaseUploadBuffers()
+
+void CGameScene::Enter()
 {
-	for (UINT i = OBJECT_TYPE_PLAYER; i <= OBJECT_TYPE_STRUCTURE; ++i)
+	ShowCursor(false);
+
+	// 카메라의 타겟 설정
+	const vector<CObject*>& objects = GetGroupObject(GROUP_TYPE::PLAYER);
+
+	CCameraManager::GetInstance()->GetMainCamera()->SetTarget((CPlayer*)objects[0]);
+	//CSoundManager::GetInstance()->Play(SOUND_TYPE_INGAME_BGM_1, 0.3f, false);
+}
+
+void CGameScene::Exit()
+{
+	//// 엔딩씬에서는 감시탑의 조명이 비춰지면 안되기 때문에 게임씬을 나갈 때, 꺼준다.
+	//m_Lights[1].m_IsActive = false;
+	//m_Lights[2].m_IsActive = false;
+
+	//CSoundManager::GetInstance()->Stop(SOUND_TYPE_SIREN);
+	//CSoundManager::GetInstance()->Stop(SOUND_TYPE_INGAME_BGM_1);
+	//CSoundManager::GetInstance()->Stop(SOUND_TYPE_INGAME_BGM_2);
+}
+
+const vector<Light>& CGameScene::GetLights()
+{
+	return m_lights;
+}
+
+void CGameScene::Init(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+{
+	// 씬 로드
+	Load(d3d12Device, d3d12GraphicsCommandList, "GameScene.bin");
+
+	// 스카이박스 추가
+	CObject* object = new CSkyBox(d3d12Device, d3d12GraphicsCommandList);
+
+	AddObject(GROUP_TYPE::BILBOARD, object);
+
+	// 나무 추가
+	object = new CTree(d3d12Device, d3d12GraphicsCommandList, SCENE_TYPE::GAME);
+	AddObject(GROUP_TYPE::BILBOARD, object);
+
+	// 충돌 그룹 설정
+	CCollisionManager::GetInstance()->SetCollisionGroup(GROUP_TYPE::ENEMY, GROUP_TYPE::ENEMY);
+	CCollisionManager::GetInstance()->SetCollisionGroup(GROUP_TYPE::ENEMY, GROUP_TYPE::PLAYER);
+	CCollisionManager::GetInstance()->SetCollisionGroup(GROUP_TYPE::PLAYER, GROUP_TYPE::PLAYER);
+
+	// 조명(Light) 생성
+	const vector<CCamera*>& cameras = CCameraManager::GetInstance()->GetCameras();
+
+	m_lights.resize(MAX_LIGHTS);
+	m_lights[0].m_isActive = true;
+	m_lights[0].m_shadowMapping = true;
+	m_lights[0].m_type = (int)LIGHT_TYPE::DIRECTIONAL;
+	m_lights[0].m_position = XMFLOAT3(0.0f, 100.0f, 130.0f);
+	m_lights[0].m_direction = Vector3::Normalize(XMFLOAT3(0.0f, -1.0f, -1.0f));
+	m_lights[0].m_color = XMFLOAT4(0.5f, 0.5f, 0.6f, 0.0f);
+	m_lights[0].m_range = 2000.0f;
+	cameras[1]->SetLight(&m_lights[0]);
+
+	m_towerLightAngle = XMConvertToRadians(90.0f);
+	m_lights[1].m_isActive = true;
+	m_lights[1].m_type = (int)LIGHT_TYPE::SPOT;
+	m_lights[1].m_position = XMFLOAT3(0.0f, 50.0f, 0.0f);
+	m_lights[1].m_direction = Vector3::Normalize(XMFLOAT3(cosf(m_towerLightAngle), -1.0f, sinf(m_towerLightAngle)));
+	m_lights[1].m_color = XMFLOAT4(0.7f, 0.7f, 0.3f, 0.0f);
+	m_lights[1].m_attenuation = XMFLOAT3(0.5f, 0.01f, 0.0f);
+	m_lights[1].m_fallOff = 1.0f;
+	m_lights[1].m_range = 500.0f;
+	m_lights[1].m_theta = cosf(XMConvertToRadians(5.0f));
+	m_lights[1].m_phi = cosf(XMConvertToRadians(10.0f));
+
+	m_lights[2].m_isActive = true;
+	m_lights[2].m_type = (int)LIGHT_TYPE::POINT;
+	m_lights[2].m_position = XMFLOAT3(7.5f * cosf(m_towerLightAngle), 37.0f, 7.5f * sinf(m_towerLightAngle));
+	m_lights[2].m_color = XMFLOAT4(1.0f, 1.0f, 0.8f, 0.0f);
+	m_lights[2].m_attenuation = XMFLOAT3(0.5f, 0.01f, 0.0f);
+	m_lights[2].m_range = 7.0f;
+
+	CreateShaderVariables(d3d12Device, d3d12GraphicsCommandList);
+}
+
+void CGameScene::Update()
+{
+	if (KEY_TAP(KEY::Q))
 	{
-		for (const auto& GameObject : m_GameObjects[i])
+		CNavMesh* navMesh = (CNavMesh*)CAssetManager::GetInstance()->GetMesh("NavMesh");
+		const vector<CObject*>& objects = GetGroupObject(GROUP_TYPE::PLAYER);
+
+		objects[0]->SetPosition(navMesh->GetNavNodes()[100]->GetTriangle().m_centroid);
+		objects[0]->UpdateTransform();
+	}
+
+	CScene::Update();
+	UpdateLightTower();
+}
+
+void CGameScene::UpdateLightTower()
+{
+	if (m_lights[1].m_isActive)
+	{
+		// 광원 포지션과 방향 벡터를 활용해 평면에 도달하는 중심점을 계산한다. 
+		float angle = Vector3::Angle(m_lights[1].m_direction, XMFLOAT3(0.0f, -1.0f, 0.0f));	// 빗변과 변의 각도
+		float hypotenuseLength = m_lights[1].m_position.y / cosf(XMConvertToRadians(angle)); // 빗변의 길이
+		XMFLOAT3 lightCenter = Vector3::Add(m_lights[1].m_position, Vector3::ScalarProduct(hypotenuseLength, m_lights[1].m_direction, false)); // 원점에서 광원의 중심을 향하는 벡터(밑변)
+		float radius = hypotenuseLength * tanf(XMConvertToRadians(10.0f)); // 광원이 쏘아지는 원의 반지름
+
+		const vector<CObject*> players = GetGroupObject(GROUP_TYPE::PLAYER);
+		const vector<CObject*> structures = GetGroupObject(GROUP_TYPE::STRUCTURE);
+
+		for (const auto& object1 : players)
 		{
-			if (GameObject)
+			CPlayer* player = (CPlayer*)object1;
+
+			if (player->GetHealth() > 0)
 			{
-				GameObject->ReleaseUploadBuffers();
-			}
-		}
-	}
+				float dist = Math::Distance(player->GetPosition(), lightCenter);
 
-	for (UINT i = BILBOARD_OBJECT_TYPE_BILBOARD; i <= BILBOARD_OBJECT_TYPE_UI; ++i)
-	{
-		for (const auto& QuadObject : m_QuadObjects[i])
-		{
-			if (QuadObject)
-			{
-				QuadObject->ReleaseUploadBuffers();
-			}
-		}
-	}
-}
-
-void CGameScene::ProcessMouseMessage(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
-{
-
-}
-
-void CGameScene::ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
-{
-	switch (Message)
-	{
-	case WM_KEYUP:
-		switch (wParam)
-		{
-		case 'b': // 바운딩 박스 렌더링 ON/OFF
-		case 'B':
-			(m_RenderBoundingBox) ? m_RenderBoundingBox = false : m_RenderBoundingBox = true;
-			break;
-		case 'p': // 안개 ON/OFF
-		case 'P':
-			(m_MappedFog->m_Fog.m_Density > 0.0f) ? m_MappedFog->m_Fog.m_Density = 0.0f : m_MappedFog->m_Fog.m_Density = 0.025f;
-			break;
-		case 'q': // 플레이어를 감옥 밖으로 이동
-		case 'Q':
-		{
-			shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][CFramework::GetInstance()->GetSocketInfo().m_ID]) };
-
-			Player->SetPosition(m_NavMesh->GetNavNodes()[750]->GetTriangle().m_Centroid);
-		}
-		break;
-		}
-		break;
-	}
-}
-
-void CGameScene::ProcessInput(HWND hWnd, float ElapsedTime)
-{
-	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][CFramework::GetInstance()->GetSocketInfo().m_ID]) };
-
-	UpdatePerspective(hWnd, ElapsedTime, Player);
-
-	// 1인칭 모드
-	//if (GetAsyncKeyState('W') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(15.0f * ElapsedTime, Player->GetCamera()->GetLook(), false));
-	//if (GetAsyncKeyState('S') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(-15.0f * ElapsedTime, Player->GetCamera()->GetLook(), false));
-	//if (GetAsyncKeyState('A') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(-15.0f * ElapsedTime, Player->GetCamera()->GetRight(), false));
-	//if (GetAsyncKeyState('D') & 0x8000) Player->GetCamera()->Move(Vector3::ScalarProduct(15.0f * ElapsedTime, Player->GetCamera()->GetRight(), false));
-
-	//return;
-
-	m_InputMask = INPUT_MASK_NONE;
-
-	if (GetAsyncKeyState('W') & 0x8000)
-	{
-		m_InputMask |= INPUT_MASK_W;
-	}
-
-	if (GetAsyncKeyState('S') & 0x8000)
-	{
-		m_InputMask |= INPUT_MASK_S;
-	}
-
-	if (GetAsyncKeyState('A') & 0x8000)
-	{
-		m_InputMask |= INPUT_MASK_A;
-	}
-
-	if (GetAsyncKeyState('D') & 0x8000)
-	{
-		m_InputMask |= INPUT_MASK_D;
-	}
-
-	if (GetAsyncKeyState('F') & 0x0001)
-	{
-		m_InputMask |= INPUT_MASK_F;
-	}
-
-	if (GetAsyncKeyState(VK_SHIFT) & 0x8000)
-	{
-		m_InputMask |= INPUT_MASK_SHIFT;
-	}
-
-	if (GetAsyncKeyState(VK_TAB) & 0x0001)
-	{
-		m_InputMask |= INPUT_MASK_TAB;
-
-		// m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][0]: Mission
-		static_pointer_cast<CMissionUI>(m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][0])->GetStateMachine()->ProcessInput(ElapsedTime, m_InputMask);
-	}
-
-	if (GetAsyncKeyState(VK_LBUTTON) & 0x0001)
-	{
-		m_InputMask |= INPUT_MASK_LMB;
-	}
-
-	if (GetAsyncKeyState(VK_RBUTTON) & 0x8000)
-	{
-		m_InputMask |= INPUT_MASK_RMB;
-	}
-
-	if (GetAsyncKeyState(0x31) & 0x0001)
-	{
-		m_InputMask |= INPUT_MASK_NUM1;
-	}
-
-	if (GetAsyncKeyState(0x32) & 0x0001)
-	{
-		m_InputMask |= INPUT_MASK_NUM2;
-	}
-
-	// INPUT_MASK에 발사 조건이 충족된다면, 쏠 수 있는지 검사하여 INPUT_MASK를 수정한다.
-	if ((m_InputMask & INPUT_MASK_LMB) && (m_InputMask & INPUT_MASK_RMB))
-	{
-		if (Player->IsEquippedPistol())
-		{
-			UINT BulletCount{ m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][4]->GetVertexCount() };
-
-			// m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][4]: StatueIcons_Pistol
-			// 1은 Pistol Icon Vertex
-			if (BulletCount <= 1)
-			{
-				// 총알이 없는 경우일 때는 IMPUT_MASK_LMB를 제거한다.
-				m_InputMask &= ~INPUT_MASK_LMB;
-
-				CSoundManager::GetInstance()->Play(SOUND_TYPE_PISTOL_EMPTY, 0.45f, false);
-			}
-		}
-	}
-}
-
-void CGameScene::Animate(float ElapsedTime)
-{
-	for (UINT i = OBJECT_TYPE_PLAYER; i <= OBJECT_TYPE_NPC; ++i)
-	{
-		for (const auto& GameObject : m_GameObjects[i])
-		{
-			if (GameObject)
-			{
-				GameObject->Animate(ElapsedTime);
-			}
-		}
-	}
-
-	for (const auto& QuadObject : m_QuadObjects[BILBOARD_OBJECT_TYPE_UI])
-	{
-		if (QuadObject)
-		{
-			QuadObject->Animate(ElapsedTime);
-		}
-	}
-	
-	for (const auto& EventTrigger : m_EventTriggers)
-	{
-		if (EventTrigger)
-		{
-			EventTrigger->Update(ElapsedTime);
-		}
-	}
-}
-
-void CGameScene::PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
-{
-	static_pointer_cast<CDepthWriteShader>(CShaderManager::GetInstance()->GetShader(TEXT("DepthWriteShader")))->Render(D3D12GraphicsCommandList, nullptr);
-
-	UpdateShaderVariables(D3D12GraphicsCommandList);
-}
-
-void CGameScene::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
-{
-	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][CFramework::GetInstance()->GetSocketInfo().m_ID]) };
-
-	Player->GetCamera()->RSSetViewportsAndScissorRects(D3D12GraphicsCommandList);
-	Player->GetCamera()->UpdateShaderVariables(D3D12GraphicsCommandList);
-
-	CTextureManager::GetInstance()->GetTexture(TEXT("ShadowMap"))->UpdateShaderVariable(D3D12GraphicsCommandList);
-
-	for (UINT i = OBJECT_TYPE_PLAYER; i <= OBJECT_TYPE_NPC; ++i)
-	{
-		for (const auto& GameObject : m_GameObjects[i])
-		{
-			if (GameObject)
-			{
-				GameObject->Render(D3D12GraphicsCommandList, Player->GetCamera().get(), RENDER_TYPE_STANDARD);
-			}
-		}
-	}
-
-	for (UINT i = OBJECT_TYPE_TERRAIN; i <= OBJECT_TYPE_STRUCTURE; ++i)
-	{
-		for (const auto& GameObject : m_GameObjects[i])
-		{
-			if (GameObject)
-			{
-				GameObject->UpdateTransform(Matrix4x4::Identity());
-				GameObject->Render(D3D12GraphicsCommandList, Player->GetCamera().get(), RENDER_TYPE_STANDARD);
-			}
-		}
-	}
-
-	for (UINT i = BILBOARD_OBJECT_TYPE_BILBOARD; i <= BILBOARD_OBJECT_TYPE_UI; ++i)
-	{
-		for (const auto& QuadObject : m_QuadObjects[i])
-		{
-			if (QuadObject)
-			{
-				QuadObject->Render(D3D12GraphicsCommandList, Player->GetCamera().get(), RENDER_TYPE_STANDARD);
-			}
-		}
-	}
-
-	if (m_RenderBoundingBox)
-	{
-		static_pointer_cast<CDebugShader>(CShaderManager::GetInstance()->GetShader(TEXT("DebugShader")))->Render(D3D12GraphicsCommandList, Player->GetCamera().get());
-	}
-}
-
-void CGameScene::PostRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
-{
-
-}
-
-void CGameScene::ProcessPacket()
-{
-	// Send to msg data.
-	SOCKET_INFO SocketInfo{ CFramework::GetInstance()->GetSocketInfo() };
-	MSG_TYPE MsgType{ MSG_TYPE_INGAME };
-	int ReturnValue{ send(SocketInfo.m_Socket, (char*)&MsgType, sizeof(MsgType), 0) };
-
-	if (ReturnValue == SOCKET_ERROR)
-	{
-		Server::ErrorDisplay("send()");
-	}
-
-	// Send to packet data.
-	CLIENT_TO_SERVER_DATA SendedPacketData{ m_InputMask, m_GameObjects[OBJECT_TYPE_PLAYER][SocketInfo.m_ID]->GetWorldMatrix() };
-
-	ReturnValue = send(SocketInfo.m_Socket, (char*)&SendedPacketData, sizeof(SendedPacketData), 0);
-
-	if (ReturnValue == SOCKET_ERROR)
-	{
-		Server::ErrorDisplay("send()");
-	}
-
-	shared_ptr<CPlayer> Player{};
-
-	if ((m_InputMask & INPUT_MASK_LMB) && (m_InputMask & INPUT_MASK_RMB))
-	{
-		Player = static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][SocketInfo.m_ID]);
-
-		CAMERA_DATA CameraData{ Player->GetCamera()->GetPosition(), Player->GetCamera()->GetLook() };
-
-		ReturnValue = send(SocketInfo.m_Socket, (char*)&CameraData, sizeof(CameraData), 0);
-
-		if (ReturnValue == SOCKET_ERROR)
-		{
-			Server::ErrorDisplay("send()");
-		}
-	}
-
-	// Receive updated packet data.
-	SERVER_TO_CLIENT_DATA ReceivedPacketData{};
-
-	ReturnValue = recv(SocketInfo.m_Socket, (char*)&ReceivedPacketData, sizeof(ReceivedPacketData), MSG_WAITALL);
-
-	if (ReturnValue == SOCKET_ERROR)
-	{
-		Server::ErrorDisplay("recv()");
-	}
-	else if (ReturnValue == 0)
-	{
-		tcout << "서버가 종료되었습니다." << endl;
-		closesocket(SocketInfo.m_Socket);
-	}
-	else
-	{
-		switch (ReceivedPacketData.m_MsgType)
-		{
-		case MSG_TYPE_DISCONNECTION:
-			CSceneManager::GetInstance()->ChangeScene(TEXT("TitleScene"), ReceivedPacketData.m_MsgType);
-			return;
-		case MSG_TYPE_TITLE:
-			CSceneManager::GetInstance()->ReserveScene(TEXT("TitleScene"), ReceivedPacketData.m_MsgType);
-			CFramework::GetInstance()->GetPostProcessingShader()->SetPostProcessingType(POST_PROCESSING_TYPE_FADE_OUT);
-			return;
-		case MSG_TYPE_ENDING:
-			CSceneManager::GetInstance()->ReserveScene(TEXT("EndingScene"), ReceivedPacketData.m_MsgType);
-			CFramework::GetInstance()->GetPostProcessingShader()->SetPostProcessingType(POST_PROCESSING_TYPE_FADE_OUT);
-			return;
-		}
-		
-		for (UINT i = 0; i < MAX_PLAYER_CAPACITY; ++i)
-		{
-			if (m_GameObjects[OBJECT_TYPE_PLAYER][i]->IsActive())
-			{
-				Player = static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][i]);
-
-				ANIMATION_CLIP_TYPE PrevAnimationClipType{ Player->GetAnimationController()->GetAnimationClipType() };
-
-				Player->SetTransformMatrix(ReceivedPacketData.m_PlayerWorldMatrixes[i]);
-				Player->GetAnimationController()->SetAnimationClipType(ReceivedPacketData.m_PlayerAnimationClipTypes[i]);
-
-				switch (ReceivedPacketData.m_PlayerAnimationClipTypes[i])
+				if (dist <= radius)
 				{
-				case ANIMATION_CLIP_TYPE_PLAYER_IDLE:
-					Player->GetStateMachine()->ChangeState(CPlayerIdleState::GetInstance());
-					break;
-				case ANIMATION_CLIP_TYPE_PLAYER_WALK_FORWARD_AND_BACK:
-				case ANIMATION_CLIP_TYPE_PLAYER_WALK_LEFT:
-				case ANIMATION_CLIP_TYPE_PLAYER_WALK_RIGHT:
-					Player->GetStateMachine()->ChangeState(CPlayerWalkingState::GetInstance());
-					break;
-				case ANIMATION_CLIP_TYPE_PLAYER_RUN_FORWARD:
-				case ANIMATION_CLIP_TYPE_PLAYER_RUN_LEFT:
-				case ANIMATION_CLIP_TYPE_PLAYER_RUN_RIGHT:
-					Player->GetStateMachine()->ChangeState(CPlayerRunningState::GetInstance());
-					break;
-				case ANIMATION_CLIP_TYPE_PLAYER_PUNCH:
-					Player->GetStateMachine()->ChangeState(CPlayerPunchingState::GetInstance());
-					break;
-				case ANIMATION_CLIP_TYPE_PLAYER_PISTOL_IDLE:
-					Player->GetStateMachine()->ChangeState(CPlayerShootingState::GetInstance());
-					break;
-				case ANIMATION_CLIP_TYPE_PLAYER_SHOOT:
-					if (PrevAnimationClipType != ReceivedPacketData.m_PlayerAnimationClipTypes[i])
-					{
-						if (SocketInfo.m_ID == Player->GetID())
-						{
-							UINT BulletCount{ m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][4]->GetVertexCount() };
+					XMFLOAT3 toPlayer = Vector3::Normalize(Vector3::Subtract(player->GetPosition(), m_lights[1].m_position));
+					float nearestHitDist = FLT_MAX;
+					bool isHit = false;
 
-							m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetVertexCount(BulletCount - 1);
+					// 광선 추적을 통해 플레이어가 구조물 뒤에 있는지에 대한 차폐 여부를 파악한다.
+					for (const auto& object2 : structures)
+					{
+						float hitDist = 0.0f;
+						CObject* intersectedObject = object2->CheckRayIntersection(m_lights[1].m_position, toPlayer, hitDist, hypotenuseLength);
+
+						if ((intersectedObject != nullptr) && (hitDist < nearestHitDist))
+						{
+							isHit = true;
+							break;
 						}
-
-						Player->PlaySound(SOUND_TYPE_PISTOL_SHOT, 0.45f, 80.0f);
 					}
-					break;
-				case ANIMATION_CLIP_TYPE_PLAYER_DIE:
-					Player->GetStateMachine()->ChangeState(CPlayerDyingState::GetInstance());
-					break;
-				}
-			}
-		}
 
-		shared_ptr<CGuard> Guard{};
-
-		for (UINT i = 0; i < MAX_NPC_COUNT; ++i)
-		{
-			if (m_GameObjects[OBJECT_TYPE_NPC][i]->IsActive())
-			{
-				Guard = static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][i]);
-
-				Guard->SetTransformMatrix(ReceivedPacketData.m_NPCWorldMatrixes[i]);
-				Guard->GetAnimationController()->SetAnimationClipType(ReceivedPacketData.m_NPCAnimationClipTypes[i]);
-
-				switch (ReceivedPacketData.m_NPCAnimationClipTypes[i])
-				{
-				case ANIMATION_CLIP_TYPE_NPC_IDLE:
-					Guard->GetStateMachine()->ChangeState(CGuardIdleState::GetInstance());
-					break;
-				case ANIMATION_CLIP_TYPE_NPC_WALK_FORWARD:
-					Guard->GetStateMachine()->ChangeState(CGuardPatrolState::GetInstance());
-					break;
-				case ANIMATION_CLIP_TYPE_NPC_RUN_FORWARD:
-					Guard->GetStateMachine()->ChangeState(CGuardChaseState::GetInstance());
-					break;
-				case ANIMATION_CLIP_TYPE_NPC_SHOOT:
-					Guard->GetStateMachine()->ChangeState(CGuardShootingState::GetInstance());
-					break;
-				case ANIMATION_CLIP_TYPE_NPC_HIT:
-					Guard->GetStateMachine()->ChangeState(CGuardHitState::GetInstance());
-					break;
-				case ANIMATION_CLIP_TYPE_NPC_DIE:
-					Guard->GetStateMachine()->ChangeState(CGuardDyingState::GetInstance());
-					break;
-				}
-			}
-		}
-
-		if (ReceivedPacketData.m_MsgType & MSG_TYPE_GAME_OVER)
-		{
-			m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][9]->SetActive(true);
-		}
-
-		if (ReceivedPacketData.m_MsgType & MSG_TYPE_PLAYER1_WEAPON_SWAP)
-		{
-			Player = static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][0]);
-
-			if (Player->IsEquippedPistol())
-			{
-				Player->SwapWeapon(WEAPON_TYPE_PUNCH);
-
-				if (Player->GetID() == SocketInfo.m_ID)
-				{
-					m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(true);  // 3: Punch
-					m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(false); // 4: Pistol
-				}
-			}
-			else
-			{
-				Player->SwapWeapon(WEAPON_TYPE_PISTOL);
-
-				if (Player->GetID() == SocketInfo.m_ID)
-				{
-					m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(false); // 3: Punch
-					m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(true);  // 4: Pistol
-				}
-			}
-		}
-
-		if (ReceivedPacketData.m_MsgType & MSG_TYPE_PLAYER2_WEAPON_SWAP)
-		{
-			Player = static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][1]);
-
-			if (Player->IsEquippedPistol())
-			{
-				Player->SwapWeapon(WEAPON_TYPE_PUNCH);
-
-				if (Player->GetID() == SocketInfo.m_ID)
-				{
-					m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(true);  // 3: Punch
-					m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(false); // 4: Pistol
-				}
-			}
-			else
-			{
-				Player->SwapWeapon(WEAPON_TYPE_PISTOL);
-
-				if (Player->GetID() == SocketInfo.m_ID)
-				{
-					m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][3]->SetActive(false); // 3: Punch
-					m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][4]->SetActive(true);  // 4: Pistol
-				}
-			}
-		}
-
-		if (ReceivedPacketData.m_MsgType & MSG_TYPE_PLAYER_ATTACK)
-		{
-			PLAYER_ATTACK_DATA PlayerAttackData{};
-
-			ReturnValue = recv(SocketInfo.m_Socket, (char*)&PlayerAttackData, sizeof(PlayerAttackData), MSG_WAITALL);
-
-			if (ReturnValue == SOCKET_ERROR)
-			{
-				Server::ErrorDisplay("recv()");
-			}
-			else if (ReturnValue == 0)
-			{
-				tcout << "서버가 종료되었습니다." << endl;
-				closesocket(SocketInfo.m_Socket);
-			}
-			else
-			{
-				for (UINT i = 0; i < MAX_PLAYER_CAPACITY; ++i)
-				{
-					if (PlayerAttackData.m_TargetIndices[i] != UINT_MAX)
+					// 구조물이 광선에 맞지 않았다면, 감시탑은 플레이어를 발견한 것으로 취급한다.
+					if (!isHit)
 					{
-						m_GameObjects[OBJECT_TYPE_NPC][PlayerAttackData.m_TargetIndices[i]]->PlaySound(SOUND_TYPE_GRUNT_2, 0.5f, 40.0f);
-					}
-				}
-			}
-		}
+						const vector<CObject*> guards = GetGroupObject(GROUP_TYPE::ENEMY);
 
-		if (ReceivedPacketData.m_MsgType & MSG_TYPE_GUARD_ATTACK)
-		{
-			GUARD_ATTACK_DATA GuardAttackData{};
-
-			ReturnValue = recv(SocketInfo.m_Socket, (char*)&GuardAttackData, sizeof(GuardAttackData), MSG_WAITALL);
-
-			if (ReturnValue == SOCKET_ERROR)
-			{
-				Server::ErrorDisplay("recv()");
-			}
-			else if (ReturnValue == 0)
-			{
-				tcout << "서버가 종료되었습니다." << endl;
-				closesocket(SocketInfo.m_Socket);
-			}
-			else
-			{
-				for (UINT i = 0; i < MAX_NPC_COUNT; ++i)
-				{
-					Guard = static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][i]);
-
-					if (ReceivedPacketData.m_NPCAnimationClipTypes[i] == ANIMATION_CLIP_TYPE_NPC_SHOOT)
-					{
-						if (CFramework::GetInstance()->GetSocketInfo().m_ID == GuardAttackData.m_TargetIndices[i])
+						for (const auto& object3 : guards)
 						{
-							// 피격 UI 애니메이션을 재생시키고, UI 체력을 1감소시킨다.
-							static_pointer_cast<CHitUI>(m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][8])->GetStateMachine()->SetCurrentState(CHitUIActivationState::GetInstance());
+							CGuard* guard = (CGuard*)object3;
 
-							UINT LifeCount{ m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][2]->GetVertexCount() };
-
-							// 첫번째 정점은 하트 아이콘이므로 2이상부터 체력 아이콘임
-							if (LifeCount > 1)
+							if (guard->GetHealth() > 0)
 							{
-								m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][2]->SetVertexCount(LifeCount - 1);
-							}
-						}	
+								float dist = Math::Distance(guard->GetPosition(), lightCenter);
 
-						if (GuardAttackData.m_TargetIndices[i] != UINT_MAX)
+								// 조명의 중심에서 거리가 80.0f이하인 교도관들을 플레이어의 위치로 불러들인다.
+								if (dist <= 80.0f)
+								{
+									CState* currentState = guard->GetStateMachine()->GetCurrentState();
+
+									if (currentState == CGuardIdleState::GetInstance() ||
+										currentState == CGuardPatrolState::GetInstance() ||
+										currentState == CGuardReturnState::GetInstance())
+									{
+										guard->CreateMovePath(player->GetPosition());
+										guard->GetStateMachine()->ChangeState(CGuardAssembleState::GetInstance());
+									}
+								}
+							}
+						}
+
+						// 감시탑은 플레이어를 쫓아간다.
+						XMFLOAT3 toPlayer = player->GetPosition();
+
+						toPlayer.y = 0.0f;
+
+						if (!Vector3::IsEqual(Vector3::Normalize(lightCenter), Vector3::Normalize(toPlayer)))
 						{
-							Guard->PlaySound(SOUND_TYPE_PISTOL_SHOT, 0.35f, 80.0f);
-							m_GameObjects[OBJECT_TYPE_PLAYER][GuardAttackData.m_TargetIndices[i]]->PlaySound(SOUND_TYPE_GRUNT_1, 0.3f, 40.0f);
+							float axis = Vector3::CrossProduct(lightCenter, toPlayer, false).y;
+
+							if (axis > 0.0f)
+							{
+								m_towerLightAngle -= 0.25f * DT;
+							}
+							else if (axis < 0.0f)
+							{
+								m_towerLightAngle += 0.25f * DT;
+							}
+
+							m_lights[1].m_direction = Vector3::Normalize(XMFLOAT3(cosf(m_towerLightAngle), -1.0f, sinf(m_towerLightAngle)));
+							m_lights[2].m_position = XMFLOAT3(7.5f * cosf(m_towerLightAngle), 37.0f, 7.5f * sinf(m_towerLightAngle));
+
+							// 감시탑 조명 회전
+							m_towerLight->UpdateLocalCoord(Vector3::Inverse(m_lights[1].m_direction));
+						}
+
+						return;
+					}
+				}
+			}
+		}
+
+		m_towerLightAngle += DT;
+		m_lights[1].m_direction = Vector3::Normalize(XMFLOAT3(cosf(m_towerLightAngle), -1.0f, sinf(m_towerLightAngle)));
+		m_lights[2].m_position = XMFLOAT3(7.5f * cosf(m_towerLightAngle), 37.0f, 7.5f * sinf(m_towerLightAngle));
+
+		// 감시탑 조명 회전
+		m_towerLight->UpdateLocalCoord(Vector3::Inverse(m_lights[1].m_direction));
+	}
+}
+
+void CGameScene::PreRender(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+{
+	UpdateShaderVariables(d3d12GraphicsCommandList);
+
+	const vector<CCamera*>& cameras = CCameraManager::GetInstance()->GetCameras();
+
+	for (int i = 0; i < cameras.size(); ++i)
+	{
+		if (cameras[i]->GetType() == CAMERA_TYPE::LIGHT)
+		{
+			Light* light = cameras[i]->GetLight();
+
+			if ((light != nullptr) && (light->m_isActive) && (light->m_shadowMapping))
+			{
+				float nearPlaneDist = 5.0f;
+				float farPlaneDist = light->m_range;
+
+				switch ((LIGHT_TYPE)light->m_type)
+				{
+				case LIGHT_TYPE::POINT:
+					break;
+				case LIGHT_TYPE::SPOT:
+					cameras[i]->GeneratePerspectiveProjectionMatrix(90.0f, static_cast<float>(DEPTH_BUFFER_WIDTH) / static_cast<float>(DEPTH_BUFFER_HEIGHT), nearPlaneDist, farPlaneDist);
+					break;
+				case LIGHT_TYPE::DIRECTIONAL:
+					cameras[i]->GenerateOrthographicsProjectionMatrix(static_cast<float>(PLANE_WIDTH), static_cast<float>(PLANE_HEIGHT), nearPlaneDist, farPlaneDist);
+					break;
+				}
+
+				cameras[i]->GenerateViewMatrix(light->m_position, light->m_direction);
+
+				XMFLOAT4X4 projectionToTexture =
+				{
+					0.5f,  0.0f, 0.0f, 0.0f,
+					0.0f, -0.5f, 0.0f, 0.0f,
+					0.0f,  0.0f, 1.0f, 0.0f,
+					0.5f,  0.5f, 0.0f, 1.0f
+				};
+
+				XMStoreFloat4x4(&light->m_toTexCoord, XMMatrixTranspose(XMLoadFloat4x4(&cameras[i]->GetViewMatrix()) * XMLoadFloat4x4(&cameras[i]->GetProjectionMatrix()) * XMLoadFloat4x4(&projectionToTexture)));
+
+				CTexture* depthTexture = CAssetManager::GetInstance()->GetTexture("DepthWrite");
+
+				DX::ResourceTransition(d3d12GraphicsCommandList, depthTexture->GetTexture(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+				CD3DX12_CPU_DESCRIPTOR_HANDLE d3d12RtvCPUDescriptorHandle(CCore::GetInstance()->GetRtvDescriptorHeap()->GetCPUDescriptorHandleForHeapStart());
+				CD3DX12_CPU_DESCRIPTOR_HANDLE d3d12DsvCPUDescriptorHandle(CCore::GetInstance()->GetDsvDescriptorHeap()->GetCPUDescriptorHandleForHeapStart());
+
+				d3d12RtvCPUDescriptorHandle.ptr += 2 * CCore::GetInstance()->GetRtvDescriptorIncrementSize();
+				d3d12DsvCPUDescriptorHandle.ptr += CCore::GetInstance()->GetDsvDescriptorIncrementSize();
+
+				d3d12GraphicsCommandList->ClearRenderTargetView(d3d12RtvCPUDescriptorHandle, Colors::White, 0, nullptr);
+				d3d12GraphicsCommandList->ClearDepthStencilView(d3d12DsvCPUDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+				d3d12GraphicsCommandList->OMSetRenderTargets(1, &d3d12RtvCPUDescriptorHandle, TRUE, &d3d12DsvCPUDescriptorHandle);
+
+				cameras[i]->RSSetViewportsAndScissorRects(d3d12GraphicsCommandList);
+				cameras[i]->UpdateShaderVariables(d3d12GraphicsCommandList);
+				depthTexture->UpdateShaderVariable(d3d12GraphicsCommandList);
+
+				for (int j = (int)GROUP_TYPE::STRUCTURE; j <= (int)GROUP_TYPE::PLAYER; ++j)
+				{
+					const vector<CObject*>& groupObjects = GetGroupObject((GROUP_TYPE)j);
+
+					for (int k = 0; k < groupObjects.size(); ++k)
+					{
+						if (groupObjects[k]->IsActive() && !groupObjects[k]->IsDeleted())
+						{
+							groupObjects[k]->PreRender(d3d12GraphicsCommandList, cameras[i]);
 						}
 					}
 				}
+
+				DX::ResourceTransition(d3d12GraphicsCommandList, depthTexture->GetTexture(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COMMON);
 			}
-		}
-
-		// 메세지 타입에 트리거와 관련된 내용이 포함돼있다면 상호작용을 수행한다.
-		if (ReceivedPacketData.m_MsgType & MSG_TYPE_TRIGGER)
-		{
-			TRIGGER_DATA TriggerData{};
-
-			ReturnValue = recv(SocketInfo.m_Socket, (char*)&TriggerData, sizeof(TriggerData), MSG_WAITALL);
-
-			if (ReturnValue == SOCKET_ERROR)
-			{
-				Server::ErrorDisplay("recv()");
-			}
-			else if (ReturnValue == 0)
-			{
-				tcout << "서버가 종료되었습니다." << endl;
-				closesocket(SocketInfo.m_Socket);
-			}
-			else
-			{
-				for (UINT i = 0; i < MAX_PLAYER_CAPACITY; ++i)
-				{
-					// 타겟 인덱스가 UINT_MAX가 아니라면, 해당 프레임에 i번째 플레이어가 m_TargetIndices[i]번째 트리거를 활성화했다는 것을 의미한다.
-					if (TriggerData.m_TargetIndices[i] != UINT_MAX)
-					{
-						m_EventTriggers[TriggerData.m_TargetIndices[i]]->InteractEventTrigger(i);
-					}
-				}
-			}
-		}
-				
-		if ((ReceivedPacketData.m_MsgType & MSG_TYPE_PLAYER1_BGM_SWAP && SocketInfo.m_ID == 0) ||
-			(ReceivedPacketData.m_MsgType & MSG_TYPE_PLAYER2_BGM_SWAP && SocketInfo.m_ID == 1))
-		{
-			if (CSoundManager::GetInstance()->IsPlaying(SOUND_TYPE_INGAME_BGM_1))
-			{
-				CSoundManager::GetInstance()->Stop(SOUND_TYPE_INGAME_BGM_1);
-				CSoundManager::GetInstance()->Play(SOUND_TYPE_INGAME_BGM_2, 0.3f, false);
-			}
-			else
-			{
-				CSoundManager::GetInstance()->Stop(SOUND_TYPE_INGAME_BGM_2);
-				CSoundManager::GetInstance()->Play(SOUND_TYPE_INGAME_BGM_1, 0.3f, false);
-			}
-		}
-		
-		m_Lights[1].m_Direction = ReceivedPacketData.m_TowerLightDirection;
-
-		if (m_TowerLightFrame)
-		{
-			const XMFLOAT3 Extents{ m_TowerLightFrame->GetBoundingBox()->Extents };
-			
-			m_Lights[2].m_Position = XMFLOAT3((m_Lights[2].m_Range + Extents.x) * ReceivedPacketData.m_TowerLightDirection.x, m_TowerLightFrame->GetPosition().y, (m_Lights[2].m_Range + Extents.z) * ReceivedPacketData.m_TowerLightDirection.z);
-			m_TowerLightFrame->UpdateLocalCoord(Vector3::Inverse(ReceivedPacketData.m_TowerLightDirection));
-		}
-
-		Player = static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][SocketInfo.m_ID]);
-		Player->IsCollidedByEventTrigger(Player->GetPosition());
-		(Player->GetCamera()->IsZoomIn()) ? m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(true) : m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][6]->SetActive(false); // 6: Crosshair
-	}
-}
-
-vector<vector<shared_ptr<CGameObject>>>& CGameScene::GetGameObjects()
-{
-	return m_GameObjects;
-}
-
-vector<vector<shared_ptr<CQuadObject>>>& CGameScene::GetQuadObjects()
-{
-	return m_QuadObjects;
-}
-
-vector<shared_ptr<CEventTrigger>>& CGameScene::GetEventTriggers()
-{
-	return m_EventTriggers;
-}
-
-vector<LIGHT>& CGameScene::GetLights()
-{
-	return m_Lights;
-}
-
-shared_ptr<CNavMesh>& CGameScene::GetNavMesh()
-{
-	return m_NavMesh;
-}
-
-void CGameScene::LoadMeshCachesFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName, unordered_map<tstring, shared_ptr<CMesh>>& MeshCaches)
-{
-	tifstream InFile{ FileName, ios::binary };
-	tstring Token{};
-
-	while (true)
-	{
-		File::ReadStringFromFile(InFile, Token);
-
-		if (Token == TEXT("<Meshes>"))
-		{
-			UINT MeshCount{ File::ReadIntegerFromFile(InFile) };
-
-			if (MeshCount > 0)
-			{
-				MeshCaches.reserve(MeshCount);
-				tcout << FileName << TEXT(" 로드 시작...") << endl;
-			}
-		}
-		else if (Token == TEXT("<Mesh>"))
-		{
-			shared_ptr<CMesh> Mesh{ make_shared<CMesh>() };
-
-			Mesh->LoadMeshInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
-			MeshCaches.emplace(Mesh->GetName(), Mesh);
-		}
-		else if (Token == TEXT("<SkinnedMesh>"))
-		{
-			shared_ptr<CSkinnedMesh> SkinnedMesh{ make_shared<CSkinnedMesh>() };
-
-			SkinnedMesh->LoadMeshInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
-			MeshCaches.emplace(SkinnedMesh->GetName(), SkinnedMesh);
-		}
-		else if (Token == TEXT("</Meshes>"))
-		{
-			tcout << FileName << TEXT(" 로드 완료...(메쉬 수: ") << MeshCaches.size() << ")" << endl << endl;
-			break;
 		}
 	}
 }
 
-void CGameScene::LoadMaterialCachesFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName, unordered_map<tstring, shared_ptr<CMaterial>>& MaterialCaches)
+void CGameScene::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
 {
-	tifstream InFile{ FileName, ios::binary };
-	tstring Token{};
+	CScene::Render(d3d12GraphicsCommandList);
 
-	while (true)
-	{
-		File::ReadStringFromFile(InFile, Token);
+	// [Debug] Render NavMesh
+	//XMFLOAT4X4 worldMatrix = {}, identity = Matrix4x4::Identity();
 
-		if (Token == TEXT("<Materials>"))
-		{
-			UINT MaterialCount{ File::ReadIntegerFromFile(InFile) };
+	//XMStoreFloat4x4(&worldMatrix, XMMatrixTranspose(XMLoadFloat4x4(&identity)));
+	//d3d12GraphicsCommandList->SetGraphicsRoot32BitConstants((UINT)ROOT_PARAMETER_TYPE::OBJECT, 16, &worldMatrix, 0);
 
-			if (MaterialCount > 0)
-			{
-				tcout << FileName << TEXT(" 로드 시작...") << endl;
-				MaterialCaches.reserve(MaterialCount);
-			}
-		}
-		else if (Token == TEXT("<Material>"))
-		{
-			shared_ptr<CMaterial> Material{ make_shared<CMaterial>() };
+	//CAssetManager::GetInstance()->GetShader("WireFrame")->SetPipelineState(d3d12GraphicsCommandList, 0);
+	//CAssetManager::GetInstance()->GetMesh("NavMesh")->Render(d3d12GraphicsCommandList, 0);
 
-			Material->LoadMaterialInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile);
-			MaterialCaches.emplace(Material->GetName(), Material);
-		}
-		else if (Token == TEXT("</Materials>"))
-		{
-			tcout << FileName << TEXT(" 로드 완료...(메터리얼 수: ") << MaterialCaches.size() << ")" << endl << endl;
-			break;
-		}
-	}
-}
+	// [Debug] Render DepthTexture
+	//const XMFLOAT2& resolution = CCore::GetInstance()->GetResolution();
+	//D3D12_VIEWPORT d3d12Viewport = { 0.0f, 0.0f, resolution.x * 0.4f, resolution.y * 0.4f, 0.0f, 1.0f };
+	//D3D12_RECT d3d12ScissorRect = { 0, 0,(LONG)(resolution.x * 0.4f), (LONG)(resolution.y * 0.4f) };
+	//CTexture* texture = CAssetManager::GetInstance()->GetTexture("DepthWrite");
+	//CShader* shader = CAssetManager::GetInstance()->GetShader("DepthWrite");
 
-void CGameScene::LoadEventTriggerFromFile(const tstring& FileName)
-{
-	shared_ptr<CEventTrigger> EventTrigger{};
-
-	// 열쇠를 드롭하는 트리거를 추가한다.
-	// 열쇠는 외형이 다른 교도관(Index: 0, 1)이 보유하고 있다.
-	for (UINT i = 0; i < 2; ++i)
-	{
-		if (m_GameObjects[OBJECT_TYPE_NPC][i])
-		{
-			shared_ptr<CGuard> Guard{ static_pointer_cast<CGuard>(m_GameObjects[OBJECT_TYPE_NPC][i]) };
-
-			EventTrigger = make_shared<CGetKeyEventTrigger>();
-			Guard->SetEventTrigger(EventTrigger);
-
-			m_EventTriggers.push_back(EventTrigger);
-		}
-	}
-
-	// 권총을 드롭하는 트리거를 추가한다.
-	// 권총은 열쇠를 갖지 않은 임의의 교도관(Index: 2 ~ 14) 중 5명이 보유하고 있다.
-	for (UINT i = 0; i < 5; ++i)
-	{
-		EventTrigger = make_shared<CGetPistolEventTrigger>();
-
-		m_EventTriggers.push_back(EventTrigger);
-	}
-
-	tifstream InFile{ FileName, ios::binary };
-	tstring Token{};
-
-	tcout << FileName << TEXT(" 로드 시작...") << endl;
-
-	while (true)
-	{
-		File::ReadStringFromFile(InFile, Token);
-
-		if (Token == TEXT("<EventTriggers>"))
-		{
-			UINT TriggerCount{ File::ReadIntegerFromFile(InFile) };
-
-			m_EventTriggers.reserve(TriggerCount);
-		}
-		else if (Token == TEXT("<Type>"))
-		{
-			TRIGGER_TYPE TriggerType{ static_cast<TRIGGER_TYPE>(File::ReadIntegerFromFile(InFile)) };
-
-			switch (TriggerType)
-			{
-			case TRIGGER_TYPE_OPEN_DOOR:
-				EventTrigger = make_shared<COpenDoorEventTrigger>();
-				break;
-			case TRIGGER_TYPE_OPEN_ELEC_PANEL:
-				EventTrigger = make_shared<CPowerDownEventTrigger>();
-				break;
-			case TRIGGER_TYPE_SIREN:
-				EventTrigger = make_shared<CSirenEventTrigger>();
-				break;
-			case TRIGGER_TYPE_OPEN_GATE:
-				EventTrigger = make_shared<COpenGateEventTrigger>();
-				break;
-			}
-
-			EventTrigger->LoadEventTriggerFromFile(InFile);
-			m_EventTriggers.push_back(EventTrigger);
-		}
-		else if (Token == TEXT("</EventTriggers>"))
-		{
-			break;
-		}
-	}
-
-	tcout << FileName << TEXT(" 로드 완료...") << endl << endl;
-
-	// 모든 트리거 객체는 상호작용 UI 객체를 공유한다.
-	for (const auto& EventTrigger : m_EventTriggers)
-	{
-		if (EventTrigger)
-		{
-			// [BILBOARD_OBJECT_TYPE_UI][7]: Interactions
-			EventTrigger->SetInteractionUI(m_QuadObjects[BILBOARD_OBJECT_TYPE_UI][7]);
-		}
-	}
-}
-
-void CGameScene::BuildLights()
-{
-	m_Lights.resize(MAX_LIGHTS);
-
-	m_Lights[0].m_IsActive = true;
-	m_Lights[0].m_ShadowMapping = false;
-	m_Lights[0].m_Type = LIGHT_TYPE_DIRECTIONAL;
-	m_Lights[0].m_Position = XMFLOAT3(0.0f, 500.0f, 100.0f);
-	m_Lights[0].m_Direction = XMFLOAT3(0.0f, -1.0f, -1.0f);
-	m_Lights[0].m_Color = XMFLOAT4(0.1f, 0.1f, 0.1f, 0.0f);
-
-	const float m_SpotLightAngle{ XMConvertToRadians(90.0f) };
-
-	m_Lights[1].m_IsActive = true;
-	m_Lights[1].m_ShadowMapping = true;
-	m_Lights[1].m_Type = LIGHT_TYPE_SPOT;
-	m_Lights[1].m_Position = XMFLOAT3(0.0f, 50.0f, 0.0f);
-	m_Lights[1].m_Direction = Vector3::Normalize(XMFLOAT3(cosf(m_SpotLightAngle), -1.0f, sinf(m_SpotLightAngle)));
-	m_Lights[1].m_Color = XMFLOAT4(1.0f, 1.0f, 0.3f, 0.0f);
-	m_Lights[1].m_Attenuation = XMFLOAT3(0.5f, 0.01f, 0.0f);
-	m_Lights[1].m_Falloff = 1.0f;
-	m_Lights[1].m_Range = 500.0f;
-	m_Lights[1].m_Theta = cosf(XMConvertToRadians(5.0f));
-	m_Lights[1].m_Phi = cosf(XMConvertToRadians(10.0f));
-
-	const XMFLOAT3 Extents{ m_TowerLightFrame->GetBoundingBox()->Extents };
-
-	m_Lights[2].m_IsActive = true;
-	m_Lights[2].m_ShadowMapping = false;
-	m_Lights[2].m_Type = LIGHT_TYPE_POINT;
-	m_Lights[2].m_Position = XMFLOAT3((m_Lights[2].m_Range + Extents.x) * m_Lights[1].m_Direction.x, m_TowerLightFrame->GetPosition().y, (m_Lights[2].m_Range + Extents.z) * m_Lights[1].m_Direction.z);
-	m_Lights[2].m_Color = XMFLOAT4(1.0f, 1.0f, 0.6f, 0.0f);
-	m_Lights[2].m_Attenuation = XMFLOAT3(0.5f, 0.01f, 0.0f);
-	m_Lights[2].m_Range = 7.0f;
-}
-
-void CGameScene::BuildFog()
-{
-	m_MappedFog->m_Fog.m_Color = XMFLOAT4(0.0f, 0.015f, 0.03f, 1.0f);
-	m_MappedFog->m_Fog.m_Density = 0.025f;
-}
-
-void CGameScene::UpdatePerspective(HWND hWnd, float ElapsedTime, const shared_ptr<CPlayer>& Player)
-{
-	RECT Rect{};
-
-	GetWindowRect(hWnd, &Rect);
-
-	POINT NewCursorPos{};
-	POINT OldCursorPos{ Rect.right / 2, Rect.bottom / 2 };
-
-	GetCursorPos(&NewCursorPos);
-	SetCursorPos(OldCursorPos.x, OldCursorPos.y);
-
-	if (Player->GetHealth() > 0)
-	{
-		XMFLOAT2 Delta{ 10.0f * ElapsedTime * (NewCursorPos.x - OldCursorPos.x), 10.0f * ElapsedTime * (NewCursorPos.y - OldCursorPos.y) };
-
-		float NearestHitDistance{ FLT_MAX };
-		float HitDistance{};
-
-		XMFLOAT3 RayOrigin{ Player->GetPosition().x, Player->GetCamera()->GetPosition().y, Player->GetPosition().z };
-		XMFLOAT3 RayDirection{ Vector3::Inverse(Player->GetLook()) };
-
-		for (const auto& GameObject : m_GameObjects[OBJECT_TYPE_STRUCTURE])
-		{
-			if (GameObject)
-			{
-				shared_ptr<CGameObject> IntersectedObject{ GameObject->PickObjectByRayIntersection(RayOrigin, RayDirection, HitDistance, 3.0f) };
-
-				if (IntersectedObject && (HitDistance < NearestHitDistance))
-				{
-					NearestHitDistance = HitDistance;
-				}
-			}
-		}
-
-		// 1인칭 모드
-		//Player->GetCamera()->Rotate(Delta.y, Delta.x, 0.0f);
-
-		Player->Rotate(Delta.y, Delta.x, 0.0f, ElapsedTime, NearestHitDistance);
-	}
-	else
-	{
-		XMFLOAT3 Direction{ Vector3::Inverse(Player->GetCamera()->GetLook()) };
-
-		Player->GetCamera()->Move(Vector3::ScalarProduct(2.5f * ElapsedTime, XMFLOAT3(Direction.x, 0.3f, Direction.z), false));
-	}
+	//texture->UpdateShaderVariable(d3d12GraphicsCommandList);
+	//shader->SetPipelineState(d3d12GraphicsCommandList, 2);
+	//d3d12GraphicsCommandList->RSSetViewports(1, &d3d12Viewport);
+	//d3d12GraphicsCommandList->RSSetScissorRects(1, &d3d12ScissorRect);
+	//d3d12GraphicsCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	//d3d12GraphicsCommandList->DrawInstanced(6, 1, 0, 0);
 }

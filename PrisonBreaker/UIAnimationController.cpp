@@ -1,23 +1,23 @@
-#include "stdafx.h"
+#include "pch.h"
 #include "UIAnimationController.h"
 #include "QuadObject.h"
 
-void CUIAnimationClip::LoadAnimationClipInfoFromFile(ifstream& InFile, UINT VertexCount)
+void CUIAnimationClip::LoadAnimationClipInfoFromFile(ifstream& in, UINT VertexCount)
 {
-	tstring Token{};
+	string str{};
 
 	UINT Count{};
 
 	while (true)
 	{
-		File::ReadStringFromFile(InFile, Token);
+		File::ReadStringFromFile(in, str);
 
-		if (Token == TEXT("<AnimationClip>"))
+		if (str == TEXT("<AnimationClip>"))
 		{
-			File::ReadStringFromFile(InFile, m_ClipName);
-			m_FramePerSec = File::ReadIntegerFromFile(InFile);
-			m_KeyFrameCount = File::ReadIntegerFromFile(InFile);
-			m_KeyFrameTime = File::ReadFloatFromFile(InFile);
+			File::ReadStringFromFile(in, m_ClipName);
+			in.read(reinterpret_cast<char*>(&m_FramePerSec), sizeof(int));
+			in.read(reinterpret_cast<char*>(&m_KeyFrameCount), sizeof(int));
+			in.read(reinterpret_cast<char*>(&m_KeyFrameTime), sizeof(float));
 
 			m_TransformData.resize(VertexCount);
 
@@ -26,10 +26,10 @@ void CUIAnimationClip::LoadAnimationClipInfoFromFile(ifstream& InFile, UINT Vert
 				m_TransformData[i].reserve(m_KeyFrameCount);
 			}
 		}
-		else if (Token == TEXT("<RectTransform>"))
+		else if (str == TEXT("<RectTransform>"))
 		{
 			// Current KeyFrameTime
-			File::ReadFloatFromFile(InFile);
+			File::ReadFloatFromFile(in);
 
 			for (UINT i = 0; i < VertexCount; ++i)
 			{
@@ -37,9 +37,9 @@ void CUIAnimationClip::LoadAnimationClipInfoFromFile(ifstream& InFile, UINT Vert
 				XMFLOAT2 Size{};
 				float CellIndex{};
 
-				InFile.read(reinterpret_cast<TCHAR*>(&Position), sizeof(XMFLOAT2));
-				InFile.read(reinterpret_cast<TCHAR*>(&CellIndex), sizeof(float));
-				InFile.read(reinterpret_cast<TCHAR*>(&Size), sizeof(XMFLOAT2));
+				in.read(reinterpret_cast<char*>(&Position), sizeof(XMFLOAT2));
+				in.read(reinterpret_cast<char*>(&CellIndex), sizeof(float));
+				in.read(reinterpret_cast<char*>(&Size), sizeof(XMFLOAT2));
 
 				QUAD_INFO QuadInfo{};
 
@@ -50,23 +50,23 @@ void CUIAnimationClip::LoadAnimationClipInfoFromFile(ifstream& InFile, UINT Vert
 				m_TransformData[i].push_back(QuadInfo);
 			}
 		}
-		else if (Token == TEXT("<AlphaColor>"))
+		else if (str == TEXT("<AlphaColor>"))
 		{
 			// Current KeyFrameTime
-			File::ReadFloatFromFile(InFile);
+			File::ReadFloatFromFile(in);
 
 			for (UINT i = 0; i < VertexCount; ++i)
 			{
 				float AlphaColor{};
 
-				InFile.read(reinterpret_cast<TCHAR*>(&AlphaColor), sizeof(float));
+				in.read(reinterpret_cast<char*>(&AlphaColor), sizeof(float));
 
 				m_TransformData[i][Count].m_AlphaColor = AlphaColor;
 			}
 
 			++Count;
 		}
-		else if (Token == TEXT("</AnimationClip>"))
+		else if (str == TEXT("</AnimationClip>"))
 		{
 			break;
 		}

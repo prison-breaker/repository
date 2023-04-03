@@ -11,7 +11,7 @@ private:
 
 private:
 	CSoundManager() = default;
-	~CSoundManager();
+	virtual ~CSoundManager();
 
 public:
 	static CSoundManager* GetInstance();

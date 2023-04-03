@@ -1,21 +1,32 @@
 #pragma once
+#include "Mesh.h"
 
 class CNavNode;
 
-class CNavMesh
+class CNavMesh : public CMesh
 {
+	friend class CAssetManager;
+
 private:
-	vector<shared_ptr<CNavNode>> m_NavNodes{};
+	vector<CNavNode*> m_navNodes;
+
+private:
+	// 이 객체의 생성은 오로지 CAssetManager에 의해서만 일어난다.
+	CNavMesh();
+
+	void InsertNode(CNavNode* newNavNode);
+
+	bool IsInPolygon(XMFLOAT3& position);
+	void FixPosition(const XMFLOAT3& position, XMFLOAT3& newPosition);
 
 public:
-	CNavMesh() = default;
-	~CNavMesh() = default;
+	// 소멸자의 경우에는 SafeDelete 외부 함수를 이용하기 때문에 접근 지정자를 public으로 설정하였다.
+	~CNavMesh();
 
-	void LoadNavMeshFromFile(const tstring& FileName);
+	const vector<CNavNode*>& GetNavNodes();
+	int GetNodeIndex(const XMFLOAT3& position);
 
-	vector<shared_ptr<CNavNode>>& GetNavNodes();
+	void Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, const string& fileName);
 
-	void InsertNode(const shared_ptr<CNavNode>& NewNavNode);
-
-	UINT GetNodeIndex(const XMFLOAT3& Position);
+	bool IsInNavMesh(const XMFLOAT3& position, XMFLOAT3& newPosition);
 };

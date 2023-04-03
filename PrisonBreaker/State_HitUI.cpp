@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "pch.h"
 #include "State_HitUI.h"
 #include "UIObjects.h"
 #include "UIAnimationController.h"

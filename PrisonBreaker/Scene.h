@@ -1,40 +1,50 @@
 #pragma once
 
-class CScene
+class CObject;
+
+class CScene abstract
 {
-public:
-	CScene() = default;
-	virtual ~CScene() = default;
+	friend class CSceneManager;
 
-	virtual void Initialize() = 0;
+private:
+	string			 m_name;
 
-	virtual void OnCreate(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, ID3D12RootSignature* D3D12RootSignature) = 0;
-	virtual void OnDestroy() = 0;
+	vector<CObject*> m_objects[(int)GROUP_TYPE::COUNT];
 
-	virtual void BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, ID3D12RootSignature* D3D12RootSignature) = 0;
-	virtual void ReleaseObjects() = 0;
+protected:
+	// 이 객체의 생성은 오로지 CSceneManager에 의해서만 일어난다.
+	// 단, 이 객체를 상속 받은 자식 클래스의 생성자에서 이 클래스의 생성자를 호출해야하므로 접근 지정자를 protected로 설정하였다.
+	CScene();
 
-	virtual void Enter(MSG_TYPE MsgType) = 0;
+	virtual void Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, const string& fileName);
+
+private:
+	virtual void Enter() = 0;
 	virtual void Exit() = 0;
 
-	virtual void LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName) = 0;
-	virtual void LoadUIInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName) = 0;
+	virtual void CreateShaderVariables(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
+	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
+	virtual void ReleaseShaderVariables();
 
-	virtual void CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList) = 0;
-	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList) = 0;
-	virtual void ReleaseShaderVariables() = 0;
+public:
+	// 소멸자의 경우에는 SafeDelete 외부 함수를 이용하기 때문에 접근 지정자를 public으로 설정하였다.
+	virtual ~CScene();
 
-	virtual void ReleaseUploadBuffers() = 0;
+	void SetName(const string& name);
+	const string& GetName();
 
-	virtual void ProcessMouseMessage(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam) = 0;
-	virtual void ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam) = 0;
-	virtual void ProcessInput(HWND hWnd, float ElapsedTime) = 0;
+	void AddObject(GROUP_TYPE group, CObject* object);
+	const vector<CObject*>& GetGroupObject(GROUP_TYPE group);
+	void DeleteGroupObject(GROUP_TYPE group);
 
-	virtual void Animate(float ElapsedTime) = 0;
+	virtual void Init(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList) = 0;
 
-	virtual void PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList) = 0;
-	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList) = 0;
-	virtual void PostRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList) = 0;
+	void ReleaseUploadBuffers();
 
-	virtual void ProcessPacket() = 0;
+	virtual void Update();
+	virtual void LateUpdate();
+
+	virtual void PreRender(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
+	virtual void Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
+	virtual void PostRender(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
 };

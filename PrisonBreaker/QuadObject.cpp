@@ -1,12 +1,12 @@
-#include "stdafx.h"
+#include "pch.h"
 #include "UIObjects.h"
 #include "Material.h"
 #include "Texture.h"
 #include "UIAnimationController.h"
 
-shared_ptr<CQuadObject> CQuadObject::LoadObjectInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile, unordered_map<tstring, shared_ptr<CMaterial>>& MaterialCaches)
+shared_ptr<CQuadObject> CQuadObject::LoadObjectInfoFromFile(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in, unordered_map<string, shared_ptr<CMaterial>>& MaterialCaches)
 {
-	tstring Token{};
+	string str{};
 
 	shared_ptr<CQuadObject> NewObject{};
 
@@ -15,11 +15,11 @@ shared_ptr<CQuadObject> CQuadObject::LoadObjectInfoFromFile(ID3D12Device* D3D12D
 
 	while (true)
 	{
-		File::ReadStringFromFile(InFile, Token);
+		File::ReadStringFromFile(in, str);
 
-		if (Token == TEXT("<Type>"))
+		if (str == TEXT("<Type>"))
 		{
-			Type = File::ReadIntegerFromFile(InFile);
+			Type = File::ReadIntegerFromFile(in);
 
 			switch (Type)
 			{
@@ -55,19 +55,19 @@ shared_ptr<CQuadObject> CQuadObject::LoadObjectInfoFromFile(ID3D12Device* D3D12D
 				break;
 			}
 		}
-		else if (Token == TEXT("<IsActive>"))
+		else if (str == TEXT("<IsActive>"))
 		{
-			bool IsActive{ static_cast<bool>(File::ReadIntegerFromFile(InFile)) };
+			bool IsActive{ static_cast<bool>(File::ReadIntegerFromFile(in)) };
 
 			NewObject->SetActive(IsActive);
 		}
-		else if (Token == TEXT("<TextureName>"))
+		else if (str == TEXT("<TextureName>"))
 		{
-			File::ReadStringFromFile(InFile, Token);
+			File::ReadStringFromFile(in, str);
 		
-			if (MaterialCaches.count(Token))
+			if (MaterialCaches.count(str))
 			{
-				NewObject->SetMaterial(MaterialCaches[Token]);
+				NewObject->SetMaterial(MaterialCaches[str]);
 			}
 			else
 			{
@@ -75,30 +75,30 @@ shared_ptr<CQuadObject> CQuadObject::LoadObjectInfoFromFile(ID3D12Device* D3D12D
 				shared_ptr<CTexture> Texture{ make_shared<CTexture>() };
 				shared_ptr<CShader> Shader{ CShaderManager::GetInstance()->GetShader("QuadShader") };
 
-				Texture->LoadTextureFromDDSFile(D3D12Device, D3D12GraphicsCommandList, TEXTURE_TYPE_ALBEDO_MAP, Token);
+				Texture->LoadTextureFromDDSFile(d3d12Device, d3d12GraphicsCommandList, TEXTURE_TYPE_ALBEDO_MAP, str);
 				Material->SetStateNum(2);
 				Material->RegisterTexture(Texture);
 				Material->RegisterShader(Shader);
-				CTextureManager::GetInstance()->RegisterTexture(Token, Texture);
-				MaterialCaches.emplace(Token, Material);
+				CTextureManager::GetInstance()->RegisterTexture(str, Texture);
+				MaterialCaches.emplace(str, Material);
 
 				NewObject->SetMaterial(Material);
 			}
 		}
-		else if (Token == TEXT("<CellInfo>"))
+		else if (str == TEXT("<CellInfo>"))
 		{
-			CellCount = { File::ReadIntegerFromFile(InFile), File::ReadIntegerFromFile(InFile) };
+			CellCount = { File::ReadIntegerFromFile(in), File::ReadIntegerFromFile(in) };
 		}
-		else if (Token == TEXT("<RectTransform>"))
+		else if (str == TEXT("<RectTransform>"))
 		{
-			NewObject->m_MaxVertexCount = NewObject->m_VertexCount = File::ReadIntegerFromFile(InFile);
+			NewObject->m_MaxVertexCount = NewObject->m_VertexCount = File::ReadIntegerFromFile(in);
 
-			NewObject->m_D3D12VertexBuffer = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, nullptr, sizeof(QUAD_INFO) * NewObject->m_VertexCount, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, nullptr);
-			DX::ThrowIfFailed(NewObject->m_D3D12VertexBuffer->Map(0, nullptr, reinterpret_cast<void**>(&NewObject->m_MappedQuadInfo)));
+			NewObject->m_d3d12VertexBuffer = DX::CreateBufferResource(d3d12Device, d3d12GraphicsCommandList, nullptr, sizeof(QUAD_INFO) * NewObject->m_VertexCount, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, nullptr);
+			DX::ThrowIfFailed(NewObject->m_d3d12VertexBuffer->Map(0, nullptr, reinterpret_cast<void**>(&NewObject->m_MappedQuadInfo)));
 
-			NewObject->m_D3D12VertexBufferView.BufferLocation = NewObject->m_D3D12VertexBuffer->GetGPUVirtualAddress();
-			NewObject->m_D3D12VertexBufferView.StrideInBytes = sizeof(QUAD_INFO);
-			NewObject->m_D3D12VertexBufferView.SizeInBytes = sizeof(QUAD_INFO) * NewObject->m_VertexCount;
+			NewObject->m_d3d12VertexBufferView.BufferLocation = NewObject->m_d3d12VertexBuffer->GetGPUVirtualAddress();
+			NewObject->m_d3d12VertexBufferView.StrideInBytes = sizeof(QUAD_INFO);
+			NewObject->m_d3d12VertexBufferView.SizeInBytes = sizeof(QUAD_INFO) * NewObject->m_VertexCount;
 
 			// 버튼 영역이나, 크레딧의 초기 위치 등을 저장한다.
 			shared_ptr<CButtonUI> ButtonUI{};
@@ -120,9 +120,9 @@ shared_ptr<CQuadObject> CQuadObject::LoadObjectInfoFromFile(ID3D12Device* D3D12D
 				XMFLOAT2 Size{};
 				float CellIndex{};
 
-				InFile.read(reinterpret_cast<TCHAR*>(&Position), sizeof(XMFLOAT2));
-				InFile.read(reinterpret_cast<TCHAR*>(&CellIndex), sizeof(float));
-				InFile.read(reinterpret_cast<TCHAR*>(&Size), sizeof(XMFLOAT2));
+				in.read(reinterpret_cast<char*>(&Position), sizeof(XMFLOAT2));
+				in.read(reinterpret_cast<char*>(&CellIndex), sizeof(float));
+				in.read(reinterpret_cast<char*>(&Size), sizeof(XMFLOAT2));
 
 				MappedQuadInfo->m_Position = Position;
 				MappedQuadInfo->m_Size = Size;
@@ -142,31 +142,31 @@ shared_ptr<CQuadObject> CQuadObject::LoadObjectInfoFromFile(ID3D12Device* D3D12D
 				}
 			}
 		}
-		else if (Token == TEXT("<AlphaColor>"))
+		else if (str == TEXT("<AlphaColor>"))
 		{
 			for (UINT i = 0; i < NewObject->m_VertexCount; ++i)
 			{
 				QUAD_INFO* MappedQuadInfo{ NewObject->m_MappedQuadInfo + i };
 				float AlphaColor{};
 
-				InFile.read(reinterpret_cast<TCHAR*>(&AlphaColor), sizeof(float));
+				in.read(reinterpret_cast<char*>(&AlphaColor), sizeof(float));
 
 				MappedQuadInfo->m_AlphaColor = AlphaColor;
 			}
 		}
-		else if (Token == TEXT("<Animation>"))
+		else if (str == TEXT("<Animation>"))
 		{
-			CQuadObject::LoadAnimationInfoFromFile(InFile, NewObject);
+			CQuadObject::LoadAnimationInfoFromFile(in, NewObject);
 		}
-		else if (Token == TEXT("<ChildCount>"))
+		else if (str == TEXT("<ChildCount>"))
 		{
-			UINT ChildCount{ File::ReadIntegerFromFile(InFile) };
+			UINT ChildCount{ File::ReadIntegerFromFile(in) };
 
 			if (ChildCount > 0)
 			{
 				for (UINT i = 0; i < ChildCount; ++i)
 				{
-					shared_ptr<CQuadObject> ChildObject{ CQuadObject::LoadObjectInfoFromFile(D3D12Device, D3D12GraphicsCommandList, InFile, MaterialCaches) };
+					shared_ptr<CQuadObject> ChildObject{ CQuadObject::LoadObjectInfoFromFile(d3d12Device, d3d12GraphicsCommandList, in, MaterialCaches) };
 
 					if (ChildObject)
 					{
@@ -175,7 +175,7 @@ shared_ptr<CQuadObject> CQuadObject::LoadObjectInfoFromFile(ID3D12Device* D3D12D
 				}
 			}
 		}
-		else if (Token == TEXT("</UIObject>"))
+		else if (str == TEXT("</UIObject>"))
 		{
 			break;
 		}
@@ -184,17 +184,17 @@ shared_ptr<CQuadObject> CQuadObject::LoadObjectInfoFromFile(ID3D12Device* D3D12D
 	return NewObject;
 }
 
-void CQuadObject::LoadAnimationInfoFromFile(tifstream& InFile, const shared_ptr<CQuadObject>& Model)
+void CQuadObject::LoadAnimationInfoFromFile(ifstream& in, const shared_ptr<CQuadObject>& Model)
 {
-	tstring Token{};
+	string str{};
 
 	while (true)
 	{
-		File::ReadStringFromFile(InFile, Token);
+		File::ReadStringFromFile(in, str);
 
-		if (Token == TEXT("<AnimationClips>"))
+		if (str == TEXT("<AnimationClips>"))
 		{
-			UINT ClipCount{ File::ReadIntegerFromFile(InFile) };
+			UINT ClipCount{ File::ReadIntegerFromFile(in) };
 
 			if (ClipCount > 0)
 			{
@@ -206,7 +206,7 @@ void CQuadObject::LoadAnimationInfoFromFile(tifstream& InFile, const shared_ptr<
 				{
 					shared_ptr<CUIAnimationClip> UIAnimationClip{ make_shared<CUIAnimationClip>() };
 
-					UIAnimationClip->LoadAnimationClipInfoFromFile(InFile, Model->m_VertexCount);
+					UIAnimationClip->LoadAnimationClipInfoFromFile(in, Model->m_VertexCount);
 					UIAnimationClips.push_back(UIAnimationClip);
 				}
 
@@ -214,7 +214,7 @@ void CQuadObject::LoadAnimationInfoFromFile(tifstream& InFile, const shared_ptr<
 				Model->Initialize();
 			}
 		}
-		else if (Token == TEXT("</AnimationClips>"))
+		else if (str == TEXT("</AnimationClips>"))
 		{
 			break;
 		}
@@ -268,14 +268,14 @@ void CQuadObject::Animate(float ElapsedTime)
 	}
 }
 
-void CQuadObject::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType)
+void CQuadObject::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType)
 {
 	if (m_IsActive)
 	{
-		D3D12_VERTEX_BUFFER_VIEW VertexBufferViews[] = { m_D3D12VertexBufferView };
+		D3D12_VERTEX_BUFFER_VIEW VertexBufferViews[] = { m_d3d12VertexBufferView };
 
-		D3D12GraphicsCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
-		D3D12GraphicsCommandList->IASetVertexBuffers(0, 1, VertexBufferViews);
+		d3d12GraphicsCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
+		d3d12GraphicsCommandList->IASetVertexBuffers(0, 1, VertexBufferViews);
 
 		UINT MaterialCount{ static_cast<UINT>(m_Materials.size()) };
 
@@ -283,18 +283,18 @@ void CQuadObject::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CC
 		{
 			if (m_Materials[i])
 			{
-				m_Materials[i]->SetPipelineState(D3D12GraphicsCommandList, RenderType);
-				m_Materials[i]->UpdateShaderVariables(D3D12GraphicsCommandList);
+				m_Materials[i]->SetPipelineState(d3d12GraphicsCommandList, RenderType);
+				m_Materials[i]->UpdateShaderVariables(d3d12GraphicsCommandList);
 			}
 
-			D3D12GraphicsCommandList->DrawInstanced(m_VertexCount, 1, 0, 0);
+			d3d12GraphicsCommandList->DrawInstanced(m_VertexCount, 1, 0, 0);
 		}
 
 		for (const auto& ChildObject : m_ChildObjects)
 		{
 			if (ChildObject)
 			{
-				ChildObject->Render(D3D12GraphicsCommandList, Camera, RenderType);
+				ChildObject->Render(d3d12GraphicsCommandList, Camera, RenderType);
 			}
 		}
 	}
@@ -302,9 +302,9 @@ void CQuadObject::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CC
 
 void CQuadObject::ReleaseUploadBuffers()
 {
-	if (m_D3D12VertexUploadBuffer)
+	if (m_d3d12VertexUploadBuffer)
 	{
-		m_D3D12VertexUploadBuffer.Reset();
+		m_d3d12VertexUploadBuffer.Reset();
 	}
 
 	for (const auto& ChildObject : m_ChildObjects)

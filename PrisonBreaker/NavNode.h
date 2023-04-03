@@ -1,10 +1,10 @@
 #pragma once
 
-struct TRIANGLE
+struct Triangle
 {
-	XMFLOAT3 m_Vertices[3]{};
-	XMFLOAT3 m_CenterSides[3]{};
-	XMFLOAT3 m_Centroid{};
+	XMFLOAT3 m_vertices[3];    // 정점의 위치
+	XMFLOAT3 m_centerSides[3]; // 각 정점을 잇는 변의 중점
+	XMFLOAT3 m_centroid;       // 삼각형의 무게중심
 };
 
 class CNavNode
@@ -12,50 +12,53 @@ class CNavNode
 	friend class CNavMesh;
 
 private:
-	bool				         m_IsVisited{};
+	bool			  m_isVisited;
+					  
+	Triangle		  m_triangle;
+					  
+	float			  m_f;
+	float             m_h;
+	float             m_g;
 
-	float				         m_F{};
-	float                        m_H{};
-	float                        m_G{};
+	vector<CNavNode*> m_nearNodes;
+	CNavNode*		  m_parent;
 
-	TRIANGLE			         m_Triangle{};
-
-	vector<shared_ptr<CNavNode>> m_NeighborNavNodes{};
-	shared_ptr<CNavNode>         m_Parent{};
+private:
+	// 이 객체의 생성은 오로지 CNavMesh에 의해서만 일어난다.
+	CNavNode(const Triangle& triangle);
 
 public:
-	void SetTriangle(const TRIANGLE& Triangle);
-	const TRIANGLE& GetTriangle() const;
+	// 소멸자의 경우에는 SafeDelete 외부 함수를 이용하기 때문에 접근 지정자를 public으로 설정하였다.
+	~CNavNode();
 
-	void SetVisit(bool IsVisited);
-	bool IsVisited() const;
+	void SetVisited(bool isVisited);
+	bool IsVisited();
 
-	void CalculateCenterSides();
-	void CalculateCentroid();
+	const Triangle& GetTriangle();
 
-	void CalculateH(const shared_ptr<CNavNode>& TargetNavNode);
-	float GetH() const;
+	void CalculateH(CNavNode* targetNode);
+	float GetH();
 
-	void CalculateG(const shared_ptr<CNavNode>& ParentNavNode);
-	float GetG() const;
+	void CalculateG(CNavNode* parentNode);
+	float GetG();
 
-	void CalculateF(const shared_ptr<CNavNode>& ParentNavNode, const shared_ptr<CNavNode>& TargetNavNode);
-	float GetF() const;
+	void CalculateF(CNavNode* targetNode, CNavNode* parentNode);
+	float GetF();
 
-	UINT CalculateNeighborSideIndex(const shared_ptr<CNavNode>& NavNode);
+	const vector<CNavNode*>& GetNearNodes();
 
-	vector<shared_ptr<CNavNode>>& GetNeighborNavNodes();
+	void SetParent(CNavNode* node);
+	CNavNode* GetParent();
 
-	void SetParent(const shared_ptr<CNavNode>& ParentNavNode);
-	const shared_ptr<CNavNode>& GetParent() const;
+	int CalculateNearSideIndex(CNavNode* node);
 
 	void Reset();
 };
 
 struct compare
 {
-	bool operator ()(const shared_ptr<CNavNode>& NavNode1, const shared_ptr<CNavNode>& NavNode2)
+	bool operator ()(CNavNode* navNode1, CNavNode* navNode2)
 	{
-		return NavNode1->GetF() > NavNode2->GetF();
+		return navNode1->GetF() > navNode2->GetF();
 	}
 };

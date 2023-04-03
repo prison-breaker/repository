@@ -1,97 +1,108 @@
-#include "stdafx.h"
+#include "pch.h"
 #include "NavNode.h"
 
-void CNavNode::SetTriangle(const TRIANGLE& Triangle)
+CNavNode::CNavNode(const Triangle& triangle) :
+	m_isVisited(),
+	m_triangle(triangle),
+	m_f(),
+	m_h(),
+	m_g(),
+	m_nearNodes(),
+	m_parent()
 {
-	m_Triangle = Triangle;
-
-	CalculateCenterSides();
-	CalculateCentroid();
+	m_triangle.m_centerSides[0] = { 0.5f * (m_triangle.m_vertices[0].x + m_triangle.m_vertices[1].x), 0.5f * (m_triangle.m_vertices[0].y + m_triangle.m_vertices[1].y), 0.5f * (m_triangle.m_vertices[0].z + m_triangle.m_vertices[1].z) };
+	m_triangle.m_centerSides[1] = { 0.5f * (m_triangle.m_vertices[1].x + m_triangle.m_vertices[2].x), 0.5f * (m_triangle.m_vertices[1].y + m_triangle.m_vertices[2].y), 0.5f * (m_triangle.m_vertices[1].z + m_triangle.m_vertices[2].z) };
+	m_triangle.m_centerSides[2] = { 0.5f * (m_triangle.m_vertices[2].x + m_triangle.m_vertices[0].x), 0.5f * (m_triangle.m_vertices[2].y + m_triangle.m_vertices[0].y), 0.5f * (m_triangle.m_vertices[2].z + m_triangle.m_vertices[0].z) };
+	m_triangle.m_centroid = { (m_triangle.m_vertices[0].x + m_triangle.m_vertices[1].x + m_triangle.m_vertices[2].x) / 3, (m_triangle.m_vertices[0].y + m_triangle.m_vertices[1].y + m_triangle.m_vertices[2].y) / 3, (m_triangle.m_vertices[0].z + m_triangle.m_vertices[1].z + m_triangle.m_vertices[2].z) / 3 };
 }
 
-const TRIANGLE& CNavNode::GetTriangle() const
+CNavNode::~CNavNode()
 {
-	return m_Triangle;
 }
 
-void CNavNode::SetVisit(bool IsVisited)
+void CNavNode::SetVisited(bool isVisited)
 {
-	m_IsVisited = IsVisited;
+	m_isVisited = isVisited;
 }
 
-bool CNavNode::IsVisited() const
+bool CNavNode::IsVisited()
 {
-	return m_IsVisited;
+	return m_isVisited;
 }
 
-void CNavNode::CalculateCenterSides()
+const Triangle& CNavNode::GetTriangle()
 {
-	m_Triangle.m_CenterSides[0] = { 0.5f * (m_Triangle.m_Vertices[0].x + m_Triangle.m_Vertices[1].x), 0.5f * (m_Triangle.m_Vertices[0].y + m_Triangle.m_Vertices[1].y), 0.5f * (m_Triangle.m_Vertices[0].z + m_Triangle.m_Vertices[1].z) };
-	m_Triangle.m_CenterSides[1] = { 0.5f * (m_Triangle.m_Vertices[1].x + m_Triangle.m_Vertices[2].x), 0.5f * (m_Triangle.m_Vertices[1].y + m_Triangle.m_Vertices[2].y), 0.5f * (m_Triangle.m_Vertices[1].z + m_Triangle.m_Vertices[2].z) };
-	m_Triangle.m_CenterSides[2] = { 0.5f * (m_Triangle.m_Vertices[2].x + m_Triangle.m_Vertices[0].x), 0.5f * (m_Triangle.m_Vertices[2].y + m_Triangle.m_Vertices[0].y), 0.5f * (m_Triangle.m_Vertices[2].z + m_Triangle.m_Vertices[0].z) };
+	return m_triangle;
 }
 
-void CNavNode::CalculateCentroid()
+void CNavNode::CalculateH(CNavNode* targetNode)
 {
-	m_Triangle.m_Centroid = {
-		0.33f * (m_Triangle.m_Vertices[0].x + m_Triangle.m_Vertices[1].x + m_Triangle.m_Vertices[2].x),
-		0.33f * (m_Triangle.m_Vertices[0].y + m_Triangle.m_Vertices[1].y + m_Triangle.m_Vertices[2].y),
-		0.33f * (m_Triangle.m_Vertices[0].z + m_Triangle.m_Vertices[1].z + m_Triangle.m_Vertices[2].z)
-	};
+	m_h = Math::Distance(m_triangle.m_centroid, targetNode->m_triangle.m_centroid);
 }
 
-void CNavNode::CalculateH(const shared_ptr<CNavNode>& TargetNavNode)
+float CNavNode::GetH()
 {
-	m_H = Math::Distance(m_Triangle.m_Centroid, TargetNavNode->m_Triangle.m_Centroid);
+	return m_h;
 }
 
-float CNavNode::GetH() const
+void CNavNode::CalculateG(CNavNode* parentNode)
 {
-	return m_H;
+	m_g = parentNode->GetG() + Math::Distance(m_triangle.m_centroid, parentNode->m_triangle.m_centroid);
 }
 
-void CNavNode::CalculateG(const shared_ptr<CNavNode>& ParentNavNode)
+float CNavNode::GetG()
 {
-	float Distance{ Math::Distance(m_Triangle.m_Centroid, ParentNavNode->m_Triangle.m_Centroid) };
-
-	m_G = ParentNavNode->GetG() + Distance;
+	return m_g;
 }
 
-float CNavNode::GetG() const
+void CNavNode::CalculateF(CNavNode* targetNode, CNavNode* parentNode)
 {
-	return m_G;
+	CalculateH(targetNode);
+	CalculateG(parentNode);
+
+	m_f = m_h + m_g;
 }
 
-void CNavNode::CalculateF(const shared_ptr<CNavNode>& ParentNavNode, const shared_ptr<CNavNode>& TargetNavNode)
+float CNavNode::GetF()
 {
-	CalculateH(TargetNavNode);
-	CalculateG(ParentNavNode);
-
-	m_F = m_H + m_G;
+	return m_f;
 }
 
-float CNavNode::GetF() const
+const vector<CNavNode*>& CNavNode::GetNearNodes()
 {
-	return m_F;
+	return m_nearNodes;
 }
 
-UINT CNavNode::CalculateNeighborSideIndex(const shared_ptr<CNavNode>& NavNode)
+void CNavNode::SetParent(CNavNode* node)
 {
-	UINT TotalNeighborSideIndex{};
-
-	for (UINT i = 0; i < 3; ++i)
+	if (node != nullptr)
 	{
-		for (UINT j = 0; j < 3; ++j)
-		{			
-			if (Vector3::IsEqual(m_Triangle.m_Vertices[i], NavNode->m_Triangle.m_Vertices[j]))
+		m_parent = node;
+	}
+}
+
+CNavNode* CNavNode::GetParent()
+{
+	return m_parent;
+}
+
+int CNavNode::CalculateNearSideIndex(CNavNode* node)
+{
+	int totalNearSideIndex = 0;
+
+	for (int i = 0; i < 3; ++i)
+	{
+		for (int j = 0; j < 3; ++j)
+		{
+			if (Vector3::IsEqual(m_triangle.m_vertices[i], node->m_triangle.m_vertices[j]))
 			{
-				TotalNeighborSideIndex += i;
-				continue;
+				totalNearSideIndex += i;
+				break;
 			}
 		}
 	}
 
-	switch (TotalNeighborSideIndex)
+	switch (totalNearSideIndex)
 	{
 	case 1:
 		return 0;
@@ -104,24 +115,9 @@ UINT CNavNode::CalculateNeighborSideIndex(const shared_ptr<CNavNode>& NavNode)
 	return 4;
 }
 
-vector<shared_ptr<CNavNode>>& CNavNode::GetNeighborNavNodes()
-{
-	return m_NeighborNavNodes;
-}
-
-void CNavNode::SetParent(const shared_ptr<CNavNode>& ParentNavNode)
-{
-	m_Parent = ParentNavNode;
-}
-
-const shared_ptr<CNavNode>& CNavNode::GetParent() const
-{
-	return m_Parent;
-}
-
 void CNavNode::Reset()
 {
-	m_IsVisited = false;
-	m_H = m_G = m_F = 0;
-	m_Parent = nullptr;
+	m_isVisited = false;
+	m_f = m_h = m_g = 0.0f;
+	m_parent = nullptr;
 }

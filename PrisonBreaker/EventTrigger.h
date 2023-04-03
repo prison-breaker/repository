@@ -1,6 +1,6 @@
 #pragma once
 
-class CGameObject;
+class CObject;
 class CQuadObject;
 
 class CEventTrigger : public enable_shared_from_this<CEventTrigger>
@@ -14,7 +14,7 @@ protected:
 
 	XMFLOAT3						m_TriggerArea[4]{}; // Vertices
 
-	vector<shared_ptr<CGameObject>> m_EventObjects{};
+	vector<shared_ptr<CObject>> m_EventObjects{};
 	shared_ptr<CQuadObject>		m_InteractionUI{};
 
 public:
@@ -30,7 +30,7 @@ public:
 	virtual bool InteractEventTrigger(UINT CallerIndex);
 	virtual void Update(float ElapsedTime);
 
-	void LoadEventTriggerFromFile(tifstream& InFile);
+	void LoadEventTriggerFromFile(ifstream& in);
 
 	void SetActive(bool IsActive);
 	bool IsActive() const;
@@ -40,8 +40,8 @@ public:
 
 	void CalculateTriggerAreaByGuard(const XMFLOAT3& Position);
 
-	void InsertEventObject(const shared_ptr<CGameObject>& EventObject);
-	shared_ptr<CGameObject> GetEventObject(UINT Index);
+	void InsertEventObject(const shared_ptr<CObject>& EventObject);
+	shared_ptr<CObject> GetEventObject(UINT Index);
 
 	void SetInteractionUI(const shared_ptr<CQuadObject>& InteractionUI);
 	shared_ptr<CQuadObject> GetInteractionUI() const;

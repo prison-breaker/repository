@@ -1,37 +1,40 @@
 #pragma once
+#include "Asset.h"
 
 class CTexture;
 class CShader;
 
-class CMaterial
+class CMaterial : public CAsset
 {
+	friend class CAssetManager;
+
 private:
-	tstring						 m_Name{};
+	XMFLOAT4		  m_albedoColor;
+	XMFLOAT4		  m_emissionColor;
+	float			  m_smoothness;
+	float			  m_metallic;
 
-	XMFLOAT4			         m_AlbedoColor{};
+	int				  m_textureMask;
+	XMFLOAT2		  m_textureScale;
+	vector<CTexture*> m_textures;
 
-	vector<shared_ptr<CTexture>> m_Textures{};
-	UINT						 m_TextureMask{};
-	XMFLOAT2					 m_TextureScale{ 1.0f, 1.0f }; // Tiling
+	vector<CShader*>  m_shaders;
+	int	              m_stateNum;
 
-	vector<shared_ptr<CShader>>  m_Shaders{};
-	UINT						 m_StateNum{};
+private:
+	CMaterial();
 
 public:
-	CMaterial() = default;
-	~CMaterial() = default;
+	virtual ~CMaterial();
 
-	void LoadMaterialInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile);
+	void SetStateNum(int stateNum);
+	int GetStateNum();
 
-	void UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
+	void Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in);
 
-	void RegisterTexture(const shared_ptr<CTexture>& Texture);
-	void RegisterShader(const shared_ptr<CShader>& Shader);
+	void AddTexture(CTexture* texture);
+	void AddShader(CShader* shader);
 
-	void SetName(const tstring & Name);
-	const tstring& GetName() const;
-
-	void SetStateNum(UINT StateNum);
-
-	void SetPipelineState(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, RENDER_TYPE RenderType);
+	void UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
+	void SetPipelineState(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, RENDER_TYPE RenderType);
 };

@@ -1,76 +1,107 @@
-#include "stdafx.h"
+#include "pch.h"
 #include "Texture.h"
 
-void CTexture::LoadTextureFromDDSFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, TEXTURE_TYPE TextureType, const tstring& FileName)
-{
-	if (TextureType < TEXTURE_TYPE_ALBEDO_MAP || TextureType > TEXTURE_TYPE_SHADOW_MAP)
-	{
-		return;
-	}
+#include "AssetManager.h"
 
-	m_Type = TextureType;
-	m_D3D12Texture = DX::CreateTextureResourceFromDDSFile(D3D12Device, D3D12GraphicsCommandList, FileName, D3D12_RESOURCE_STATE_GENERIC_READ, m_D3D12TextureUploadBuffer.GetAddressOf());
+CTexture::CTexture() :
+	m_type(),
+	m_d3d12Texture(),
+	m_d3d12UploadBuffer(),
+	m_d3d12GpuDescriptorHandle()
+{
 }
 
-void CTexture::CreateTexture2D(ID3D12Device* D3D12Device, TEXTURE_TYPE TextureType, const UINT64& Width, UINT Height, D3D12_RESOURCE_STATES D3D12ResourceStates, D3D12_RESOURCE_FLAGS D3D12ResourceFlags, DXGI_FORMAT DxgiFormat, const D3D12_CLEAR_VALUE& D3D12ClearValue)
+CTexture::~CTexture()
 {
-	if (TextureType < TEXTURE_TYPE_ALBEDO_MAP || TextureType > TEXTURE_TYPE_SHADOW_MAP)
-	{
-		return;
-	}
-
-	m_Type = TextureType;
-	m_D3D12Texture = DX::CreateTexture2DResource(D3D12Device, Width, Height, 1, 0, D3D12ResourceStates, D3D12ResourceFlags, DxgiFormat, D3D12ClearValue);
 }
 
-void CTexture::UpdateShaderVariable(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
+TEXTURE_TYPE CTexture::GetType()
 {
-	switch (m_Type)
+	return m_type;
+}
+
+ID3D12Resource* CTexture::GetTexture()
+{
+	return m_d3d12Texture.Get();
+}
+
+void CTexture::SetGpuDescriptorHandle(const D3D12_GPU_DESCRIPTOR_HANDLE& d3d12GpuDescriptorHandle)
+{
+	m_d3d12GpuDescriptorHandle = d3d12GpuDescriptorHandle;
+}
+
+const D3D12_GPU_DESCRIPTOR_HANDLE& CTexture::GetGpuDescriptorHandle()
+{
+	return m_d3d12GpuDescriptorHandle;
+}
+
+void CTexture::Create(ID3D12Device* d3d12Device, const UINT64& Width, UINT Height, D3D12_RESOURCE_STATES D3D12ResourceStates, D3D12_RESOURCE_FLAGS D3D12ResourceFlags, DXGI_FORMAT DxgiFormat, const D3D12_CLEAR_VALUE& D3D12ClearValue, TEXTURE_TYPE textureType)
+{
+	m_type = textureType;
+	m_d3d12Texture = DX::CreateTexture2DResource(d3d12Device, Width, Height, 1, 0, D3D12ResourceStates, D3D12ResourceFlags, DxgiFormat, D3D12ClearValue);
+}
+
+void CTexture::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in)
+{
+	string filePath = CAssetManager::GetInstance()->GetAssetPath() + "Texture\\";
+	string str;
+
+	while (true)
 	{
-	case TEXTURE_TYPE_ALBEDO_MAP:
-		D3D12GraphicsCommandList->SetGraphicsRootDescriptorTable(ROOT_PARAMETER_TYPE_ALBEDO_MAP, m_D3D12GpuDescriptorHandle);
+		File::ReadStringFromFile(in, str);
+
+		if (str == "<FileName>")
+		{
+			File::ReadStringFromFile(in, str);
+
+			// .dds 부분을 제외한 나머지를 이름으로 설정한다.
+			m_name = str.substr(0, str.length() - 4);
+			m_d3d12Texture = DX::CreateTextureResourceFromDDSFile(d3d12Device, d3d12GraphicsCommandList, filePath + str, D3D12_RESOURCE_STATE_GENERIC_READ, m_d3d12UploadBuffer.GetAddressOf());
+		}
+		else if (str == "<Type>")
+		{
+			in.read(reinterpret_cast<char*>(&m_type), sizeof(int));
+		}
+		else if (str == "</Texture>")
+		{
+			break;
+		}
+	}
+}
+
+void CTexture::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, const string& fileName, TEXTURE_TYPE textureType)
+{
+	string filePath = CAssetManager::GetInstance()->GetAssetPath() + "Texture\\" + fileName;
+
+	// .dds 부분을 제외한 나머지를 이름으로 설정한다.
+	m_name = fileName.substr(0, fileName.length() - 4);
+	m_type = textureType;
+	m_d3d12Texture = DX::CreateTextureResourceFromDDSFile(d3d12Device, d3d12GraphicsCommandList, filePath, D3D12_RESOURCE_STATE_GENERIC_READ, m_d3d12UploadBuffer.GetAddressOf());
+}
+
+void CTexture::UpdateShaderVariable(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+{
+	switch (m_type)
+	{
+	case TEXTURE_TYPE::ALBEDO_MAP:
+		d3d12GraphicsCommandList->SetGraphicsRootDescriptorTable((UINT)ROOT_PARAMETER_TYPE::ALBEDO_MAP, m_d3d12GpuDescriptorHandle);
 		break;
-	case TEXTURE_TYPE_METALLIC_MAP:
-		D3D12GraphicsCommandList->SetGraphicsRootDescriptorTable(ROOT_PARAMETER_TYPE_METALLIC_MAP, m_D3D12GpuDescriptorHandle);
+	case TEXTURE_TYPE::METALLIC_MAP:
+		d3d12GraphicsCommandList->SetGraphicsRootDescriptorTable((UINT)ROOT_PARAMETER_TYPE::METALLIC_MAP, m_d3d12GpuDescriptorHandle);
 		break;
-	case TEXTURE_TYPE_NORMAL_MAP:
-		D3D12GraphicsCommandList->SetGraphicsRootDescriptorTable(ROOT_PARAMETER_TYPE_NORMAL_MAP, m_D3D12GpuDescriptorHandle);
+	case TEXTURE_TYPE::NORMAL_MAP:
+		d3d12GraphicsCommandList->SetGraphicsRootDescriptorTable((UINT)ROOT_PARAMETER_TYPE::NORMAL_MAP, m_d3d12GpuDescriptorHandle);
 		break;
-	case TEXTURE_TYPE_SHADOW_MAP:
-		D3D12GraphicsCommandList->SetGraphicsRootDescriptorTable(ROOT_PARAMETER_TYPE_SHADOW_MAP, m_D3D12GpuDescriptorHandle);
+	case TEXTURE_TYPE::SHADOW_MAP:
+		d3d12GraphicsCommandList->SetGraphicsRootDescriptorTable((UINT)ROOT_PARAMETER_TYPE::SHADOW_MAP, m_d3d12GpuDescriptorHandle);
 		break;
 	}
 }
 
 void CTexture::ReleaseUploadBuffers()
 {
-	if (m_D3D12TextureUploadBuffer)
+	if (m_d3d12UploadBuffer.Get() != nullptr)
 	{
-		m_D3D12TextureUploadBuffer.Reset();
+		m_d3d12UploadBuffer.Reset();
 	}
-}
-
-TEXTURE_TYPE CTexture::GetTextureType() const
-{
-	return m_Type;
-}
-
-ID3D12Resource* CTexture::GetResource()
-{
-	if (m_D3D12Texture)
-	{
-		return m_D3D12Texture.Get();
-	}
-
-	return nullptr;
-}
-
-void CTexture::SetGpuDescriptorHandle(const D3D12_GPU_DESCRIPTOR_HANDLE& D3D12GpuDescriptorHandle)
-{
-	m_D3D12GpuDescriptorHandle = D3D12GpuDescriptorHandle;
-}
-
-const D3D12_GPU_DESCRIPTOR_HANDLE& CTexture::GetGpuDescriptorHandle()
-{
-	return m_D3D12GpuDescriptorHandle;
 }

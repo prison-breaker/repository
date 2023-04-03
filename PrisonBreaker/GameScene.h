@@ -1,125 +1,83 @@
 #pragma once
 #include "Scene.h"
 
-class CGameObject;
-class CPlayer;
-class CQuadObject;
-class CEventTrigger;
-class CNavMesh;
-class CMesh;
-class CMaterial;
-
-struct FOG
+struct Fog
 {
-	XMFLOAT4 m_Color{};
-
-	float	 m_Density{};
+	XMFLOAT4 m_color;
+	float	 m_density;
 };
 
-struct CB_FOG
+struct CB_Fog
 {
-	FOG m_Fog{};
+	Fog m_fog;
 };
 
-struct LIGHT
+struct Light
 {
-	bool	   m_IsActive{};
+	bool	   m_isActive;
 			   
-	XMFLOAT3   m_Position{};
-	XMFLOAT3   m_Direction{};
+	XMFLOAT3   m_position;
+	XMFLOAT3   m_direction;
 			   
-	UINT	   m_Type{};
+	int		   m_type;
 			   
-	XMFLOAT4   m_Color{};
+	XMFLOAT4   m_color;
 			   
-	XMFLOAT3   m_Attenuation{};
-	float 	   m_Falloff{};
-	float	   m_Range{};
-	float 	   m_Theta{};
-	float	   m_Phi{};
+	XMFLOAT3   m_attenuation;
+	float 	   m_fallOff;
+	float	   m_range;
+	float 	   m_theta;
+	float	   m_phi;
 			   
-	bool	   m_ShadowMapping{};
+	bool	   m_shadowMapping;
 
-	XMFLOAT4X4 m_ToTexCoordMatrix{};
+	XMFLOAT4X4 m_toTexCoord;
 };
 
-struct CB_LIGHT
+struct CB_Light
 {
-	LIGHT m_Lights[MAX_LIGHTS]{};
+	Light m_lights[MAX_LIGHTS];
 };
 
 class CGameScene : public CScene
 {
+	friend class CSceneManager;
+
 private:
-	UINT									m_InputMask{};
+	//INIT_GAME_DATA		   m_InitGameData{};
 
-	INIT_GAME_DATA							m_InitGameData{};
+	vector<Light>		   m_lights;
+	ComPtr<ID3D12Resource> m_d3d12Lights;
+	CB_Light*			   m_mappedLights;
+	CObject*			   m_towerLight;
+	float				   m_towerLightAngle;
 
-	vector<vector<shared_ptr<CGameObject>>> m_GameObjects{};
-	vector<vector<shared_ptr<CQuadObject>>> m_QuadObjects{};
+	ComPtr<ID3D12Resource> m_d3d12Fog;
+	CB_Fog*                m_mappedFog;
 
-	vector<shared_ptr<CEventTrigger>>		m_EventTriggers{};
+private:
+	CGameScene();
 
-	shared_ptr<CNavMesh>					m_NavMesh{};
+	virtual void Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, const string& fileName);
 
-	vector<LIGHT>						    m_Lights{};
-	ComPtr<ID3D12Resource>				    m_D3D12Lights{};
-	CB_LIGHT*							    m_MappedLights{};
-	shared_ptr<CGameObject>					m_TowerLightFrame{};
-
-	ComPtr<ID3D12Resource>					m_D3D12Fog{};
-	CB_FOG*									m_MappedFog{};
-
-	bool									m_RenderBoundingBox{};
-
-public:
-	CGameScene() = default;
-	virtual ~CGameScene() = default;
-
-	virtual void Initialize();
-
-	virtual void OnCreate(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, ID3D12RootSignature* D3D12RootSignature);
-	virtual void OnDestroy();
-
-	virtual void BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, ID3D12RootSignature* D3D12RootSignature);
-	virtual void ReleaseObjects();
-
-	virtual void Enter(MSG_TYPE MsgType);
+	virtual void Enter();
 	virtual void Exit();
 
-	virtual void LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName);
-	virtual void LoadUIInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName);
-
-	virtual void CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
-	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
+	virtual void CreateShaderVariables(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
+	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
 	virtual void ReleaseShaderVariables();
 
-	virtual void ReleaseUploadBuffers();
+	void UpdateLightTower();
 
-	virtual void ProcessMouseMessage(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam);
-	virtual void ProcessKeyboardMessage(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam);
-	virtual void ProcessInput(HWND hWnd, float ElapsedTime);
+public:
+	virtual ~CGameScene();
 
-	virtual void Animate(float ElapsedTime);
+	const vector<Light>& GetLights();
 
-	virtual void PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
-	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
-	virtual void PostRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList);
+	virtual void Init(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
 
-	virtual void ProcessPacket();
+	virtual void Update();
 
-	vector<vector<shared_ptr<CGameObject>>>& GetGameObjects();
-	vector<vector<shared_ptr<CQuadObject>>>& GetQuadObjects();
-	vector<shared_ptr<CEventTrigger>>& GetEventTriggers();
-	vector<LIGHT>& GetLights();
-	shared_ptr<CNavMesh>& GetNavMesh();
-
-	void LoadMeshCachesFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName, unordered_map<tstring, shared_ptr<CMesh>>& MeshCaches);
-	void LoadMaterialCachesFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName, unordered_map<tstring, shared_ptr<CMaterial>>& MaterialCaches);
-	void LoadEventTriggerFromFile(const tstring& FileName);
-
-	void BuildLights();
-	void BuildFog();
-
-	void UpdatePerspective(HWND hWnd, float ElapsedTime, const shared_ptr<CPlayer>& Player);
+	virtual void PreRender(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
+	virtual void Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
 };

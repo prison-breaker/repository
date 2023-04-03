@@ -1,152 +1,179 @@
-#include "stdafx.h"
+#include "pch.h"
 #include "Material.h"
+
+#include "AssetManager.h"
+
 #include "Texture.h"
 #include "Shader.h"
 
-void CMaterial::LoadMaterialInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile)
+CMaterial::CMaterial() :
+	m_albedoColor(1.0f, 1.0f, 1.0f, 1.0f),
+	m_emissionColor(),
+	m_smoothness(),
+	m_metallic(),
+	m_textureMask(),
+	m_textureScale(1.0f, 1.0f),
+	m_textures(),
+	m_shaders(),
+	m_stateNum()
 {
-	tstring Token{};
+}
 
-	shared_ptr<CTexture> Texture{};
+CMaterial::~CMaterial()
+{
+}
 
-	File::ReadStringFromFile(InFile, m_Name);
+void CMaterial::SetStateNum(int stateNum)
+{
+	if (stateNum < 0)
+	{
+		return;
+	}
+
+	m_stateNum = stateNum;
+}
+
+int CMaterial::GetStateNum()
+{
+	return m_stateNum;
+}
+
+void CMaterial::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in)
+{
+	string str;
 
 	while (true)
 	{
-		File::ReadStringFromFile(InFile, Token);
+		File::ReadStringFromFile(in, str);
 
-		if (Token == TEXT("<StateNum>"))
+		if (str == "<Name>")
 		{
-			m_StateNum = File::ReadIntegerFromFile(InFile);
+			File::ReadStringFromFile(in, str);
+			SetName(str);
+		}
+		else if (str == "<StateNum>")
+		{
+			in.read(reinterpret_cast<char*>(&m_stateNum), sizeof(int));
+			m_shaders.push_back(CAssetManager::GetInstance()->GetShader("Object"));
+			m_shaders.push_back(CAssetManager::GetInstance()->GetShader("DepthWrite"));
+		}
+		else if (str == "<TextureScale>")
+		{
+			in.read(reinterpret_cast<char*>(&m_textureScale), sizeof(XMFLOAT2));
+		}
+		else if (str == "<AlbedoColor>")
+		{
+			in.read(reinterpret_cast<char*>(&m_albedoColor), sizeof(XMFLOAT4));
+		}
+		else if (str == "<EmissionColor>")
+		{
+			in.read(reinterpret_cast<char*>(&m_emissionColor), sizeof(XMFLOAT4));
+		}
+		else if (str == "<Smoothness>")
+		{
+			in.read(reinterpret_cast<char*>(&m_smoothness), sizeof(float));
+		}
+		else if (str == "<Metallic>")
+		{
+			in.read(reinterpret_cast<char*>(&m_metallic), sizeof(float));
+		}
+		else if (str == "<AlbedoMap>")
+		{
+			File::ReadStringFromFile(in, str);
 
-			RegisterShader(CShaderManager::GetInstance()->GetShader("ShadowMapShader"));
-			RegisterShader(CShaderManager::GetInstance()->GetShader("DepthWriteShader"));
-		}
-		else if (Token == TEXT("<TextureScale>"))
-		{
-			InFile.read(reinterpret_cast<TCHAR*>(&m_TextureScale), sizeof(XMFLOAT2));
-		}
-		else if (Token == TEXT("<AlbedoColor>"))
-		{
-			InFile.read(reinterpret_cast<TCHAR*>(&m_AlbedoColor), sizeof(XMFLOAT4));
-		}
-		else if (Token == TEXT("<AlbedoMap>"))
-		{
-			File::ReadStringFromFile(InFile, Token);
-
-			if (Token != TEXT("Null"))
+			if (str != "None")
 			{
-				Texture = CTextureManager::GetInstance()->GetTexture(Token);
+				CTexture* texture = CAssetManager::GetInstance()->GetTexture(str);
 
-				if (!Texture)
+				if (texture != nullptr)
 				{
-					Texture = make_shared<CTexture>();
-					Texture->LoadTextureFromDDSFile(D3D12Device, D3D12GraphicsCommandList, TEXTURE_TYPE_ALBEDO_MAP, Token);
+					m_textureMask |= TEXTURE_MASK_ALBEDO_MAP;
+					m_textures.push_back(texture);
 				}
-
-				m_TextureMask |= TEXTURE_MASK_ALBEDO_MAP;
-				m_Textures.push_back(Texture);
-				CTextureManager::GetInstance()->RegisterTexture(Token, Texture);
 			}
 		}
-		else if (Token == TEXT("<MetallicMap>"))
+		else if (str == "<MetallicMap>")
 		{
-			File::ReadStringFromFile(InFile, Token);
+			File::ReadStringFromFile(in, str);
 
-			if (Token != TEXT("Null"))
+			if (str != "None")
 			{
-				Texture = CTextureManager::GetInstance()->GetTexture(Token);
+				CTexture* texture = CAssetManager::GetInstance()->GetTexture(str);
 
-				if (!Texture)
+				if (texture != nullptr)
 				{
-					Texture = make_shared<CTexture>();
-					Texture->LoadTextureFromDDSFile(D3D12Device, D3D12GraphicsCommandList, TEXTURE_TYPE_METALLIC_MAP, Token);
+					m_textureMask |= TEXTURE_MASK_METALLIC_MAP;
+					m_textures.push_back(texture);
 				}
-
-				m_TextureMask |= TEXTURE_MASK_METALLIC_MAP;
-				m_Textures.push_back(Texture);
-				CTextureManager::GetInstance()->RegisterTexture(Token, Texture);
 			}
 		}
-		else if (Token == TEXT("<NormalMap>"))
+		else if (str == "<NormalMap>")
 		{
-			File::ReadStringFromFile(InFile, Token);
+			File::ReadStringFromFile(in, str);
 
-			if (Token != TEXT("Null"))
+			if (str != "None")
 			{
-				Texture = CTextureManager::GetInstance()->GetTexture(Token);
+				CTexture* texture = CAssetManager::GetInstance()->GetTexture(str);
 
-				if (!Texture)
+				if (texture != nullptr)
 				{
-					Texture = make_shared<CTexture>();
-					Texture->LoadTextureFromDDSFile(D3D12Device, D3D12GraphicsCommandList, TEXTURE_TYPE_NORMAL_MAP, Token);
+					m_textureMask |= TEXTURE_MASK_NORMAL_MAP;
+					m_textures.push_back(texture);
 				}
-
-				m_TextureMask |= TEXTURE_MASK_NORMAL_MAP;
-				m_Textures.push_back(Texture);
-				CTextureManager::GetInstance()->RegisterTexture(Token, Texture);
 			}
 		}
-		else if (Token == TEXT("</Material>"))
+		else if (str == "</Material>")
 		{
 			break;
 		}
 	}
 }
 
-void CMaterial::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
+void CMaterial::AddTexture(CTexture* texture)
 {
-	D3D12GraphicsCommandList->SetGraphicsRoot32BitConstants(ROOT_PARAMETER_TYPE_OBJECT, 4, &m_AlbedoColor, 16);
-	D3D12GraphicsCommandList->SetGraphicsRoot32BitConstants(ROOT_PARAMETER_TYPE_OBJECT, 1, &m_TextureMask, 20);
-	D3D12GraphicsCommandList->SetGraphicsRoot32BitConstants(ROOT_PARAMETER_TYPE_OBJECT, 2, &m_TextureScale, 21);
-
-	for (const auto& Texture : m_Textures)
+	if (texture != nullptr)
 	{
-		if (Texture)
+		switch (texture->GetType())
 		{
-			Texture->UpdateShaderVariable(D3D12GraphicsCommandList);
+		case TEXTURE_TYPE::ALBEDO_MAP:
+			m_textureMask |= TEXTURE_MASK_ALBEDO_MAP;
+			break;
+		case TEXTURE_TYPE::METALLIC_MAP:
+			m_textureMask |= TEXTURE_MASK_METALLIC_MAP;
+			break;
+		case TEXTURE_TYPE::NORMAL_MAP:
+			m_textureMask |= TEXTURE_MASK_NORMAL_MAP;
+			break;
+		case TEXTURE_TYPE::SHADOW_MAP:
+			m_textureMask |= TEXTURE_MASK_SHADOW_MAP;
+			break;
 		}
+
+		m_textures.push_back(texture);
 	}
 }
 
-void CMaterial::RegisterTexture(const shared_ptr<CTexture>& Texture)
+void CMaterial::AddShader(CShader* shader)
 {
-	if (Texture)
+	if (shader != nullptr)
 	{
-		m_Textures.push_back(Texture);
+		m_shaders.push_back(shader);
 	}
 }
 
-void CMaterial::RegisterShader(const shared_ptr<CShader>& Shader)
+void CMaterial::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
 {
-	if (Shader)
+	d3d12GraphicsCommandList->SetGraphicsRoot32BitConstants((UINT)ROOT_PARAMETER_TYPE::OBJECT, 4, &m_albedoColor, 16);
+	d3d12GraphicsCommandList->SetGraphicsRoot32BitConstants((UINT)ROOT_PARAMETER_TYPE::OBJECT, 1, &m_textureMask, 20);
+	d3d12GraphicsCommandList->SetGraphicsRoot32BitConstants((UINT)ROOT_PARAMETER_TYPE::OBJECT, 2, &m_textureScale, 21);
+
+	for (const auto& texture : m_textures)
 	{
-		m_Shaders.push_back(Shader);
+		texture->UpdateShaderVariable(d3d12GraphicsCommandList);
 	}
 }
 
-void CMaterial::SetName(const tstring& Name)
+void CMaterial::SetPipelineState(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, RENDER_TYPE RenderType)
 {
-	m_Name = Name;
-}
-
-const tstring& CMaterial::GetName() const
-{
-	return m_Name;
-}
-
-void CMaterial::SetStateNum(UINT StateNum)
-{
-	m_StateNum = StateNum;
-}
-
-void CMaterial::SetPipelineState(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, RENDER_TYPE RenderType)
-{
-	switch (RenderType)
-	{
-	case RENDER_TYPE_STANDARD:
-	case RENDER_TYPE_DEPTH_WRITE:
-		static_pointer_cast<CGraphicsShader>(m_Shaders[RenderType])->SetPipelineState(D3D12GraphicsCommandList, m_StateNum);
-		break;
-	}
+	m_shaders[(int)RenderType]->SetPipelineState(d3d12GraphicsCommandList, m_stateNum);
 }

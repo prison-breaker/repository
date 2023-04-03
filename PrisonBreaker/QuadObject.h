@@ -23,9 +23,9 @@ protected:
 	UINT						       m_MaxVertexCount{};
 	UINT						       m_VertexCount{};
 								       
-	ComPtr<ID3D12Resource>	           m_D3D12VertexBuffer{};
-	ComPtr<ID3D12Resource>	           m_D3D12VertexUploadBuffer{};
-	D3D12_VERTEX_BUFFER_VIEW           m_D3D12VertexBufferView{};
+	ComPtr<ID3D12Resource>	           m_d3d12VertexBuffer{};
+	ComPtr<ID3D12Resource>	           m_d3d12VertexUploadBuffer{};
+	D3D12_VERTEX_BUFFER_VIEW           m_d3d12VertexBufferView{};
 								        
 	QUAD_INFO*				           m_MappedQuadInfo{};
 		
@@ -39,8 +39,8 @@ public:
 	CQuadObject() = default;
 	virtual ~CQuadObject() = default;
 
-	static shared_ptr<CQuadObject> LoadObjectInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, tifstream& InFile, unordered_map<tstring, shared_ptr<CMaterial>>& MaterialCaches);
-	static void LoadAnimationInfoFromFile(tifstream& InFile, const shared_ptr<CQuadObject>& Model);
+	static shared_ptr<CQuadObject> LoadObjectInfoFromFile(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in, unordered_map<string, shared_ptr<CMaterial>>& MaterialCaches);
+	static void LoadAnimationInfoFromFile(ifstream& in, const shared_ptr<CQuadObject>& Model);
 
 	virtual void Initialize();
 	virtual void Reset();
@@ -49,7 +49,7 @@ public:
 
 	virtual void Animate(float ElapsedTime);
 
-	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType);
+	virtual void Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCamera* Camera, RENDER_TYPE RenderType);
 
 	virtual void ReleaseUploadBuffers();
 

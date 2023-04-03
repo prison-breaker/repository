@@ -1,7 +1,7 @@
-﻿#include "stdafx.h"
+﻿#include "pch.h"
 #include "UILayer.h"
 
-CUILayer::CUILayer(ID3D12Device* D3D12Device, ID3D12CommandQueue* D3D12CommandQueue, UINT RenderTargetCount)
+CUILayer::CUILayer(ID3D12Device* d3d12Device, ID3D12CommandQueue* D3D12CommandQueue, UINT RenderTargetCount)
 {
     m_D3D11WrappedRenderTargets.resize(RenderTargetCount);
     m_D2D1RenderTargets.resize(RenderTargetCount);
@@ -17,13 +17,13 @@ CUILayer::CUILayer(ID3D12Device* D3D12Device, ID3D12CommandQueue* D3D12CommandQu
     ComPtr<ID3D11Device> D3D11Device{};
     ComPtr<ID3D12CommandQueue> D3D12CommandQueues[]{ D3D12CommandQueue };
 
-    DX::ThrowIfFailed(D3D11On12CreateDevice(D3D12Device, D3D11DeviceFlags, nullptr, 0, reinterpret_cast<IUnknown**>(D3D12CommandQueues->GetAddressOf()), _countof(D3D12CommandQueues), 0, reinterpret_cast<ID3D11Device**>(D3D11Device.GetAddressOf()), reinterpret_cast<ID3D11DeviceContext**>(m_D3D11DeviceContext.GetAddressOf()), nullptr));
+    DX::ThrowIfFailed(D3D11On12CreateDevice(d3d12Device, D3D11DeviceFlags, nullptr, 0, reinterpret_cast<IUnknown**>(D3D12CommandQueues->GetAddressOf()), _countof(D3D12CommandQueues), 0, reinterpret_cast<ID3D11Device**>(D3D11Device.GetAddressOf()), reinterpret_cast<ID3D11DeviceContext**>(m_D3D11DeviceContext.GetAddressOf()), nullptr));
     DX::ThrowIfFailed(D3D11Device->QueryInterface(__uuidof(ID3D11On12Device), reinterpret_cast<void**>(m_D3D11On12Device.GetAddressOf())));
 
 #ifdef _DEBUG
     ComPtr<ID3D12InfoQueue> D3D12InfoQueue{};
 
-    if (SUCCEEDED(D3D12Device->QueryInterface(IID_PPV_ARGS(D3D12InfoQueue.GetAddressOf()))))
+    if (SUCCEEDED(d3d12Device->QueryInterface(IID_PPV_ARGS(D3D12InfoQueue.GetAddressOf()))))
     {
         D3D12_MESSAGE_SEVERITY D3D12MsgSeverities[]{  D3D12_MESSAGE_SEVERITY_INFO };
         D3D12_MESSAGE_ID D3D12MsgIDs[]{ D3D12_MESSAGE_ID_INVALID_DESCRIPTOR_HANDLE };
@@ -70,12 +70,12 @@ void CUILayer::UpdateText(WPARAM wParam)
         }
         else if (m_TextBlock.m_TextPos < m_TextBlock.m_Text.length() && (('0' <= wParam && wParam <= '9') || wParam == '.'))
         {
-            m_TextBlock.m_Text[m_TextBlock.m_TextPos++] = static_cast<TCHAR>(wParam);
+            m_TextBlock.m_Text[m_TextBlock.m_TextPos++] = static_cast<char>(wParam);
         }
     }
 }
 
-const tstring& CUILayer::GetText() const
+const string& CUILayer::GetText() const
 {
     return m_TextBlock.m_Text;
 }

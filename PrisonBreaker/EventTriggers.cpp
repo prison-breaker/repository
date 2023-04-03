@@ -1,6 +1,6 @@
-#include "stdafx.h"
+#include "pch.h"
 #include "EventTriggers.h"
-#include "Framework.h"
+#include "Core.h"
 #include "GameScene.h"
 #include "Player.h"
 #include "Guard.h"
@@ -107,7 +107,7 @@ void CPowerDownEventTrigger::ShowInteractionUI()
 	if (m_InteractionUI)
 	{
 		// 감시탑 차단 상호작용 UI는 0번 플레이어에게만 보여진다.
-		if (CFramework::GetInstance()->GetSocketInfo().m_ID == 0)
+		if (CCore::GetInstance()->GetSocketInfo().m_ID == 0)
 		{
 			m_InteractionUI->SetActive(true);
 
@@ -139,7 +139,7 @@ bool CPowerDownEventTrigger::InteractEventTrigger(UINT CallerIndex)
 			Lights[2].m_IsActive = false;
 
 			// 0번 플레이어의 감시탑 차단 미션UI를 완료상태로 변경한다.
-			if (CFramework::GetInstance()->GetSocketInfo().m_ID == 0)
+			if (CCore::GetInstance()->GetSocketInfo().m_ID == 0)
 			{
 				vector<vector<shared_ptr<CQuadObject>>>& QuadObjects{ GameScene->GetQuadObjects() };
 
@@ -195,7 +195,7 @@ void CSirenEventTrigger::ShowInteractionUI()
 	if (m_InteractionUI)
 	{
 		// 사이렌 작동 상호작용 UI는 1번 플레이어에게만 보여진다.
-		if (CFramework::GetInstance()->GetSocketInfo().m_ID == 1)
+		if (CCore::GetInstance()->GetSocketInfo().m_ID == 1)
 		{
 			m_InteractionUI->SetActive(true);
 			m_InteractionUI->SetCellIndex(0, 3);
@@ -210,7 +210,7 @@ bool CSirenEventTrigger::InteractEventTrigger(UINT CallerIndex)
 		m_IsInteracted = true;
 
 		shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene("GameScene")) };
-		vector<vector<shared_ptr<CGameObject>>>& GameObjects{ GameScene->GetGameObjects() };
+		vector<vector<shared_ptr<CObject>>>& GameObjects{ GameScene->GetGameObjects() };
 		shared_ptr<CNavMesh> NavMesh{ GameScene->GetNavMesh() };
 
 		UINT GuardCount{ static_cast<UINT>(GameObjects[OBJECT_TYPE_NPC].size()) };
@@ -240,7 +240,7 @@ bool CSirenEventTrigger::InteractEventTrigger(UINT CallerIndex)
 		}
 
 		// 1번 플레이어의 사이렌 작동 미션UI를 완료상태로 변경한다.
-		if (CFramework::GetInstance()->GetSocketInfo().m_ID == 1)
+		if (CCore::GetInstance()->GetSocketInfo().m_ID == 1)
 		{
 			vector<vector<shared_ptr<CQuadObject>>>& QuadObjects{ GameScene->GetQuadObjects() };
 
@@ -295,8 +295,8 @@ void COpenGateEventTrigger::ShowInteractionUI()
 {
 	if (m_InteractionUI)
 	{
-		UINT PlayerID{ CFramework::GetInstance()->GetSocketInfo().m_ID };
-		vector<vector<shared_ptr<CGameObject>>>& GameObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene("GameScene"))->GetGameObjects() };
+		UINT PlayerID{ CCore::GetInstance()->GetSocketInfo().m_ID };
+		vector<vector<shared_ptr<CObject>>>& GameObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene("GameScene"))->GetGameObjects() };
 		shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(GameObjects[OBJECT_TYPE_PLAYER][PlayerID]) };
 
 		if (Player->HasKey() && !m_UsedKeyIndices[PlayerID])
@@ -311,7 +311,7 @@ bool COpenGateEventTrigger::InteractEventTrigger(UINT CallerIndex)
 {
 	if (!m_IsInteracted)
 	{
-		vector<vector<shared_ptr<CGameObject>>>& GameObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene("GameScene"))->GetGameObjects() };
+		vector<vector<shared_ptr<CObject>>>& GameObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene("GameScene"))->GetGameObjects() };
 		shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(GameObjects[OBJECT_TYPE_PLAYER][CallerIndex]) };
 
 		if (Player->HasKey() && !m_UsedKeyIndices[CallerIndex])
@@ -377,7 +377,7 @@ bool CGetPistolEventTrigger::InteractEventTrigger(UINT CallerIndex)
 		m_IsInteracted = true;
 
 		shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene("GameScene")) };
-		vector<vector<shared_ptr<CGameObject>>>& GameObjects{ GameScene->GetGameObjects() };
+		vector<vector<shared_ptr<CObject>>>& GameObjects{ GameScene->GetGameObjects() };
 
 		// 권총을 획득한 경우, 권총으로 무기를 교체하고 UI 또한 주먹에서 권총으로 변경시킨다.
 		shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(GameObjects[OBJECT_TYPE_PLAYER][CallerIndex]) };
@@ -389,7 +389,7 @@ bool CGetPistolEventTrigger::InteractEventTrigger(UINT CallerIndex)
 
 		Player->SwapWeapon(WEAPON_TYPE_PISTOL);
 
-		if (CFramework::GetInstance()->GetSocketInfo().m_ID == CallerIndex)
+		if (CCore::GetInstance()->GetSocketInfo().m_ID == CallerIndex)
 		{
 			vector<vector<shared_ptr<CQuadObject>>>& QuadObjects{ GameScene->GetQuadObjects() };
 
@@ -436,12 +436,12 @@ bool CGetKeyEventTrigger::InteractEventTrigger(UINT CallerIndex)
 		m_IsInteracted = true;
 
 		shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene("GameScene")) };
-		vector<vector<shared_ptr<CGameObject>>>& GameObjects{ GameScene->GetGameObjects() };
+		vector<vector<shared_ptr<CObject>>>& GameObjects{ GameScene->GetGameObjects() };
 		shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(GameObjects[OBJECT_TYPE_PLAYER][CallerIndex]) };
 
 		Player->ManageKey(true);
 
-		if (CFramework::GetInstance()->GetSocketInfo().m_ID == CallerIndex)
+		if (CCore::GetInstance()->GetSocketInfo().m_ID == CallerIndex)
 		{
 			vector<vector<shared_ptr<CQuadObject>>>& QuadObjects{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene("GameScene"))->GetQuadObjects()};
 

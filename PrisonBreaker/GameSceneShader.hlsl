@@ -271,6 +271,8 @@ VS_OUTPUT VS_Main(VS_INPUT Input)
 
 float4 PS_Main(VS_OUTPUT Input) : SV_TARGET
 {
+    return float4(1.0f, 0.0f, 0.0f, 1.0f);
+	
 	float4 Color = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
 	if (Material.m_TextureMask & TEXTURE_MASK_ALBEDO_MAP)

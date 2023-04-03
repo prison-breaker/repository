@@ -1,65 +1,66 @@
 #pragma once
+#include "Asset.h"
 
-class CCamera;
-
-class CShader
+class CShader : public CAsset
 {
+	friend class CAssetManager;
+
 protected:
-	vector<ComPtr<ID3D12PipelineState>> m_D3D12PipelineStates{};
+	static ComPtr<ID3D12PipelineState>  m_currentPipelineState;
+
+	vector<ComPtr<ID3D12PipelineState>> m_d3d12PipelineStates;
+
+protected:
+	CShader();
+
+	D3D12_SHADER_BYTECODE Compile(const string& fileName, const string& shaderName, const string& shaderVersion, ID3DBlob* d3d12CodeBlob);
+
+	virtual D3D12_INPUT_LAYOUT_DESC CreateInputLayout(int stateNum);
+	virtual D3D12_RASTERIZER_DESC CreateRasterizerState(int stateNum);
+	virtual D3D12_BLEND_DESC CreateBlendState(int stateNum);
+	virtual D3D12_DEPTH_STENCIL_DESC CreateDepthStencilState(int stateNum);
+	virtual D3D12_STREAM_OUTPUT_DESC CreateStreamOutputState(int stateNum);
+
+	virtual D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob* d3d12ShaderBlob, int stateNum);
+	virtual D3D12_SHADER_BYTECODE CreateHullShader(ID3DBlob* d3d12ShaderBlob, int stateNum);
+	virtual D3D12_SHADER_BYTECODE CreateDomainShader(ID3DBlob* d3d12ShaderBlob, int stateNum);
+	virtual D3D12_SHADER_BYTECODE CreateGeometryShader(ID3DBlob* d3d12ShaderBlob, int stateNum);
+	virtual D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob* d3d12ShaderBlob, int stateNum);
+
+	virtual D3D12_PRIMITIVE_TOPOLOGY_TYPE GetPrimitiveType(int stateNum);
+	virtual DXGI_FORMAT GetRTVFormat(int renderTargetNum, int stateNum);
+	virtual DXGI_FORMAT GetDSVFormat(int stateNum);
+
+	virtual void CreatePipelineState(ID3D12Device* d3d12Device, ID3D12RootSignature* d3d12RootSignature, int stateNum);
 
 public:
-	CShader() = default;
-	virtual ~CShader() = default;
+	virtual ~CShader();
 
-	D3D12_SHADER_BYTECODE CompileShaderFromFile(LPCWSTR FileName, LPCSTR ShaderName, LPCSTR ShaderModelName, ID3DBlob* D3D12CodeBlob);
-};
-
-//=========================================================================================================================
-
-class CGraphicsShader : public CShader
-{
-public:
-	CGraphicsShader() = default;
-	virtual ~CGraphicsShader() = default;
-
-	virtual D3D12_INPUT_LAYOUT_DESC CreateInputLayout(UINT StateNum);
-	virtual D3D12_RASTERIZER_DESC CreateRasterizerState(UINT StateNum);
-	virtual D3D12_BLEND_DESC CreateBlendState(UINT StateNum);
-	virtual D3D12_DEPTH_STENCIL_DESC CreateDepthStencilState(UINT StateNum);
-	virtual D3D12_STREAM_OUTPUT_DESC CreateStreamOutputState(UINT StateNum);
-
-	virtual D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob* D3D12ShaderBlob, UINT StateNum);
-	virtual D3D12_SHADER_BYTECODE CreateHullShader(ID3DBlob* D3D12ShaderBlob, UINT StateNum);
-	virtual D3D12_SHADER_BYTECODE CreateDomainShader(ID3DBlob* D3D12ShaderBlob, UINT StateNum);
-	virtual D3D12_SHADER_BYTECODE CreateGeometryShader(ID3DBlob* D3D12ShaderBlob, UINT StateNum);
-	virtual D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob* D3D12ShaderBlob, UINT StateNum);
-
-	virtual D3D12_PRIMITIVE_TOPOLOGY_TYPE GetPrimitiveType(UINT StateNum);
-	virtual DXGI_FORMAT GetRTVFormat(UINT RenderTargetNum, UINT StateNum);
-	virtual DXGI_FORMAT GetDSVFormat(UINT StateNum);
-
-	virtual void CreatePipelineState(ID3D12Device* D3D12Device, ID3D12RootSignature* D3D12RootSignature, UINT StateNum);
-	virtual void CreatePipelineStates(ID3D12Device* D3D12Device, ID3D12RootSignature* D3D12RootSignature, UINT StateCount);
-	virtual void SetPipelineState(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, UINT StateNum);
-
-	virtual void Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, CCamera* Camera);
+	void CreatePipelineStates(ID3D12Device* d3d12Device, ID3D12RootSignature* d3d12RootSignature, int stateCount);
+	void SetPipelineState(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, int stateNum);
 };
 
 //=========================================================================================================================
 
 class CComputeShader : public CShader
 {
+	friend class CAssetManager;
+
+private:
+	XMUINT3 m_threadGroup;
+
 protected:
-	XMUINT3 m_ThreadGroups{};
+	CComputeShader();
+
+	virtual D3D12_SHADER_BYTECODE CreateComputeShader(ID3DBlob* d3d12ShaderBlob, int stateNum);
 
 public:
-	CComputeShader() = default;
-	virtual ~CComputeShader() = default;
+	virtual ~CComputeShader();
 
-	virtual D3D12_SHADER_BYTECODE CreateComputeShader(ID3DBlob* D3D12ShaderBlob, UINT StateNum);
+	void SetThreadGroup(const XMUINT3& threadGroup);
+	const XMUINT3& GetThreadGroup();
 
-	virtual void CreatePipelineStates(ID3D12Device* D3D12Device, ID3D12RootSignature* D3D12RootSignature, const XMUINT3& ThreadGroups, UINT StateNum);
-
-	virtual void Dispatch(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, UINT StateNum);
-	virtual void Dispatch(ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const XMUINT3& ThreadGroups, UINT StateNum);
+	virtual void CreatePipelineState(ID3D12Device* d3d12Device, ID3D12RootSignature* d3d12RootSignature, int stateNum);
+	
+	void Dispatch(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, int stateNum);
 };

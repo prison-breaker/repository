@@ -1,6 +1,6 @@
-#include "stdafx.h"
+#include "pch.h"
 #include "EndingScene.h"
-#include "Framework.h"
+#include "Core.h"
 #include "Player.h"
 #include "State_Player.h"
 #include "BilboardObjects.h"
@@ -9,7 +9,7 @@
 #include "Camera.h"
 #include "PostProcessingShader.h"
 
-CEndingScene::CEndingScene(vector<vector<shared_ptr<CGameObject>>>& GameObjects, shared_ptr<CQuadObject>& SkyBox) :
+CEndingScene::CEndingScene(vector<vector<shared_ptr<CObject>>>& GameObjects, shared_ptr<CQuadObject>& SkyBox) :
 	m_GameObjects{ GameObjects }
 {
 	// 0: Trees, 1: SkyBox
@@ -24,9 +24,9 @@ void CEndingScene::Initialize()
 
 }
 
-void CEndingScene::OnCreate(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, ID3D12RootSignature* D3D12RootSignature)
+void CEndingScene::OnCreate(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ID3D12RootSignature* D3D12RootSignature)
 {
-	BuildObjects(D3D12Device, D3D12GraphicsCommandList, D3D12RootSignature);
+	BuildObjects(d3d12Device, d3d12GraphicsCommandList, D3D12RootSignature);
 }
 
 void CEndingScene::OnDestroy()
@@ -34,9 +34,9 @@ void CEndingScene::OnDestroy()
 
 }
 
-void CEndingScene::BuildObjects(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, ID3D12RootSignature* D3D12RootSignature)
+void CEndingScene::BuildObjects(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ID3D12RootSignature* D3D12RootSignature)
 {
-	shared_ptr<CTree> Tree{ make_shared<CTree>(D3D12Device, D3D12GraphicsCommandList, TEXT("EndingScene")) };
+	shared_ptr<CTree> Tree{ make_shared<CTree>(d3d12Device, d3d12GraphicsCommandList, TEXT("EndingScene")) };
 
 	m_QuadObjects[0] = Tree;
 }
@@ -48,7 +48,7 @@ void CEndingScene::ReleaseObjects()
 
 void CEndingScene::Enter(MSG_TYPE MsgType)
 {
-	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][CFramework::GetInstance()->GetSocketInfo().m_ID]) };
+	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][CCore::GetInstance()->GetSocketInfo().m_ID]) };
 
 	Player->GetCamera()->GenerateViewMatrix(XMFLOAT3(0.0f, 2.0f, -20.0f), XMFLOAT3(0.0f, 0.0f, 1.0f));
 	Player->GetCamera()->Rotate(3.0f, 0.0f, 0.0f);
@@ -78,25 +78,25 @@ void CEndingScene::Exit()
 		m_GameObjects[OBJECT_TYPE_TERRAIN][1]->SetActive(false);
 	}
 
-	CFramework::GetInstance()->GetPostProcessingShader()->SetLetterboxAmount(0.0f);
+	CCore::GetInstance()->GetPostProcessingShader()->SetLetterboxAmount(0.0f);
 }
 
-void CEndingScene::LoadSceneInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName)
+void CEndingScene::LoadSceneInfoFromFile(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, const string& FileName)
 {
 
 }
 
-void CEndingScene::LoadUIInfoFromFile(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList, const tstring& FileName)
+void CEndingScene::LoadUIInfoFromFile(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, const string& FileName)
 {
 
 }
 
-void CEndingScene::CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
+void CEndingScene::CreateShaderVariables(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
 {
 
 }
 
-void CEndingScene::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
+void CEndingScene::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
 {
 
 }
@@ -145,61 +145,61 @@ void CEndingScene::ProcessInput(HWND hWnd, float ElapsedTime)
 
 void CEndingScene::Animate(float ElapsedTime)
 {
-	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][CFramework::GetInstance()->GetSocketInfo().m_ID]) };
+	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][CCore::GetInstance()->GetSocketInfo().m_ID]) };
 
 	Player->GetCamera()->Rotate(-3.0f * ElapsedTime, 0.0f, 0.0f);
 
-	shared_ptr<CPostProcessingShader> PostProcessingShader{ CFramework::GetInstance()->GetPostProcessingShader() };
+	shared_ptr<CPostProcessingShader> PostProcessingShader{ CCore::GetInstance()->GetPostProcessingShader() };
 
 	PostProcessingShader->SetLetterboxAmount(PostProcessingShader->GetLetterboxAmount() + 0.05f * ElapsedTime);
 }
 
-void CEndingScene::PreRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
+void CEndingScene::PreRender(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
 {
 
 }
 
-void CEndingScene::Render(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
+void CEndingScene::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
 {
-	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][CFramework::GetInstance()->GetSocketInfo().m_ID]) };
+	shared_ptr<CPlayer> Player{ static_pointer_cast<CPlayer>(m_GameObjects[OBJECT_TYPE_PLAYER][CCore::GetInstance()->GetSocketInfo().m_ID]) };
 
-	Player->GetCamera()->RSSetViewportsAndScissorRects(D3D12GraphicsCommandList);
-	Player->GetCamera()->UpdateShaderVariables(D3D12GraphicsCommandList);
+	Player->GetCamera()->RSSetViewportsAndScissorRects(d3d12GraphicsCommandList);
+	Player->GetCamera()->UpdateShaderVariables(d3d12GraphicsCommandList);
 
 	shared_ptr<CScene> GameScene{ CSceneManager::GetInstance()->GetScene(TEXT("GameScene")) };
 
-	GameScene->UpdateShaderVariables(D3D12GraphicsCommandList);
+	GameScene->UpdateShaderVariables(d3d12GraphicsCommandList);
 
 	for (const auto& GameObject : m_GameObjects[OBJECT_TYPE_PLAYER])
 	{
 		if (GameObject)
 		{
-			GameObject->Render(D3D12GraphicsCommandList, Player->GetCamera().get(), RENDER_TYPE_STANDARD);
+			GameObject->Render(d3d12GraphicsCommandList, Player->GetCamera().get(), RENDER_TYPE_STANDARD);
 		}
 	}
 
 	if (m_GameObjects[OBJECT_TYPE_TERRAIN][1])
 	{
-		m_GameObjects[OBJECT_TYPE_TERRAIN][1]->Render(D3D12GraphicsCommandList, Player->GetCamera().get(), RENDER_TYPE_STANDARD);
+		m_GameObjects[OBJECT_TYPE_TERRAIN][1]->Render(d3d12GraphicsCommandList, Player->GetCamera().get(), RENDER_TYPE_STANDARD);
 	}
 
 	for (const auto& QuadObject : m_QuadObjects)
 	{
 		if (QuadObject)
 		{
-			QuadObject->Render(D3D12GraphicsCommandList, Player->GetCamera().get(), RENDER_TYPE_STANDARD);
+			QuadObject->Render(d3d12GraphicsCommandList, Player->GetCamera().get(), RENDER_TYPE_STANDARD);
 		}
 	}
 }
 
-void CEndingScene::PostRender(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
+void CEndingScene::PostRender(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
 {
 
 }
 
 void CEndingScene::ProcessPacket()
 {
-	SOCKET_INFO SocketInfo{ CFramework::GetInstance()->GetSocketInfo() };
+	SOCKET_INFO SocketInfo{ CCore::GetInstance()->GetSocketInfo() };
 
 	if (SocketInfo.m_Socket)
 	{
@@ -231,7 +231,7 @@ void CEndingScene::ProcessPacket()
 				return;
 			case MSG_TYPE_CREDIT:
 				CSceneManager::GetInstance()->ReserveScene(TEXT("CreditScene"));
-				CFramework::GetInstance()->GetPostProcessingShader()->SetPostProcessingType(POST_PROCESSING_TYPE_FADE_OUT);
+				CCore::GetInstance()->GetPostProcessingShader()->SetPostProcessingType(POST_PROCESSING_TYPE_FADE_OUT);
 				return;
 			}
 

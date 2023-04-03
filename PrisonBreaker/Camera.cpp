@@ -1,236 +1,270 @@
-#include "stdafx.h"
+#include "pch.h"
 #include "Camera.h"
 
-void CCamera::CreateShaderVariables(ID3D12Device* D3D12Device, ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
-{
-	UINT Bytes{ (sizeof(CB_CAMERA) + 255) & ~255 };
+#include "TimeManager.h"
 
-	m_D3D12Camera = DX::CreateBufferResource(D3D12Device, D3D12GraphicsCommandList, nullptr, Bytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, nullptr);
-	DX::ThrowIfFailed(m_D3D12Camera->Map(0, nullptr, (void**)&m_MappedCamera));
+#include "Player.h"
+
+CCamera::CCamera(CAMERA_TYPE type) :
+	m_type(type),
+	m_isZoomIn(),
+	m_magnification(1.0f),
+	m_d3d12Viewport(),
+	m_d3d12ScissorRect(),
+	m_viewMatrix(Matrix4x4::Identity()),
+	m_projectionMatrix(Matrix4x4::Identity()),
+	m_right(1.0f, 0.0f, 0.0f),
+	m_up(0.0f, 1.0f, 0.0f),
+	m_forward(0.0f, 0.0f, 1.0f),
+	m_position(),
+	m_offset(0.0f, 0.0f, -3.0f),
+	m_speed(15.0f),
+	m_frustum(),
+	m_d3d12Buffer(),
+	m_mappedData(),
+	m_target(),
+	m_light()
+{
 }
 
-void CCamera::UpdateShaderVariables(ID3D12GraphicsCommandList* D3D12GraphicsCommandList)
+CCamera::~CCamera()
 {
-	XMStoreFloat4x4(&m_MappedCamera->m_ViewMatrix, XMMatrixTranspose(XMLoadFloat4x4(&m_ViewMatrix)));
-	XMStoreFloat4x4(&m_MappedCamera->m_ProjectionMatrix, XMMatrixTranspose(XMLoadFloat4x4(&m_ProjectionMatrix)));
-	memcpy(&m_MappedCamera->m_Position, &m_Position, sizeof(XMFLOAT3));
-
-	D3D12GraphicsCommandList->SetGraphicsRootConstantBufferView(ROOT_PARAMETER_TYPE_CAMERA, m_D3D12Camera->GetGPUVirtualAddress());
+	ReleaseShaderVariables();
 }
 
-void CCamera::ReleaseShaderVariables()
+CAMERA_TYPE CCamera::GetType()
 {
-	m_D3D12Camera->Unmap(0, nullptr);
+	return m_type;
 }
 
-void CCamera::SetZoomIn(bool IsZoomIn)
+void CCamera::SetZoomIn(bool isZoomIn)
 {
-	m_IsZoomIn = IsZoomIn;
-	m_ZoomFactor = 0.0f;
+	m_isZoomIn = isZoomIn;
 }
 
-bool CCamera::IsZoomIn() const
+bool CCamera::IsZoomIn()
 {
-	return m_IsZoomIn;
+	return m_isZoomIn;
 }
 
-void CCamera::IncreaseZoomFactor(float ElapsedTime)
+void CCamera::SetMagnification(float magnification)
 {
-	if (IsZoomIn())
-	{
-		m_ZoomFactor += 10.0f * ElapsedTime;
+	m_magnification = clamp(magnification, 1.0f, 1.5f);
+}
 
-		if (m_ZoomFactor > 1.2f)
-		{
-			m_ZoomFactor = 1.2f;
-		}
-	}
+float CCamera::GetMagnification()
+{
+	return m_magnification;
 }
 
 void CCamera::SetViewport(int TopLeftX, int TopLeftY, UINT Width, UINT Height, float MinDepth, float MaxDepth)
 {
-	m_D3D12Viewport.TopLeftX = static_cast<float>(TopLeftX);
-	m_D3D12Viewport.TopLeftY = static_cast<float>(TopLeftY);
-	m_D3D12Viewport.Width = static_cast<float>(Width);
-	m_D3D12Viewport.Height = static_cast<float>(Height);
-	m_D3D12Viewport.MinDepth = MinDepth;
-	m_D3D12Viewport.MaxDepth = MaxDepth;
+	m_d3d12Viewport.TopLeftX = static_cast<float>(TopLeftX);
+	m_d3d12Viewport.TopLeftY = static_cast<float>(TopLeftY);
+	m_d3d12Viewport.Width = static_cast<float>(Width);
+	m_d3d12Viewport.Height = static_cast<float>(Height);
+	m_d3d12Viewport.MinDepth = MinDepth;
+	m_d3d12Viewport.MaxDepth = MaxDepth;
 }
 
 void CCamera::SetScissorRect(LONG Left, LONG Top, LONG Right, LONG Bottom)
 {
-	m_D3D12ScissorRect.left = Left;
-	m_D3D12ScissorRect.top = Top;
-	m_D3D12ScissorRect.right = Right;
-	m_D3D12ScissorRect.bottom = Bottom;
+	m_d3d12ScissorRect.left = Left;
+	m_d3d12ScissorRect.top = Top;
+	m_d3d12ScissorRect.right = Right;
+	m_d3d12ScissorRect.bottom = Bottom;
 }
 
-void CCamera::RSSetViewportsAndScissorRects(ID3D12GraphicsCommandList* D3D12GraphicsCommandList) const
+const XMFLOAT4X4& CCamera::GetViewMatrix()
 {
-	D3D12GraphicsCommandList->RSSetViewports(1, &m_D3D12Viewport);
-	D3D12GraphicsCommandList->RSSetScissorRects(1, &m_D3D12ScissorRect);
+	return m_viewMatrix;
+}
+
+const XMFLOAT4X4& CCamera::GetProjectionMatrix()
+{
+	return m_projectionMatrix;
+}
+
+const XMFLOAT3& CCamera::GetRight()
+{
+	return m_right;
+}
+
+const XMFLOAT3& CCamera::GetUp()
+{
+	return m_up;
+}
+
+const XMFLOAT3& CCamera::GetFoward()
+{
+	return m_forward;
+}
+
+void CCamera::SetPosition(const XMFLOAT3& Position)
+{
+	m_position = Position;
+
+	RegenerateViewMatrix();
+}
+
+const XMFLOAT3& CCamera::GetPosition()
+{
+	return m_position;
+}
+
+void CCamera::SetTarget(CPlayer* target)
+{
+	m_target = target;
+}
+
+CPlayer* CCamera::GetTarget()
+{
+	return m_target;
+}
+
+void CCamera::SetLight(Light* light)
+{
+	m_light = light;
+}
+
+Light* CCamera::GetLight()
+{
+	return m_light;
+}
+
+void CCamera::CreateShaderVariables(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+{
+	UINT bytes = (sizeof(CB_CAMERA) + 255) & ~255;
+
+	m_d3d12Buffer = DX::CreateBufferResource(d3d12Device, d3d12GraphicsCommandList, nullptr, bytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, nullptr);
+	DX::ThrowIfFailed(m_d3d12Buffer->Map(0, nullptr, (void**)&m_mappedData));
+}
+
+void CCamera::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+{
+	XMStoreFloat4x4(&m_mappedData->m_viewMatrix, XMMatrixTranspose(XMLoadFloat4x4(&m_viewMatrix)));
+	XMStoreFloat4x4(&m_mappedData->m_projectionMatrix, XMMatrixTranspose(XMLoadFloat4x4(&m_projectionMatrix)));
+	memcpy(&m_mappedData->m_position, &m_position, sizeof(XMFLOAT3));
+
+	d3d12GraphicsCommandList->SetGraphicsRootConstantBufferView((UINT)ROOT_PARAMETER_TYPE::CAMERA, m_d3d12Buffer->GetGPUVirtualAddress());
+}
+
+void CCamera::ReleaseShaderVariables()
+{
+	m_d3d12Buffer->Unmap(0, nullptr);
+}
+
+void CCamera::RSSetViewportsAndScissorRects(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+{
+	d3d12GraphicsCommandList->RSSetViewports(1, &m_d3d12Viewport);
+	d3d12GraphicsCommandList->RSSetScissorRects(1, &m_d3d12ScissorRect);
 }
 
 void CCamera::GenerateViewMatrix(const XMFLOAT3& Position, const XMFLOAT3& Look)
 {
-	m_Position = Position;
-	m_Look = Look;
+	m_position = Position;
+	m_forward = Look;
 
 	RegenerateViewMatrix();
 }
 
 void CCamera::RegenerateViewMatrix()
 {
-	const XMFLOAT3 WorldUp{ 0.0f, 1.0f, 0.0f };
+	XMFLOAT3 worldUp = XMFLOAT3(0.0f, 1.0f, 0.0f);
 
-	m_Look = Vector3::Normalize(m_Look);
-	m_Right = Vector3::CrossProduct(WorldUp, m_Look, false);
-	m_Up = Vector3::CrossProduct(m_Look, m_Right, false);
-	m_ViewMatrix = Matrix4x4::LookToLH(m_Position, m_Look, WorldUp);
+	m_forward = Vector3::Normalize(m_forward);
+	m_right = Vector3::CrossProduct(worldUp, m_forward, false);
+	m_up = Vector3::CrossProduct(m_forward, m_right, false);
+	m_viewMatrix = Matrix4x4::LookToLH(m_position, m_forward, worldUp);
 
 	GenerateBoundingFrustum();
 }
 
-const XMFLOAT4X4& CCamera::GetViewMatrix() const
-{
-	return m_ViewMatrix;
-}
-
 void CCamera::GenerateOrthographicsProjectionMatrix(float ViewWidth, float ViewHeight, float NearZ, float FarZ)
 {
-	m_ProjectionMatrix = Matrix4x4::OrthographicFovLH(ViewWidth, ViewHeight, NearZ, FarZ);
+	m_projectionMatrix = Matrix4x4::OrthographicFovLH(ViewWidth, ViewHeight, NearZ, FarZ);
 }
 
 void CCamera::GeneratePerspectiveProjectionMatrix(float FOVAngleY, float AspectRatio, float NearZ, float FarZ)
 {
-	m_ProjectionMatrix = Matrix4x4::PerspectiveFovLH(XMConvertToRadians(FOVAngleY), AspectRatio, NearZ, FarZ);
-}
-
-const XMFLOAT4X4& CCamera::GetProjectionMatrix() const
-{
-	return m_ProjectionMatrix;
+	m_projectionMatrix = Matrix4x4::PerspectiveFovLH(XMConvertToRadians(FOVAngleY), AspectRatio, NearZ, FarZ);
 }
 
 void CCamera::GenerateBoundingFrustum()
 {
 	// 원근 투영 변환 행렬에서 절두체를 생성한다(절두체는 카메라 좌표계로 표현된다).
-	m_BoundingFrustum.CreateFromMatrix(m_BoundingFrustum, XMLoadFloat4x4(&m_ProjectionMatrix));
+	m_frustum.CreateFromMatrix(m_frustum, XMLoadFloat4x4(&m_projectionMatrix));
 
 	// 카메라 변환 행렬의 역행렬을 구한다.
-	XMMATRIX InverseViewMatrix{ XMMatrixInverse(nullptr, XMLoadFloat4x4(&m_ViewMatrix)) };
+	XMMATRIX inverseViewMatrix = XMMatrixInverse(nullptr, XMLoadFloat4x4(&m_viewMatrix));
 
 	// 절두체를 카메라 변환 행렬의 역행렬로 변환한다(이제 절두체는 월드 좌표계로 표현된다).
-	m_BoundingFrustum.Transform(m_BoundingFrustum, InverseViewMatrix);
+	m_frustum.Transform(m_frustum, inverseViewMatrix);
 }
 
-bool CCamera::IsInBoundingFrustum(const BoundingBox& BoundingBox) const
+bool CCamera::IsInBoundingFrustum(const BoundingBox& BoundingBox)
 {
-	return m_BoundingFrustum.Intersects(BoundingBox);
-}
-
-const XMFLOAT3& CCamera::GetRight() const
-{
-	return m_Right;
-}
-
-const XMFLOAT3& CCamera::GetUp() const
-{
-	return m_Up;
-}
-
-const XMFLOAT3& CCamera::GetLook() const
-{
-	return m_Look;
-}
-
-void CCamera::SetPosition(const XMFLOAT3& Position)
-{
-	m_Position = Position;
-}
-
-const XMFLOAT3& CCamera::GetPosition() const
-{
-	return m_Position;
+	return m_frustum.Intersects(BoundingBox);
 }
 
 void CCamera::Move(const XMFLOAT3& Shift)
 {
-	m_Position = Vector3::Add(m_Position, Shift);
-
-	RegenerateViewMatrix();
+	SetPosition(Vector3::Add(m_position, Shift));
 }
 
 void CCamera::Rotate(float Pitch, float Yaw, float Roll)
 {
-	if (Pitch)
+	if (!Math::IsZero(Pitch))
 	{
-		XMFLOAT4X4 RotationMatrix{ Matrix4x4::RotationAxis(m_Right, Pitch) };
-		m_Look = Vector3::TransformNormal(m_Look, RotationMatrix);
+		XMFLOAT4X4 rotationMatrix = Matrix4x4::RotationAxis(m_right, Pitch);
+
+		m_forward = Vector3::TransformNormal(m_forward, rotationMatrix);
 	}
 
-	if (Yaw)
+	if (!Math::IsZero(Yaw))
 	{
-		XMFLOAT4X4 RotationMatrix{ Matrix4x4::RotationAxis(m_Up, Yaw) };
-		m_Look = Vector3::TransformNormal(m_Look, RotationMatrix);
+		XMFLOAT4X4 rotationMatrix = Matrix4x4::RotationAxis(m_up, Yaw);
+
+		m_forward = Vector3::TransformNormal(m_forward, rotationMatrix);
 	}
 
-	if (Roll)
+	if (!Math::IsZero(Roll))
 	{
-		XMFLOAT4X4 RotationMatrix{ Matrix4x4::RotationAxis(m_Look, Roll) };
-		m_Look = Vector3::TransformNormal(m_Look, RotationMatrix);
+		XMFLOAT4X4 rotationMatrix = Matrix4x4::RotationAxis(m_forward, Roll);
+
+		m_forward = Vector3::TransformNormal(m_forward, rotationMatrix);
 	}
 
 	RegenerateViewMatrix();
 }
 
-void CCamera::Rotate(const XMFLOAT4X4& WorldMatrix, float ElapsedTime, float NearestHitDistance)
+void CCamera::Update()
 {
-	// 플레이어와 오브젝트
-	//if (NearestHitDistance 
-	//  0.0f)
-	//{
-	//	m_Offset.z = clamp(-(NearestHitDistance + 3.0f), -3.0f, -1.8f);
-	//}
-	//else
-	//{
-	//	m_Offset.z = -3.0f;
-	//}
-
-	// 카메라와 오브젝트
-	if (NearestHitDistance < 3.0f)
+	if (m_target != nullptr)
 	{
-		m_Offset.z = clamp(-NearestHitDistance, -3.0f, -1.8f);
-	}
-	else
-	{
-		m_Offset.z = -3.0f;
-	}
+		const XMFLOAT3& rotation = m_target->GetRotation();
+		XMFLOAT4X4 transformMatrix = Matrix4x4::Multiply(Matrix4x4::RotationYawPitchRoll(rotation.x, 0.0f, 0.0f), m_target->GetWorldMatrix());
+		XMFLOAT3 focusPosition = XMFLOAT3(transformMatrix._41, transformMatrix._42 + 4.5f, transformMatrix._43);
 
-	XMFLOAT4X4 RotationMatrix{
-		WorldMatrix._11, WorldMatrix._12, WorldMatrix._13, 0.0f,
-		WorldMatrix._21, WorldMatrix._22, WorldMatrix._23, 0.0f,
-		WorldMatrix._31, WorldMatrix._32, WorldMatrix._33, 0.0f,
-				   0.0f,			0.0f,			 0.0f, 1.0f
-	};
+		if (m_magnification > 1.0f)
+		{
+			XMFLOAT3 zoomDirection = Vector3::Normalize(Vector3::Add(XMFLOAT3(transformMatrix._11, transformMatrix._12, transformMatrix._13), XMFLOAT3(transformMatrix._31, transformMatrix._32, transformMatrix._33)));
+		
+			zoomDirection = Vector3::ScalarProduct(m_magnification, zoomDirection, false);
+			focusPosition = Vector3::Add(focusPosition, zoomDirection);
+		}
 
-	XMFLOAT3 Position{ WorldMatrix._41, WorldMatrix._42 + 4.5f, WorldMatrix._43 };
-	XMFLOAT3 ZoomDirection{ Vector3::Add(XMFLOAT3(WorldMatrix._11, WorldMatrix._12, WorldMatrix._13), XMFLOAT3(WorldMatrix._31, WorldMatrix._32, WorldMatrix._33)) };
-	
-	ZoomDirection = Vector3::ScalarProduct(m_ZoomFactor, ZoomDirection, false);
-	Position = Vector3::Add(Position, ZoomDirection);
+		XMFLOAT3 newOffset = Vector3::TransformNormal(m_offset, transformMatrix);
+		XMFLOAT3 newPosition = Vector3::Add(focusPosition, newOffset);
+		XMFLOAT3 direction = Vector3::Subtract(newPosition, m_position);
+		float shift = Vector3::Length(direction) * m_speed * DT;
 
-	XMFLOAT3 NewOffset{ Vector3::TransformNormal(m_Offset, RotationMatrix) };
-	XMFLOAT3 NewPosition{ Vector3::Add(Position, NewOffset) };
-	XMFLOAT3 Direction{ Vector3::Subtract(NewPosition, m_Position) };
-	float Distance{ Vector3::Length(Direction) };
-	float TimeLagScale{ (m_TimeLag) ? ElapsedTime * (1.0f / m_TimeLag) : 1.0f };
-	float Shift{ Distance * TimeLagScale };
-
-	if (Shift > 0.0f)
-	{
-		Direction = Vector3::Normalize(Direction);
-		m_Position = Vector3::Add(m_Position, Vector3::ScalarProduct(Shift, Direction, false));
-		m_Look = Vector3::Subtract(Position, m_Position);
+		if (shift > 0.0f)
+		{
+			direction = Vector3::Normalize(direction);
+			m_position = Vector3::Add(m_position, Vector3::ScalarProduct(shift, direction, false));
+			m_forward = Vector3::Subtract(focusPosition, m_position);
+		}
 	}
 
 	RegenerateViewMatrix();

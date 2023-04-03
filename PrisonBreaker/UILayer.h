@@ -2,7 +2,7 @@
 
 struct TEXT_BLOCK
 {
-    tstring                   m_Text{};
+    string                   m_Text{};
     int                       m_TextPos{};
 
     D2D1_RECT_F               m_D2D1Rect{};
@@ -34,14 +34,14 @@ private:
     TEXT_BLOCK                     m_TextBlock{};
 
 public:
-    CUILayer(ID3D12Device* D3D12Device, ID3D12CommandQueue* D3D12CommandQueue, UINT RenderTargetCount);
+    CUILayer(ID3D12Device* d3d12Device, ID3D12CommandQueue* D3D12CommandQueue, UINT RenderTargetCount);
     ~CUILayer() = default;
 
     void SetActive(bool IsActive);
     bool IsActive() const;
 
     void UpdateText(WPARAM wParam);
-    const tstring& GetText() const;
+    const string& GetText() const;
 
     void Render(UINT RenderTargetIndex);
     void ReleaseResources();

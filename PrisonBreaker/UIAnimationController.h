@@ -20,7 +20,7 @@ public:
 	CUIAnimationClip() = default;
 	~CUIAnimationClip() = default;
 
-	void LoadAnimationClipInfoFromFile(ifstream& InFile, UINT VertexCount);
+	void LoadAnimationClipInfoFromFile(ifstream& in, UINT VertexCount);
 };
 
 //=========================================================================================================================
