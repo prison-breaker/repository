@@ -20,4 +20,8 @@ public:
 
 	bool IsEquippedWeapon();
 	void SwapWeapon(WEAPON_TYPE weaponType);
+
+	virtual void OnCollisionEnter(CObject* collidedObject);
+	virtual void OnCollision(CObject* collidedObject);
+	virtual void OnCollisionExit(CObject* collidedObject);
 };

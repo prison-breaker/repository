@@ -24,6 +24,7 @@ CGuard::CGuard() :
 	m_patrolIndex(),
 	m_target()
 {
+	SetName("Guard");
 }
 
 CGuard::~CGuard()
@@ -73,6 +74,20 @@ CCharacter* CGuard::GetTarget()
 void CGuard::Init()
 {
 	GetStateMachine()->SetCurrentState(CGuardIdleState::GetInstance());
+}
+
+void CGuard::OnCollisionEnter(CObject* collidedObject)
+{
+	if (GetHealth() <= 0)
+	{
+		return;
+	}
+
+	if (collidedObject->GetName() == "Player")
+	{
+		SetTarget((CCharacter*)collidedObject);
+		GetStateMachine()->ChangeState(CGuardChaseState::GetInstance());
+	}
 }
 
 CCharacter* CGuard::FindTarget(float maxDist, float fov)

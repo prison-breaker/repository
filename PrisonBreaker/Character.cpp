@@ -1,6 +1,10 @@
 #include "pch.h"
 #include "Character.h"
 
+#include "TimeManager.h"
+
+#include "RigidBody.h"
+
 CCharacter::CCharacter() :
     m_health(100),
     m_weapon()
@@ -59,4 +63,46 @@ void CCharacter::SwapWeapon(WEAPON_TYPE weaponType)
             break;
         }
     }
+}
+
+void CCharacter::OnCollisionEnter(CObject* collidedObject)
+{
+}
+
+void CCharacter::OnCollision(CObject* collidedObject)
+{
+    float speedXZ = GetRigidBody()->GetSpeedXZ();
+
+    if (!Math::IsZero(speedXZ))
+    {
+        float angle = Vector3::Angle(GetForward(), collidedObject->GetForward());
+        XMFLOAT3 shift = {};
+
+        if (angle < 90.0f)
+        {
+            // 이 객체가 충돌한 객체보다 앞에 있는 객체인지 판별한다.
+            XMFLOAT3 toCollidedObject = Vector3::Normalize(Vector3::Subtract(collidedObject->GetPosition(), GetPosition()));
+
+            // 두 벡터의 각이 둔각이면, 앞에 있는 객체이다.
+            angle = Vector3::Angle(GetForward(), toCollidedObject);
+
+            // 뒤에 있는 객체일 경우에만, 뒤로 밀어준다.
+            if (angle <= 90.0f)
+            {
+                shift = Vector3::ScalarProduct(speedXZ * DT, Vector3::Inverse(collidedObject->GetForward()), false);
+            }
+        }
+        else if (angle > 90.0f)
+        {
+            shift = Vector3::ScalarProduct(speedXZ * DT, collidedObject->GetForward(), false);
+        }
+
+        XMFLOAT3 newPosition = Vector3::Add(GetPosition(), shift);
+
+        SetPosition(newPosition);
+    }
+}
+
+void CCharacter::OnCollisionExit(CObject* collidedObject)
+{
 }

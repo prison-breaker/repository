@@ -34,6 +34,8 @@ public:
 
 	virtual void Init();
 
+	virtual void OnCollisionEnter(CObject* collidedObject);
+
 	CCharacter* FindTarget(float maxDist, float fov);
 
 	void CreateMovePath(const XMFLOAT3& targetPosition);

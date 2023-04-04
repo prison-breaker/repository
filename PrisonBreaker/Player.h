@@ -21,10 +21,6 @@ public:
 
 	virtual void Init();
 
-	virtual void OnCollisionEnter(CObject* collidedObject);
-	virtual void OnCollision(CObject* collidedObject);
-	virtual void OnCollisionExit(CObject* collidedObject);
-
 	virtual void Update();
 
 	void Punch();

@@ -23,6 +23,7 @@ CPlayer::CPlayer() :
 	m_rotation(),
 	m_isAiming()
 {
+	SetName("Player");
 }
 
 CPlayer::~CPlayer()
@@ -53,18 +54,6 @@ void CPlayer::Init()
 	//weapon->SetActive(false);
 
 	GetStateMachine()->SetCurrentState(CPlayerIdleState::GetInstance());
-}
-
-void CPlayer::OnCollisionEnter(CObject* collidedObject)
-{
-}
-
-void CPlayer::OnCollision(CObject* collidedObject)
-{
-}
-
-void CPlayer::OnCollisionExit(CObject* collidedObject)
-{
 }
 
 void CPlayer::Update()
