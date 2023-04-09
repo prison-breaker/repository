@@ -270,11 +270,20 @@
     <ClCompile Include="Collider.cpp">
       <Filter>소스 파일\06. Component</Filter>
     </ClCompile>
-    <ClCompile Include="BilboardObject.cpp">
+    <ClCompile Include="Bilboard.cpp">
       <Filter>소스 파일\03. Object</Filter>
     </ClCompile>
     <ClCompile Include="Character.cpp">
       <Filter>소스 파일\03. Object</Filter>
+    </ClCompile>
+    <ClCompile Include="UI.cpp">
+      <Filter>소스 파일\03. Object</Filter>
+    </ClCompile>
+    <ClCompile Include="UIShader.cpp">
+      <Filter>소스 파일\05. Asset\Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="SpriteRenderer.cpp">
+      <Filter>소스 파일\06. Component</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -443,11 +452,20 @@
     <ClInclude Include="Collider.h">
       <Filter>헤더 파일\06. Component</Filter>
     </ClInclude>
-    <ClInclude Include="BilboardObject.h">
+    <ClInclude Include="Bilboard.h">
       <Filter>헤더 파일\03. Object</Filter>
     </ClInclude>
     <ClInclude Include="Character.h">
       <Filter>헤더 파일\03. Object</Filter>
+    </ClInclude>
+    <ClInclude Include="UI.h">
+      <Filter>헤더 파일\03. Object</Filter>
+    </ClInclude>
+    <ClInclude Include="UIShader.h">
+      <Filter>헤더 파일\05. Asset\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="SpriteRenderer.h">
+      <Filter>헤더 파일\06. Component</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

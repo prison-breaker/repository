@@ -9,8 +9,8 @@ CCharacter::CCharacter() :
     m_health(100),
     m_weapon()
 {
-    CreateRigidBody();
-    CreateStateMachine();
+    CreateComponent(COMPONENT_TYPE::STATE_MACHINE);
+    CreateComponent(COMPONENT_TYPE::RIGIDBODY);
 }
 
 CCharacter::~CCharacter()
@@ -71,7 +71,8 @@ void CCharacter::OnCollisionEnter(CObject* collidedObject)
 
 void CCharacter::OnCollision(CObject* collidedObject)
 {
-    float speedXZ = GetRigidBody()->GetSpeedXZ();
+    CRigidBody* rigidBody = static_cast<CRigidBody*>(GetComponent(COMPONENT_TYPE::RIGIDBODY));
+    float speedXZ = rigidBody->GetSpeedXZ();
 
     if (!Math::IsZero(speedXZ))
     {

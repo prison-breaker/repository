@@ -9,47 +9,32 @@
 #define WIN32_LEAN_AND_MEAN
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
-#define SERVER_PORT				  9000
+#define SERVER_PORT				9000
 
-#define DEPTH_BUFFER_WIDTH	      2048
-#define DEPTH_BUFFER_HEIGHT       2048
-#define PLANE_WIDTH				  400
-#define PLANE_HEIGHT			  400
+#define TERRAIN_WIDTH			400
+#define TERRAIN_HEIGHT			400
+#define DEPTH_BUFFER_WIDTH	    2048
+#define DEPTH_BUFFER_HEIGHT     2048
 
-#define MAX_PLAYER_CAPACITY		  2
-#define MAX_NPC_COUNT			  15
-#define MAX_LIGHTS                3
-#define MAX_BOUNDINGBOX_INDICES	  36
-#define MAX_BONES				  70
-#define MAX_BGM_SOUNDS			  4
-#define MAX_SFX_SOUNDS			  14
+#define MAX_PLAYER_CAPACITY		2
+#define MAX_NPC_COUNT			15
+#define MAX_LIGHTS              3
+#define MAX_BONES				70
+#define MAX_BGM_SOUNDS			4
+#define MAX_SFX_SOUNDS			14
 
-#define INPUT_MASK_NONE			  0x0000
-#define INPUT_MASK_W	          0x0001
-#define INPUT_MASK_S              0x0002
-#define INPUT_MASK_A              0x0004
-#define INPUT_MASK_D              0x0008
-#define INPUT_MASK_F			  0x0010
-#define INPUT_MASK_SHIFT          0x0020
-#define INPUT_MASK_TAB            0x0040
-#define INPUT_MASK_LMB            0x0080
-#define INPUT_MASK_RMB            0x0100
-#define INPUT_MASK_NUM1			  0x0200
-#define INPUT_MASK_NUM2			  0x0400
+#define TEXTURE_MASK_ALBEDO_MAP 0x0001
+#define TEXTURE_MASK_NORMAL_MAP 0x0002
+#define TEXTURE_MASK_SHADOW_MAP 0x0004
 
-#define TEXTURE_MASK_ALBEDO_MAP   0x0001
-#define TEXTURE_MASK_METALLIC_MAP 0x0002
-#define TEXTURE_MASK_NORMAL_MAP   0x0004
-#define TEXTURE_MASK_SHADOW_MAP   0x0008
+#define DT						CTimeManager::GetInstance()->GetDeltaTime()
 
-#define DT						  CTimeManager::GetInstance()->GetDeltaTime()
-
-#define KEY_NONE(key)			  CInputManager::GetInstance()->GetKeyState(key) == KEY_STATE::NONE
-#define KEY_TAP(key)			  CInputManager::GetInstance()->GetKeyState(key) == KEY_STATE::TAP
-#define KEY_HOLD(key)			  CInputManager::GetInstance()->GetKeyState(key) == KEY_STATE::HOLD
-#define KEY_AWAY(key)			  CInputManager::GetInstance()->GetKeyState(key) == KEY_STATE::AWAY
-#define CURSOR					  CInputManager::GetInstance()->GetCursor()
-#define OLD_CURSOR				  CInputManager::GetInstance()->GetOldCursor()
+#define KEY_NONE(key)			CInputManager::GetInstance()->GetKeyState(key) == KEY_STATE::NONE
+#define KEY_TAP(key)			CInputManager::GetInstance()->GetKeyState(key) == KEY_STATE::TAP
+#define KEY_HOLD(key)			CInputManager::GetInstance()->GetKeyState(key) == KEY_STATE::HOLD
+#define KEY_AWAY(key)			CInputManager::GetInstance()->GetKeyState(key) == KEY_STATE::AWAY
+#define CURSOR					CInputManager::GetInstance()->GetCursor()
+#define OLD_CURSOR				CInputManager::GetInstance()->GetOldCursor()
 
 enum class MSG_TYPE
 {
@@ -94,9 +79,21 @@ enum class GROUP_TYPE
 	COUNT
 };
 
+enum class COMPONENT_TYPE
+{
+	STATE_MACHINE,
+	RIGIDBODY,
+	ANIMATOR,
+	SPRITE_RENDERER,
+	COLLIDER,
+
+	COUNT
+};
+
 enum class CAMERA_TYPE
 {
 	MAIN,
+	UI,
 	LIGHT,
 
 	COUNT
@@ -172,15 +169,14 @@ enum class LIGHT_TYPE
 
 enum class ROOT_PARAMETER_TYPE
 {
-	FRAMEWORK_INFO,
+	CORE,
 	CAMERA,
-	LIGHT,
-	FOG,
+	GAME_SCENE,
 	OBJECT,
+	SPRITE,
 	BONE_OFFSET,
 	BONE_TRANSFORM,
 	ALBEDO_MAP,
-	METALLIC_MAP,
 	NORMAL_MAP,
 	SHADOW_MAP,
 
@@ -190,7 +186,6 @@ enum class ROOT_PARAMETER_TYPE
 enum class TEXTURE_TYPE
 {
 	ALBEDO_MAP,
-	METALLIC_MAP,
 	NORMAL_MAP,
 	SHADOW_MAP,
 

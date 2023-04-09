@@ -7,35 +7,80 @@
 #include "Shader.h"
 
 CMaterial::CMaterial() :
-	m_albedoColor(1.0f, 1.0f, 1.0f, 1.0f),
-	m_emissionColor(),
-	m_smoothness(),
-	m_metallic(),
+	m_color(1.0f, 1.0f, 1.0f, 1.0f),
 	m_textureMask(),
 	m_textureScale(1.0f, 1.0f),
 	m_textures(),
 	m_shaders(),
 	m_stateNum()
 {
+	m_textures.resize(static_cast<size_t>(TEXTURE_TYPE::COUNT));
 }
 
 CMaterial::~CMaterial()
 {
 }
 
+void CMaterial::SetColor(const XMFLOAT4& color)
+{
+	m_color = color;
+}
+
+const XMFLOAT4& CMaterial::GetColor()
+{
+	return m_color;
+}
+
 void CMaterial::SetStateNum(int stateNum)
 {
-	if (stateNum < 0)
+	if (stateNum >= 0)
 	{
-		return;
+		m_stateNum = stateNum;
 	}
-
-	m_stateNum = stateNum;
 }
 
 int CMaterial::GetStateNum()
 {
 	return m_stateNum;
+}
+
+void CMaterial::SetTexture(CTexture* texture)
+{
+	if (texture != nullptr)
+	{
+		switch (texture->GetType())
+		{
+		case TEXTURE_TYPE::ALBEDO_MAP:
+			m_textureMask |= TEXTURE_MASK_ALBEDO_MAP;
+			break;
+		case TEXTURE_TYPE::NORMAL_MAP:
+			m_textureMask |= TEXTURE_MASK_NORMAL_MAP;
+			break;
+		case TEXTURE_TYPE::SHADOW_MAP:
+			m_textureMask |= TEXTURE_MASK_SHADOW_MAP;
+			break;
+		}
+
+		m_textures[static_cast<int>(texture->GetType())] = texture;
+	}
+}
+
+const vector<CTexture*>& CMaterial::GetTextures()
+{
+	return m_textures;
+}
+
+void CMaterial::AddShader(CShader* shader)
+{
+	if (shader != nullptr)
+	{
+		m_shaders.push_back(shader);
+	}
+}
+
+const vector<CShader*>& CMaterial::GetShaders()
+{
+	return m_shaders;
 }
 
 void CMaterial::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in)
@@ -48,79 +93,50 @@ void CMaterial::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12
 
 		if (str == "<Name>")
 		{
-			File::ReadStringFromFile(in, str);
-			SetName(str);
+			File::ReadStringFromFile(in, m_name);
+
+			if (m_name == "cone")
+			{
+				cout << "ÀâÀ½\n";
+			}
 		}
-		else if (str == "<StateNum>")
+		else if (str == "<Color>")
 		{
-			in.read(reinterpret_cast<char*>(&m_stateNum), sizeof(int));
-			m_shaders.push_back(CAssetManager::GetInstance()->GetShader("Object"));
-			m_shaders.push_back(CAssetManager::GetInstance()->GetShader("DepthWrite"));
+			in.read(reinterpret_cast<char*>(&m_color), sizeof(XMFLOAT4));
 		}
 		else if (str == "<TextureScale>")
 		{
 			in.read(reinterpret_cast<char*>(&m_textureScale), sizeof(XMFLOAT2));
 		}
-		else if (str == "<AlbedoColor>")
-		{
-			in.read(reinterpret_cast<char*>(&m_albedoColor), sizeof(XMFLOAT4));
-		}
-		else if (str == "<EmissionColor>")
-		{
-			in.read(reinterpret_cast<char*>(&m_emissionColor), sizeof(XMFLOAT4));
-		}
-		else if (str == "<Smoothness>")
-		{
-			in.read(reinterpret_cast<char*>(&m_smoothness), sizeof(float));
-		}
-		else if (str == "<Metallic>")
-		{
-			in.read(reinterpret_cast<char*>(&m_metallic), sizeof(float));
-		}
-		else if (str == "<AlbedoMap>")
+		else if (str == "<AlbedoMap>" || str == "<NormalMap>")
 		{
 			File::ReadStringFromFile(in, str);
 
-			if (str != "None")
-			{
-				CTexture* texture = CAssetManager::GetInstance()->GetTexture(str);
+			CTexture* texture = CAssetManager::GetInstance()->GetTexture(str);
 
-				if (texture != nullptr)
-				{
-					m_textureMask |= TEXTURE_MASK_ALBEDO_MAP;
-					m_textures.push_back(texture);
-				}
+			if (texture != nullptr)
+			{
+				SetTexture(texture);
 			}
 		}
-		else if (str == "<MetallicMap>")
+		else if (str == "<Shaders>")
 		{
-			File::ReadStringFromFile(in, str);
+			int shaderCount = 0;
 
-			if (str != "None")
+			in.read(reinterpret_cast<char*>(&shaderCount), sizeof(int));
+
+			for (int i = 0; i < shaderCount; ++i)
 			{
-				CTexture* texture = CAssetManager::GetInstance()->GetTexture(str);
+				File::ReadStringFromFile(in, str);
+				
+				CShader* shader = CAssetManager::GetInstance()->GetShader(str);
 
-				if (texture != nullptr)
-				{
-					m_textureMask |= TEXTURE_MASK_METALLIC_MAP;
-					m_textures.push_back(texture);
-				}
+				AddShader(shader);
 			}
 		}
-		else if (str == "<NormalMap>")
+		else if (str == "<StateNum>")
 		{
-			File::ReadStringFromFile(in, str);
-
-			if (str != "None")
-			{
-				CTexture* texture = CAssetManager::GetInstance()->GetTexture(str);
-
-				if (texture != nullptr)
-				{
-					m_textureMask |= TEXTURE_MASK_NORMAL_MAP;
-					m_textures.push_back(texture);
-				}
-			}
+			in.read(reinterpret_cast<char*>(&m_stateNum), sizeof(int));
 		}
 		else if (str == "</Material>")
 		{
@@ -129,51 +145,22 @@ void CMaterial::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12
 	}
 }
 
-void CMaterial::AddTexture(CTexture* texture)
-{
-	if (texture != nullptr)
-	{
-		switch (texture->GetType())
-		{
-		case TEXTURE_TYPE::ALBEDO_MAP:
-			m_textureMask |= TEXTURE_MASK_ALBEDO_MAP;
-			break;
-		case TEXTURE_TYPE::METALLIC_MAP:
-			m_textureMask |= TEXTURE_MASK_METALLIC_MAP;
-			break;
-		case TEXTURE_TYPE::NORMAL_MAP:
-			m_textureMask |= TEXTURE_MASK_NORMAL_MAP;
-			break;
-		case TEXTURE_TYPE::SHADOW_MAP:
-			m_textureMask |= TEXTURE_MASK_SHADOW_MAP;
-			break;
-		}
-
-		m_textures.push_back(texture);
-	}
-}
-
-void CMaterial::AddShader(CShader* shader)
-{
-	if (shader != nullptr)
-	{
-		m_shaders.push_back(shader);
-	}
-}
-
 void CMaterial::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
 {
-	d3d12GraphicsCommandList->SetGraphicsRoot32BitConstants((UINT)ROOT_PARAMETER_TYPE::OBJECT, 4, &m_albedoColor, 16);
-	d3d12GraphicsCommandList->SetGraphicsRoot32BitConstants((UINT)ROOT_PARAMETER_TYPE::OBJECT, 1, &m_textureMask, 20);
-	d3d12GraphicsCommandList->SetGraphicsRoot32BitConstants((UINT)ROOT_PARAMETER_TYPE::OBJECT, 2, &m_textureScale, 21);
+	d3d12GraphicsCommandList->SetGraphicsRoot32BitConstants(static_cast<UINT>(ROOT_PARAMETER_TYPE::OBJECT), 4, &m_color, 16);
+	d3d12GraphicsCommandList->SetGraphicsRoot32BitConstants(static_cast<UINT>(ROOT_PARAMETER_TYPE::OBJECT), 1, &m_textureMask, 20);
+	d3d12GraphicsCommandList->SetGraphicsRoot32BitConstants(static_cast<UINT>(ROOT_PARAMETER_TYPE::OBJECT), 2, &m_textureScale, 21);
 
 	for (const auto& texture : m_textures)
 	{
-		texture->UpdateShaderVariable(d3d12GraphicsCommandList);
+		if (texture != nullptr)
+		{
+			texture->UpdateShaderVariable(d3d12GraphicsCommandList);
+		}
 	}
 }
 
-void CMaterial::SetPipelineState(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, RENDER_TYPE RenderType)
+void CMaterial::SetPipelineState(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, RENDER_TYPE renderType)
 {
-	m_shaders[(int)RenderType]->SetPipelineState(d3d12GraphicsCommandList, m_stateNum);
+	m_shaders[static_cast<int>(renderType)]->SetPipelineState(d3d12GraphicsCommandList, m_stateNum);
 }

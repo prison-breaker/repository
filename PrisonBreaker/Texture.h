@@ -19,6 +19,7 @@ public:
 	virtual ~CTexture();
 
 	TEXTURE_TYPE GetType();
+
 	ID3D12Resource* GetTexture();
 
 	void SetGpuDescriptorHandle(const D3D12_GPU_DESCRIPTOR_HANDLE& D3D12GpuDescriptorHandle);
@@ -28,7 +29,7 @@ public:
 	void Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in);
 	void Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, const string& fileName, TEXTURE_TYPE textureType);
 
-	void UpdateShaderVariable(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
+	virtual void UpdateShaderVariable(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
 
 	void ReleaseUploadBuffers();
 };

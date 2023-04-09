@@ -12,9 +12,9 @@ CRigidBody::CRigidBody() :
     m_mass(1.0f),
     m_force(),
     m_velocity(),
+    m_accel(),
     m_maxSpeedXZ(),
     m_maxSpeedY(),
-    m_accel(),
     m_frictionCoeffX(2.0f),
     m_frictionCoeffZ(2.0f)
 {
@@ -126,11 +126,11 @@ void CRigidBody::AddVelocity(const XMFLOAT3& velocity)
 
 void CRigidBody::MovePosition()
 {    
-    CNavMesh* navMesh = (CNavMesh*)CAssetManager::GetInstance()->GetMesh("NavMesh");
-
     XMFLOAT3 position = m_owner->GetPosition();
     XMFLOAT3 shift = Vector3::ScalarProduct(DT, m_velocity, false);
     XMFLOAT3 newPosition = Vector3::Add(position, shift);
+
+    CNavMesh* navMesh = (CNavMesh*)CAssetManager::GetInstance()->GetMesh("NavMesh");
 
     if (navMesh->IsInNavMesh(position, newPosition))
     {
@@ -140,6 +140,11 @@ void CRigidBody::MovePosition()
 
 void CRigidBody::Update()
 {
+    if (!m_isEnabled)
+    {
+        return;
+    }
+
     // 이번 프레임에 누적된 힘의 양에 따른 가속도 값 갱신
     // Force = Mass * Accel
     // Accel = Force / Mass = Force * (1.0f / Mass)
@@ -149,7 +154,7 @@ void CRigidBody::Update()
     m_velocity = Vector3::Add(m_velocity, Vector3::ScalarProduct(DT, m_accel, false));
 
     // XZ축 성분 처리
-    float speedXZ = sqrtf(m_velocity.x * m_velocity.x + m_velocity.z * m_velocity.z);
+    float speedXZ = GetSpeedXZ();
 
     if (speedXZ > 0.0f)
     {
@@ -183,7 +188,7 @@ void CRigidBody::Update()
         }
 
         // 마찰력을 적용한 이후의 속력을 다시 구한다.
-        speedXZ = sqrtf(m_velocity.x * m_velocity.x + m_velocity.z * m_velocity.z);
+        speedXZ = GetSpeedXZ();
 
         float maxSpeedXZ = m_maxSpeedXZ * DT;
 

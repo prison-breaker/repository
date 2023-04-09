@@ -6,6 +6,11 @@
 
 #include "Player.h"
 #include "Guard.h"
+#include "UI.h"
+
+#include "Animator.h"
+
+#include "Camera.h"
 
 CScene::CScene() :
 	m_name(),
@@ -95,7 +100,7 @@ void CScene::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Gra
 
 					guard->SetActive(isActive[i]);
 					guard->SetTransformMatrix(transformMatrixes[i]);
-					guard->SetAnimator(loadedModel.m_animator);
+					guard->SetComponent(COMPONENT_TYPE::ANIMATOR, loadedModel.m_animator);
 					guard->AddChild(loadedModel.m_rootFrame);
 					guard->UpdateTransform();
 					guard->CreatePatrolPath(targetPositions[i]);
@@ -114,7 +119,7 @@ void CScene::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Gra
 
 					player->SetActive(isActive[i]);
 					player->SetTransformMatrix(transformMatrixes[i]);
-					player->SetAnimator(loadedModel.m_animator);
+					player->SetComponent(COMPONENT_TYPE::ANIMATOR, loadedModel.m_animator);
 					player->AddChild(loadedModel.m_rootFrame);
 					player->UpdateTransform();
 					player->Init();
@@ -127,6 +132,30 @@ void CScene::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Gra
 			}
 		}
 		else if (str == "</Scene>")
+		{
+			cout << endl;
+			break;
+		}
+	}
+}
+
+void CScene::LoadUI(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, const string& fileName)
+{
+	string filePath = CAssetManager::GetInstance()->GetAssetPath() + "Scene\\" + fileName;
+	ifstream in(filePath, ios::binary);
+	string str;
+
+	while (true)
+	{
+		File::ReadStringFromFile(in, str);
+
+		if (str == "<UI>")
+		{
+			CUI* ui = CUI::Load(d3d12Device, d3d12GraphicsCommandList, in);
+
+			AddObject(GROUP_TYPE::UI, ui);
+		}
+		else if (str == "<UIs>")
 		{
 			cout << endl;
 			break;
@@ -178,9 +207,9 @@ void CScene::ReleaseUploadBuffers()
 {
 	for (int i = 0; i < (int)GROUP_TYPE::COUNT; ++i)
 	{
-		for (int j = 0; j < m_objects[i].size(); ++j)
+		for (const auto& object : m_objects[i])
 		{
-			m_objects[i][j]->ReleaseUploadBuffers();
+			object->ReleaseUploadBuffers();
 		}
 	}
 }
@@ -189,11 +218,11 @@ void CScene::Update()
 {
 	for (int i = 0; i < (int)GROUP_TYPE::COUNT; ++i)
 	{
-		for (int j = 0; j < m_objects[i].size(); ++j)
+		for (const auto& object : m_objects[i])
 		{
-			if (m_objects[i][j]->IsActive() && !m_objects[i][j]->IsDeleted())
+			if (object->IsActive() && !object->IsDeleted())
 			{
-				m_objects[i][j]->Update();
+				object->Update();
 			}
 		}
 	}
@@ -203,11 +232,11 @@ void CScene::LateUpdate()
 {
 	for (int i = 0; i < (int)GROUP_TYPE::COUNT; ++i)
 	{
-		for (int j = 0; j < m_objects[i].size(); ++j)
+		for (const auto& object : m_objects[i])
 		{
-			if (m_objects[i][j]->IsActive() && !m_objects[i][j]->IsDeleted())
+			if (object->IsActive() && !object->IsDeleted())
 			{
-				m_objects[i][j]->LateUpdate();
+				object->LateUpdate();
 			}
 		}
 	}
@@ -221,14 +250,29 @@ void CScene::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
 {
 	CCamera* camera = CCameraManager::GetInstance()->GetMainCamera();
 
-	for (int i = 0; i < (int)GROUP_TYPE::COUNT; ++i)
+	camera->UpdateShaderVariables(d3d12GraphicsCommandList);
+	camera->RSSetViewportsAndScissorRects(d3d12GraphicsCommandList);
+
+	for (int i = 0; i <= (int)GROUP_TYPE::BILBOARD; ++i)
 	{
-		for (int j = 0; j < m_objects[i].size(); ++j)
+		for (const auto& object : m_objects[i])
 		{
-			if (m_objects[i][j]->IsActive() && !m_objects[i][j]->IsDeleted())
+			if (object->IsActive() && !object->IsDeleted())
 			{
-				m_objects[i][j]->Render(d3d12GraphicsCommandList, camera);
+				object->Render(d3d12GraphicsCommandList, camera);
 			}
+		}
+	}
+
+	camera = CCameraManager::GetInstance()->GetUICamera();
+	camera->UpdateShaderVariables(d3d12GraphicsCommandList);
+	camera->RSSetViewportsAndScissorRects(d3d12GraphicsCommandList);
+
+	for (const auto& object : m_objects[(int)GROUP_TYPE::UI])
+	{
+		if (object->IsActive() && !object->IsDeleted())
+		{
+			object->Render(d3d12GraphicsCommandList, camera);
 		}
 	}
 }

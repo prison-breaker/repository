@@ -15,6 +15,8 @@ private:
 
 public:
 	CCamera* GetMainCamera();
+	CCamera* GetUICamera();
+
 	const vector<CCamera*>& GetCameras();
 
 	void Init(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList);

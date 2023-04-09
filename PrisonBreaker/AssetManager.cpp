@@ -9,6 +9,7 @@
 #include "ObjectShader.h"
 #include "DepthWriteShader.h"
 #include "BilboardShader.h"
+#include "UIShader.h"
 #include "WireFrameShader.h"
 #include "Material.h"
 #include "Animation.h"
@@ -155,6 +156,11 @@ void CAssetManager::LoadShaders(ID3D12Device* d3d12Device, ID3D12RootSignature* 
 	shader = new CBilboardShader();
 	shader->SetName("Bilboard");
 	shader->CreatePipelineStates(d3d12Device, D3D12RootSignature, 2);
+	m_shaders.emplace(shader->GetName(), shader);
+
+	shader = new CUIShader();
+	shader->SetName("UI");
+	shader->CreatePipelineStates(d3d12Device, D3D12RootSignature, 1);
 	m_shaders.emplace(shader->GetName(), shader);
 
 	shader = new CWireFrameShader();

@@ -20,19 +20,9 @@ KEY_STATE CInputManager::GetKeyState(KEY key)
 	return m_keyInfo[(int)key].m_state;
 }
 
-void CInputManager::SetCursor(const XMFLOAT2& position)
-{
-	m_cursor = position;
-}
-
 const XMFLOAT2& CInputManager::GetCursor()
 {
 	return m_cursor;
-}
-
-void CInputManager::SetOldCursor(const XMFLOAT2& position)
-{
-	m_oldCursor = position;
 }
 
 const XMFLOAT2& CInputManager::GetOldCursor()
@@ -108,4 +98,16 @@ void CInputManager::Update()
 			m_keyInfo[i].m_isPressed = false;
 		}
 	}
+
+	// 마우스 커서의 위치 계산
+	POINT point = {};
+
+	// 이 함수는 윈도우 전체 영역을 기준으로 커서의 위치를 계산한다.
+	GetCursorPos(&point);
+
+	// 스크린 좌표를 클라이언트 기준 좌표로 계산한다.
+	ScreenToClient(CCore::GetInstance()->GetHwnd(), &point);
+
+	m_oldCursor = m_cursor;
+	m_cursor = XMFLOAT2((float)point.x, (float)point.y);
 }

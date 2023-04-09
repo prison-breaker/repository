@@ -3,8 +3,6 @@
 
 #include "AssetManager.h"
 
-ComPtr<ID3D12PipelineState> CShader::m_currentPipelineState;
-
 CShader::CShader() :
 	m_d3d12PipelineStates()
 {

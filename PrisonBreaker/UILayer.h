@@ -2,7 +2,7 @@
 
 struct TEXT_BLOCK
 {
-    string                   m_Text{};
+    string                    m_Text{};
     int                       m_TextPos{};
 
     D2D1_RECT_F               m_D2D1Rect{};

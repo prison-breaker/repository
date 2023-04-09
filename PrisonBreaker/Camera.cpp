@@ -137,7 +137,7 @@ void CCamera::CreateShaderVariables(ID3D12Device* d3d12Device, ID3D12GraphicsCom
 	UINT bytes = (sizeof(CB_CAMERA) + 255) & ~255;
 
 	m_d3d12Buffer = DX::CreateBufferResource(d3d12Device, d3d12GraphicsCommandList, nullptr, bytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, nullptr);
-	DX::ThrowIfFailed(m_d3d12Buffer->Map(0, nullptr, (void**)&m_mappedData));
+	DX::ThrowIfFailed(m_d3d12Buffer->Map(0, nullptr, reinterpret_cast<void**>(&m_mappedData)));
 }
 
 void CCamera::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
@@ -146,7 +146,7 @@ void CCamera::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsComm
 	XMStoreFloat4x4(&m_mappedData->m_projectionMatrix, XMMatrixTranspose(XMLoadFloat4x4(&m_projectionMatrix)));
 	memcpy(&m_mappedData->m_position, &m_position, sizeof(XMFLOAT3));
 
-	d3d12GraphicsCommandList->SetGraphicsRootConstantBufferView((UINT)ROOT_PARAMETER_TYPE::CAMERA, m_d3d12Buffer->GetGPUVirtualAddress());
+	d3d12GraphicsCommandList->SetGraphicsRootConstantBufferView(static_cast<UINT>(ROOT_PARAMETER_TYPE::CAMERA), m_d3d12Buffer->GetGPUVirtualAddress());
 }
 
 void CCamera::ReleaseShaderVariables()

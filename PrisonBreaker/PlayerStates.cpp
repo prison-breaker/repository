@@ -7,8 +7,8 @@
 
 #include "Player.h"
 
-#include "RigidBody.h"
 #include "StateMachine.h"
+#include "RigidBody.h"
 #include "Animator.h"
 
 #include "Camera.h"
@@ -23,7 +23,9 @@ CPlayerIdleState::~CPlayerIdleState()
 
 void CPlayerIdleState::Enter(CObject* object)
 {
-	object->GetAnimator()->Play("Idle", true);
+	CAnimator* animator = static_cast<CAnimator*>(object->GetComponent(COMPONENT_TYPE::ANIMATOR));
+
+	animator->Play("Idle", true);
 }
 
 void CPlayerIdleState::Exit(CObject* object)
@@ -32,31 +34,32 @@ void CPlayerIdleState::Exit(CObject* object)
 
 void CPlayerIdleState::Update(CObject* object)
 {
-	CPlayer* player = (CPlayer*)object;
+	CPlayer* player = static_cast<CPlayer*>(object);
+	CStateMachine* stateMachine = static_cast<CStateMachine*>(player->GetComponent(COMPONENT_TYPE::STATE_MACHINE));
 
 	if (KEY_TAP(KEY::LBUTTON))
 	{
 		if (!player->IsEquippedWeapon())
 		{
-			player->GetStateMachine()->ChangeState(CPlayerPunchState::GetInstance());
+			stateMachine->ChangeState(CPlayerPunchState::GetInstance());
 		}
 	}
 	else if (KEY_HOLD(KEY::RBUTTON))
 	{
 		if (player->IsEquippedWeapon())
 		{
-			player->GetStateMachine()->ChangeState(CPlayerShootState::GetInstance());
+			stateMachine->ChangeState(CPlayerShootState::GetInstance());
 		}
 	}
 	else if (KEY_HOLD(KEY::W) || KEY_HOLD(KEY::S) || KEY_HOLD(KEY::A) || KEY_HOLD(KEY::D))
 	{
 		if (KEY_HOLD(KEY::SHIFT))
 		{
-			player->GetStateMachine()->ChangeState(CPlayerRunState::GetInstance());
+			stateMachine->ChangeState(CPlayerRunState::GetInstance());
 		}
 		else
 		{
-			player->GetStateMachine()->ChangeState(CPlayerWalkState::GetInstance());
+			stateMachine->ChangeState(CPlayerWalkState::GetInstance());
 		}
 	}
 }
@@ -73,28 +76,30 @@ CPlayerWalkState::~CPlayerWalkState()
 
 void CPlayerWalkState::Enter(CObject* object)
 {
+	CRigidBody* rigidBody = static_cast<CRigidBody*>(object->GetComponent(COMPONENT_TYPE::RIGIDBODY));
+
 	if (KEY_HOLD(KEY::W))
 	{
-		object->GetRigidBody()->SetMaxSpeedXZ(400.0f);
-		object->GetRigidBody()->AddVelocity(Vector3::ScalarProduct(400.0f * DT, object->GetForward(), false));
+		rigidBody->SetMaxSpeedXZ(400.0f);
+		rigidBody->AddVelocity(Vector3::ScalarProduct(400.0f * DT, object->GetForward(), false));
 	}
 
 	if (KEY_HOLD(KEY::S))
 	{
-		object->GetRigidBody()->SetMaxSpeedXZ(400.0f);
-		object->GetRigidBody()->AddVelocity(Vector3::ScalarProduct(400.0f * DT, Vector3::Inverse(object->GetForward()), false));
+		rigidBody->SetMaxSpeedXZ(400.0f);
+		rigidBody->AddVelocity(Vector3::ScalarProduct(400.0f * DT, Vector3::Inverse(object->GetForward()), false));
 	}
 
 	if (KEY_HOLD(KEY::A))
 	{
-		object->GetRigidBody()->SetMaxSpeedXZ(400.0f);
-		object->GetRigidBody()->AddVelocity(Vector3::ScalarProduct(400.0f * DT, Vector3::Inverse(object->GetRight()), false));
+		rigidBody->SetMaxSpeedXZ(400.0f);
+		rigidBody->AddVelocity(Vector3::ScalarProduct(400.0f * DT, Vector3::Inverse(object->GetRight()), false));
 	}
 
 	if (KEY_HOLD(KEY::D))
 	{
-		object->GetRigidBody()->SetMaxSpeedXZ(400.0f);
-		object->GetRigidBody()->AddVelocity(Vector3::ScalarProduct(400.0f * DT, object->GetRight(), false));
+		rigidBody->SetMaxSpeedXZ(400.0f);
+		rigidBody->AddVelocity(Vector3::ScalarProduct(400.0f * DT, object->GetRight(), false));
 	}
 }
 
@@ -105,70 +110,73 @@ void CPlayerWalkState::Exit(CObject* object)
 void CPlayerWalkState::Update(CObject* object)
 {
 	CPlayer* player = (CPlayer*)object;
+	CStateMachine* stateMachine = static_cast<CStateMachine*>(player->GetComponent(COMPONENT_TYPE::STATE_MACHINE));
+	CRigidBody* rigidBody = static_cast<CRigidBody*>(player->GetComponent(COMPONENT_TYPE::RIGIDBODY));
+	CAnimator* animator = static_cast<CAnimator*>(player->GetComponent(COMPONENT_TYPE::ANIMATOR));
 
-	if ((KEY_NONE(KEY::W) && KEY_NONE(KEY::S) && KEY_NONE(KEY::A) && KEY_NONE(KEY::D)) && Math::IsZero(player->GetRigidBody()->GetSpeedXZ()))
+	if ((KEY_NONE(KEY::W) && KEY_NONE(KEY::S) && KEY_NONE(KEY::A) && KEY_NONE(KEY::D)) && Math::IsZero(rigidBody->GetSpeedXZ()))
 	{
-		player->GetStateMachine()->ChangeState(CPlayerIdleState::GetInstance());
+		stateMachine->ChangeState(CPlayerIdleState::GetInstance());
 	}
 	else if ((KEY_HOLD(KEY::SHIFT)) && (KEY_HOLD(KEY::W) || KEY_HOLD(KEY::S) || KEY_HOLD(KEY::A) || KEY_HOLD(KEY::D)))
 	{
-		player->GetStateMachine()->ChangeState(CPlayerRunState::GetInstance());
+		stateMachine->ChangeState(CPlayerRunState::GetInstance());
 	}
 	else if (KEY_TAP(KEY::LBUTTON))
 	{
 		if (!player->IsEquippedWeapon())
 		{
-			player->GetStateMachine()->ChangeState(CPlayerPunchState::GetInstance());
+			stateMachine->ChangeState(CPlayerPunchState::GetInstance());
 		}
 	}
 	else if (KEY_HOLD(KEY::RBUTTON))
 	{
 		if (player->IsEquippedWeapon())
 		{
-			player->GetStateMachine()->ChangeState(CPlayerShootState::GetInstance());
+			stateMachine->ChangeState(CPlayerShootState::GetInstance());
 		}
 	}
 	else
 	{
 		if (KEY_HOLD(KEY::W))
 		{
-			player->GetRigidBody()->AddForce(Vector3::ScalarProduct(10000.0f * DT, player->GetForward(), false));
+			rigidBody->AddForce(Vector3::ScalarProduct(10000.0f * DT, player->GetForward(), false));
 		}
 
 		if (KEY_HOLD(KEY::S))
 		{
-			player->GetRigidBody()->AddForce(Vector3::ScalarProduct(10000.0f * DT, Vector3::Inverse(player->GetForward()), false));
+			rigidBody->AddForce(Vector3::ScalarProduct(10000.0f * DT, Vector3::Inverse(player->GetForward()), false));
 		}
 
 		if (KEY_HOLD(KEY::A))
 		{
-			player->GetRigidBody()->AddForce(Vector3::ScalarProduct(10000.0f * DT, Vector3::Inverse(player->GetRight()), false));
+			rigidBody->AddForce(Vector3::ScalarProduct(10000.0f * DT, Vector3::Inverse(player->GetRight()), false));
 		}
 
 		if (KEY_HOLD(KEY::D))
 		{
-			player->GetRigidBody()->AddForce(Vector3::ScalarProduct(10000.0f * DT, player->GetRight(), false));
+			rigidBody->AddForce(Vector3::ScalarProduct(10000.0f * DT, player->GetRight(), false));
 		}
 
-		if (Math::IsZero(player->GetRigidBody()->GetSpeedXZ()))
+		if (Math::IsZero(rigidBody->GetSpeedXZ()))
 		{
-			player->GetStateMachine()->ChangeState(CPlayerIdleState::GetInstance());
+			stateMachine->ChangeState(CPlayerIdleState::GetInstance());
 		}
 		else
 		{
-			XMFLOAT3 direction = Vector3::Normalize(player->GetRigidBody()->GetVelocity());
+			XMFLOAT3 direction = Vector3::Normalize(rigidBody->GetVelocity());
 
 			if (Vector3::IsEqual(direction, player->GetRight()))
 			{
-				player->GetAnimator()->Play("Right_Strafe_Walking", true);
+				animator->Play("Right_Strafe_Walking", true);
 			}
 			else if (Vector3::IsEqual(direction, Vector3::Inverse(player->GetRight())))
 			{
-				player->GetAnimator()->Play("Left_Strafe_Walking", true);
+				animator->Play("Left_Strafe_Walking", true);
 			}
 			else
 			{
-				player->GetAnimator()->Play("Crouched_Walking", true);
+				animator->Play("Crouched_Walking", true);
 			}
 		}
 	}
@@ -186,28 +194,30 @@ CPlayerRunState::~CPlayerRunState()
 
 void CPlayerRunState::Enter(CObject* object)
 {
+	CRigidBody* rigidBody = static_cast<CRigidBody*>(object->GetComponent(COMPONENT_TYPE::RIGIDBODY));
+
 	if (KEY_HOLD(KEY::W))
 	{
-		object->GetRigidBody()->SetMaxSpeedXZ(700.0f);
-		object->GetRigidBody()->AddVelocity(Vector3::ScalarProduct(700.0f * DT, object->GetForward(), false));
+		rigidBody->SetMaxSpeedXZ(700.0f);
+		rigidBody->AddVelocity(Vector3::ScalarProduct(700.0f * DT, object->GetForward(), false));
 	}
 
 	if (KEY_HOLD(KEY::S))
 	{
-		object->GetRigidBody()->SetMaxSpeedXZ(400.0f);
-		object->GetRigidBody()->AddVelocity(Vector3::ScalarProduct(400.0f * DT, Vector3::Inverse(object->GetForward()), false));
+		rigidBody->SetMaxSpeedXZ(400.0f);
+		rigidBody->AddVelocity(Vector3::ScalarProduct(400.0f * DT, Vector3::Inverse(object->GetForward()), false));
 	}
 
 	if (KEY_HOLD(KEY::A))
 	{
-		object->GetRigidBody()->SetMaxSpeedXZ(700.0f);
-		object->GetRigidBody()->AddVelocity(Vector3::ScalarProduct(700.0f * DT, Vector3::Inverse(object->GetRight()), false));
+		rigidBody->SetMaxSpeedXZ(700.0f);
+		rigidBody->AddVelocity(Vector3::ScalarProduct(700.0f * DT, Vector3::Inverse(object->GetRight()), false));
 	}
 
 	if (KEY_HOLD(KEY::D))
 	{
-		object->GetRigidBody()->SetMaxSpeedXZ(700.0f);
-		object->GetRigidBody()->AddVelocity(Vector3::ScalarProduct(700.0f * DT, object->GetRight(), false));
+		rigidBody->SetMaxSpeedXZ(700.0f);
+		rigidBody->AddVelocity(Vector3::ScalarProduct(700.0f * DT, object->GetRight(), false));
 	}
 }
 
@@ -218,78 +228,81 @@ void CPlayerRunState::Exit(CObject* object)
 void CPlayerRunState::Update(CObject* object)
 {
 	CPlayer* player = (CPlayer*)object;
+	CStateMachine* stateMachine = static_cast<CStateMachine*>(player->GetComponent(COMPONENT_TYPE::STATE_MACHINE));
+	CRigidBody* rigidBody = static_cast<CRigidBody*>(player->GetComponent(COMPONENT_TYPE::RIGIDBODY));
+	CAnimator* animator = static_cast<CAnimator*>(player->GetComponent(COMPONENT_TYPE::ANIMATOR));
 
-	if ((KEY_NONE(KEY::W) && KEY_NONE(KEY::S) && KEY_NONE(KEY::A) && KEY_NONE(KEY::D)) && Math::IsZero(player->GetRigidBody()->GetSpeedXZ()))
+	if ((KEY_NONE(KEY::W) && KEY_NONE(KEY::S) && KEY_NONE(KEY::A) && KEY_NONE(KEY::D)) && Math::IsZero(rigidBody->GetSpeedXZ()))
 	{
-		player->GetStateMachine()->ChangeState(CPlayerIdleState::GetInstance());
+		stateMachine->ChangeState(CPlayerIdleState::GetInstance());
 	}
 	else if ((KEY_NONE(KEY::SHIFT)) && (KEY_HOLD(KEY::W) || KEY_HOLD(KEY::S) || KEY_HOLD(KEY::A) || KEY_HOLD(KEY::D)))
 	{
-		player->GetStateMachine()->ChangeState(CPlayerWalkState::GetInstance());
+		stateMachine->ChangeState(CPlayerWalkState::GetInstance());
 	}
 	else if (KEY_TAP(KEY::LBUTTON))
 	{
 		if (!player->IsEquippedWeapon())
 		{
-			player->GetStateMachine()->ChangeState(CPlayerPunchState::GetInstance());
+			stateMachine->ChangeState(CPlayerPunchState::GetInstance());
 		}
 	}
 	else if (KEY_HOLD(KEY::RBUTTON))
 	{
 		if (player->IsEquippedWeapon())
 		{
-			player->GetStateMachine()->ChangeState(CPlayerShootState::GetInstance());
+			stateMachine->ChangeState(CPlayerShootState::GetInstance());
 		}
 	}
 	else
 	{
 		if (KEY_HOLD(KEY::W))
 		{
-			player->GetRigidBody()->AddForce(Vector3::ScalarProduct(15000.0f * DT, player->GetForward(), false));
+			rigidBody->AddForce(Vector3::ScalarProduct(15000.0f * DT, player->GetForward(), false));
 		}
 
 		if (KEY_HOLD(KEY::S))
 		{
-			player->GetRigidBody()->AddForce(Vector3::ScalarProduct(10000.0f * DT, Vector3::Inverse(player->GetForward()), false));
+			rigidBody->AddForce(Vector3::ScalarProduct(10000.0f * DT, Vector3::Inverse(player->GetForward()), false));
 		}
 
 		if (KEY_HOLD(KEY::A))
 		{
-			player->GetRigidBody()->AddForce(Vector3::ScalarProduct(15000.0f * DT, Vector3::Inverse(player->GetRight()), false));
+			rigidBody->AddForce(Vector3::ScalarProduct(15000.0f * DT, Vector3::Inverse(player->GetRight()), false));
 		}
 
 		if (KEY_HOLD(KEY::D))
 		{
-			player->GetRigidBody()->AddForce(Vector3::ScalarProduct(15000.0f * DT, player->GetRight(), false));
+			rigidBody->AddForce(Vector3::ScalarProduct(15000.0f * DT, player->GetRight(), false));
 		}
 
-		if (Math::IsZero(player->GetRigidBody()->GetSpeedXZ()))
+		if (Math::IsZero(rigidBody->GetSpeedXZ()))
 		{
-			player->GetStateMachine()->ChangeState(CPlayerIdleState::GetInstance());
+			stateMachine->ChangeState(CPlayerIdleState::GetInstance());
 		}
 		else
 		{
-			XMFLOAT3 direction = Vector3::Normalize(player->GetRigidBody()->GetVelocity());
+			XMFLOAT3 direction = Vector3::Normalize(rigidBody->GetVelocity());
 
 			if (Vector3::IsEqual(direction, player->GetRight()))
 			{
-				player->GetRigidBody()->SetMaxSpeedXZ(700.0f);
-				player->GetAnimator()->Play("Right_Strafe", true);
+				rigidBody->SetMaxSpeedXZ(700.0f);
+				animator->Play("Right_Strafe", true);
 			}
 			else if (Vector3::IsEqual(direction, Vector3::Inverse(player->GetRight())))
 			{
-				player->GetRigidBody()->SetMaxSpeedXZ(700.0f);
-				player->GetAnimator()->Play("Left_Strafe", true);
+				rigidBody->SetMaxSpeedXZ(700.0f);
+				animator->Play("Left_Strafe", true);
 			}
 			else if (Vector3::Angle(direction, player->GetForward()) < 90.0f)
 			{
-				player->GetRigidBody()->SetMaxSpeedXZ(700.0f);
-				player->GetAnimator()->Play("Running", true);
+				rigidBody->SetMaxSpeedXZ(700.0f);
+				animator->Play("Running", true);
 			}
 			else
 			{
-				player->GetRigidBody()->SetMaxSpeedXZ(400.0f);
-				player->GetAnimator()->Play("Crouched_Walking", true);
+				rigidBody->SetMaxSpeedXZ(400.0f);
+				animator->Play("Crouched_Walking", true);
 			}
 		}
 	}
@@ -308,9 +321,10 @@ CPlayerPunchState::~CPlayerPunchState()
 void CPlayerPunchState::Enter(CObject* object)
 {
 	CPlayer* player = (CPlayer*)object;
+	CAnimator* animator = static_cast<CAnimator*>(object->GetComponent(COMPONENT_TYPE::ANIMATOR));
 
 	player->Punch();
-	player->GetAnimator()->Play("Punching", false);
+	animator->Play("Punching", false);
 }
 
 void CPlayerPunchState::Exit(CObject* object)
@@ -319,21 +333,24 @@ void CPlayerPunchState::Exit(CObject* object)
 
 void CPlayerPunchState::Update(CObject* object)
 {
-	if (object->GetAnimator()->IsFinished())
+	CStateMachine* stateMachine = static_cast<CStateMachine*>(object->GetComponent(COMPONENT_TYPE::STATE_MACHINE));
+	CAnimator* animator = static_cast<CAnimator*>(object->GetComponent(COMPONENT_TYPE::ANIMATOR));
+
+	if (animator->IsFinished())
 	{
-		if ((KEY_NONE(KEY::W) && KEY_NONE(KEY::S) && KEY_NONE(KEY::A) && KEY_NONE(KEY::D)) && Math::IsZero(object->GetRigidBody()->GetSpeedXZ()))
+		if ((KEY_NONE(KEY::W) && KEY_NONE(KEY::S) && KEY_NONE(KEY::A) && KEY_NONE(KEY::D)) && Math::IsZero(((CRigidBody*)object->GetComponent(COMPONENT_TYPE::RIGIDBODY))->GetSpeedXZ()))
 		{
-			object->GetStateMachine()->ChangeState(CPlayerIdleState::GetInstance());
+			stateMachine->ChangeState(CPlayerIdleState::GetInstance());
 		}
 		else if (KEY_HOLD(KEY::W) || KEY_HOLD(KEY::S) || KEY_HOLD(KEY::A) || KEY_HOLD(KEY::D))
 		{
 			if (KEY_NONE(KEY::SHIFT))
 			{
-				object->GetStateMachine()->ChangeState(CPlayerWalkState::GetInstance());
+				stateMachine->ChangeState(CPlayerWalkState::GetInstance());
 			}
 			else
 			{
-				object->GetStateMachine()->ChangeState(CPlayerRunState::GetInstance());
+				stateMachine->ChangeState(CPlayerRunState::GetInstance());
 			}
 		}
 	}
@@ -352,9 +369,10 @@ CPlayerShootState::~CPlayerShootState()
 void CPlayerShootState::Enter(CObject* object)
 {
 	CPlayer* player = (CPlayer*)object;
+	CAnimator* animator = static_cast<CAnimator*>(player->GetComponent(COMPONENT_TYPE::ANIMATOR));
 
 	player->SetAiming(true);
-	player->GetAnimator()->Play("Pistol_Idle", true);
+	animator->Play("Pistol_Idle", true);
 
 	CCameraManager::GetInstance()->GetMainCamera()->SetZoomIn(true);
 }
@@ -370,6 +388,8 @@ void CPlayerShootState::Exit(CObject* object)
 void CPlayerShootState::Update(CObject* object)
 {
 	CPlayer* player = (CPlayer*)object;
+	CRigidBody* rigidBody = static_cast<CRigidBody*>(player->GetComponent(COMPONENT_TYPE::RIGIDBODY));
+	CAnimator* animator = static_cast<CAnimator*>(player->GetComponent(COMPONENT_TYPE::ANIMATOR));
 
 	if (player->IsAiming())
 	{
@@ -384,15 +404,15 @@ void CPlayerShootState::Update(CObject* object)
 			{
 				player->SetAiming(false);
 				player->Shoot();
-				player->GetAnimator()->Play("Shooting", false);
+				animator->Play("Shooting", false);
 			}
 		}
 		else
 		{ 
-			if ((KEY_NONE(KEY::W) && KEY_NONE(KEY::S) && KEY_NONE(KEY::A) && KEY_NONE(KEY::D)) && Math::IsZero(player->GetRigidBody()->GetSpeedXZ()))
+			if ((KEY_NONE(KEY::W) && KEY_NONE(KEY::S) && KEY_NONE(KEY::A) && KEY_NONE(KEY::D)) && Math::IsZero(rigidBody->GetSpeedXZ()))
 			{
 				player->SetAiming(false);
-				player->GetStateMachine()->ChangeState(CPlayerIdleState::GetInstance());
+				((CStateMachine*)player->GetComponent(COMPONENT_TYPE::STATE_MACHINE))->ChangeState(CPlayerIdleState::GetInstance());
 			}
 			else if (KEY_HOLD(KEY::W) || KEY_HOLD(KEY::S) || KEY_HOLD(KEY::A) || KEY_HOLD(KEY::D))
 			{
@@ -400,21 +420,21 @@ void CPlayerShootState::Update(CObject* object)
 
 				if (KEY_NONE(KEY::SHIFT))
 				{
-					player->GetStateMachine()->ChangeState(CPlayerWalkState::GetInstance());
+					((CStateMachine*)player->GetComponent(COMPONENT_TYPE::STATE_MACHINE))->ChangeState(CPlayerWalkState::GetInstance());
 				}
 				else
 				{
-					player->GetStateMachine()->ChangeState(CPlayerRunState::GetInstance());
+					((CStateMachine*)player->GetComponent(COMPONENT_TYPE::STATE_MACHINE))->ChangeState(CPlayerRunState::GetInstance());
 				}
 			}
 		}
 	}
 	else
 	{
-		if (player->GetAnimator()->IsFinished())
+		if (animator->IsFinished())
 		{
 			player->SetAiming(true);
-			player->GetAnimator()->Play("Pistol_Idle", true);
+			animator->Play("Pistol_Idle", true);
 		}
 	}
 }
@@ -431,7 +451,9 @@ CPlayerDieState::~CPlayerDieState()
 
 void CPlayerDieState::Enter(CObject* object)
 {
-	object->GetAnimator()->Play("Standing_React_Death_Backward", false);
+	CAnimator* animator = static_cast<CAnimator*>(object->GetComponent(COMPONENT_TYPE::ANIMATOR));
+
+	animator->Play("Standing_React_Death_Backward", false);
 }
 
 void CPlayerDieState::Exit(CObject* object)

@@ -73,7 +73,9 @@ CCharacter* CGuard::GetTarget()
 
 void CGuard::Init()
 {
-	GetStateMachine()->SetCurrentState(CGuardIdleState::GetInstance());
+	CStateMachine* stateMachine = static_cast<CStateMachine*>(GetComponent(COMPONENT_TYPE::STATE_MACHINE));
+
+	stateMachine->SetCurrentState(CGuardIdleState::GetInstance());
 }
 
 void CGuard::OnCollisionEnter(CObject* collidedObject)
@@ -85,8 +87,11 @@ void CGuard::OnCollisionEnter(CObject* collidedObject)
 
 	if (collidedObject->GetName() == "Player")
 	{
-		SetTarget((CCharacter*)collidedObject);
-		GetStateMachine()->ChangeState(CGuardChaseState::GetInstance());
+		CCharacter* target = static_cast<CCharacter*>(collidedObject);
+		CStateMachine* stateMachine = static_cast<CStateMachine*>(GetComponent(COMPONENT_TYPE::STATE_MACHINE));
+
+		SetTarget(target);
+		stateMachine->ChangeState(CGuardChaseState::GetInstance());
 	}
 }
 
@@ -321,7 +326,9 @@ void CGuard::FollowMovePath(float force)
 	}
 	else
 	{
-		GetRigidBody()->AddForce(Vector3::ScalarProduct(force, forward, false));
+		CRigidBody* rigidBody = static_cast<CRigidBody*>(GetComponent(COMPONENT_TYPE::RIGIDBODY));
+
+		rigidBody->AddForce(Vector3::ScalarProduct(force, forward, false));
 	}
 }
 
@@ -361,6 +368,8 @@ void CGuard::FollowPatrolPath(float force)
 	}
 	else
 	{
-		GetRigidBody()->AddForce(Vector3::ScalarProduct(force, forward, false));
+		CRigidBody* rigidBody = static_cast<CRigidBody*>(GetComponent(COMPONENT_TYPE::RIGIDBODY));
+
+		rigidBody->AddForce(Vector3::ScalarProduct(force, forward, false));
 	}
 }

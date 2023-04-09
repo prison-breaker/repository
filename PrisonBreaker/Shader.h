@@ -6,8 +6,6 @@ class CShader : public CAsset
 	friend class CAssetManager;
 
 protected:
-	static ComPtr<ID3D12PipelineState>  m_currentPipelineState;
-
 	vector<ComPtr<ID3D12PipelineState>> m_d3d12PipelineStates;
 
 protected:

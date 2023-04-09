@@ -6,10 +6,7 @@ class CAnimation;
 
 class CAnimator : public CComponent
 {
-	friend class CObject;
-
 private:
-	bool							   m_isActive;
 	bool							   m_isLoop;
 	bool							   m_isFinished;
 
@@ -24,14 +21,10 @@ private:
 	vector<ComPtr<ID3D12Resource>>	   m_d3d12BoneTransformMatrixes;
 	vector<XMFLOAT4X4*>				   m_mappedBoneTransformMatrixes;
 
-private:
+public:
 	CAnimator();
 	~CAnimator();
 	
-public:
-	void SetActive(bool isActive);
-	bool IsActive();
-
 	bool IsFinished();
 
 	void SetFrameIndex(int frameIndex);
@@ -41,7 +34,7 @@ public:
 
 	void Play(const string& key, bool isLoop, bool duplicatable = false);
 
-	void UpdateShaderVariables();
+	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
 
 	virtual void Update();
 };

@@ -1,12 +1,12 @@
 #include "pch.h"
-#include "BilboardObject.h"
+#include "Bilboard.h"
 
 #include "AssetManager.h"
 
 #include "Texture.h"
 #include "Material.h"
 
-CBilboardObject::CBilboardObject() :
+CBilboard::CBilboard() :
 	m_maxVertexCount(),
 	m_vertexCount(),
 	m_d3d12VertexBuffer(),
@@ -16,11 +16,11 @@ CBilboardObject::CBilboardObject() :
 {
 }
 
-CBilboardObject::~CBilboardObject()
+CBilboard::~CBilboard()
 {
 }
 
-void CBilboardObject::ReleaseUploadBuffers()
+void CBilboard::ReleaseUploadBuffers()
 {
 	if (m_d3d12VertexUploadBuffer.Get() != nullptr)
 	{
@@ -35,7 +35,7 @@ void CBilboardObject::ReleaseUploadBuffers()
 	}
 }
 
-void CBilboardObject::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCamera* camera)
+void CBilboard::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCamera* camera)
 {
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferViews[] = { m_d3d12VertexBufferView };
 
@@ -113,55 +113,55 @@ CSkyBox::CSkyBox(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Grap
 	CShader* shader = CAssetManager::GetInstance()->GetShader("Bilboard");
 
 	texture->Load(d3d12Device, d3d12GraphicsCommandList, "SkyBox_Left.dds", TEXTURE_TYPE::ALBEDO_MAP);
-	material->AddTexture(texture);
+	material->SetTexture(texture);
 	material->AddShader(shader);
 	material->SetStateNum(1);
-	SetMaterial(material);
+	AddMaterial(material);
 
 	// Right
 	material = CAssetManager::GetInstance()->CreateMaterial("SkyBox_Right");
 	texture = CAssetManager::GetInstance()->CreateTexture("SkyBox_Right");
 	texture->Load(d3d12Device, d3d12GraphicsCommandList, "SkyBox_Right.dds", TEXTURE_TYPE::ALBEDO_MAP);
-	material->AddTexture(texture);
+	material->SetTexture(texture);
 	material->AddShader(shader);
 	material->SetStateNum(1);
-	SetMaterial(material);
+	AddMaterial(material);
 
 	// Bottom
 	material = CAssetManager::GetInstance()->CreateMaterial("SkyBox_Bottom");
 	texture = CAssetManager::GetInstance()->CreateTexture("SkyBox_Bottom");
 	texture->Load(d3d12Device, d3d12GraphicsCommandList, "SkyBox_Bottom.dds", TEXTURE_TYPE::ALBEDO_MAP);
-	material->AddTexture(texture);
+	material->SetTexture(texture);
 	material->AddShader(shader);
 	material->SetStateNum(1);
-	SetMaterial(material);
+	AddMaterial(material);
 
 	// Top
 	material = CAssetManager::GetInstance()->CreateMaterial("SkyBox_Top");
 	texture = CAssetManager::GetInstance()->CreateTexture("SkyBox_Top");
 	texture->Load(d3d12Device, d3d12GraphicsCommandList, "SkyBox_Top.dds", TEXTURE_TYPE::ALBEDO_MAP);
-	material->AddTexture(texture);
+	material->SetTexture(texture);
 	material->AddShader(shader);
 	material->SetStateNum(1);
-	SetMaterial(material);
+	AddMaterial(material);
 
 	// Back
 	material = CAssetManager::GetInstance()->CreateMaterial("SkyBox_Back");
 	texture = CAssetManager::GetInstance()->CreateTexture("SkyBox_Back");
 	texture->Load(d3d12Device, d3d12GraphicsCommandList, "SkyBox_Back.dds", TEXTURE_TYPE::ALBEDO_MAP);
-	material->AddTexture(texture);
+	material->SetTexture(texture);
 	material->AddShader(shader);
 	material->SetStateNum(1);
-	SetMaterial(material);
+	AddMaterial(material);
 
 	// Front
 	material = CAssetManager::GetInstance()->CreateMaterial("SkyBox_Front");
 	texture = CAssetManager::GetInstance()->CreateTexture("SkyBox_Front");
 	texture->Load(d3d12Device, d3d12GraphicsCommandList, "SkyBox_Front.dds", TEXTURE_TYPE::ALBEDO_MAP);
-	material->AddTexture(texture);
+	material->SetTexture(texture);
 	material->AddShader(shader);
 	material->SetStateNum(1);
-	SetMaterial(material);
+	AddMaterial(material);
 }
 
 CSkyBox::~CSkyBox()
@@ -272,10 +272,10 @@ CTree::CTree(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Graphics
 	CShader* shader = CAssetManager::GetInstance()->GetShader("Bilboard");
 
 	texture->Load(d3d12Device, d3d12GraphicsCommandList, "Tree.dds", TEXTURE_TYPE::ALBEDO_MAP);
-	material->AddTexture(texture);
+	material->SetTexture(texture);
 	material->AddShader(shader);
 	material->SetStateNum(0);
-	SetMaterial(material);
+	AddMaterial(material);
 }
 
 CTree::~CTree()

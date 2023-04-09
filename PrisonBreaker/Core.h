@@ -3,13 +3,10 @@
 class CPostProcessingShader;
 class CUILayer;
 
-struct CB_FRAMEWORKINFO
+struct CB_Core
 {
-	float m_TotalTime;
-	float m_ElapsedTime;
-
-	float m_FadeAmount;
-	float m_LetterboxAmount;
+	float m_totalTime;
+	float m_elapsedTime;
 };
 
 class CCore : public CSingleton<CCore>
@@ -19,43 +16,43 @@ class CCore : public CSingleton<CCore>
 private:
 	// 윈도우 관련 멤버 변수
 	HWND							  m_hWnd;		// 메인 윈도우 핸들
-	char							  m_Title[64];  // 윈도우 타이틀
-	XMFLOAT2						  m_Resolution; // 윈도우 해상도
+	char							  m_title[64];  // 윈도우 타이틀
+	XMFLOAT2						  m_resolution; // 윈도우 해상도
 
 	// DirectX12 관련 멤버 변수
-	bool							  m_Msaa4xEnable;
-	UINT							  m_Msaa4xQualityLevels;
+	bool							  m_msaa4xEnable;
+	UINT							  m_msaa4xQualityLevels;
 									  
-	ComPtr<IDXGIFactory4>			  m_DXGIFactory;
+	ComPtr<IDXGIFactory4>			  m_dxgiIFactory;
 	ComPtr<ID3D12Device>			  m_d3d12Device;
 									  
 	ComPtr<ID3D12CommandQueue>		  m_d3d12CommandQueue;
 	ComPtr<ID3D12CommandAllocator>	  m_d3d12CommandAllocator;
 	ComPtr<ID3D12GraphicsCommandList> m_d3d12GraphicsCommandList;
 									 
-	ComPtr<IDXGISwapChain3>			  m_DXGISwapChain;
-	static const UINT				  m_SwapChainBufferCount = 2;
-	UINT							  m_SwapChainBufferIndex;
+	ComPtr<IDXGISwapChain3>			  m_dxgiSwapChain;
+	static const UINT				  m_swapChainBufferCount = 2;
+	UINT							  m_swapChainBufferIndex;
 									  
-	ComPtr<ID3D12Resource>			  m_d3d12RenderTargetBuffers[m_SwapChainBufferCount];
+	ComPtr<ID3D12Resource>			  m_d3d12RenderTargetBuffers[m_swapChainBufferCount];
 	ComPtr<ID3D12DescriptorHeap>	  m_d3d12RtvDescriptorHeap;
-	UINT							  m_RtvDescriptorIncrementSize;
+	UINT							  m_rtvDescriptorIncrementSize;
 									  
 	ComPtr<ID3D12Resource>			  m_d3d12DepthStencilBuffer;
 	ComPtr<ID3D12Resource>			  m_d3d12DepthBuffer; // for DepthWrite
 	ComPtr<ID3D12DescriptorHeap>	  m_d3d12DsvDescriptorHeap;
-	UINT							  m_DsvDescriptorIncrementSize;
+	UINT							  m_dsvDescriptorIncrementSize;
 									  
 	ComPtr<ID3D12DescriptorHeap>	  m_d3d12CbvSrvUavDescriptorHeap;
 
 	ComPtr<ID3D12Fence>				  m_d3d12Fence;
-	UINT64							  m_FenceValues[m_SwapChainBufferCount];
-	HANDLE							  m_FenceEvent;
+	UINT64							  m_fenceValues[m_swapChainBufferCount];
+	HANDLE							  m_fenceEvent;
 
 	ComPtr<ID3D12RootSignature>		  m_d3d12RootSignature;
 
-	ComPtr<ID3D12Resource>			  m_d3d12FrameworkInfo;
-	CB_FRAMEWORKINFO*				  m_MappedFrameworkInfo;
+	ComPtr<ID3D12Resource>			  m_d3d12Core;
+	CB_Core*				          m_mappedCore;
 
 	//shared_ptr<CTexture>			  m_RenderingResultTexture;
 	//shared_ptr<CPostProcessingShader> m_PostProcessingShader;
@@ -68,9 +65,6 @@ private:
 private:
 	CCore();
 	~CCore();
-
-	void BuildObjects();
-	void ReleaseObjects();
 
 	void CreateDevice();
 	void CreateCommandQueueAndList();

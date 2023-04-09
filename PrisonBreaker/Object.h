@@ -5,9 +5,7 @@ class CObject;
 class CMesh;
 class CMaterial;
 
-class CCollider;
-class CRigidBody;
-class CStateMachine;
+class CComponent;
 class CAnimator;
 
 class CCamera;
@@ -21,27 +19,24 @@ struct LoadedModel
 class CObject
 {
 private:
-	static UINT		   m_nextInstanceID;
-	UINT			   m_instanceID;
+	static UINT		    m_nextInstanceID;
+	UINT			    m_instanceID;
+					    
+	string              m_name;
+					    
+	bool			    m_isActive;
+	bool			    m_isDeleted;
+					    
+	XMFLOAT4X4		    m_worldMatrix;
+	XMFLOAT4X4		    m_transformMatrix;
+					    
+	CMesh*			    m_mesh;
+	vector<CMaterial*>  m_materials;
 
-	string             m_name;
+	vector<CComponent*> m_components;
 
-	bool			   m_isActive;
-	bool			   m_isDeleted;
-
-	XMFLOAT4X4		   m_worldMatrix;
-	XMFLOAT4X4		   m_transformMatrix;
-
-	CMesh*			   m_mesh;
-	vector<CMaterial*> m_materials;
-
-	CCollider*         m_collider;
-	CRigidBody*		   m_rigidBody;
-	CStateMachine*     m_stateMachine;
-	CAnimator*		   m_animator;
-
-	CObject*		   m_parent;
-	vector<CObject*>   m_children;
+	CObject*		    m_parent;
+	vector<CObject*>    m_children;
 
 public:
 	CObject();
@@ -81,20 +76,12 @@ public:
 	void SetMesh(CMesh* mesh);
 	CMesh* GetMesh();
 
-	void SetMaterial(CMaterial* material);
+	void AddMaterial(CMaterial* material);
 	const vector<CMaterial*>& GetMaterials();
 
-	void CreateCollider();
-	CCollider* GetCollider();
-
-	void CreateRigidBody();
-	CRigidBody* GetRigidBody();
-
-	void SetAnimator(CAnimator* animator);
-	CAnimator* GetAnimator();
-
-	void CreateStateMachine();
-	CStateMachine* GetStateMachine();
+	CComponent* CreateComponent(COMPONENT_TYPE componentType);
+	void SetComponent(COMPONENT_TYPE componentType, CComponent* newComponent);
+	CComponent* GetComponent(COMPONENT_TYPE componentType);
 
 	CObject* GetParent();
 

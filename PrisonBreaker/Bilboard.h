@@ -12,7 +12,7 @@ struct QuadInfo
 	XMFLOAT3 m_color;
 };
 
-class CBilboardObject abstract : public CObject
+class CBilboard abstract : public CObject
 {
 protected:
 	int						 m_maxVertexCount;
@@ -24,8 +24,8 @@ protected:
 	QuadInfo*				 m_mappedQuadInfo;
 
 public:
-	CBilboardObject(); 
-	virtual ~CBilboardObject();
+	CBilboard(); 
+	virtual ~CBilboard();
 
 	virtual void ReleaseUploadBuffers();
 
@@ -34,7 +34,7 @@ public:
 
 //=========================================================================================================================
 
-class CSkyBox : public CBilboardObject
+class CSkyBox : public CBilboard
 {
 public:
 	CSkyBox(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
@@ -45,7 +45,7 @@ public:
 
 //=========================================================================================================================
 
-class CTree : public CBilboardObject
+class CTree : public CBilboard
 {
 public:
 	CTree(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, SCENE_TYPE sceneType);

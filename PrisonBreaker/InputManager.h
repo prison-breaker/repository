@@ -46,10 +46,7 @@ private:
 public:
 	KEY_STATE GetKeyState(KEY key);
 
-	void SetCursor(const XMFLOAT2& position);
 	const XMFLOAT2& GetCursor();
-
-	void SetOldCursor(const XMFLOAT2& position);
 	const XMFLOAT2& GetOldCursor();
 
 	void Init();

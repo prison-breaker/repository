@@ -7,11 +7,6 @@ struct Fog
 	float	 m_density;
 };
 
-struct CB_Fog
-{
-	Fog m_fog;
-};
-
 struct Light
 {
 	bool	   m_isActive;
@@ -34,9 +29,10 @@ struct Light
 	XMFLOAT4X4 m_toTexCoord;
 };
 
-struct CB_Light
+struct CB_GameScene
 {
 	Light m_lights[MAX_LIGHTS];
+	Fog   m_fog;
 };
 
 class CGameScene : public CScene
@@ -44,21 +40,16 @@ class CGameScene : public CScene
 	friend class CSceneManager;
 
 private:
-	//INIT_GAME_DATA		   m_InitGameData{};
+	ComPtr<ID3D12Resource> m_d3d12GameScene;
+	CB_GameScene*		   m_mappedGameScene;
 
-	vector<Light>		   m_lights;
-	ComPtr<ID3D12Resource> m_d3d12Lights;
-	CB_Light*			   m_mappedLights;
 	CObject*			   m_towerLight;
 	float				   m_towerLightAngle;
 
-	ComPtr<ID3D12Resource> m_d3d12Fog;
-	CB_Fog*                m_mappedFog;
+	//INIT_GAME_DATA		   m_InitGameData{};
 
 private:
 	CGameScene();
-
-	virtual void Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, const string& fileName);
 
 	virtual void Enter();
 	virtual void Exit();
@@ -71,8 +62,6 @@ private:
 
 public:
 	virtual ~CGameScene();
-
-	const vector<Light>& GetLights();
 
 	virtual void Init(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
 

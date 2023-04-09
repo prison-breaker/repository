@@ -10,7 +10,6 @@
 #include "Animation.h"
 
 CAnimator::CAnimator() :
-	m_isActive(true),
 	m_isLoop(),
 	m_isFinished(),
 	m_animations(),
@@ -26,16 +25,6 @@ CAnimator::CAnimator() :
 
 CAnimator::~CAnimator()
 {
-}
-
-void CAnimator::SetActive(bool isActive)
-{
-	m_isActive = isActive;
-}
-
-bool CAnimator::IsActive()
-{
-	return m_isActive;
 }
 
 bool CAnimator::IsFinished()
@@ -95,7 +84,7 @@ void CAnimator::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12
 				File::ReadStringFromFile(in, str);
 
 				File::ReadStringFromFile(in, str);
-				m_skinnedMeshCache[i] = static_cast<CSkinnedMesh*>(CAssetManager::GetInstance()->GetMesh(str));
+				m_skinnedMeshCache[i] = (CSkinnedMesh*)CAssetManager::GetInstance()->GetMesh(str);
 
 				// <Bones>
 				File::ReadStringFromFile(in, str);
@@ -150,7 +139,7 @@ void CAnimator::Play(const string& key, bool isLoop, bool duplicatable)
 	m_frameIndex = 0;
 }
 
-void CAnimator::UpdateShaderVariables()
+void CAnimator::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
 {
 	// 공유되는 스킨 메쉬에 현재 애니메이션 컨트롤러의 뼈 변환 행렬 리소스를 설정해준다.
 	for (int i = 0; i < m_skinnedMeshCache.size(); ++i)
@@ -161,7 +150,7 @@ void CAnimator::UpdateShaderVariables()
 
 void CAnimator::Update()
 {
-	if (m_isFinished)
+	if (!m_isEnabled || m_isFinished)
 	{
 		return;
 	}

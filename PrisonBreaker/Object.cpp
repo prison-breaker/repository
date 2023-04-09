@@ -7,10 +7,11 @@
 #include "Shader.h"
 #include "Material.h"
 
-#include "Collider.h"
-#include "RigidBody.h"
 #include "StateMachine.h"
+#include "RigidBody.h"
 #include "Animator.h"
+#include "SpriteRenderer.h"
+#include "Collider.h"
 
 #include "Player.h"
 
@@ -27,41 +28,16 @@ CObject::CObject() :
 	m_transformMatrix(Matrix4x4::Identity()),
 	m_mesh(),
 	m_materials(),
-	m_collider(),
-	m_rigidBody(),
-	m_stateMachine(),
-	m_animator(),
+	m_components(),
 	m_parent(),
 	m_children()
 {
+	m_components.resize((size_t)COMPONENT_TYPE::COUNT);
 }
 
 CObject::~CObject()
 {
-	if (m_collider != nullptr)
-	{
-		delete m_collider;
-		m_collider = nullptr;
-	}
-
-	if (m_rigidBody != nullptr)
-	{
-		delete m_rigidBody;
-		m_rigidBody = nullptr;
-	}
-
-	if (m_stateMachine != nullptr)
-	{
-		delete m_stateMachine;
-		m_stateMachine = nullptr;
-	}
-
-	if (m_animator != nullptr)
-	{
-		delete m_animator;
-		m_animator = nullptr;
-	}
-
+	Utility::SafeDelete(m_components);
 	Utility::SafeDelete(m_children);
 }
 
@@ -93,7 +69,9 @@ LoadedModel CObject::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* 
 	if (str == "<Animator>")
 	{
 		loadedModel.m_animator = new CAnimator();
-		loadedModel.m_animator->m_owner = loadedModel.m_rootFrame;
+
+		// 임시적으로 rootFrame을 owner로 지정하여 뼈정보를 저장시켜 놓는다.
+		loadedModel.m_animator->SetOwner(loadedModel.m_rootFrame);
 		loadedModel.m_animator->Load(d3d12Device, d3d12GraphicsCommandList, in);
 	}
 
@@ -129,7 +107,9 @@ CObject* CObject::LoadFrame(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList
 			CMesh* mesh = CAssetManager::GetInstance()->GetMesh(str);
 
 			object->SetMesh(mesh);
-			object->CreateCollider();
+
+			// 메쉬를 가진 프레임은 콜라이더 컴포넌트를 생성한다.
+			object->CreateComponent(COMPONENT_TYPE::COLLIDER);
 		}
 		else if (str == "<Materials>")
 		{
@@ -147,7 +127,10 @@ CObject* CObject::LoadFrame(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList
 				for (int i = 0; i < materialCount; ++i)
 				{
 					File::ReadStringFromFile(in, str);
-					object->SetMaterial(CAssetManager::GetInstance()->GetMaterial(str));
+					
+					CMaterial* material = CAssetManager::GetInstance()->GetMaterial(str);
+
+					object->AddMaterial(material);
 				}
 			}
 		}
@@ -287,10 +270,7 @@ XMFLOAT3 CObject::GetPosition()
 
 void CObject::SetMesh(CMesh* mesh)
 {
-	if (mesh != nullptr)
-	{
-		m_mesh = mesh;
-	}
+	m_mesh = mesh;
 }
 
 CMesh* CObject::GetMesh()
@@ -298,7 +278,7 @@ CMesh* CObject::GetMesh()
 	return m_mesh;
 }
 
-void CObject::SetMaterial(CMaterial* material)
+void CObject::AddMaterial(CMaterial* material)
 {
 	if (material != nullptr)
 	{
@@ -311,60 +291,63 @@ const vector<CMaterial*>& CObject::GetMaterials()
 	return m_materials;
 }
 
-void CObject::CreateCollider()
+CComponent* CObject::CreateComponent(COMPONENT_TYPE componentType)
 {
-	if (m_collider == nullptr)
+	if (m_components[(int)componentType] == nullptr)
 	{
-		m_collider = new CCollider();
-		m_collider->m_owner = this;
+		switch (componentType)
+		{
+		case COMPONENT_TYPE::STATE_MACHINE:
+			m_components[(int)componentType] = new CStateMachine();
+			break;
+		case COMPONENT_TYPE::COLLIDER:
+			m_components[(int)componentType] = new CCollider();
+			break;
+		case COMPONENT_TYPE::RIGIDBODY:
+			m_components[(int)componentType] = new CRigidBody();
+			break;
+		case COMPONENT_TYPE::ANIMATOR:
+			m_components[(int)componentType] = new CAnimator();
+			break;
+		case COMPONENT_TYPE::SPRITE_RENDERER:
+			m_components[(int)componentType] = new CSpriteRenderer();
+			break;
+		}
+
+		m_components[(int)componentType]->SetOwner(this);
 	}
+
+	return m_components[(int)componentType];
 }
 
-CCollider* CObject::GetCollider()
+void CObject::SetComponent(COMPONENT_TYPE componentType, CComponent* newComponent)
 {
-	return m_collider;
-}
-
-void CObject::CreateRigidBody()
-{
-	if (m_rigidBody == nullptr)
+	// 기존에 해당 타입의 컴포넌트를 가지고 있었다면 소멸시킨다.
+	if (m_components[(int)componentType] != nullptr)
 	{
-		m_rigidBody = new CRigidBody();
-		m_rigidBody->m_owner = this;
+		delete m_components[(int)componentType];
+		m_components[(int)componentType] = nullptr;
 	}
-}
 
-CRigidBody* CObject::GetRigidBody()
-{
-	return m_rigidBody;
-}
-
-void CObject::SetAnimator(CAnimator* animator)
-{
-	if (animator != nullptr)
+	if (newComponent != nullptr)
 	{
-		m_animator = animator;
-		m_animator->m_owner = this;
+		// newComponent의 owner가 있었다면, 연결을 해지시킨다.
+		CObject* owner = newComponent->GetOwner();
+
+		if (owner != nullptr)
+		{
+			owner->SetComponent(componentType, nullptr);
+		}
+
+		newComponent->SetOwner(this);
 	}
+	
+	m_components[(int)componentType] = newComponent;
 }
 
-CAnimator* CObject::GetAnimator()
+CComponent* CObject::GetComponent(COMPONENT_TYPE componentType)
 {
-	return m_animator;
-}
-
-void CObject::CreateStateMachine()
-{
-	if (m_stateMachine == nullptr)
-	{
-		m_stateMachine = new CStateMachine();
-		m_stateMachine->m_owner = this;
-	}
-}
-
-CStateMachine* CObject::GetStateMachine()
-{
-	return m_stateMachine;
+	return m_components[(int)componentType];
 }
 
 CObject* CObject::GetParent()
@@ -399,7 +382,7 @@ void CObject::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsComm
 	XMFLOAT4X4 worldMatrix = {};
 
 	XMStoreFloat4x4(&worldMatrix, XMMatrixTranspose(XMLoadFloat4x4(&m_worldMatrix)));
-	d3d12GraphicsCommandList->SetGraphicsRoot32BitConstants((UINT)ROOT_PARAMETER_TYPE::OBJECT, 16, &worldMatrix, 0);
+	d3d12GraphicsCommandList->SetGraphicsRoot32BitConstants(static_cast<UINT>(ROOT_PARAMETER_TYPE::OBJECT), 16, &worldMatrix, 0);
 }
 
 void CObject::ReleaseShaderVariables()
@@ -434,10 +417,12 @@ CObject* CObject::FindFrame(const string& name)
 
 CObject* CObject::CheckRayIntersection(const XMFLOAT3& rayOrigin, const XMFLOAT3& rayDirection, float& hitDistance, float maxDistance)
 {
-	if ((m_mesh != nullptr) && (m_collider != nullptr))
+	CCollider* collider = (CCollider*)m_components[(int)COMPONENT_TYPE::COLLIDER];
+
+	if ((m_mesh != nullptr) && (collider != nullptr))
 	{
 		// 광선과 바운딩박스의 교차를 검사한다.
-		bool isIntersected = m_collider->GetBoundingBox().Intersects(XMLoadFloat3(&rayOrigin), XMLoadFloat3(&rayDirection), hitDistance);
+		bool isIntersected = collider->GetBoundingBox().Intersects(XMLoadFloat3(&rayOrigin), XMLoadFloat3(&rayDirection), hitDistance);
 
 		if (isIntersected)
 		{
@@ -476,9 +461,11 @@ CObject* CObject::CheckRayIntersection(const XMFLOAT3& rayOrigin, const XMFLOAT3
 
 bool CObject::IsVisible(CCamera* camera)
 {
-	if ((camera != nullptr) && (m_collider != nullptr))
+	CCollider* collider = (CCollider*)m_components[(int)COMPONENT_TYPE::COLLIDER];
+
+	if ((camera != nullptr) && (collider != nullptr))
 	{
-		return camera->IsInBoundingFrustum(m_collider->GetBoundingBox());
+		return camera->IsInBoundingFrustum(collider->GetBoundingBox());
 	}
 
 	return false;
@@ -560,9 +547,9 @@ void CObject::OnCollisionExit(CObject* collidedObject)
 
 void CObject::Update()
 {
-	if (m_stateMachine != nullptr)
+	if (m_components[(int)COMPONENT_TYPE::STATE_MACHINE] != nullptr)
 	{
-		m_stateMachine->Update();
+		m_components[(int)COMPONENT_TYPE::STATE_MACHINE]->Update();
 	}
 
 	for (const auto& child : m_children)
@@ -576,19 +563,12 @@ void CObject::Update()
 
 void CObject::LateUpdate()
 {
-	if (m_rigidBody != nullptr)
+	for (int i = (int)COMPONENT_TYPE::RIGIDBODY; i < (int)COMPONENT_TYPE::COUNT; ++i)
 	{
-		m_rigidBody->Update();
-	}
-
-	if (m_animator != nullptr)
-	{
-		m_animator->Update();
-	}
-
-	if (m_collider != nullptr)
-	{
-		m_collider->Update();
+		if (m_components[i] != nullptr)
+		{
+			m_components[i]->Update();
+		}
 	}
 
 	for (const auto& child : m_children)
@@ -602,9 +582,12 @@ void CObject::LateUpdate()
 
 void CObject::PreRender(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCamera* camera)
 {
-	if (m_animator != nullptr)
+	for (const auto& component : m_components)
 	{
-		m_animator->UpdateShaderVariables();
+		if (component != nullptr)
+		{
+			component->UpdateShaderVariables(d3d12GraphicsCommandList);
+		}
 	}
 
 	// DepthWrite의 경우, 직교 투영변환 행렬을 사용하기 때문에 프러스텀 컬링을 수행할 수 없다.
@@ -630,9 +613,12 @@ void CObject::PreRender(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCa
 
 void CObject::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCamera* camera)
 {
-	if (m_animator != nullptr)
+	for (const auto& component : m_components)
 	{
-		m_animator->UpdateShaderVariables();
+		if (component != nullptr)
+		{
+			component->UpdateShaderVariables(d3d12GraphicsCommandList);
+		}
 	}
 
 	if (IsVisible(camera))

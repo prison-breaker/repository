@@ -22,6 +22,11 @@ CCamera* CCameraManager::GetMainCamera()
 	return m_cameras[0];
 }
 
+CCamera* CCameraManager::GetUICamera()
+{
+	return m_cameras[1];
+}
+
 const vector<CCamera*>& CCameraManager::GetCameras()
 {
 	return m_cameras;
@@ -36,6 +41,14 @@ void CCameraManager::Init(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* 
 	camera->SetScissorRect(0, 0, (LONG)resolution.x, (LONG)resolution.y);
 	camera->GeneratePerspectiveProjectionMatrix(90.0f, resolution.x / resolution.y, 1.0f, 200.0f);
 	camera->GenerateViewMatrix(XMFLOAT3(0.0f, 5.0f, 10.0f), XMFLOAT3(0.0f, 0.0f, -1.0f));
+	camera->CreateShaderVariables(d3d12Device, d3d12GraphicsCommandList);
+	m_cameras.push_back(camera);
+
+	camera = new CCamera(CAMERA_TYPE::UI);
+	camera->SetViewport(0, 0, (UINT)resolution.x, (UINT)resolution.y, 0.0f, 1.0f);
+	camera->SetScissorRect(0, 0, (LONG)resolution.x, (LONG)resolution.y);
+	camera->GenerateOrthographicsProjectionMatrix(resolution.x, resolution.y, 0.0f, 30.0f);
+	camera->GenerateViewMatrix(XMFLOAT3(0.0f, 0.0f, -10.0f), XMFLOAT3(0.0f, 0.0f, 1.0f));
 	camera->CreateShaderVariables(d3d12Device, d3d12GraphicsCommandList);
 	m_cameras.push_back(camera);
 

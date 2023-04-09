@@ -43,24 +43,20 @@ void CTexture::Create(ID3D12Device* d3d12Device, const UINT64& Width, UINT Heigh
 
 void CTexture::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in)
 {
-	string filePath = CAssetManager::GetInstance()->GetAssetPath() + "Texture\\";
 	string str;
 
 	while (true)
 	{
 		File::ReadStringFromFile(in, str);
 
-		if (str == "<FileName>")
-		{
-			File::ReadStringFromFile(in, str);
-
-			// .dds 부분을 제외한 나머지를 이름으로 설정한다.
-			m_name = str.substr(0, str.length() - 4);
-			m_d3d12Texture = DX::CreateTextureResourceFromDDSFile(d3d12Device, d3d12GraphicsCommandList, filePath + str, D3D12_RESOURCE_STATE_GENERIC_READ, m_d3d12UploadBuffer.GetAddressOf());
-		}
-		else if (str == "<Type>")
+		if (str == "<Type>")
 		{
 			in.read(reinterpret_cast<char*>(&m_type), sizeof(int));
+		}
+		else if (str == "<FileName>")
+		{
+			File::ReadStringFromFile(in, str);
+			Load(d3d12Device, d3d12GraphicsCommandList, str, m_type);
 		}
 		else if (str == "</Texture>")
 		{
@@ -84,16 +80,13 @@ void CTexture::UpdateShaderVariable(ID3D12GraphicsCommandList* d3d12GraphicsComm
 	switch (m_type)
 	{
 	case TEXTURE_TYPE::ALBEDO_MAP:
-		d3d12GraphicsCommandList->SetGraphicsRootDescriptorTable((UINT)ROOT_PARAMETER_TYPE::ALBEDO_MAP, m_d3d12GpuDescriptorHandle);
-		break;
-	case TEXTURE_TYPE::METALLIC_MAP:
-		d3d12GraphicsCommandList->SetGraphicsRootDescriptorTable((UINT)ROOT_PARAMETER_TYPE::METALLIC_MAP, m_d3d12GpuDescriptorHandle);
+		d3d12GraphicsCommandList->SetGraphicsRootDescriptorTable(static_cast<UINT>(ROOT_PARAMETER_TYPE::ALBEDO_MAP), m_d3d12GpuDescriptorHandle);
 		break;
 	case TEXTURE_TYPE::NORMAL_MAP:
-		d3d12GraphicsCommandList->SetGraphicsRootDescriptorTable((UINT)ROOT_PARAMETER_TYPE::NORMAL_MAP, m_d3d12GpuDescriptorHandle);
+		d3d12GraphicsCommandList->SetGraphicsRootDescriptorTable(static_cast<UINT>(ROOT_PARAMETER_TYPE::NORMAL_MAP), m_d3d12GpuDescriptorHandle);
 		break;
 	case TEXTURE_TYPE::SHADOW_MAP:
-		d3d12GraphicsCommandList->SetGraphicsRootDescriptorTable((UINT)ROOT_PARAMETER_TYPE::SHADOW_MAP, m_d3d12GpuDescriptorHandle);
+		d3d12GraphicsCommandList->SetGraphicsRootDescriptorTable(static_cast<UINT>(ROOT_PARAMETER_TYPE::SHADOW_MAP), m_d3d12GpuDescriptorHandle);
 		break;
 	}
 }

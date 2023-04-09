@@ -2,6 +2,7 @@
 #include "Component.h"
 
 CComponent::CComponent() :
+	m_isEnabled(true),
 	m_owner()
 {
 }
@@ -10,7 +11,34 @@ CComponent::~CComponent()
 {
 }
 
+void CComponent::SetEnabled(bool isEnabled)
+{
+	m_isEnabled = isEnabled;
+}
+
+bool CComponent::IsEnabled()
+{
+	return m_isEnabled;
+}
+
+void CComponent::SetOwner(CObject* owner)
+{
+	m_owner = owner;
+}
+
 CObject* CComponent::GetOwner()
 {
 	return m_owner;
+}
+
+void CComponent::CreateShaderVariables(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+{
+}
+
+void CComponent::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+{
+}
+
+void CComponent::ReleaseShaderVariables()
+{
 }

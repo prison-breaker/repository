@@ -1,21 +1,30 @@
 #pragma once
-#include "Object.h"
 
-class CCamera;
+class CObject;
 
-class CComponent
+class CComponent abstract
 {
-	friend class CObject;
-
 protected:
+	bool     m_isEnabled;
+
 	CObject* m_owner;
 
-protected:
+public:
 	CComponent();
+	CComponent(const CComponent& rhs) = delete;
 	virtual ~CComponent();
 
-public:
+	CComponent& operator =(const CComponent& rhs) = delete;
+
+	void SetEnabled(bool isEnabled);
+	bool IsEnabled();
+
+	void SetOwner(CObject* owner);
 	CObject* GetOwner();
+
+	virtual void CreateShaderVariables(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
+	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
+	virtual void ReleaseShaderVariables();
 
 	virtual void Update() = 0;
 };

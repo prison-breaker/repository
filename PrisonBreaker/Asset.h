@@ -18,4 +18,8 @@ public:
 
 	void SetName(const string& name);
 	const string& GetName();
+
+	virtual void CreateShaderVariables(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
+	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
+	virtual void ReleaseShaderVariables();
 };

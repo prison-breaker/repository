@@ -3,12 +3,10 @@
 
 class CCollider : public CComponent
 {
-	friend class CObject;
-
 private:
 	BoundingBox m_boundingBox;
 
-private:
+public:
 	CCollider();
 	virtual ~CCollider();
 

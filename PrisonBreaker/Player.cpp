@@ -53,7 +53,9 @@ void CPlayer::Init()
 	SetWeapon(weapon);
 	//weapon->SetActive(false);
 
-	GetStateMachine()->SetCurrentState(CPlayerIdleState::GetInstance());
+	CStateMachine* stateMachine = static_cast<CStateMachine*>(GetComponent(COMPONENT_TYPE::STATE_MACHINE));
+
+	stateMachine->SetCurrentState(CPlayerIdleState::GetInstance());
 }
 
 void CPlayer::Update()
@@ -69,7 +71,7 @@ void CPlayer::Update()
 		GetWindowRect(hWnd, &rect);
 
 		// 마우스 커서 위치 계산
-		POINT oldCursor = { (LONG)(rect.right / 2), (LONG)(rect.bottom / 2) };
+		POINT oldCursor = { static_cast<LONG>(rect.right / 2), static_cast<LONG>(rect.bottom / 2) };
 		POINT cursor = {};
 
 		// 이 함수는 윈도우 전체 영역을 기준으로 커서의 위치를 계산한다.
@@ -143,7 +145,7 @@ void CPlayer::Punch()
 
 	for (const auto& object : guards)
 	{
-		CGuard* guard = (CGuard*)object;
+		CGuard* guard = static_cast<CGuard*>(object);
 
 		if (guard->GetHealth() > 0)
 		{
@@ -163,16 +165,18 @@ void CPlayer::Punch()
 					// 플레이어의 forward 벡터와 교도관의 forward 벡터 간의 각이 40도 이하일 때 후면 타격(즉사)으로 처리한다.
 					angle = Vector3::Angle(forward, guard->GetForward());
 
+					CStateMachine* stateMachine = (CStateMachine*)guard->GetComponent(COMPONENT_TYPE::STATE_MACHINE);
+
 					if (angle <= 40.0f)
 					{
 						guard->SetHealth(0);
-						guard->GetStateMachine()->ChangeState(CGuardDieState::GetInstance());
+						stateMachine->ChangeState(CGuardDieState::GetInstance());
 					}
 					else
 					{
 						guard->SetHealth(guard->GetHealth() - 40);
 						guard->SetTarget(this);
-						guard->GetStateMachine()->ChangeState(CGuardHitState::GetInstance());
+						stateMachine->ChangeState(CGuardHitState::GetInstance());
 					}
 				}
 			}
@@ -200,7 +204,7 @@ void CPlayer::Shoot()
 			{
 				if (i == (int)GROUP_TYPE::ENEMY)
 				{
-					CGuard* guard = (CGuard*)object;
+					CGuard* guard = static_cast<CGuard*>(object);
 
 					if (guard->GetHealth() <= 0)
 					{
@@ -222,20 +226,21 @@ void CPlayer::Shoot()
 
 		if ((nearestIntersectedRootObject != nullptr) && (typeid(*nearestIntersectedRootObject) == typeid(CGuard)))
 		{
-			CGuard* guard = (CGuard*)nearestIntersectedRootObject;
+			CGuard* guard = static_cast<CGuard*>(nearestIntersectedRootObject);
+			CStateMachine* stateMachine = static_cast<CStateMachine*>(guard->GetComponent(COMPONENT_TYPE::STATE_MACHINE));
 			const string& hitFrameName = nearestIntersectedObject->GetName();
 
 			// 머리에 맞은 경우, 즉사시킨다.
 			if (hitFrameName == "hat" || hitFrameName == "head_1" || hitFrameName == "head_2")
 			{
 				guard->SetHealth(0);
-				guard->GetStateMachine()->ChangeState(CGuardDieState::GetInstance());
+				stateMachine->ChangeState(CGuardDieState::GetInstance());
 			}
 			else
 			{
 				guard->SetHealth(guard->GetHealth() - 70);
 				guard->SetTarget(this);
-				guard->GetStateMachine()->ChangeState(CGuardHitState::GetInstance());
+				stateMachine->ChangeState(CGuardHitState::GetInstance());
 			}
 		}
 	}
