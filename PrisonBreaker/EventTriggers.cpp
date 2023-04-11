@@ -11,7 +11,7 @@
 
 COpenDoorEventTrigger::COpenDoorEventTrigger()
 {
-	m_IsActive = true;
+	m_isActive = true;
 	m_ActiveFOV = 70.0f;
 }
 
@@ -66,7 +66,7 @@ bool COpenDoorEventTrigger::InteractEventTrigger(UINT CallerIndex)
 
 void COpenDoorEventTrigger::Update(float ElapsedTime)
 {
-	if (m_IsActive && m_IsInteracted)
+	if (m_isActive && m_IsInteracted)
 	{
 		if (m_DoorAngle < 70.0f)
 		{
@@ -83,7 +83,7 @@ void COpenDoorEventTrigger::Update(float ElapsedTime)
 
 CPowerDownEventTrigger::CPowerDownEventTrigger()
 {
-	m_IsActive = true;
+	m_isActive = true;
 	m_ActiveFOV = 40.0f;
 }
 
@@ -94,8 +94,8 @@ void CPowerDownEventTrigger::Reset()
 	vector<LIGHT>& Lights{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene(TEXT("GameScene")))->GetLights() };
 	const XMFLOAT3 WorldUp{ 0.0f, 1.0f, 0.0f };
 
-	Lights[1].m_IsActive = true;
-	Lights[2].m_IsActive = true;
+	Lights[1].m_isActive = true;
+	Lights[2].m_isActive = true;
 
 	m_EventObjects[0]->Rotate(WorldUp, m_PanelAngle);
 	m_IsOpened = false;
@@ -135,8 +135,8 @@ bool CPowerDownEventTrigger::InteractEventTrigger(UINT CallerIndex)
 			vector<LIGHT>& Lights{ GameScene->GetLights() };
 
 			// 감시탑의 조명을 끈다.
-			Lights[1].m_IsActive = false;
-			Lights[2].m_IsActive = false;
+			Lights[1].m_isActive = false;
+			Lights[2].m_isActive = false;
 
 			// 0번 플레이어의 감시탑 차단 미션UI를 완료상태로 변경한다.
 			if (CCore::GetInstance()->GetSocketInfo().m_ID == 0)
@@ -161,7 +161,7 @@ bool CPowerDownEventTrigger::InteractEventTrigger(UINT CallerIndex)
 
 void CPowerDownEventTrigger::Update(float ElapsedTime)
 {
-	if (m_IsActive && m_IsInteracted)
+	if (m_isActive && m_IsInteracted)
 	{
 		if (m_PanelAngle < 120.0f)
 		{
@@ -186,7 +186,7 @@ void CPowerDownEventTrigger::Update(float ElapsedTime)
 
 CSirenEventTrigger::CSirenEventTrigger()
 {
-	m_IsActive = true;
+	m_isActive = true;
 	m_ActiveFOV = 40.0f;
 }
 
@@ -259,7 +259,7 @@ bool CSirenEventTrigger::InteractEventTrigger(UINT CallerIndex)
 
 COpenGateEventTrigger::COpenGateEventTrigger()
 {
-	m_IsActive = true;
+	m_isActive = true;
 	m_ActiveFOV = 70.0f;
 }
 
@@ -334,7 +334,7 @@ bool COpenGateEventTrigger::InteractEventTrigger(UINT CallerIndex)
 
 void COpenGateEventTrigger::Update(float ElapsedTime)
 {
-	if (m_IsActive && m_IsInteracted)
+	if (m_isActive && m_IsInteracted)
 	{
 		if (m_GateAngle < 120.0f)
 		{
@@ -358,7 +358,7 @@ void CGetPistolEventTrigger::Reset()
 {
 	CEventTrigger::Reset();
 
-	m_IsActive = false;
+	m_isActive = false;
 }
 
 void CGetPistolEventTrigger::ShowInteractionUI()
@@ -417,7 +417,7 @@ void CGetKeyEventTrigger::Reset()
 {
 	CEventTrigger::Reset();
 
-	m_IsActive = false;
+	m_isActive = false;
 }
 
 void CGetKeyEventTrigger::ShowInteractionUI()

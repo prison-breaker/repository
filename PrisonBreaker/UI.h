@@ -18,6 +18,10 @@ public:
 
 	bool IsCursorOver();
 
+	void SetPosition(const XMFLOAT2& position);
+	XMFLOAT2 GetPosition();
+
+	void SetSize(const XMFLOAT2& size);
 	XMFLOAT2 GetSize();
 
 	virtual void OnCursorOver();		    // 현재 커서의 위치가 이 UI 위에 있을 때 호출
@@ -26,6 +30,8 @@ public:
 	virtual void OnCursorLeftButtonClick(); // 현재 커서의 위치가 이 UI 위에 있고, 이전에 눌렸으며 현재 프레임에 때졌을 때 호출
 
 	virtual void LateUpdate();
+
+	virtual void Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCamera* camera);
 
 private:
 	void CheckCursorOver();

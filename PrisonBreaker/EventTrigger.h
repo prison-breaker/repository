@@ -6,7 +6,7 @@ class CQuadObject;
 class CEventTrigger : public enable_shared_from_this<CEventTrigger>
 {
 protected:
-	bool							m_IsActive{};
+	bool							m_isActive{};
 	bool							m_IsInteracted{};
 
 	XMFLOAT3						m_ToTrigger{};

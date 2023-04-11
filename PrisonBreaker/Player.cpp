@@ -21,7 +21,8 @@
 
 CPlayer::CPlayer() :
 	m_rotation(),
-	m_isAiming()
+	m_isAiming(),
+	m_bulletCount()
 {
 	SetName("Player");
 }
@@ -45,98 +46,53 @@ bool CPlayer::IsAiming()
 	return m_isAiming;
 }
 
+bool CPlayer::HasBullet()
+{
+	return m_bulletCount > 0;
+}
+
 void CPlayer::Init()
 {
 	// 시작 시, 들고있는 권총을 비활성화 시킨다.
 	CObject* weapon = FindFrame("gun_pr_1");
 
+	weapon->SetActive(false);
 	SetWeapon(weapon);
-	//weapon->SetActive(false);
+	m_bulletCount = 5;
 
 	CStateMachine* stateMachine = static_cast<CStateMachine*>(GetComponent(COMPONENT_TYPE::STATE_MACHINE));
 
 	stateMachine->SetCurrentState(CPlayerIdleState::GetInstance());
 }
 
-void CPlayer::Update()
+void CPlayer::SwapWeapon(WEAPON_TYPE weaponType)
 {
-	// 현재 윈도우가 포커싱 상태인지 알아낸다.
-	HWND hWnd = GetFocus();
+	CObject* weapon = GetWeapon();
 
-	if (hWnd != nullptr)
+	if (weapon != nullptr)
 	{
-		// 윈도우 영역 계산
-		RECT rect = {};
+		CCharacter::SwapWeapon(weaponType);
 
-		GetWindowRect(hWnd, &rect);
+		const vector<CObject*>& uis = CSceneManager::GetInstance()->GetCurrentScene()->GetGroupObject(GROUP_TYPE::UI);
 
-		// 마우스 커서 위치 계산
-		POINT oldCursor = { static_cast<LONG>(rect.right / 2), static_cast<LONG>(rect.bottom / 2) };
-		POINT cursor = {};
-
-		// 이 함수는 윈도우 전체 영역을 기준으로 커서의 위치를 계산한다.
-		GetCursorPos(&cursor);
-
-		XMFLOAT2 delta = {};
-
-		delta.x = (cursor.x - oldCursor.x) * 20.0f * DT;
-		delta.y = (cursor.y - oldCursor.y) * 20.0f * DT;
-
-		SetCursorPos(oldCursor.x, oldCursor.y);
-
-		// X축 회전(카메라만)
-		if (!Math::IsZero(delta.y))
+		for (const auto& ui : uis)
 		{
-			m_rotation.x += delta.y;
-
-			if (m_rotation.x < -15.0f)
+			if (ui->GetName() == "Status")
 			{
-				m_rotation.x = -15.0f;
+				switch (weaponType)
+				{
+				case WEAPON_TYPE::PUNCH:
+					ui->FindFrame("Punch")->SetActive(true);
+					ui->FindFrame("Pistol")->SetActive(false);
+					break;
+				case WEAPON_TYPE::PISTOL:
+					ui->FindFrame("Punch")->SetActive(false);
+					ui->FindFrame("Pistol")->SetActive(true);
+					break;
+				}
 			}
-			else if (m_rotation.x > 15.0f)
-			{
-				m_rotation.x = 15.0f;
-			}
-		}
-
-		// Y축 회전(플레이어와 카메라 모두)
-		if (!Math::IsZero(delta.x))
-		{
-			m_rotation.y += delta.x;
-
-			if (m_rotation.y < 0.0f)
-			{
-				m_rotation.y += 360.0f;
-			}
-			else if (m_rotation.y > 360.0f)
-			{
-				m_rotation.y -= 360.0f;
-			}
-
-			XMFLOAT4X4 rotationMatrix = Matrix4x4::RotationAxis(GetUp(), delta.x);
-
-			SetRight(Vector3::TransformNormal(GetRight(), rotationMatrix));
-			SetForward(Vector3::TransformNormal(GetForward(), rotationMatrix));
 		}
 	}
-
-	if (KEY_TAP(KEY::NUM1))
-	{
-		if (IsEquippedWeapon())
-		{
-			SwapWeapon(WEAPON_TYPE::PUNCH);
-		}
-	}
-
-	if (KEY_TAP(KEY::NUM2))
-	{
-		if (!IsEquippedWeapon())
-		{
-			SwapWeapon(WEAPON_TYPE::PISTOL);
-		}
-	}
-
-	CObject::Update();
 }
 
 void CPlayer::Punch()
@@ -244,4 +200,99 @@ void CPlayer::Shoot()
 			}
 		}
 	}
+
+	// 총알 UI를 한개씩 지운다.
+	const vector<CObject*>& uis = CSceneManager::GetInstance()->GetCurrentScene()->GetGroupObject(GROUP_TYPE::UI);
+
+	for (const auto& ui : uis)
+	{
+		if (ui->GetName() == "Status")
+		{
+			const vector<CObject*>& children = ui->FindFrame("Pistol")->GetChildren();
+
+			children[m_bulletCount--]->SetActive(false);
+			break;
+		}
+	}
+}
+
+void CPlayer::Update()
+{
+	// 현재 윈도우가 포커싱 상태인지 알아낸다.
+	HWND hWnd = GetFocus();
+
+	if (hWnd != nullptr)
+	{
+		// 윈도우 영역 계산
+		RECT rect = {};
+
+		GetWindowRect(hWnd, &rect);
+
+		// 마우스 커서 위치 계산
+		POINT oldCursor = { static_cast<LONG>(rect.right / 2), static_cast<LONG>(rect.bottom / 2) };
+		POINT cursor = {};
+
+		// 이 함수는 윈도우 전체 영역을 기준으로 커서의 위치를 계산한다.
+		GetCursorPos(&cursor);
+
+		XMFLOAT2 delta = {};
+
+		delta.x = (cursor.x - oldCursor.x) * 20.0f * DT;
+		delta.y = (cursor.y - oldCursor.y) * 20.0f * DT;
+
+		SetCursorPos(oldCursor.x, oldCursor.y);
+
+		// X축 회전(카메라만)
+		if (!Math::IsZero(delta.y))
+		{
+			m_rotation.x += delta.y;
+
+			if (m_rotation.x < -15.0f)
+			{
+				m_rotation.x = -15.0f;
+			}
+			else if (m_rotation.x > 15.0f)
+			{
+				m_rotation.x = 15.0f;
+			}
+		}
+
+		// Y축 회전(플레이어와 카메라 모두)
+		if (!Math::IsZero(delta.x))
+		{
+			m_rotation.y += delta.x;
+
+			if (m_rotation.y < 0.0f)
+			{
+				m_rotation.y += 360.0f;
+			}
+			else if (m_rotation.y > 360.0f)
+			{
+				m_rotation.y -= 360.0f;
+			}
+
+			XMFLOAT4X4 rotationMatrix = Matrix4x4::RotationAxis(GetUp(), delta.x);
+
+			SetRight(Vector3::TransformNormal(GetRight(), rotationMatrix));
+			SetForward(Vector3::TransformNormal(GetForward(), rotationMatrix));
+		}
+	}
+
+	if (KEY_TAP(KEY::NUM1))
+	{
+		if (IsEquippedWeapon())
+		{
+			SwapWeapon(WEAPON_TYPE::PUNCH);
+		}
+	}
+
+	if (KEY_TAP(KEY::NUM2))
+	{
+		if (!IsEquippedWeapon())
+		{
+			SwapWeapon(WEAPON_TYPE::PISTOL);
+		}
+	}
+
+	CObject::Update();
 }

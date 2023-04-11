@@ -79,8 +79,8 @@ void CGameScene::Enter()
 void CGameScene::Exit()
 {
 	//// 엔딩씬에서는 감시탑의 조명이 비춰지면 안되기 때문에 게임씬을 나갈 때, 꺼준다.
-	//m_Lights[1].m_IsActive = false;
-	//m_Lights[2].m_IsActive = false;
+	//m_Lights[1].m_isActive = false;
+	//m_Lights[2].m_isActive = false;
 
 	//CSoundManager::GetInstance()->Stop(SOUND_TYPE_SIREN);
 	//CSoundManager::GetInstance()->Stop(SOUND_TYPE_INGAME_BGM_1);
@@ -91,7 +91,7 @@ void CGameScene::Init(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d1
 {
 	// 씬 로드
 	Load(d3d12Device, d3d12GraphicsCommandList, "GameScene.bin");
-	//LoadUI(d3d12Device, d3d12GraphicsCommandList, "GameScene_UI.bin");
+	LoadUI(d3d12Device, d3d12GraphicsCommandList, "GameScene_UI.bin");
 
 	// 구조물을 순회하며, 감시탑의 조명 프레임을 찾아 저장한다.
 	const vector<CObject*>& structures = GetGroupObject(GROUP_TYPE::STRUCTURE);
@@ -131,7 +131,7 @@ void CGameScene::Init(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d1
 	//object->AddMaterial(material);
 	//object->Scale(256.0f, 384.0f, 1.0f);
 	//object->Rotate(90.0f, 180.0f, 0.0f);
-	//object->UpdateTransform();
+	//object->UpdateTransform(true);
 	//AddObject(GROUP_TYPE::UI, object);
 
 	// 충돌 그룹 설정
@@ -181,7 +181,7 @@ void CGameScene::Update()
 		const vector<CObject*>& objects = GetGroupObject(GROUP_TYPE::PLAYER);
 
 		objects[0]->SetPosition(navMesh->GetNavNodes()[100]->GetTriangle().m_centroid);
-		objects[0]->UpdateTransform();
+		objects[0]->UpdateTransform(true);
 	}
 
 	CScene::Update();
@@ -308,7 +308,7 @@ void CGameScene::PreRender(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
 	{
 		if (camera->GetType() == CAMERA_TYPE::LIGHT)
 		{
-			Light* light = camera->GetLight();
+			LIGHT* light = camera->GetLight();
 
 			if ((light != nullptr) && (light->m_isActive) && (light->m_shadowMapping))
 			{

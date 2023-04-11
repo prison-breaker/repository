@@ -218,7 +218,7 @@ void CObject::SetRight(const XMFLOAT3& right)
 	m_transformMatrix._12 = right.y;
 	m_transformMatrix._13 = right.z;
 
-	UpdateTransform();
+	UpdateTransform(true);
 }
 
 XMFLOAT3 CObject::GetRight()
@@ -232,7 +232,7 @@ void CObject::SetUp(const XMFLOAT3& up)
 	m_transformMatrix._22 = up.y;
 	m_transformMatrix._23 = up.z;
 
-	UpdateTransform();
+	UpdateTransform(true);
 }
 
 XMFLOAT3 CObject::GetUp()
@@ -246,7 +246,7 @@ void CObject::SetForward(const XMFLOAT3& forward)
 	m_transformMatrix._32 = forward.y;
 	m_transformMatrix._33 = forward.z;
 
-	UpdateTransform();
+	UpdateTransform(true);
 }
 
 XMFLOAT3 CObject::GetForward()
@@ -260,7 +260,7 @@ void CObject::SetPosition(const XMFLOAT3& position)
 	m_transformMatrix._42 = position.y;
 	m_transformMatrix._43 = position.z;
 
-	UpdateTransform();
+	UpdateTransform(true);
 }
 
 XMFLOAT3 CObject::GetPosition()
@@ -348,6 +348,11 @@ void CObject::SetComponent(COMPONENT_TYPE componentType, CComponent* newComponen
 CComponent* CObject::GetComponent(COMPONENT_TYPE componentType)
 {
 	return m_components[(int)componentType];
+}
+
+const vector<CComponent*>& CObject::GetComponents()
+{
+	return m_components;
 }
 
 CObject* CObject::GetParent()
@@ -482,7 +487,7 @@ void CObject::UpdateLocalCoord(const XMFLOAT3& forward)
 	SetForward(forward);
 }
 
-void CObject::UpdateTransform()
+void CObject::UpdateTransform(bool updateChidren)
 {
 	if (m_parent != nullptr)
 	{
@@ -493,9 +498,12 @@ void CObject::UpdateTransform()
 		m_worldMatrix = Matrix4x4::Multiply(m_transformMatrix, Matrix4x4::Identity());
 	}
 
-	for (const auto& child : m_children)
+	if (updateChidren)
 	{
-		child->UpdateTransform();
+		for (const auto& child : m_children)
+		{
+			child->UpdateTransform(updateChidren);
+		}
 	}
 }
 
@@ -512,7 +520,7 @@ void CObject::Scale(float Pitch, float Yaw, float Roll)
 
 	m_transformMatrix = Matrix4x4::Multiply(scalingMatrix, m_transformMatrix);
 
-	UpdateTransform();
+	UpdateTransform(true);
 }
 
 void CObject::Rotate(float Pitch, float Yaw, float Roll)
@@ -521,7 +529,7 @@ void CObject::Rotate(float Pitch, float Yaw, float Roll)
 
 	m_transformMatrix = Matrix4x4::Multiply(rotationMatrix, m_transformMatrix);
 
-	UpdateTransform();
+	UpdateTransform(true);
 }
 
 void CObject::Rotate(const XMFLOAT3& Axis, float Angle)
@@ -530,7 +538,7 @@ void CObject::Rotate(const XMFLOAT3& Axis, float Angle)
 
 	m_transformMatrix = Matrix4x4::Multiply(rotationMatrix, m_transformMatrix);
 
-	UpdateTransform();
+	UpdateTransform(true);
 }
 
 void CObject::OnCollisionEnter(CObject* collidedObject)

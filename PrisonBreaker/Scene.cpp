@@ -79,7 +79,7 @@ void CScene::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Gra
 					object->SetActive(isActive[i]);
 					object->SetTransformMatrix(transformMatrixes[i]);
 					object->AddChild(loadedModel.m_rootFrame);
-					object->UpdateTransform();
+					object->UpdateTransform(true);
 					object->Init();
 					AddObject(groupType, object);
 				}
@@ -102,7 +102,7 @@ void CScene::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Gra
 					guard->SetTransformMatrix(transformMatrixes[i]);
 					guard->SetComponent(COMPONENT_TYPE::ANIMATOR, loadedModel.m_animator);
 					guard->AddChild(loadedModel.m_rootFrame);
-					guard->UpdateTransform();
+					guard->UpdateTransform(true);
 					guard->CreatePatrolPath(targetPositions[i]);
 					guard->Init();
 					AddObject(groupType, guard);
@@ -121,7 +121,7 @@ void CScene::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Gra
 					player->SetTransformMatrix(transformMatrixes[i]);
 					player->SetComponent(COMPONENT_TYPE::ANIMATOR, loadedModel.m_animator);
 					player->AddChild(loadedModel.m_rootFrame);
-					player->UpdateTransform();
+					player->UpdateTransform(true);
 					player->Init();
 					AddObject(groupType, player);
 
@@ -155,7 +155,7 @@ void CScene::LoadUI(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12G
 
 			AddObject(GROUP_TYPE::UI, ui);
 		}
-		else if (str == "<UIs>")
+		else if (str == "</UIs>")
 		{
 			cout << endl;
 			break;

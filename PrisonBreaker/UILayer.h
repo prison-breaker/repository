@@ -12,7 +12,7 @@ struct TEXT_BLOCK
 class CUILayer
 {
 private:
-    bool                           m_IsActive{};
+    bool                           m_isActive{};
 
     float                          m_Width{};
     float                          m_Height{};

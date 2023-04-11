@@ -209,12 +209,6 @@ void CShader::CreatePipelineStates(ID3D12Device* d3d12Device, ID3D12RootSignatur
 void CShader::SetPipelineState(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, int stateNum)
 {
 	d3d12GraphicsCommandList->SetPipelineState(m_d3d12PipelineStates[stateNum].Get());
-
-	//if (CShader::m_currentPipelineState != m_d3d12PipelineStates[stateNum])
-	//{
-	//	CShader::m_currentPipelineState = m_d3d12PipelineStates[stateNum];
-	//	d3d12GraphicsCommandList->SetPipelineState(CShader::m_currentPipelineState.Get());
-	//}
 }
 
 //=========================================================================================================================

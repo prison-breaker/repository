@@ -122,12 +122,12 @@ CPlayer* CCamera::GetTarget()
 	return m_target;
 }
 
-void CCamera::SetLight(Light* light)
+void CCamera::SetLight(LIGHT* light)
 {
 	m_light = light;
 }
 
-Light* CCamera::GetLight()
+LIGHT* CCamera::GetLight()
 {
 	return m_light;
 }

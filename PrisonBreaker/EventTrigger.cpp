@@ -6,7 +6,7 @@
 
 void CEventTrigger::Reset()
 {
-	m_IsActive = true;
+	m_isActive = true;
 	m_IsInteracted = false;
 }
 
@@ -86,12 +86,12 @@ void CEventTrigger::LoadEventTriggerFromFile(ifstream& in)
 
 void CEventTrigger::SetActive(bool IsActive)
 {
-	m_IsActive = IsActive;
+	m_isActive = IsActive;
 }
 
 bool CEventTrigger::IsActive() const
 {
-	return m_IsActive;
+	return m_isActive;
 }
 
 void CEventTrigger::SetInteracted(bool IsInteracted)
@@ -152,7 +152,7 @@ shared_ptr<CQuadObject> CEventTrigger::GetInteractionUI() const
 
 bool CEventTrigger::IsInTriggerArea(const XMFLOAT3& Position, const XMFLOAT3& LookDirection)
 {
-	if (m_IsActive && !m_IsInteracted)
+	if (m_isActive && !m_IsInteracted)
 	{
 		for (UINT i = 0; i < 2; ++i)
 		{

@@ -45,7 +45,7 @@ void CStateMachine::ChangeState(CState* state)
 
 void CStateMachine::Update()
 {
-	if (m_currentState != nullptr)
+	if (m_isEnabled && m_currentState != nullptr)
 	{
 		m_currentState->Update(m_owner);
 	}

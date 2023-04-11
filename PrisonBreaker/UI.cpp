@@ -5,8 +5,6 @@
 #include "InputManager.h"
 
 #include "Mesh.h"
-#include "Texture.h"
-#include "Shader.h"
 #include "Material.h"
 
 #include "Animator.h"
@@ -33,7 +31,14 @@ CUI* CUI::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Graphi
 
 		if (str == "<Type>")
 		{
+			int type = 0;
+
+			in.read((char*)&type, sizeof(int));
+
+			CMesh* mesh = CAssetManager::GetInstance()->GetMesh("Quad");
+
 			ui = new CUI();
+			ui->SetMesh(mesh);
 		}
 		else if (str == "<Name>")
 		{
@@ -52,28 +57,32 @@ CUI* CUI::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Graphi
 			XMFLOAT2 position = {};
 
 			in.read((char*)&position, sizeof(XMFLOAT2));
-			ui->SetPosition(XMFLOAT3(position.x, position.y, 0.0f));
+			ui->SetPosition(position);
 		}
 		else if (str == "<Size>")
 		{
 			XMFLOAT2 size = {};
 
 			in.read((char*)&size, sizeof(XMFLOAT2));
-			ui->Scale(size.x, size.y, 1.0f);
+			ui->SetSize(size);
 		}
 		else if (str == "<Material>")
 		{
 			File::ReadStringFromFile(in, str);
+
+			CMaterial* material = CAssetManager::GetInstance()->GetMaterial(str);
+
+			ui->AddMaterial(material);
 		}
 		else if (str == "<SpriteSize>")
 		{
 			CSpriteRenderer* spriteRenderer = static_cast<CSpriteRenderer*>(ui->CreateComponent(COMPONENT_TYPE::SPRITE_RENDERER));
-			XMFLOAT2 spriteSize = {};
+			XMINT2 spriteSize = {};
 
-			in.read((char*)&spriteSize, sizeof(XMFLOAT2));
+			in.read((char*)&spriteSize, sizeof(XMINT2));
 			spriteRenderer->SetSpriteSize(spriteSize);
 		}
-		else if (str == "<SpriteIndex>")
+		else if (str == "<FrameIndex>")
 		{
 			CSpriteRenderer* spriteRenderer = static_cast<CSpriteRenderer*>(ui->GetComponent(COMPONENT_TYPE::SPRITE_RENDERER));
 			int frameIndex = 0;
@@ -81,7 +90,23 @@ CUI* CUI::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Graphi
 			in.read((char*)&frameIndex, sizeof(int));
 			spriteRenderer->SetFrameIndex(frameIndex);
 		}
-		else if (str == "</UI>")	
+		else if (str == "<ChildCount>")
+		{
+			int childCount = 0;
+
+			in.read(reinterpret_cast<char*>(&childCount), sizeof(int));
+
+			for (int i = 0; i < childCount; ++i)
+			{
+				CUI* child = CUI::Load(d3d12Device, d3d12GraphicsCommandList, in);
+
+				if (child != nullptr)
+				{
+					ui->AddChild(child);
+				}
+			}
+		}
+		else if (str == "</Frame>")
 		{
 			cout << endl;
 			break;
@@ -104,11 +129,11 @@ bool CUI::IsFixed()
 void CUI::CheckCursorOver()
 {
     const XMFLOAT2& cursor = CURSOR;
-    XMFLOAT3 position = GetPosition();
+    XMFLOAT2 position = GetPosition();
     XMFLOAT2 size = GetSize();
 
-    if ((position.x <= cursor.x) && (cursor.x <= position.x + size.x) &&
-        (position.y <= cursor.y) && (cursor.y <= position.y + size.y))
+    if ((position.x - 0.5f * size.x <= cursor.x) && (cursor.x <= position.x + 0.5f * size.x) &&
+        (position.y - 0.5f * size.y <= cursor.y) && (cursor.y <= position.y + 0.5f * size.y))
     {
         m_isCursorOver = true;
     }
@@ -121,6 +146,35 @@ void CUI::CheckCursorOver()
 bool CUI::IsCursorOver()
 {
     return m_isCursorOver;
+}
+
+void CUI::SetPosition(const XMFLOAT2& position)
+{
+	XMFLOAT4X4 transformMatrix = GetTransformMatrix();
+
+	transformMatrix._41 = position.x;
+	transformMatrix._42 = position.y;
+
+	SetTransformMatrix(transformMatrix);
+	UpdateTransform(false);
+}
+
+XMFLOAT2 CUI::GetPosition()
+{
+	const XMFLOAT4X4& worldMatrix = GetWorldMatrix();
+
+	return XMFLOAT2(worldMatrix._41, worldMatrix._42);
+}
+
+void CUI::SetSize(const XMFLOAT2& size)
+{
+	XMFLOAT4X4 transformMatrix = GetTransformMatrix();
+
+	transformMatrix._11 = size.x;
+	transformMatrix._22 = size.y;
+
+	SetTransformMatrix(transformMatrix);
+	UpdateTransform(false);
 }
 
 XMFLOAT2 CUI::GetSize()
@@ -150,4 +204,43 @@ void CUI::LateUpdate()
 {
     CObject::LateUpdate();
     CheckCursorOver();
+}
+
+void CUI::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCamera* camera)
+{
+	const vector<CComponent*>& components = GetComponents();
+
+	for (const auto& component : components)
+	{
+		if (component != nullptr)
+		{
+			component->UpdateShaderVariables(d3d12GraphicsCommandList);
+		}
+	}
+
+	CMesh* mesh = GetMesh();
+
+	if (mesh != nullptr)
+	{
+		UpdateShaderVariables(d3d12GraphicsCommandList);
+
+		const vector<CMaterial*>& materials = GetMaterials();
+
+		for (int i = 0; i < materials.size(); ++i)
+		{
+			materials[i]->SetPipelineState(d3d12GraphicsCommandList, RENDER_TYPE::STANDARD);
+			materials[i]->UpdateShaderVariables(d3d12GraphicsCommandList);
+			mesh->Render(d3d12GraphicsCommandList, i);
+		}
+	}
+	
+	const vector<CObject*>& children = GetChildren();
+
+	for (const auto& child : children)
+	{
+		if (child->IsActive() && !child->IsDeleted())
+		{
+			child->Render(d3d12GraphicsCommandList, camera);
+		}
+	}
 }

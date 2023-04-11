@@ -7,6 +7,7 @@ private:
 	XMFLOAT3 m_rotation;
 
 	bool	 m_isAiming;
+	int	     m_bulletCount;
 
 	//bool     m_hasKey;
 
@@ -19,12 +20,16 @@ public:
 	void SetAiming(bool isAiming);
 	bool IsAiming();
 
+	bool HasBullet();
+
 	virtual void Init();
 
-	virtual void Update();
+	virtual void SwapWeapon(WEAPON_TYPE weaponType);
 
 	void Punch();
 	void Shoot();
+
+	virtual void Update();
 
 	//void ManagePistol(bool HasPistol);
 	//bool HasPistol() const;

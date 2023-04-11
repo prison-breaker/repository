@@ -7,7 +7,7 @@ struct Fog
 	float	 m_density;
 };
 
-struct Light
+struct LIGHT
 {
 	bool	   m_isActive;
 			   
@@ -25,13 +25,12 @@ struct Light
 	float	   m_phi;
 			   
 	bool	   m_shadowMapping;
-
 	XMFLOAT4X4 m_toTexCoord;
 };
 
 struct CB_GameScene
 {
-	Light m_lights[MAX_LIGHTS];
+	LIGHT m_lights[MAX_LIGHTS];
 	Fog   m_fog;
 };
 

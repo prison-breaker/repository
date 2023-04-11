@@ -1,7 +1,7 @@
 #pragma once
 
 class CPlayer;
-struct Light;
+struct LIGHT;
 
 struct CB_CAMERA
 {
@@ -41,7 +41,7 @@ protected:
 	CB_CAMERA*			   m_mappedData;
 
 	CPlayer*			   m_target;
-	Light*				   m_light;
+	LIGHT*				   m_light;
 
 protected:
 	// 이 객체의 생성은 오로지 CCameraManager에 의해서만 일어난다.
@@ -75,8 +75,8 @@ public:
 	void SetTarget(CPlayer* target);
 	CPlayer* GetTarget();
 
-	void SetLight(Light* light);
-	Light* GetLight();
+	void SetLight(LIGHT* light);
+	LIGHT* GetLight();
 
 	void CreateShaderVariables(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
 	void UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);

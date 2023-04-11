@@ -82,6 +82,7 @@ public:
 	CComponent* CreateComponent(COMPONENT_TYPE componentType);
 	void SetComponent(COMPONENT_TYPE componentType, CComponent* newComponent);
 	CComponent* GetComponent(COMPONENT_TYPE componentType);
+	const vector<CComponent*>& GetComponents();
 
 	CObject* GetParent();
 
@@ -103,7 +104,7 @@ public:
 	bool IsVisible(CCamera* camera);
 
 	void UpdateLocalCoord(const XMFLOAT3& forward);
-	void UpdateTransform();
+	void UpdateTransform(bool updateChidren);
 
 	void Move(const XMFLOAT3& Direction, float Distance);
 	void Scale(float Pitch, float Yaw, float Roll);

@@ -160,7 +160,7 @@ void CAssetManager::LoadShaders(ID3D12Device* d3d12Device, ID3D12RootSignature* 
 
 	shader = new CUIShader();
 	shader->SetName("UI");
-	shader->CreatePipelineStates(d3d12Device, D3D12RootSignature, 1);
+	shader->CreatePipelineStates(d3d12Device, D3D12RootSignature, 2);
 	m_shaders.emplace(shader->GetName(), shader);
 
 	shader = new CWireFrameShader();

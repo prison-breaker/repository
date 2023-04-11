@@ -193,6 +193,6 @@ void CAnimator::Update()
 			}
 		}
 
-		m_owner->UpdateTransform();
+		m_owner->UpdateTransform(true);
 	}
 }

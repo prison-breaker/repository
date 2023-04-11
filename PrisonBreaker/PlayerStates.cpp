@@ -397,10 +397,10 @@ void CPlayerShootState::Update(CObject* object)
 		{
 			CCamera* camera = CCameraManager::GetInstance()->GetMainCamera();
 			
-			camera->SetMagnification(camera->GetMagnification() + DT);
+			camera->SetMagnification(camera->GetMagnification() + 1.5f * DT);
 
 			// 우클릭으로 줌을 하고 있는 상태에서, 좌클릭이 입력된다면 총을 발사한다.
-			if (KEY_TAP(KEY::LBUTTON))
+			if (KEY_TAP(KEY::LBUTTON) && player->HasBullet())
 			{
 				player->SetAiming(false);
 				player->Shoot();
