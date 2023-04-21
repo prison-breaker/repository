@@ -294,6 +294,9 @@
     <ClCompile Include="UIObjects.cpp">
       <Filter>소스 파일\05. Object\05-03. UI</Filter>
     </ClCompile>
+    <ClCompile Include="Transform.cpp">
+      <Filter>소스 파일\07. Component</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Scene.h">
@@ -472,6 +475,9 @@
     </ClInclude>
     <ClInclude Include="UIObjects.h">
       <Filter>헤더 파일\05. Object\05-03. UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Transform.h">
+      <Filter>헤더 파일\07. Component</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -7,7 +7,7 @@ struct Fog
 	float	 m_density;
 };
 
-struct LIGHT
+struct Light
 {
 	bool	   m_isActive;
 			   
@@ -30,7 +30,7 @@ struct LIGHT
 
 struct CB_GameScene
 {
-	LIGHT m_lights[MAX_LIGHTS];
+	Light m_lights[MAX_LIGHTS];
 	Fog   m_fog;
 };
 

@@ -11,16 +11,15 @@
 #include "Scene.h"
 
 #include "Guard.h"
-
 #include "Camera.h"
 
 #include "StateMachine.h"
+#include "Transform.h"
 
 #include "PlayerStates.h"
 #include "GuardStates.h"
 
 CPlayer::CPlayer() :
-	m_rotation(),
 	m_isAiming(),
 	m_bulletCount()
 {
@@ -29,11 +28,6 @@ CPlayer::CPlayer() :
 
 CPlayer::~CPlayer()
 {
-}
-
-const XMFLOAT3& CPlayer::GetRotation()
-{
-	return m_rotation;
 }
 
 void CPlayer::SetAiming(bool isAiming)
@@ -60,9 +54,9 @@ void CPlayer::Init()
 	SetWeapon(weapon);
 	m_bulletCount = 5;
 
-	CStateMachine* stateMachine = static_cast<CStateMachine*>(GetComponent(COMPONENT_TYPE::STATE_MACHINE));
+	//CStateMachine* stateMachine = GetComponent<CStateMachine>();
 
-	stateMachine->SetCurrentState(CPlayerIdleState::GetInstance());
+	//stateMachine->SetCurrentState(CPlayerIdleState::GetInstance());
 }
 
 void CPlayer::SwapWeapon(WEAPON_TYPE weaponType)
@@ -97,31 +91,33 @@ void CPlayer::SwapWeapon(WEAPON_TYPE weaponType)
 
 void CPlayer::Punch()
 {
+	CTransform* transform = GetComponent<CTransform>();
 	const vector<CObject*>& guards = CSceneManager::GetInstance()->GetCurrentScene()->GetGroupObject(GROUP_TYPE::ENEMY);
 
 	for (const auto& object : guards)
 	{
 		CGuard* guard = static_cast<CGuard*>(object);
+		CTransform* guardTransform = guard->GetComponent<CTransform>();
 
 		if (guard->GetHealth() > 0)
 		{
-			XMFLOAT3 toGuard = Vector3::Subtract(guard->GetPosition(), GetPosition());
+			XMFLOAT3 toGuard = Vector3::Subtract(guardTransform->GetPosition(), transform->GetPosition());
 			float dist = Vector3::Length(toGuard);
 
 			if (dist <= 3.0f)
 			{
 				toGuard = Vector3::Normalize(toGuard);
 
-				XMFLOAT3 forward = GetForward();
+				XMFLOAT3 forward = transform->GetForward();
 				float angle = Vector3::Angle(forward, toGuard);
 
 				// forward 벡터와 toGaurd 벡터가 이루는 각이 80도 이하일 때 공격한다.
 				if (angle <= 80.0f)
 				{
 					// 플레이어의 forward 벡터와 교도관의 forward 벡터 간의 각이 40도 이하일 때 후면 타격(즉사)으로 처리한다.
-					angle = Vector3::Angle(forward, guard->GetForward());
+					angle = Vector3::Angle(forward, guardTransform->GetForward());
 
-					CStateMachine* stateMachine = (CStateMachine*)guard->GetComponent(COMPONENT_TYPE::STATE_MACHINE);
+					CStateMachine* stateMachine = guard->GetComponent<CStateMachine>();
 
 					if (angle <= 40.0f)
 					{
@@ -146,9 +142,9 @@ void CPlayer::Shoot()
 	CObject* nearestIntersectedObject = nullptr;
 	float nearestHitDist = FLT_MAX;
 
-	CCamera* camera = CCameraManager::GetInstance()->GetMainCamera();
-	const XMFLOAT3& rayOrigin = camera->GetPosition();
-	const XMFLOAT3& rayDirection = camera->GetFoward();
+	CTransform* cameraTransform = CCameraManager::GetInstance()->GetMainCamera()->GetComponent<CTransform>();
+	const XMFLOAT3& rayOrigin = cameraTransform->GetPosition();
+	const XMFLOAT3& rayDirection = cameraTransform->GetForward();
 
 	for (int i = (int)GROUP_TYPE::STRUCTURE; i <= (int)GROUP_TYPE::ENEMY; ++i)
 	{
@@ -183,7 +179,7 @@ void CPlayer::Shoot()
 		if ((nearestIntersectedRootObject != nullptr) && (typeid(*nearestIntersectedRootObject) == typeid(CGuard)))
 		{
 			CGuard* guard = static_cast<CGuard*>(nearestIntersectedRootObject);
-			CStateMachine* stateMachine = static_cast<CStateMachine*>(guard->GetComponent(COMPONENT_TYPE::STATE_MACHINE));
+			CStateMachine* stateMachine = guard->GetComponent<CStateMachine>();
 			const string& hitFrameName = nearestIntersectedObject->GetName();
 
 			// 머리에 맞은 경우, 즉사시킨다.
@@ -242,55 +238,40 @@ void CPlayer::Update()
 
 		SetCursorPos(oldCursor.x, oldCursor.y);
 
-		// X축 회전(카메라만)
-		if (!Math::IsZero(delta.y))
-		{
-			m_rotation.x += delta.y;
-
-			if (m_rotation.x < -15.0f)
-			{
-				m_rotation.x = -15.0f;
-			}
-			else if (m_rotation.x > 15.0f)
-			{
-				m_rotation.x = 15.0f;
-			}
-		}
-
-		// Y축 회전(플레이어와 카메라 모두)
+		// 플레이어 Y축 회전
 		if (!Math::IsZero(delta.x))
 		{
-			m_rotation.y += delta.x;
+			CTransform* transform = GetComponent<CTransform>();
+			XMFLOAT3 rotation = transform->GetRotation();
 
-			if (m_rotation.y < 0.0f)
+			rotation.y += delta.x;
+
+			if (rotation.y < 0.0f)
 			{
-				m_rotation.y += 360.0f;
+				rotation.y += 360.0f;
 			}
-			else if (m_rotation.y > 360.0f)
+			else if (rotation.y > 360.0f)
 			{
-				m_rotation.y -= 360.0f;
+				rotation.y -= 360.0f;
 			}
 
-			XMFLOAT4X4 rotationMatrix = Matrix4x4::RotationAxis(GetUp(), delta.x);
-
-			SetRight(Vector3::TransformNormal(GetRight(), rotationMatrix));
-			SetForward(Vector3::TransformNormal(GetForward(), rotationMatrix));
+			transform->SetRotation(rotation);
 		}
-	}
 
-	if (KEY_TAP(KEY::NUM1))
-	{
-		if (IsEquippedWeapon())
+		if (KEY_TAP(KEY::NUM1))
 		{
-			SwapWeapon(WEAPON_TYPE::PUNCH);
+			if (IsEquippedWeapon())
+			{
+				SwapWeapon(WEAPON_TYPE::PUNCH);
+			}
 		}
-	}
 
-	if (KEY_TAP(KEY::NUM2))
-	{
-		if (!IsEquippedWeapon())
+		if (KEY_TAP(KEY::NUM2))
 		{
-			SwapWeapon(WEAPON_TYPE::PISTOL);
+			if (!IsEquippedWeapon())
+			{
+				SwapWeapon(WEAPON_TYPE::PISTOL);
+			}
 		}
 	}
 

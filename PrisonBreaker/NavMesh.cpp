@@ -215,8 +215,8 @@ void CNavMesh::FixPosition(const XMFLOAT3& position, XMFLOAT3& newPosition)
 		if (Math::LineIntersection(vertices[index1], vertices[index2], position, newPosition))
 		{
 			crossedEdge = Vector3::Subtract(vertices[index1], vertices[index2]);
-			contactNormal = Vector3::Normalize(Vector3::TransformNormal(crossedEdge, Matrix4x4::RotationAxis(worldUp, 90.0f)));
-			slidingVector = Vector3::Subtract(shift, Vector3::ScalarProduct(Vector3::DotProduct(shift, contactNormal), contactNormal, false));
+			contactNormal = Vector3::Normalize(Vector3::TransformNormal(crossedEdge, Matrix4x4::Rotation(worldUp, 90.0f)));
+			slidingVector = Vector3::Subtract(shift, Vector3::ScalarProduct(contactNormal, Vector3::DotProduct(shift, contactNormal)));
 			newPosition = Vector3::Add(position, slidingVector);
 			return;
 		}

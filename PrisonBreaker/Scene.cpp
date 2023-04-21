@@ -9,6 +9,7 @@
 #include "UI.h"
 
 #include "Animator.h"
+#include "Transform.h"
 
 #include "Camera.h"
 
@@ -39,13 +40,13 @@ void CScene::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Gra
 	{
 		File::ReadStringFromFile(in, str);
 
-		if (str == "<FileName>")
-		{
-			File::ReadStringFromFile(in, modelFileName);
-		}
-		else if (str == "<GroupType>")
+		if (str == "<GroupType>")
 		{
 			in.read(reinterpret_cast<char*>(&groupType), sizeof(int));
+		}
+		else if (str == "<FileName>")
+		{
+			File::ReadStringFromFile(in, modelFileName);
 		}
 		else if (str == "<Instance>")
 		{
@@ -53,82 +54,92 @@ void CScene::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Gra
 
 			in.read(reinterpret_cast<char*>(&instanceCount), sizeof(int));
 
-			// <Active>
-			File::ReadStringFromFile(in, str);
-
-			vector<int> isActive(instanceCount);
-
-			in.read(reinterpret_cast<char*>(isActive.data()), sizeof(int) * instanceCount);
-
-			// <TransformMatrix>
-			File::ReadStringFromFile(in, str);
-
-			vector<XMFLOAT4X4> transformMatrixes(instanceCount);
-
-			in.read(reinterpret_cast<char*>(transformMatrixes.data()), sizeof(XMFLOAT4X4) * instanceCount);
-
-			switch (groupType)
+			for (int i = 0; i < instanceCount; ++i)
 			{
-			case GROUP_TYPE::TERRAIN:
-			case GROUP_TYPE::STRUCTURE:
-				for (int i = 0; i < instanceCount; ++i)
+				LoadedModel loadedModel = CObject::Load(d3d12Device, d3d12GraphicsCommandList, modelFileName);
+
+				// <IsActive>
+				File::ReadStringFromFile(in, str);
+
+				int isActive = 0;
+				in.read(reinterpret_cast<char*>(&isActive), sizeof(int));
+
+				// <Transform>
+				File::ReadStringFromFile(in, str);
+
+				// <Position>
+				XMFLOAT3 position = {};
+
+				File::ReadStringFromFile(in, str);
+				in.read(reinterpret_cast<char*>(&position), sizeof(XMFLOAT3));
+
+				// <Rotation>
+				XMFLOAT3 rotation = {};
+
+				File::ReadStringFromFile(in, str);
+				in.read(reinterpret_cast<char*>(&rotation), sizeof(XMFLOAT3));
+
+				// <Scale>
+				XMFLOAT3 scale = {};
+
+				File::ReadStringFromFile(in, str);
+				in.read(reinterpret_cast<char*>(&scale), sizeof(XMFLOAT3));
+
+				switch (groupType)
+				{
+				case GROUP_TYPE::TERRAIN:
+				case GROUP_TYPE::STRUCTURE:
 				{
 					CObject* object = new CObject();
-					LoadedModel loadedModel = CObject::Load(d3d12Device, d3d12GraphicsCommandList, modelFileName);
+					CTransform* transform = object->GetComponent<CTransform>();
 
-					object->SetActive(isActive[i]);
-					object->SetTransformMatrix(transformMatrixes[i]);
+					object->SetActive(isActive);
+					transform->SetPosition(position);
+					transform->SetRotation(rotation);
+					transform->SetScale(scale);
 					object->AddChild(loadedModel.m_rootFrame);
-					object->UpdateTransform(true);
 					object->Init();
 					AddObject(groupType, object);
 				}
-				break;
-			case GROUP_TYPE::ENEMY:
-			{
-				// <TargetPosition>
-				File::ReadStringFromFile(in, str);
-
-				vector<XMFLOAT3> targetPositions(instanceCount);
-
-				in.read(reinterpret_cast<char*>(targetPositions.data()), sizeof(XMFLOAT3) * instanceCount);
-
-				for (int i = 0; i < instanceCount; ++i)
+					break;
+				case GROUP_TYPE::ENEMY:
 				{
 					CGuard* guard = new CGuard();
-					LoadedModel loadedModel = CObject::Load(d3d12Device, d3d12GraphicsCommandList, modelFileName);
+					CTransform* transform = guard->GetComponent<CTransform>();
 
-					guard->SetActive(isActive[i]);
-					guard->SetTransformMatrix(transformMatrixes[i]);
+					guard->SetActive(isActive);
 					guard->SetComponent(COMPONENT_TYPE::ANIMATOR, loadedModel.m_animator);
+					transform->SetPosition(position);
+					transform->SetRotation(rotation);
+					transform->SetScale(scale);
 					guard->AddChild(loadedModel.m_rootFrame);
-					guard->UpdateTransform(true);
-					guard->CreatePatrolPath(targetPositions[i]);
 					guard->Init();
-					AddObject(groupType, guard);
 
-					//m_InitGameData.m_NPCInitTransformMatrixes.push_back(TransformMatrixes[i]);
+					// <TargetPosition>
+					XMFLOAT3 targetPosition = {};
+
+					File::ReadStringFromFile(in, str);
+					in.read(reinterpret_cast<char*>(&targetPosition), sizeof(XMFLOAT3));
+					guard->CreatePatrolPath(targetPosition);
+					AddObject(groupType, guard);
 				}
-			}
-				break;
-			case GROUP_TYPE::PLAYER:
-				for (int i = 0; i < instanceCount; ++i)
+					break;
+				case GROUP_TYPE::PLAYER:
 				{
 					CPlayer* player = new CPlayer();
-					LoadedModel loadedModel = CObject::Load(d3d12Device, d3d12GraphicsCommandList, modelFileName);
+					CTransform* transform = player->GetComponent<CTransform>();
 
-					player->SetActive(isActive[i]);
-					player->SetTransformMatrix(transformMatrixes[i]);
+					player->SetActive(isActive);
 					player->SetComponent(COMPONENT_TYPE::ANIMATOR, loadedModel.m_animator);
+					transform->SetPosition(position);
+					transform->SetRotation(rotation);
+					transform->SetScale(scale);
 					player->AddChild(loadedModel.m_rootFrame);
-					player->UpdateTransform(true);
 					player->Init();
 					AddObject(groupType, player);
-
-					//object->SetID(playerID++);
-					//m_InitGameData.m_PlayerInitTransformMatrixes.push_back(TransformMatrixes[i]);
 				}
-				break;
+					break;
+				}
 			}
 		}
 		else if (str == "</Scene>")
@@ -151,9 +162,9 @@ void CScene::LoadUI(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12G
 
 		if (str == "<UI>")
 		{
-			CUI* ui = CUI::Load(d3d12Device, d3d12GraphicsCommandList, in);
+			//CUI* ui = CUI::Load(d3d12Device, d3d12GraphicsCommandList, in);
 
-			AddObject(GROUP_TYPE::UI, ui);
+			//AddObject(GROUP_TYPE::UI, ui);
 		}
 		else if (str == "</UIs>")
 		{
@@ -185,22 +196,22 @@ const string& CScene::GetName()
 	return m_name;
 }
 
-void CScene::AddObject(GROUP_TYPE group, CObject* object)
+void CScene::AddObject(GROUP_TYPE groupType, CObject* object)
 {
 	if (object != nullptr)
 	{
-		m_objects[(int)group].push_back(object);
+		m_objects[static_cast<int>(groupType)].push_back(object);
 	}
 }
 
-const vector<CObject*>& CScene::GetGroupObject(GROUP_TYPE group)
+const vector<CObject*>& CScene::GetGroupObject(GROUP_TYPE groupType)
 {
-	return m_objects[(int)group];
+	return m_objects[static_cast<int>(groupType)];
 }
 
-void CScene::DeleteGroupObject(GROUP_TYPE group)
+void CScene::DeleteGroupObject(GROUP_TYPE groupType)
 {
-	Utility::SafeDelete(m_objects[(int)group]);
+	Utility::SafeDelete(m_objects[static_cast<int>(groupType)]);
 }
 
 void CScene::ReleaseUploadBuffers()
@@ -250,8 +261,8 @@ void CScene::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
 {
 	CCamera* camera = CCameraManager::GetInstance()->GetMainCamera();
 
-	camera->UpdateShaderVariables(d3d12GraphicsCommandList);
 	camera->RSSetViewportsAndScissorRects(d3d12GraphicsCommandList);
+	camera->UpdateShaderVariables(d3d12GraphicsCommandList);
 
 	for (int i = 0; i <= (int)GROUP_TYPE::BILBOARD; ++i)
 	{
@@ -265,8 +276,8 @@ void CScene::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
 	}
 
 	camera = CCameraManager::GetInstance()->GetUICamera();
-	camera->UpdateShaderVariables(d3d12GraphicsCommandList);
 	camera->RSSetViewportsAndScissorRects(d3d12GraphicsCommandList);
+	camera->UpdateShaderVariables(d3d12GraphicsCommandList);
 
 	for (const auto& object : m_objects[(int)GROUP_TYPE::UI])
 	{

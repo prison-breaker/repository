@@ -20,24 +20,25 @@ namespace Utility
 
 namespace DX
 {
-	void ThrowIfFailed(HRESULT Result)
+	void ThrowIfFailed(HRESULT result)
 	{
-		if (FAILED(Result))
+		if (FAILED(result))
 		{
-			char DebugMessage[64]{};
+			char debugMessage[64] = {};
 
-			printf_s(DebugMessage, _countof(DebugMessage), "[Error] HRESULT of 0x % x\n", Result);
-			OutputDebugStringA(DebugMessage);
+			printf_s(debugMessage, _countof(debugMessage), "[Error] HRESULT of 0x % x\n", result);
+			OutputDebugStringA(debugMessage);
 		}
 	}
 
-	ComPtr<ID3D12Resource> CreateTextureResource(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, void* Data, const UINT64& Bytes, D3D12_HEAP_TYPE D3D12HeapType, D3D12_RESOURCE_STATES D3D12ResourceStates, ID3D12Resource** D3D12UploadBuffer, const UINT64& Width, UINT Height, UINT16 DepthOrArraySize, UINT16 MipLevels, D3D12_RESOURCE_DIMENSION D3D12ResourceDimension, D3D12_RESOURCE_FLAGS D3D12ResourceFlags, DXGI_FORMAT DXGIFormat)
+	ComPtr<ID3D12Resource> CreateTextureResource(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, void* data, const UINT64& bytes, D3D12_HEAP_TYPE d3d12HeapType, D3D12_RESOURCE_STATES d3d12ResourceStates, ID3D12Resource** d3d12UploadBuffer, const UINT64& Width, UINT Height, UINT16 DepthOrArraySize, UINT16 MipLevels, D3D12_RESOURCE_DIMENSION D3D12ResourceDimension, D3D12_RESOURCE_FLAGS D3D12ResourceFlags, DXGI_FORMAT DXGIFormat)
 	{
-		CD3DX12_HEAP_PROPERTIES D3D12HeapProperties{ D3D12HeapType };
-		CD3DX12_RESOURCE_DESC D3D12ResourceDesc{
+		CD3DX12_HEAP_PROPERTIES d3d12HeapProperties(d3d12HeapType);
+		CD3DX12_RESOURCE_DESC d3d12ResourceDesc = 
+		{
 			D3D12ResourceDimension,
 			(D3D12ResourceDimension == D3D12_RESOURCE_DIMENSION_BUFFER) ? static_cast<UINT64>(D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT) : 0,
-			(D3D12ResourceDimension == D3D12_RESOURCE_DIMENSION_BUFFER) ? Bytes : Width,
+			(D3D12ResourceDimension == D3D12_RESOURCE_DIMENSION_BUFFER) ? bytes : Width,
 			(D3D12ResourceDimension == D3D12_RESOURCE_DIMENSION_BUFFER) ? static_cast<UINT16>(1) : Height,
 			(D3D12ResourceDimension == D3D12_RESOURCE_DIMENSION_BUFFER) ? static_cast<UINT16>(1) : DepthOrArraySize,
 			(D3D12ResourceDimension == D3D12_RESOURCE_DIMENSION_BUFFER) ? static_cast<UINT16>(1) : MipLevels,
@@ -47,134 +48,128 @@ namespace DX
 			(D3D12ResourceDimension == D3D12_RESOURCE_DIMENSION_BUFFER) ? D3D12_TEXTURE_LAYOUT_ROW_MAJOR : D3D12_TEXTURE_LAYOUT_UNKNOWN,
 			D3D12ResourceFlags
 		};
-		ComPtr<ID3D12Resource> D3D12Buffer{};
-		D3D12_RANGE D3D12ReadRange{};
-		UINT8* DataBuffer{};
+		ComPtr<ID3D12Resource> d3d12Buffer = nullptr;
+		D3D12_RANGE d3d12ReadRange = {};
+		UINT8* dataBuffer = nullptr;
 
-		switch (D3D12HeapType)
+		switch (d3d12HeapType)
 		{
 		case D3D12_HEAP_TYPE_DEFAULT:
 		{
-			D3D12_RESOURCE_STATES D3D12ResourceInitialStates{ (D3D12UploadBuffer && Data) ? D3D12_RESOURCE_STATE_COPY_DEST : D3D12ResourceStates };
+			D3D12_RESOURCE_STATES d3d12ResourceInitialStates = { (d3d12UploadBuffer && data) ? D3D12_RESOURCE_STATE_COPY_DEST : d3d12ResourceStates };
 
-			DX::ThrowIfFailed(d3d12Device->CreateCommittedResource(&D3D12HeapProperties, D3D12_HEAP_FLAG_NONE, &D3D12ResourceDesc, D3D12ResourceInitialStates, nullptr, __uuidof(ID3D12Resource), reinterpret_cast<void**>(D3D12Buffer.GetAddressOf())));
+			DX::ThrowIfFailed(d3d12Device->CreateCommittedResource(&d3d12HeapProperties, D3D12_HEAP_FLAG_NONE, &d3d12ResourceDesc, d3d12ResourceInitialStates, nullptr, __uuidof(ID3D12Resource), reinterpret_cast<void**>(d3d12Buffer.GetAddressOf())));
 
-			if (D3D12UploadBuffer && Data)
+			if (d3d12UploadBuffer != nullptr && data != nullptr)
 			{
 				// 업로드 버퍼를 생성한다.
-				D3D12HeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
+				d3d12HeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
 
-				D3D12ResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-				D3D12ResourceDesc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
-				D3D12ResourceDesc.Width = Bytes;
-				D3D12ResourceDesc.Height = 1;
-				D3D12ResourceDesc.DepthOrArraySize = 1;
-				D3D12ResourceDesc.MipLevels = 1;
-				D3D12ResourceDesc.Format = DXGI_FORMAT_UNKNOWN;
-				D3D12ResourceDesc.SampleDesc.Count = 1;
-				D3D12ResourceDesc.SampleDesc.Quality = 0;
-				D3D12ResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-				D3D12ResourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+				d3d12ResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+				d3d12ResourceDesc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
+				d3d12ResourceDesc.Width = bytes;
+				d3d12ResourceDesc.Height = 1;
+				d3d12ResourceDesc.DepthOrArraySize = 1;
+				d3d12ResourceDesc.MipLevels = 1;
+				d3d12ResourceDesc.Format = DXGI_FORMAT_UNKNOWN;
+				d3d12ResourceDesc.SampleDesc.Count = 1;
+				d3d12ResourceDesc.SampleDesc.Quality = 0;
+				d3d12ResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+				d3d12ResourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
-				DX::ThrowIfFailed(d3d12Device->CreateCommittedResource(&D3D12HeapProperties, D3D12_HEAP_FLAG_NONE, &D3D12ResourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, __uuidof(ID3D12Resource), reinterpret_cast<void**>(D3D12UploadBuffer)));
+				DX::ThrowIfFailed(d3d12Device->CreateCommittedResource(&d3d12HeapProperties, D3D12_HEAP_FLAG_NONE, &d3d12ResourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, __uuidof(ID3D12Resource), reinterpret_cast<void**>(d3d12UploadBuffer)));
 
 				// 업로드 버퍼를 매핑하여 데이터를 복사한다.
-				DX::ThrowIfFailed((*D3D12UploadBuffer)->Map(0, &D3D12ReadRange, reinterpret_cast<void**>(&DataBuffer)));
-				memcpy(DataBuffer, Data, Bytes);
-				(*D3D12UploadBuffer)->Unmap(0, nullptr);
+				DX::ThrowIfFailed((*d3d12UploadBuffer)->Map(0, &d3d12ReadRange, reinterpret_cast<void**>(&dataBuffer)));
+				memcpy(dataBuffer, data, bytes);
+				(*d3d12UploadBuffer)->Unmap(0, nullptr);
 
 				// 업로드 버퍼의 내용을 디폴트 버퍼에 복사한다.
-				d3d12GraphicsCommandList->CopyResource(D3D12Buffer.Get(), *D3D12UploadBuffer);
+				d3d12GraphicsCommandList->CopyResource(d3d12Buffer.Get(), *d3d12UploadBuffer);
 
 				// 리소스 상태를 변경한다.
-				CD3DX12_RESOURCE_BARRIER D3D12ResourceBarrier{};
-
-				D3D12ResourceBarrier = D3D12ResourceBarrier.Transition(D3D12Buffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12ResourceStates, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, D3D12_RESOURCE_BARRIER_FLAG_NONE);
-				d3d12GraphicsCommandList->ResourceBarrier(1, &D3D12ResourceBarrier);
+				ResourceTransition(d3d12GraphicsCommandList, d3d12Buffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, d3d12ResourceStates);
 			}
 			break;
 		}
 		case D3D12_HEAP_TYPE_UPLOAD:
 		{
-			D3D12ResourceStates |= D3D12_RESOURCE_STATE_GENERIC_READ;
+			d3d12ResourceStates |= D3D12_RESOURCE_STATE_GENERIC_READ;
 
-			DX::ThrowIfFailed(d3d12Device->CreateCommittedResource(&D3D12HeapProperties, D3D12_HEAP_FLAG_NONE, &D3D12ResourceDesc, D3D12ResourceStates, nullptr, __uuidof(ID3D12Resource), reinterpret_cast<void**>(D3D12Buffer.GetAddressOf())));
+			DX::ThrowIfFailed(d3d12Device->CreateCommittedResource(&d3d12HeapProperties, D3D12_HEAP_FLAG_NONE, &d3d12ResourceDesc, d3d12ResourceStates, nullptr, __uuidof(ID3D12Resource), reinterpret_cast<void**>(d3d12Buffer.GetAddressOf())));
 
-			if (Data)
+			if (data != nullptr)
 			{
-				DX::ThrowIfFailed(D3D12Buffer->Map(0, &D3D12ReadRange, reinterpret_cast<void**>(&DataBuffer)));
-				memcpy(DataBuffer, Data, Bytes);
-				D3D12Buffer->Unmap(0, nullptr);
+				DX::ThrowIfFailed(d3d12Buffer->Map(0, &d3d12ReadRange, reinterpret_cast<void**>(&dataBuffer)));
+				memcpy(dataBuffer, data, bytes);
+				d3d12Buffer->Unmap(0, nullptr);
 			}
 			break;
 		}
 		case D3D12_HEAP_TYPE_READBACK:
 		{
-			D3D12ResourceStates |= D3D12_RESOURCE_STATE_COPY_DEST;
+			d3d12ResourceStates |= D3D12_RESOURCE_STATE_COPY_DEST;
 
-			DX::ThrowIfFailed(d3d12Device->CreateCommittedResource(&D3D12HeapProperties, D3D12_HEAP_FLAG_NONE, &D3D12ResourceDesc, D3D12ResourceStates, nullptr, __uuidof(ID3D12Resource), reinterpret_cast<void**>(D3D12Buffer.GetAddressOf())));
+			DX::ThrowIfFailed(d3d12Device->CreateCommittedResource(&d3d12HeapProperties, D3D12_HEAP_FLAG_NONE, &d3d12ResourceDesc, d3d12ResourceStates, nullptr, __uuidof(ID3D12Resource), reinterpret_cast<void**>(d3d12Buffer.GetAddressOf())));
 
-			if (Data)
+			if (data != nullptr)
 			{
-				DX::ThrowIfFailed(D3D12Buffer->Map(0, &D3D12ReadRange, reinterpret_cast<void**>(&DataBuffer)));
-				memcpy(DataBuffer, Data, Bytes);
-				D3D12Buffer->Unmap(0, nullptr);
+				DX::ThrowIfFailed(d3d12Buffer->Map(0, &d3d12ReadRange, reinterpret_cast<void**>(&dataBuffer)));
+				memcpy(dataBuffer, data, bytes);
+				d3d12Buffer->Unmap(0, nullptr);
 			}
 			break;
 		}
 		}
 
-		return D3D12Buffer;
+		return d3d12Buffer;
 	}
 
-	ComPtr<ID3D12Resource> CreateBufferResource(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, void* Data, const UINT64& Bytes, D3D12_HEAP_TYPE D3D12HeapType, D3D12_RESOURCE_STATES D3D12ResourceStates, ID3D12Resource** D3D12UploadBuffer)
+	ComPtr<ID3D12Resource> CreateBufferResource(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, void* data, const UINT64& bytes, D3D12_HEAP_TYPE d3d12HeapType, D3D12_RESOURCE_STATES d3d12ResourceStates, ID3D12Resource** d3d12UploadBuffer)
 	{
-		return CreateTextureResource(d3d12Device, d3d12GraphicsCommandList, Data, Bytes, D3D12HeapType, D3D12ResourceStates, D3D12UploadBuffer, Bytes, 1, 1, 1, D3D12_RESOURCE_DIMENSION_BUFFER, D3D12_RESOURCE_FLAG_NONE, DXGI_FORMAT_UNKNOWN);
+		return CreateTextureResource(d3d12Device, d3d12GraphicsCommandList, data, bytes, d3d12HeapType, d3d12ResourceStates, d3d12UploadBuffer, bytes, 1, 1, 1, D3D12_RESOURCE_DIMENSION_BUFFER, D3D12_RESOURCE_FLAG_NONE, DXGI_FORMAT_UNKNOWN);
 	}
 
-	ComPtr<ID3D12Resource> CreateTexture2DResource(ID3D12Device* d3d12Device, const UINT64& Width, UINT Height, UINT16 DepthOrArraySize, UINT16 MipLevels, D3D12_RESOURCE_STATES D3D12ResourceStates, D3D12_RESOURCE_FLAGS D3D12ResourceFlags, DXGI_FORMAT DXGIFormat, const D3D12_CLEAR_VALUE& ClearValue)
+	ComPtr<ID3D12Resource> CreateTexture2DResource(ID3D12Device* d3d12Device, const UINT64& width, UINT height, UINT16 depthOrArraySize, UINT16 mipLevels, D3D12_RESOURCE_STATES d3d12ResourceStates, D3D12_RESOURCE_FLAGS d3d12ResourceFlags, DXGI_FORMAT dxgiFormat, const D3D12_CLEAR_VALUE& clearValue)
 	{
-		ComPtr<ID3D12Resource> Texture{};
-		CD3DX12_HEAP_PROPERTIES D3D12HeapProperties{ D3D12_HEAP_TYPE_DEFAULT };
-		CD3DX12_RESOURCE_DESC D3D12ResourceDesc{ D3D12_RESOURCE_DIMENSION_TEXTURE2D, 0, Width, Height, DepthOrArraySize, MipLevels, DXGIFormat, 1, 0, D3D12_TEXTURE_LAYOUT_UNKNOWN, D3D12ResourceFlags };
+		ComPtr<ID3D12Resource> texture = nullptr;
+		CD3DX12_HEAP_PROPERTIES d3d12HeapProperties(D3D12_HEAP_TYPE_DEFAULT);
+		CD3DX12_RESOURCE_DESC d3d12ResourceDesc = { D3D12_RESOURCE_DIMENSION_TEXTURE2D, 0, width, height, depthOrArraySize, mipLevels, dxgiFormat, 1, 0, D3D12_TEXTURE_LAYOUT_UNKNOWN, d3d12ResourceFlags };
 
-		DX::ThrowIfFailed(d3d12Device->CreateCommittedResource(&D3D12HeapProperties, D3D12_HEAP_FLAG_NONE, &D3D12ResourceDesc, D3D12ResourceStates, &ClearValue, __uuidof(ID3D12Resource), reinterpret_cast<void**>(Texture.GetAddressOf())));
+		DX::ThrowIfFailed(d3d12Device->CreateCommittedResource(&d3d12HeapProperties, D3D12_HEAP_FLAG_NONE, &d3d12ResourceDesc, d3d12ResourceStates, &clearValue, __uuidof(ID3D12Resource), reinterpret_cast<void**>(texture.GetAddressOf())));
 
-		return Texture;
+		return texture;
 	}
 
-	ComPtr<ID3D12Resource> CreateTextureResourceFromDDSFile(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, const string& FileName, D3D12_RESOURCE_STATES D3D12ResourceStates, ID3D12Resource** D3D12UploadBuffer)
+	ComPtr<ID3D12Resource> CreateTextureResourceFromDDSFile(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, const string& FileName, D3D12_RESOURCE_STATES d3d12ResourceStates, ID3D12Resource** d3d12UploadBuffer)
 	{
-		ComPtr<ID3D12Resource> D3D12Texture{};
-		vector<D3D12_SUBRESOURCE_DATA> Subresources{};
-		unique_ptr<uint8_t[]> DDSData{};
-		DDS_ALPHA_MODE DDSAlphaMode{ DDS_ALPHA_MODE_UNKNOWN };
-		bool IsCubeMap{};
+		ComPtr<ID3D12Resource> d3d12Texture = nullptr;
+		vector<D3D12_SUBRESOURCE_DATA> subResources;
+		unique_ptr<uint8_t[]> ddsData = nullptr;
+		DDS_ALPHA_MODE ddsAlphaMode = DDS_ALPHA_MODE_UNKNOWN;
+		bool isCubeMap = false;
 
-		DX::ThrowIfFailed(DirectX::LoadDDSTextureFromFileEx(d3d12Device, Utility::ConvertString(FileName).c_str(), 0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_DEFAULT, D3D12Texture.GetAddressOf(), DDSData, Subresources, &DDSAlphaMode, &IsCubeMap));
+		DX::ThrowIfFailed(DirectX::LoadDDSTextureFromFileEx(d3d12Device, Utility::ConvertString(FileName).c_str(), 0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_DEFAULT, d3d12Texture.GetAddressOf(), ddsData, subResources, &ddsAlphaMode, &isCubeMap));
 
-		UINT64 Bytes{ GetRequiredIntermediateSize(D3D12Texture.Get(), 0, static_cast<UINT>(Subresources.size())) };
+		UINT64 bytes{ GetRequiredIntermediateSize(d3d12Texture.Get(), 0, static_cast<UINT>(subResources.size())) };
 		CD3DX12_HEAP_PROPERTIES D3D12HeapPropertiesDesc{ D3D12_HEAP_TYPE_UPLOAD, 1, 1 };
-		CD3DX12_RESOURCE_DESC D3D12ResourceDesc{ D3D12_RESOURCE_DIMENSION_BUFFER, 0, Bytes, 1, 1, 1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE };
+		CD3DX12_RESOURCE_DESC d3d12ResourceDesc{ D3D12_RESOURCE_DIMENSION_BUFFER, 0, bytes, 1, 1, 1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE };
 
-		DX::ThrowIfFailed(d3d12Device->CreateCommittedResource(&D3D12HeapPropertiesDesc, D3D12_HEAP_FLAG_NONE, &D3D12ResourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, __uuidof(ID3D12Resource), reinterpret_cast<void**>(D3D12UploadBuffer)));
-		UpdateSubresources(d3d12GraphicsCommandList, D3D12Texture.Get(), *D3D12UploadBuffer, 0, 0, static_cast<UINT>(Subresources.size()), Subresources.data());
+		DX::ThrowIfFailed(d3d12Device->CreateCommittedResource(&D3D12HeapPropertiesDesc, D3D12_HEAP_FLAG_NONE, &d3d12ResourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, __uuidof(ID3D12Resource), reinterpret_cast<void**>(d3d12UploadBuffer)));
+		UpdateSubresources(d3d12GraphicsCommandList, d3d12Texture.Get(), *d3d12UploadBuffer, 0, 0, static_cast<UINT>(subResources.size()), subResources.data());
 
-		CD3DX12_RESOURCE_BARRIER D3D12ResourceBarrier{};
+		// 리소스 상태를 변경한다.
+		ResourceTransition(d3d12GraphicsCommandList, d3d12Texture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, d3d12ResourceStates);
 
-		D3D12ResourceBarrier = D3D12ResourceBarrier.Transition(D3D12Texture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12ResourceStates, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, D3D12_RESOURCE_BARRIER_FLAG_NONE);
-
-		d3d12GraphicsCommandList->ResourceBarrier(1, &D3D12ResourceBarrier);
-
-		return D3D12Texture;
+		return d3d12Texture;
 	}
 
-	void ResourceTransition(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
+	void ResourceTransition(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ID3D12Resource* resource, D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState)
 	{
-		CD3DX12_RESOURCE_BARRIER D3D12ResourceBarrier{};
+		CD3DX12_RESOURCE_BARRIER d3d12ResourceBarrier = {};
 
-		D3D12ResourceBarrier = D3D12ResourceBarrier.Transition(Resource, BeforeState, AfterState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, D3D12_RESOURCE_BARRIER_FLAG_NONE);
-		d3d12GraphicsCommandList->ResourceBarrier(1, &D3D12ResourceBarrier);
+		d3d12ResourceBarrier = d3d12ResourceBarrier.Transition(resource, beforeState, afterState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, D3D12_RESOURCE_BARRIER_FLAG_NONE);
+		d3d12GraphicsCommandList->ResourceBarrier(1, &d3d12ResourceBarrier);
 	}
 }
 
@@ -182,76 +177,67 @@ namespace File
 {
 	void ReadStringFromFile(ifstream& in, string& str)
 	{
-		UINT Length{};
+		UINT len = 0;
 
-		in.read(reinterpret_cast<char*>(&Length), sizeof(BYTE));
-		str.resize(Length);
-		in.read(reinterpret_cast<char*>(&str[0]), sizeof(BYTE) * Length);
+		in.read(reinterpret_cast<char*>(&len), sizeof(BYTE));
+		str.resize(len);
+		in.read(reinterpret_cast<char*>(&str[0]), sizeof(BYTE) * len);
 	}
 }
 
 namespace Random
 {
-	float Range(float Min, float Max)
+	float Range(float min, float max)
 	{
-		return Min + (Max - Min) * (static_cast<float>(rand()) / (RAND_MAX));
+		return min + (max - min) * (static_cast<float>(rand()) / (RAND_MAX));
 	}
 }
 
 namespace Math
 {
-	bool IsZero(float Value)
+	bool IsZero(float f)
 	{
-		return abs(Value) <= 0.01f;
+		return abs(f) <= EPSILON;
 	}
 
-	bool IsEqual(float Value1, float Value2)
+	bool IsEqual(float f1, float f2)
 	{
-		return IsZero(Value1 - Value2);
+		return IsZero(f1 - f2);
 	}
 
-	float InverseSqrt(float Value)
+	float Distance(const XMFLOAT3& v1, const XMFLOAT3& v2)
 	{
-		return 1.0f / sqrtf(Value);
+		return sqrt(powf(v2.x - v1.x, 2.0f) + powf(v2.y - v1.y, 2.0f) + powf(v2.z - v1.z, 2.0f));
 	}
 
-	float Distance(const XMFLOAT3& Vector1, const XMFLOAT3& Vector2)
+	bool IsInTriangle(const XMFLOAT3& v1, const XMFLOAT3& v2, const XMFLOAT3& v3, const XMFLOAT3& position)
 	{
-		return sqrtf(powf(Vector2.x - Vector1.x, 2) + powf(Vector2.y - Vector1.y, 2) + powf(Vector2.z - Vector1.z, 2));
+		XMFLOAT3 v1p = Vector3::Subtract(position, v1);
+		XMFLOAT3 v2p = Vector3::Subtract(position, v2);
+		XMFLOAT3 v3p = Vector3::Subtract(position, v3);
+
+		XMFLOAT3 v1v2 = Vector3::Subtract(v2, v1);
+		XMFLOAT3 v2v3 = Vector3::Subtract(v3, v2);
+		XMFLOAT3 v3v1 = Vector3::Subtract(v1, v3);
+
+		return (Vector3::CrossProduct(v1v2, v1p).y > 0.0f) && (Vector3::CrossProduct(v2v3, v2p).y > 0.0f) && (Vector3::CrossProduct(v3v1, v3p).y > 0.0f);
 	}
 
-	UINT CalculateTriangleArea(const XMFLOAT3& Vertex1, const XMFLOAT3& Vertex2, const XMFLOAT3& Vertex3)
+	UINT CalculateTriangleArea(const XMFLOAT3& v1, const XMFLOAT3& v2, const XMFLOAT3& v3)
 	{
-		UINT Area{ static_cast<UINT>(abs((Vertex1.x * (Vertex2.z - Vertex3.z)) + (Vertex2.x * (Vertex3.z - Vertex1.z)) + (Vertex3.x * (Vertex1.z - Vertex2.z)))) };
-
-		return Area;
+		return static_cast<UINT>(abs((v1.x * (v2.z - v3.z)) + (v2.x * (v3.z - v1.z)) + (v3.x * (v1.z - v2.z))));
 	}
 
-	bool IsInTriangle(const XMFLOAT3& Vertex1, const XMFLOAT3& Vertex2, const XMFLOAT3& Vertex3, const XMFLOAT3& NewPosition)
+	int CounterClockWise(const XMFLOAT3& v1, const XMFLOAT3& v2, const XMFLOAT3& v3)
 	{
-		XMFLOAT3 Vertex1ToPosition{ Vector3::Subtract(NewPosition, Vertex1) };
-		XMFLOAT3 Vertex2ToPosition{ Vector3::Subtract(NewPosition, Vertex2) };
-		XMFLOAT3 Vertex3ToPosition{ Vector3::Subtract(NewPosition, Vertex3) };
+		// v1과 v2를 이은 선분과 v1과 v3을 이은 선분의 기울기를 구하고, 양변 모두 분모를 없앤 후 좌변으로 이항하면 아래와 같이 CCW를 판별할 수 있는 공식이 나온다.
+		float gradientDiff = (v2.x - v1.x) * (v3.z - v1.z) - (v3.x - v1.x) * (v2.z - v1.z);
 
-		XMFLOAT3 Vertex1ToVertex2{ Vector3::Subtract(Vertex2, Vertex1) };
-		XMFLOAT3 Vertex2ToVertex3{ Vector3::Subtract(Vertex3, Vertex2) };
-		XMFLOAT3 Vertex3ToVertex1{ Vector3::Subtract(Vertex1, Vertex3) };
-
-		return (Vector3::CrossProduct(Vertex1ToVertex2, Vertex1ToPosition, false).y > 0.0f) &&
-			(Vector3::CrossProduct(Vertex2ToVertex3, Vertex2ToPosition, false).y > 0.0f) &&
-			(Vector3::CrossProduct(Vertex3ToVertex1, Vertex3ToPosition, false).y > 0.0f);
-	}
-
-	int CounterClockWise(const XMFLOAT3& Vertex1, const XMFLOAT3& Vertex2, const XMFLOAT3& Vertex3)
-	{
-		// Vertex1과 Vertex2를 이은 선분과 Vertex1과 Vertex3을 이은 선분의 기울기를 구하고, 양변 모두 분모를 없앤 후 좌변으로 이항하면 아래와 같이 CCW를 판별할 수 있는 공식이 나온다.
-		float GradientDiff{ (Vertex2.x - Vertex1.x) * (Vertex3.z - Vertex1.z) - (Vertex3.x - Vertex1.x) * (Vertex2.z - Vertex1.z) };
-
-		if (GradientDiff < 0.0f)
+		if (gradientDiff < 0.0f)
 		{
 			return -1;
 		}
-		else if (GradientDiff > 0.0f)
+		else if (gradientDiff > 0.0f)
 		{
 			return 1;
 		}
@@ -259,20 +245,17 @@ namespace Math
 		return 0;
 	}
 
-	bool LineIntersection(const XMFLOAT3& L1V1, const XMFLOAT3& L1V2, const XMFLOAT3& L2V1, const XMFLOAT3& L2V2)
+	bool LineIntersection(const XMFLOAT3& v1, const XMFLOAT3& v2, const XMFLOAT3& v3, const XMFLOAT3& v4)
 	{
-		int L1_L2{ CounterClockWise(L1V1, L1V2, L2V1) * CounterClockWise(L1V1, L1V2, L2V2) };
-		int L2_L1{ CounterClockWise(L2V1, L2V2, L1V1) * CounterClockWise(L2V1, L2V2, L1V2) };
-
-		return (L1_L2 <= 0) && (L2_L1 <= 0);
+		return (CounterClockWise(v1, v2, v3) * CounterClockWise(v1, v2, v4) <= 0) && (CounterClockWise(v3, v4, v1) * CounterClockWise(v3, v4, v2) <= 0);
 	}
 }
 
 namespace Vector3
 {
-	bool IsZero(const XMFLOAT3& Vector)
+	bool IsZero(const XMFLOAT3& v)
 	{
-		if (Math::IsZero(Vector.x) && Math::IsZero(Vector.y) && Math::IsZero(Vector.z))
+		if (Math::IsZero(v.x) && Math::IsZero(v.y) && Math::IsZero(v.z))
 		{
 			return true;
 		}
@@ -280,9 +263,9 @@ namespace Vector3
 		return false;
 	}
 
-	bool IsEqual(const XMFLOAT3& Vector1, const XMFLOAT3& Vector2)
+	bool IsEqual(const XMFLOAT3& v1, const XMFLOAT3& v2)
 	{
-		if (Math::IsEqual(Vector1.x, Vector2.x) && Math::IsEqual(Vector1.y, Vector2.y) && Math::IsEqual(Vector1.z, Vector2.z))
+		if (Math::IsEqual(v1.x, v2.x) && Math::IsEqual(v1.y, v2.y) && Math::IsEqual(v1.z, v2.z))
 		{
 			return true;
 		}
@@ -290,139 +273,117 @@ namespace Vector3
 		return false;
 	}
 
-	float Length(const XMFLOAT3& Vector)
+	float Length(const XMFLOAT3& v)
 	{
-		XMFLOAT3 Result{};
+		XMFLOAT3 result = {};
 
-		XMStoreFloat3(&Result, XMVector3Length(XMLoadFloat3(&Vector)));
+		XMStoreFloat3(&result, XMVector3Length(XMLoadFloat3(&v)));
 
-		return Result.x;
+		return result.x;
 	}
 
-	XMFLOAT3 Normalize(const XMFLOAT3& Vector)
+	XMFLOAT3 Normalize(const XMFLOAT3& v)
 	{
-		XMFLOAT3 Result{};
+		XMFLOAT3 result = {};
 
-		XMStoreFloat3(&Result, XMVector3Normalize(XMLoadFloat3(&Vector)));
+		XMStoreFloat3(&result, XMVector3Normalize(XMLoadFloat3(&v)));
 
-		return Result;
+		return result;
 	}
 
-	XMFLOAT3 Inverse(const XMFLOAT3& Vector)
+	XMFLOAT3 Inverse(const XMFLOAT3& v)
 	{
-		XMFLOAT3 Result{};
+		XMFLOAT3 result = {};
 
-		XMStoreFloat3(&Result, XMVectorScale(XMLoadFloat3(&Vector), -1.0f));
+		XMStoreFloat3(&result, XMVectorScale(XMLoadFloat3(&v), -1.0f));
 
-		return Result;
+		return result;
 	}
 
-	XMFLOAT3 XMVectorToXMFloat3(const XMVECTOR& Vector)
+	XMFLOAT3 Add(const XMFLOAT3& v1, const XMFLOAT3& v2)
 	{
-		XMFLOAT3 Result{};
+		XMFLOAT3 result = {};
 
-		XMStoreFloat3(&Result, Vector);
+		XMStoreFloat3(&result, XMLoadFloat3(&v1) + XMLoadFloat3(&v2));
 
-		return Result;
+		return result;
 	}
 
-	XMFLOAT3 Add(const XMFLOAT3& Vector1, const XMFLOAT3& Vector2)
+	XMFLOAT3 Subtract(const XMFLOAT3& v1, const XMFLOAT3& v2)
 	{
-		XMFLOAT3 Result{};
+		XMFLOAT3 result = {};
 
-		XMStoreFloat3(&Result, XMLoadFloat3(&Vector1) + XMLoadFloat3(&Vector2));
+		XMStoreFloat3(&result, XMLoadFloat3(&v1) - XMLoadFloat3(&v2));
 
-		return Result;
+		return result;
 	}
 
-	XMFLOAT3 Subtract(const XMFLOAT3& Vector1, const XMFLOAT3& Vector2)
+	XMFLOAT3 Multiply(const XMFLOAT3& v1, const XMFLOAT3& v2)
 	{
-		XMFLOAT3 Result{};
+		XMFLOAT3 result = {};
 
-		XMStoreFloat3(&Result, XMLoadFloat3(&Vector1) - XMLoadFloat3(&Vector2));
+		XMStoreFloat3(&result, XMLoadFloat3(&v1) * XMLoadFloat3(&v2));
 
-		return Result;
+		return result;
 	}
 
-	XMFLOAT3 ScalarProduct(float Scalar, const XMFLOAT3& Vector, bool Normalize)
+	XMFLOAT3 Divide(const XMFLOAT3& v1, const XMFLOAT3& v2)
 	{
-		XMFLOAT3 Result{};
+		XMFLOAT3 result = {};
 
-		if (Normalize)
-		{
-			XMStoreFloat3(&Result, XMVector3Normalize(Scalar * XMLoadFloat3(&Vector)));
-		}
-		else
-		{
-			XMStoreFloat3(&Result, XMLoadFloat3(&Vector) * Scalar);
-		}
+		XMStoreFloat3(&result, XMLoadFloat3(&v1) / XMLoadFloat3(&v2));
 
-		return Result;
+		return result;
 	}
 
-	float DotProduct(const XMFLOAT3& Vector1, const XMFLOAT3& Vector2)
+	XMFLOAT3 ScalarProduct(const XMFLOAT3& v, float f)
 	{
-		XMFLOAT3 Result{};
+		XMFLOAT3 result = {};
 
-		XMStoreFloat3(&Result, XMVector3Dot(XMLoadFloat3(&Vector1), XMLoadFloat3(&Vector2)));
+		XMStoreFloat3(&result, f * XMLoadFloat3(&v));
 
-		return Result.x;
+		return result;
 	}
 
-	XMFLOAT3 CrossProduct(const XMFLOAT3& Vector1, const XMFLOAT3& Vector2, bool Normalize)
+	float DotProduct(const XMFLOAT3& v1, const XMFLOAT3& v2)
 	{
-		XMFLOAT3 Result{};
+		XMFLOAT3 result = {};
 
-		if (Normalize)
-		{
-			XMStoreFloat3(&Result, XMVector3Normalize(XMVector3Cross(XMLoadFloat3(&Vector1), XMLoadFloat3(&Vector2))));
-		}
-		else
-		{
-			XMStoreFloat3(&Result, XMVector3Cross(XMLoadFloat3(&Vector1), XMLoadFloat3(&Vector2)));
-		}
+		XMStoreFloat3(&result, XMVector3Dot(XMLoadFloat3(&v1), XMLoadFloat3(&v2)));
 
-		return Result;
+		return result.x;
 	}
 
-	float Angle(const XMVECTOR& Vector1, const XMVECTOR& Vector2)
+	XMFLOAT3 CrossProduct(const XMFLOAT3& v1, const XMFLOAT3& v2)
 	{
-		XMVECTOR Result{ XMVector3AngleBetweenNormals(Vector1, Vector2) };
+		XMFLOAT3 result = {};
 
-		return XMConvertToDegrees(XMVectorGetX(Result));
+		XMStoreFloat3(&result, XMVector3Cross(XMLoadFloat3(&v1), XMLoadFloat3(&v2)));
+
+		return result;
 	}
 
-	float Angle(const XMFLOAT3& Vector1, const XMFLOAT3& Vector2)
+	float Angle(const XMFLOAT3& v1, const XMFLOAT3& v2)
 	{
-		return Angle(XMLoadFloat3(&Vector1), XMLoadFloat3(&Vector2));
+		return XMConvertToDegrees(XMVectorGetX(XMVector3AngleBetweenNormals(XMLoadFloat3(&v1), XMLoadFloat3(&v2))));
 	}
 
-	XMFLOAT3 TransformNormal(const XMFLOAT3& Vector, const XMMATRIX& Matrix)
+	XMFLOAT3 TransformNormal(const XMFLOAT3& v, const XMFLOAT4X4& m)
 	{
-		XMFLOAT3 Result{};
+		XMFLOAT3 result = {};
 
-		XMStoreFloat3(&Result, XMVector3TransformNormal(XMLoadFloat3(&Vector), Matrix));
+		XMStoreFloat3(&result, XMVector3TransformNormal(XMLoadFloat3(&v), XMLoadFloat4x4(&m)));
 
-		return Result;
+		return result;
 	}
 
-	XMFLOAT3 TransformNormal(const XMFLOAT3& Vector, const XMFLOAT4X4& Matrix)
+	XMFLOAT3 TransformCoord(const XMFLOAT3& v, const XMFLOAT4X4& m)
 	{
-		return TransformNormal(Vector, XMLoadFloat4x4(&Matrix));
-	}
+		XMFLOAT3 result = {};
 
-	XMFLOAT3 TransformCoord(const XMFLOAT3& Vector, const XMMATRIX& Matrix)
-	{
-		XMFLOAT3 Result{};
+		XMStoreFloat3(&result, XMVector3TransformCoord(XMLoadFloat3(&v), XMLoadFloat4x4(&m)));
 
-		XMStoreFloat3(&Result, XMVector3TransformCoord(XMLoadFloat3(&Vector), Matrix));
-
-		return Result;
-	}
-
-	XMFLOAT3 TransformCoord(const XMFLOAT3& Vector, const XMFLOAT4X4& Matrix)
-	{
-		return TransformCoord(Vector, XMLoadFloat4x4(&Matrix));
+		return result;
 	}
 }
 
@@ -430,119 +391,128 @@ namespace Matrix4x4
 {
 	XMFLOAT4X4 Identity()
 	{
-		XMFLOAT4X4 Result{};
+		XMFLOAT4X4 result = {};
 
-		XMStoreFloat4x4(&Result, XMMatrixIdentity());
+		XMStoreFloat4x4(&result, XMMatrixIdentity());
 
-		return Result;
+		return result;
 	}
 
-	XMFLOAT4X4 Inverse(const XMFLOAT4X4& Matrix)
+	XMFLOAT4X4 Transpose(const XMFLOAT4X4& m)
 	{
-		XMFLOAT4X4 Result{};
+		XMFLOAT4X4 result = {};
 
-		XMStoreFloat4x4(&Result, XMMatrixInverse(nullptr, XMLoadFloat4x4(&Matrix)));
+		XMStoreFloat4x4(&result, XMMatrixTranspose(XMLoadFloat4x4(&m)));
 
-		return Result;
+		return result;
 	}
 
-	XMFLOAT4X4 Transpose(const XMFLOAT4X4& Matrix)
+	XMFLOAT4X4 Inverse(const XMFLOAT4X4& m)
 	{
-		XMFLOAT4X4 Result{};
+		XMFLOAT4X4 result = {};
 
-		XMStoreFloat4x4(&Result, XMMatrixTranspose(XMLoadFloat4x4(&Matrix)));
+		XMStoreFloat4x4(&result, XMMatrixInverse(nullptr, XMLoadFloat4x4(&m)));
 
-		return Result;
+		return result;
 	}
 
-	XMFLOAT4X4 Multiply(const XMFLOAT4X4& Matrix1, const XMFLOAT4X4& Matrix2)
+	XMFLOAT4X4 Add(const XMFLOAT4X4& m1, const XMFLOAT4X4& m2)
 	{
-		XMFLOAT4X4 Result{};
+		XMFLOAT4X4 result = {};
 
-		XMStoreFloat4x4(&Result, XMLoadFloat4x4(&Matrix1) * XMLoadFloat4x4(&Matrix2));
+		XMStoreFloat4x4(&result, XMLoadFloat4x4(&m1) + XMLoadFloat4x4(&m2));
 
-		return Result;
+		return result;
 	}
 
-	XMFLOAT4X4 Multiply(const XMFLOAT4X4& Matrix1, const XMMATRIX& Matrix2)
+	XMFLOAT4X4 Subtract(const XMFLOAT4X4& m1, const XMFLOAT4X4& m2)
 	{
-		XMFLOAT4X4 Result{};
+		XMFLOAT4X4 result = {};
 
-		XMStoreFloat4x4(&Result, XMLoadFloat4x4(&Matrix1) * Matrix2);
+		XMStoreFloat4x4(&result, XMLoadFloat4x4(&m1) - XMLoadFloat4x4(&m2));
 
-		return Result;
+		return result;
 	}
 
-	XMFLOAT4X4 Multiply(const XMMATRIX& Matrix1, const XMFLOAT4X4& Matrix2)
+	XMFLOAT4X4 Multiply(const XMFLOAT4X4& m1, const XMFLOAT4X4& m2)
 	{
-		XMFLOAT4X4 Result{};
+		XMFLOAT4X4 result = {};
 
-		XMStoreFloat4x4(&Result, Matrix1 * XMLoadFloat4x4(&Matrix2));
+		XMStoreFloat4x4(&result, XMLoadFloat4x4(&m1) * XMLoadFloat4x4(&m2));
 
-		return Result;
+		return result;
 	}
 
-	XMFLOAT4X4 Scale(float Pitch, float Yaw, float Roll)
+	XMFLOAT4X4 Translation(const XMFLOAT3& position)
 	{
-		XMFLOAT4X4 Result{};
+		XMFLOAT4X4 result = {};
 
-		XMStoreFloat4x4(&Result, XMMatrixScaling(Pitch, Yaw, Roll));
+		XMStoreFloat4x4(&result, XMMatrixTranslation(position.x, position.y, position.z));
 
-		return Result;
+		return result;
 	}
 
-	XMFLOAT4X4 RotationYawPitchRoll(float Pitch, float Yaw, float Roll)
+	XMFLOAT4X4 Rotation(const XMFLOAT3& rotation)
 	{
-		XMFLOAT4X4 Result{};
+		XMFLOAT4X4 result = {};
 
-		XMStoreFloat4x4(&Result, XMMatrixRotationRollPitchYaw(XMConvertToRadians(Pitch), XMConvertToRadians(Yaw), XMConvertToRadians(Roll)));
+		XMStoreFloat4x4(&result, XMMatrixRotationRollPitchYaw(XMConvertToRadians(rotation.x), XMConvertToRadians(rotation.y), XMConvertToRadians(rotation.z)));
 
-		return Result;
+		return result;
 	}
 
-	XMFLOAT4X4 RotationAxis(const XMFLOAT3& Axis, float Angle)
+	XMFLOAT4X4 Rotation(const XMFLOAT3& axis, float angle)
 	{
-		XMFLOAT4X4 Result{};
+		XMFLOAT4X4 result = {};
 
-		XMStoreFloat4x4(&Result, XMMatrixRotationAxis(XMLoadFloat3(&Axis), XMConvertToRadians(Angle)));
+		XMStoreFloat4x4(&result, XMMatrixRotationAxis(XMLoadFloat3(&axis), XMConvertToRadians(angle)));
 
-		return Result;
+		return result;
 	}
 
-	XMFLOAT4X4 OrthographicFovLH(float ViewWidth, float ViewHeight, float NearZ, float FarZ)
+	XMFLOAT4X4 Scale(const XMFLOAT3& scale)
 	{
-		XMFLOAT4X4 Result{};
+		XMFLOAT4X4 result = {};
 
-		XMStoreFloat4x4(&Result, XMMatrixOrthographicLH(ViewWidth, ViewHeight, NearZ, FarZ));
+		XMStoreFloat4x4(&result, XMMatrixScaling(scale.x, scale.y, scale.z));
 
-		return Result;
+		return result;
 	}
 
-	XMFLOAT4X4 PerspectiveFovLH(float FovAngleY, float AspectRatio, float NearZ, float FarZ)
+	XMFLOAT4X4 OrthographicFovLH(float viewWidth, float viewHeight, float nearZ, float farZ)
 	{
-		XMFLOAT4X4 Result{};
+		XMFLOAT4X4 result = {};
 
-		XMStoreFloat4x4(&Result, XMMatrixPerspectiveFovLH(FovAngleY, AspectRatio, NearZ, FarZ));
+		XMStoreFloat4x4(&result, XMMatrixOrthographicLH(viewWidth, viewHeight, nearZ, farZ));
 
-		return Result;
+		return result;
 	}
 
-	XMFLOAT4X4 LookAtLH(const XMFLOAT3& Position, const XMFLOAT3& FocusPosition, const XMFLOAT3& UpDirection)
+	XMFLOAT4X4 PerspectiveFovLH(float fovAngleY, float aspectRatio, float nearZ, float farZ)
 	{
-		XMFLOAT4X4 Result{};
+		XMFLOAT4X4 result = {};
 
-		XMStoreFloat4x4(&Result, XMMatrixLookAtLH(XMLoadFloat3(&Position), XMLoadFloat3(&FocusPosition), XMLoadFloat3(&UpDirection)));
+		XMStoreFloat4x4(&result, XMMatrixPerspectiveFovLH(fovAngleY, aspectRatio, nearZ, farZ));
 
-		return Result;
+		return result;
 	}
 
-	XMFLOAT4X4 LookToLH(const XMFLOAT3& Position, const XMFLOAT3& Look, const XMFLOAT3& WorldUp)
+	XMFLOAT4X4 LookAtLH(const XMFLOAT3& position, const XMFLOAT3& focusPosition, const XMFLOAT3& worldUp)
 	{
-		XMFLOAT4X4 Result{};
+		XMFLOAT4X4 result = {};
 
-		XMStoreFloat4x4(&Result, XMMatrixLookToLH(XMLoadFloat3(&Position), XMLoadFloat3(&Look), XMLoadFloat3(&WorldUp)));
+		XMStoreFloat4x4(&result, XMMatrixLookAtLH(XMLoadFloat3(&position), XMLoadFloat3(&focusPosition), XMLoadFloat3(&worldUp)));
 
-		return Result;
+		return result;
+	}
+
+	XMFLOAT4X4 LookToLH(const XMFLOAT3& position, const XMFLOAT3& forward, const XMFLOAT3& worldUp)
+	{
+		XMFLOAT4X4 result = {};
+
+		XMStoreFloat4x4(&result, XMMatrixLookToLH(XMLoadFloat3(&position), XMLoadFloat3(&forward), XMLoadFloat3(&worldUp)));
+
+		return result;
 	}
 }
 

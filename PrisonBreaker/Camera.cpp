@@ -3,7 +3,7 @@
 
 #include "TimeManager.h"
 
-#include "Player.h"
+#include "Transform.h"
 
 CCamera::CCamera(CAMERA_TYPE type) :
 	m_type(type),
@@ -13,12 +13,8 @@ CCamera::CCamera(CAMERA_TYPE type) :
 	m_d3d12ScissorRect(),
 	m_viewMatrix(Matrix4x4::Identity()),
 	m_projectionMatrix(Matrix4x4::Identity()),
-	m_right(1.0f, 0.0f, 0.0f),
-	m_up(0.0f, 1.0f, 0.0f),
-	m_forward(0.0f, 0.0f, 1.0f),
-	m_position(),
-	m_offset(0.0f, 0.0f, -3.0f),
-	m_speed(15.0f),
+	m_offset(),
+	m_speed(),
 	m_frustum(),
 	m_d3d12Buffer(),
 	m_mappedData(),
@@ -57,22 +53,22 @@ float CCamera::GetMagnification()
 	return m_magnification;
 }
 
-void CCamera::SetViewport(int TopLeftX, int TopLeftY, UINT Width, UINT Height, float MinDepth, float MaxDepth)
+void CCamera::SetViewport(int topLeftX, int topLeftY, UINT width, UINT height, float minDepth, float maxDepth)
 {
-	m_d3d12Viewport.TopLeftX = static_cast<float>(TopLeftX);
-	m_d3d12Viewport.TopLeftY = static_cast<float>(TopLeftY);
-	m_d3d12Viewport.Width = static_cast<float>(Width);
-	m_d3d12Viewport.Height = static_cast<float>(Height);
-	m_d3d12Viewport.MinDepth = MinDepth;
-	m_d3d12Viewport.MaxDepth = MaxDepth;
+	m_d3d12Viewport.TopLeftX = static_cast<float>(topLeftX);
+	m_d3d12Viewport.TopLeftY = static_cast<float>(topLeftY);
+	m_d3d12Viewport.Width = static_cast<float>(width);
+	m_d3d12Viewport.Height = static_cast<float>(height);
+	m_d3d12Viewport.MinDepth = minDepth;
+	m_d3d12Viewport.MaxDepth = maxDepth;
 }
 
-void CCamera::SetScissorRect(LONG Left, LONG Top, LONG Right, LONG Bottom)
+void CCamera::SetScissorRect(LONG left, LONG top, LONG right, LONG bottom)
 {
-	m_d3d12ScissorRect.left = Left;
-	m_d3d12ScissorRect.top = Top;
-	m_d3d12ScissorRect.right = Right;
-	m_d3d12ScissorRect.bottom = Bottom;
+	m_d3d12ScissorRect.left = left;
+	m_d3d12ScissorRect.top = top;
+	m_d3d12ScissorRect.right = right;
+	m_d3d12ScissorRect.bottom = bottom;
 }
 
 const XMFLOAT4X4& CCamera::GetViewMatrix()
@@ -85,49 +81,42 @@ const XMFLOAT4X4& CCamera::GetProjectionMatrix()
 	return m_projectionMatrix;
 }
 
-const XMFLOAT3& CCamera::GetRight()
+void CCamera::SetOffset(const XMFLOAT3& offset)
 {
-	return m_right;
+	m_offset = offset;
 }
 
-const XMFLOAT3& CCamera::GetUp()
+const XMFLOAT3& CCamera::GetOffset()
 {
-	return m_up;
+	return m_offset;
 }
 
-const XMFLOAT3& CCamera::GetFoward()
+void CCamera::SetSpeed(float speed)
 {
-	return m_forward;
+	m_speed = max(0.0f, speed);
 }
 
-void CCamera::SetPosition(const XMFLOAT3& Position)
+float CCamera::GetSpeed()
 {
-	m_position = Position;
-
-	RegenerateViewMatrix();
+	return m_speed;
 }
 
-const XMFLOAT3& CCamera::GetPosition()
-{
-	return m_position;
-}
-
-void CCamera::SetTarget(CPlayer* target)
+void CCamera::SetTarget(CObject* target)
 {
 	m_target = target;
 }
 
-CPlayer* CCamera::GetTarget()
+CObject* CCamera::GetTarget()
 {
 	return m_target;
 }
 
-void CCamera::SetLight(LIGHT* light)
+void CCamera::SetLight(Light* light)
 {
 	m_light = light;
 }
 
-LIGHT* CCamera::GetLight()
+Light* CCamera::GetLight()
 {
 	return m_light;
 }
@@ -142,10 +131,11 @@ void CCamera::CreateShaderVariables(ID3D12Device* d3d12Device, ID3D12GraphicsCom
 
 void CCamera::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
 {
+	CTransform* transform = GetComponent<CTransform>();
+
 	XMStoreFloat4x4(&m_mappedData->m_viewMatrix, XMMatrixTranspose(XMLoadFloat4x4(&m_viewMatrix)));
 	XMStoreFloat4x4(&m_mappedData->m_projectionMatrix, XMMatrixTranspose(XMLoadFloat4x4(&m_projectionMatrix)));
-	memcpy(&m_mappedData->m_position, &m_position, sizeof(XMFLOAT3));
-
+	memcpy(&m_mappedData->m_position, &transform->GetPosition(), sizeof(XMFLOAT3));
 	d3d12GraphicsCommandList->SetGraphicsRootConstantBufferView(static_cast<UINT>(ROOT_PARAMETER_TYPE::CAMERA), m_d3d12Buffer->GetGPUVirtualAddress());
 }
 
@@ -160,22 +150,21 @@ void CCamera::RSSetViewportsAndScissorRects(ID3D12GraphicsCommandList* d3d12Grap
 	d3d12GraphicsCommandList->RSSetScissorRects(1, &m_d3d12ScissorRect);
 }
 
-void CCamera::GenerateViewMatrix(const XMFLOAT3& Position, const XMFLOAT3& Look)
+void CCamera::GenerateViewMatrix(const XMFLOAT3& position, const XMFLOAT3& forward)
 {
-	m_position = Position;
-	m_forward = Look;
+	CTransform* transform = GetComponent<CTransform>();
+
+	transform->SetPosition(position);
+	transform->LookTo(forward);
 
 	RegenerateViewMatrix();
 }
 
 void CCamera::RegenerateViewMatrix()
 {
-	XMFLOAT3 worldUp = XMFLOAT3(0.0f, 1.0f, 0.0f);
+	CTransform* transform = GetComponent<CTransform>();
 
-	m_forward = Vector3::Normalize(m_forward);
-	m_right = Vector3::CrossProduct(worldUp, m_forward, false);
-	m_up = Vector3::CrossProduct(m_forward, m_right, false);
-	m_viewMatrix = Matrix4x4::LookToLH(m_position, m_forward, worldUp);
+	m_viewMatrix = Matrix4x4::LookToLH(transform->GetPosition(), transform->GetForward(), CTransform::m_worldUp);
 
 	GenerateBoundingFrustum();
 }
@@ -196,10 +185,10 @@ void CCamera::GenerateBoundingFrustum()
 	m_frustum.CreateFromMatrix(m_frustum, XMLoadFloat4x4(&m_projectionMatrix));
 
 	// 카메라 변환 행렬의 역행렬을 구한다.
-	XMMATRIX inverseViewMatrix = XMMatrixInverse(nullptr, XMLoadFloat4x4(&m_viewMatrix));
+	XMMATRIX inversedViewMatrix = XMMatrixInverse(nullptr, XMLoadFloat4x4(&m_viewMatrix));
 
 	// 절두체를 카메라 변환 행렬의 역행렬로 변환한다(이제 절두체는 월드 좌표계로 표현된다).
-	m_frustum.Transform(m_frustum, inverseViewMatrix);
+	m_frustum.Transform(m_frustum, inversedViewMatrix);
 }
 
 bool CCamera::IsInBoundingFrustum(const BoundingBox& BoundingBox)
@@ -207,63 +196,37 @@ bool CCamera::IsInBoundingFrustum(const BoundingBox& BoundingBox)
 	return m_frustum.Intersects(BoundingBox);
 }
 
-void CCamera::Move(const XMFLOAT3& Shift)
-{
-	SetPosition(Vector3::Add(m_position, Shift));
-}
-
-void CCamera::Rotate(float Pitch, float Yaw, float Roll)
-{
-	if (!Math::IsZero(Pitch))
-	{
-		XMFLOAT4X4 rotationMatrix = Matrix4x4::RotationAxis(m_right, Pitch);
-
-		m_forward = Vector3::TransformNormal(m_forward, rotationMatrix);
-	}
-
-	if (!Math::IsZero(Yaw))
-	{
-		XMFLOAT4X4 rotationMatrix = Matrix4x4::RotationAxis(m_up, Yaw);
-
-		m_forward = Vector3::TransformNormal(m_forward, rotationMatrix);
-	}
-
-	if (!Math::IsZero(Roll))
-	{
-		XMFLOAT4X4 rotationMatrix = Matrix4x4::RotationAxis(m_forward, Roll);
-
-		m_forward = Vector3::TransformNormal(m_forward, rotationMatrix);
-	}
-
-	RegenerateViewMatrix();
-}
-
 void CCamera::Update()
 {
 	if (m_target != nullptr)
 	{
-		const XMFLOAT3& rotation = m_target->GetRotation();
-		XMFLOAT4X4 transformMatrix = Matrix4x4::Multiply(Matrix4x4::RotationYawPitchRoll(rotation.x, 0.0f, 0.0f), m_target->GetWorldMatrix());
-		XMFLOAT3 focusPosition = XMFLOAT3(transformMatrix._41, transformMatrix._42 + 4.5f, transformMatrix._43);
+		CTransform* transform = GetComponent<CTransform>();
+		CTransform* targetTransform = m_target->GetComponent<CTransform>();
+		XMFLOAT3 focusPosition = targetTransform->GetPosition();
+
+		focusPosition.y += 4.5f;
 
 		if (m_magnification > 1.0f)
 		{
-			XMFLOAT3 zoomDirection = Vector3::Normalize(Vector3::Add(XMFLOAT3(transformMatrix._11, transformMatrix._12, transformMatrix._13), XMFLOAT3(transformMatrix._31, transformMatrix._32, transformMatrix._33)));
-		
-			zoomDirection = Vector3::ScalarProduct(m_magnification, zoomDirection, false);
+			XMFLOAT3 zoomDirection = Vector3::Normalize(Vector3::Add(targetTransform->GetForward(), targetTransform->GetRight()));
+
+			zoomDirection = Vector3::ScalarProduct(zoomDirection, m_magnification);
 			focusPosition = Vector3::Add(focusPosition, zoomDirection);
 		}
 
-		XMFLOAT3 newOffset = Vector3::TransformNormal(m_offset, transformMatrix);
+		XMFLOAT3 newOffset = Vector3::TransformNormal(m_offset, Matrix4x4::Rotation(targetTransform->GetRotation()));
 		XMFLOAT3 newPosition = Vector3::Add(focusPosition, newOffset);
-		XMFLOAT3 direction = Vector3::Subtract(newPosition, m_position);
+		XMFLOAT3 direction = Vector3::Subtract(newPosition, transform->GetPosition());
 		float shift = Vector3::Length(direction) * m_speed * DT;
 
 		if (shift > 0.0f)
 		{
 			direction = Vector3::Normalize(direction);
-			m_position = Vector3::Add(m_position, Vector3::ScalarProduct(shift, direction, false));
-			m_forward = Vector3::Subtract(focusPosition, m_position);
+			transform->Translate(Vector3::ScalarProduct(direction, shift));
+
+			XMFLOAT3 forward = Vector3::Normalize(Vector3::Subtract(focusPosition, transform->GetPosition()));
+
+			transform->LookTo(forward);
 		}
 	}
 

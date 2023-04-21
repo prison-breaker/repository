@@ -6,7 +6,12 @@ class CMesh;
 class CMaterial;
 
 class CComponent;
+class CStateMachine;
+class CRigidBody;
 class CAnimator;
+class CTransform;
+class CSpriteRenderer;
+class CCollider;
 
 class CCamera;
 
@@ -26,10 +31,7 @@ private:
 					    
 	bool			    m_isActive;
 	bool			    m_isDeleted;
-					    
-	XMFLOAT4X4		    m_worldMatrix;
-	XMFLOAT4X4		    m_transformMatrix;
-					    
+
 	CMesh*			    m_mesh;
 	vector<CMaterial*>  m_materials;
 
@@ -56,23 +58,6 @@ public:
 	void SetDeleted(bool isDeleted);
 	bool IsDeleted();
 
-	const XMFLOAT4X4& GetWorldMatrix();
-
-	void SetTransformMatrix(const XMFLOAT4X4& transformMatrix);
-	const XMFLOAT4X4& GetTransformMatrix();
-
-	void SetRight(const XMFLOAT3& right);
-	XMFLOAT3 GetRight();
-
-	void SetUp(const XMFLOAT3& up);
-	XMFLOAT3 GetUp();
-
-	void SetForward(const XMFLOAT3& forward);
-	XMFLOAT3 GetForward();
-
-	void SetPosition(const XMFLOAT3& position);
-	XMFLOAT3 GetPosition();
-
 	void SetMesh(CMesh* mesh);
 	CMesh* GetMesh();
 
@@ -81,7 +66,22 @@ public:
 
 	CComponent* CreateComponent(COMPONENT_TYPE componentType);
 	void SetComponent(COMPONENT_TYPE componentType, CComponent* newComponent);
-	CComponent* GetComponent(COMPONENT_TYPE componentType);
+	template <typename T>
+	T* GetComponent()
+	{
+		for (int i = static_cast<int>(COMPONENT_TYPE::STATE_MACHINE); i < static_cast<int>(COMPONENT_TYPE::COUNT); ++i)
+		{
+			if (m_components[i] != nullptr)
+			{
+				if (typeid(T).raw_name() == typeid(*m_components[i]).raw_name())
+				{
+					return reinterpret_cast<T*>(m_components[i]);
+				}
+			}
+		}
+
+		return nullptr;
+	}
 	const vector<CComponent*>& GetComponents();
 
 	CObject* GetParent();
@@ -102,14 +102,6 @@ public:
 	CObject* CheckRayIntersection(const XMFLOAT3& rayOrigin, const XMFLOAT3& rayDirection, float& hitDistance, float maxDistance);
 
 	bool IsVisible(CCamera* camera);
-
-	void UpdateLocalCoord(const XMFLOAT3& forward);
-	void UpdateTransform(bool updateChidren);
-
-	void Move(const XMFLOAT3& Direction, float Distance);
-	void Scale(float Pitch, float Yaw, float Roll);
-	void Rotate(float Pitch, float Yaw, float Roll);
-	void Rotate(const XMFLOAT3& Axis, float Angle);
 
 	virtual void OnCollisionEnter(CObject* collidedObject);
 	virtual void OnCollision(CObject* collidedObject);

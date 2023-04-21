@@ -8,6 +8,8 @@
 
 #include "NavMesh.h"
 
+#include "Transform.h"
+
 CRigidBody::CRigidBody() :
     m_mass(1.0f),
     m_force(),
@@ -126,15 +128,16 @@ void CRigidBody::AddVelocity(const XMFLOAT3& velocity)
 
 void CRigidBody::MovePosition()
 {    
-    XMFLOAT3 position = m_owner->GetPosition();
-    XMFLOAT3 shift = Vector3::ScalarProduct(DT, m_velocity, false);
+    CTransform* transform = m_owner->GetComponent<CTransform>();
+    const XMFLOAT3& position = transform->GetPosition();
+    XMFLOAT3 shift = Vector3::ScalarProduct(m_velocity, DT);
     XMFLOAT3 newPosition = Vector3::Add(position, shift);
 
-    CNavMesh* navMesh = (CNavMesh*)CAssetManager::GetInstance()->GetMesh("NavMesh");
+    CNavMesh* navMesh = static_cast<CNavMesh*>(CAssetManager::GetInstance()->GetMesh("NavMesh"));
 
     if (navMesh->IsInNavMesh(position, newPosition))
     {
-        m_owner->SetPosition(newPosition);
+        transform->SetPosition(newPosition);
     }
 }
 
@@ -148,10 +151,10 @@ void CRigidBody::Update()
     // 이번 프레임에 누적된 힘의 양에 따른 가속도 값 갱신
     // Force = Mass * Accel
     // Accel = Force / Mass = Force * (1.0f / Mass)
-    m_accel = Vector3::ScalarProduct(1.0f / m_mass, m_force, false);
+    m_accel = Vector3::ScalarProduct(m_force, 1.0f / m_mass);
 
     // 갱신된 가속도 값에 의한 속도 값 갱신
-    m_velocity = Vector3::Add(m_velocity, Vector3::ScalarProduct(DT, m_accel, false));
+    m_velocity = Vector3::Add(m_velocity, Vector3::ScalarProduct(m_accel, DT));
 
     // XZ축 성분 처리
     float speedXZ = GetSpeedXZ();

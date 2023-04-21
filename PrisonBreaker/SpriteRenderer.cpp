@@ -76,7 +76,7 @@ void CSpriteRenderer::Play(bool isLoop, int startFrameIndex, int endFrameIndex, 
 
 void CSpriteRenderer::Update()
 {
-    if ((m_isEnabled) && (m_endFrameIndex > 0))
+    if (m_isEnabled && (m_endFrameIndex > 0))
     {
         m_elapsedTime += DT;
 

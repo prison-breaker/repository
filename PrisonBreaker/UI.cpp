@@ -84,7 +84,7 @@ CUI* CUI::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Graphi
 		}
 		else if (str == "<FrameIndex>")
 		{
-			CSpriteRenderer* spriteRenderer = static_cast<CSpriteRenderer*>(ui->GetComponent(COMPONENT_TYPE::SPRITE_RENDERER));
+			CSpriteRenderer* spriteRenderer = ui->GetComponent<CSpriteRenderer>();
 			int frameIndex = 0;
 
 			in.read((char*)&frameIndex, sizeof(int));

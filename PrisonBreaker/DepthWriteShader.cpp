@@ -44,8 +44,8 @@ D3D12_RASTERIZER_DESC CDepthWriteShader::CreateRasterizerState(int stateNum)
 	case 0: // Standard
 	case 1: // With Skinning
 		d3d12RasterizerDesc.CullMode = D3D12_CULL_MODE_FRONT;
-		d3d12RasterizerDesc.DepthBias = 12'500;
-		d3d12RasterizerDesc.SlopeScaledDepthBias = 1.0f;
+		//d3d12RasterizerDesc.DepthBias = 500;
+		//d3d12RasterizerDesc.SlopeScaledDepthBias = 1.0f;
 		break;
 	}
 

@@ -91,7 +91,7 @@ void CPowerDownEventTrigger::Reset()
 {
 	CEventTrigger::Reset();
 
-	vector<LIGHT>& Lights{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene(TEXT("GameScene")))->GetLights() };
+	vector<Light>& Lights{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene(TEXT("GameScene")))->GetLights() };
 	const XMFLOAT3 WorldUp{ 0.0f, 1.0f, 0.0f };
 
 	Lights[1].m_isActive = true;
@@ -132,7 +132,7 @@ bool CPowerDownEventTrigger::InteractEventTrigger(UINT CallerIndex)
 		if (m_IsOpened)
 		{
 			shared_ptr<CGameScene> GameScene{ static_pointer_cast<CGameScene>(CSceneManager::GetInstance()->GetScene("GameScene")) };
-			vector<LIGHT>& Lights{ GameScene->GetLights() };
+			vector<Light>& Lights{ GameScene->GetLights() };
 
 			// 감시탑의 조명을 끈다.
 			Lights[1].m_isActive = false;

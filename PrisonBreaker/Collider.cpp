@@ -5,6 +5,8 @@
 
 #include "Mesh.h"
 
+#include "Transform.h"
+
 CCollider::CCollider() :
     m_boundingBox()
 {
@@ -26,10 +28,8 @@ const BoundingBox& CCollider::GetBoundingBox()
 
 void CCollider::Update()
 {
-    if (!m_isEnabled)
+    if (m_isEnabled)
     {
-        return;
+        m_owner->GetMesh()->GetBoundingBox().Transform(m_boundingBox, XMLoadFloat4x4(&m_owner->GetComponent<CTransform>()->GetWorldMatrix()));
     }
-
-    m_owner->GetMesh()->GetBoundingBox().Transform(m_boundingBox, XMLoadFloat4x4(&m_owner->GetWorldMatrix()));
 }

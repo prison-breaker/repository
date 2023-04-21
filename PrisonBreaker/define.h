@@ -11,6 +11,8 @@
 
 #define SERVER_PORT				9000
 
+#define EPSILON				    0.01f
+
 #define TERRAIN_WIDTH			400
 #define TERRAIN_HEIGHT			400
 #define DEPTH_BUFFER_WIDTH	    2048
@@ -84,8 +86,9 @@ enum class COMPONENT_TYPE
 	STATE_MACHINE,
 	RIGIDBODY,
 	ANIMATOR,
-	SPRITE_RENDERER,
+	TRANSFORM,
 	COLLIDER,
+	SPRITE_RENDERER,
 
 	COUNT
 };
@@ -94,7 +97,7 @@ enum class CAMERA_TYPE
 {
 	MAIN,
 	UI,
-	LIGHT,
+	Light,
 
 	COUNT
 };

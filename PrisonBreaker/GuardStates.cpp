@@ -11,6 +11,7 @@
 #include "StateMachine.h"
 #include "RigidBody.h"
 #include "Animator.h"
+#include "Transform.h"
 
 CGuardIdleState::CGuardIdleState()
 {
@@ -22,8 +23,8 @@ CGuardIdleState::~CGuardIdleState()
 
 void CGuardIdleState::Enter(CObject* object)
 {
-	CGuard* guard = (CGuard*)object;
-	CAnimator* animator = static_cast<CAnimator*>(guard->GetComponent(COMPONENT_TYPE::ANIMATOR));
+	CGuard* guard = static_cast<CGuard*>(object);
+	CAnimator* animator = guard->GetComponent<CAnimator>();
 
 	guard->SetTarget(nullptr);
 	animator->Play("Holding_Idle", false);
@@ -35,9 +36,8 @@ void CGuardIdleState::Exit(CObject* object)
 
 void CGuardIdleState::Update(CObject* object)
 {
-	CGuard* guard = (CGuard*)object;
-	CStateMachine* stateMachine = static_cast<CStateMachine*>(guard->GetComponent(COMPONENT_TYPE::STATE_MACHINE));
-	CAnimator* animator = static_cast<CAnimator*>(guard->GetComponent(COMPONENT_TYPE::ANIMATOR));
+	CGuard* guard = static_cast<CGuard*>(object);
+	CStateMachine* stateMachine = guard->GetComponent<CStateMachine>();
 	CCharacter* target = guard->FindTarget(30.0f, 75.0f);
 
 	if (target != nullptr)
@@ -48,6 +48,8 @@ void CGuardIdleState::Update(CObject* object)
 	}
 	else
 	{
+		CAnimator* animator = guard->GetComponent<CAnimator>();
+
 		// Idle 애니메이션이 종료되면, PatrolState로 전이한다.
 		if (animator->IsFinished())
 		{
@@ -68,13 +70,14 @@ CGuardPatrolState::~CGuardPatrolState()
 
 void CGuardPatrolState::Enter(CObject* object)
 {
-	CGuard* guard = (CGuard*)object;
-	CRigidBody* rigidBody = static_cast<CRigidBody*>(guard->GetComponent(COMPONENT_TYPE::RIGIDBODY));
-	CAnimator* animator = static_cast<CAnimator*>(guard->GetComponent(COMPONENT_TYPE::ANIMATOR));
+	CGuard* guard = static_cast<CGuard*>(object);
+	CRigidBody* rigidBody = guard->GetComponent<CRigidBody>();
+	CAnimator* animator = guard->GetComponent<CAnimator>();
+	CTransform* transform = guard->GetComponent<CTransform>();
 
 	guard->SetElapsedTime(0.0f);
 	rigidBody->SetMaxSpeedXZ(300.0f);
-	rigidBody->AddVelocity(Vector3::ScalarProduct(300.0f * DT, guard->GetForward(), false));
+	rigidBody->AddVelocity(Vector3::ScalarProduct(transform->GetForward(), 300.0f * DT));
 	animator->Play("Walking", true);
 }
 
@@ -84,8 +87,8 @@ void CGuardPatrolState::Exit(CObject* object)
 
 void CGuardPatrolState::Update(CObject* object)
 {
-	CGuard* guard = (CGuard*)object;
-	CStateMachine* stateMachine = static_cast<CStateMachine*>(guard->GetComponent(COMPONENT_TYPE::STATE_MACHINE));
+	CGuard* guard = static_cast<CGuard*>(object);
+	CStateMachine* stateMachine = guard->GetComponent<CStateMachine>();
 	CCharacter* target = guard->FindTarget(30.0f, 75.0f);
 
 	if (target != nullptr)
@@ -123,14 +126,15 @@ CGuardChaseState::~CGuardChaseState()
 
 void CGuardChaseState::Enter(CObject* object)
 {
-	CGuard* guard = (CGuard*)object;
-	CRigidBody* rigidBody = static_cast<CRigidBody*>(guard->GetComponent(COMPONENT_TYPE::RIGIDBODY));
-	CAnimator* animator = static_cast<CAnimator*>(guard->GetComponent(COMPONENT_TYPE::ANIMATOR));
+	CGuard* guard = static_cast<CGuard*>(object);
+	CRigidBody* rigidBody = guard->GetComponent<CRigidBody>();
+	CAnimator* animator = guard->GetComponent<CAnimator>();
+	CTransform* transform = guard->GetComponent<CTransform>();
 
 	guard->SetElapsedTime(0.0f);
-	guard->CreateMovePath(guard->GetTarget()->GetPosition());
+	guard->CreateMovePath(guard->GetTarget()->GetComponent<CTransform>()->GetPosition());
 	rigidBody->SetMaxSpeedXZ(500.0f);
-	rigidBody->AddVelocity(Vector3::ScalarProduct(500.0f * DT, guard->GetForward(), false));
+	rigidBody->AddVelocity(Vector3::ScalarProduct(transform->GetForward(), 500.0f * DT));
 	animator->Play("Pistol_Run", true);
 }
 
@@ -140,9 +144,11 @@ void CGuardChaseState::Exit(CObject* object)
 
 void CGuardChaseState::Update(CObject* object)
 {
-	CGuard* guard = (CGuard*)object;
-	CStateMachine* stateMachine = static_cast<CStateMachine*>(guard->GetComponent(COMPONENT_TYPE::STATE_MACHINE));
+	CGuard* guard = static_cast<CGuard*>(object);
+	CStateMachine* stateMachine = guard->GetComponent<CStateMachine>();
+	CTransform* transform = guard->GetComponent<CTransform>();
 	CCharacter* target = guard->GetTarget();
+	const XMFLOAT3& targetPosition = target->GetComponent<CTransform>()->GetPosition();
 
 	guard->SetElapsedTime(guard->GetElapsedTime() + DT);
 
@@ -155,7 +161,7 @@ void CGuardChaseState::Update(CObject* object)
 		if (target != nullptr)
 		{
 			guard->SetTarget(target);
-			guard->CreateMovePath(target->GetPosition());
+			guard->CreateMovePath(targetPosition);
 		}
 		else
 		{
@@ -165,8 +171,8 @@ void CGuardChaseState::Update(CObject* object)
 	}
 	else
 	{
-		XMFLOAT3 position = guard->GetPosition();
-		XMFLOAT3 toTarget = Vector3::Subtract(target->GetPosition(), position);
+		XMFLOAT3 position = transform->GetPosition();
+		XMFLOAT3 toTarget = Vector3::Subtract(targetPosition, position);
 		float dist = Vector3::Length(toTarget);
 
 		// 타겟과의 거리가 10.0f이하라면, 광선을 쏘아 본다.
@@ -197,18 +203,18 @@ void CGuardChaseState::Update(CObject* object)
 			// 어떠한 구조물도 광선에 맞지 않았다면, 타겟을 향하도록 회전한 후 총을 쏘도록 ShootState로 전이한다.
 			if (!isHit)
 			{
-				XMFLOAT3 forward = guard->GetForward();
+				XMFLOAT3 forward = transform->GetForward();
 				float angle = Vector3::Angle(forward, toTarget);
 
 				// 두 벡터를 외적하여 회전축을 구해 최소 회전 방향으로 회전시킨다.
-				float axis = Vector3::CrossProduct(forward, toTarget, false).y;
+				float axis = Vector3::CrossProduct(forward, toTarget).y;
 
 				if (axis < 0.0f)
 				{
 					angle = -angle;
 				}
 
-				guard->Rotate(guard->GetUp(), angle);
+				transform->Rotate(XMFLOAT3(0.0f, angle, 0.0f));
 				stateMachine->ChangeState(CGuardShootState::GetInstance());
 			}
 		}
@@ -219,7 +225,7 @@ void CGuardChaseState::Update(CObject* object)
 			// targetPosition에 위치했다면, 다시 타겟의 위치로 경로를 만든다.
 			if (guard->IsFinishedMovePath())
 			{
-				guard->CreateMovePath(target->GetPosition());
+				guard->CreateMovePath(targetPosition);
 			}
 		}
 	}
@@ -237,14 +243,15 @@ CGuardReturnState::~CGuardReturnState()
 
 void CGuardReturnState::Enter(CObject* object)
 {
-	CGuard* guard = (CGuard*)object;
-	CRigidBody* rigidBody = static_cast<CRigidBody*>(guard->GetComponent(COMPONENT_TYPE::RIGIDBODY));
-	CAnimator* animator = static_cast<CAnimator*>(guard->GetComponent(COMPONENT_TYPE::ANIMATOR));
+	CGuard* guard = static_cast<CGuard*>(object);
+	CRigidBody* rigidBody = guard->GetComponent<CRigidBody>();
+	CAnimator* animator = guard->GetComponent<CAnimator>();
+	CTransform* transform = guard->GetComponent<CTransform>();
 
 	guard->SetTarget(nullptr);
 	guard->CreateMovePath(guard->GetNextPatrolPosition());
 	rigidBody->SetMaxSpeedXZ(300.0f);
-	rigidBody->AddVelocity(Vector3::ScalarProduct(300.0f * DT, guard->GetForward(), false));
+	rigidBody->AddVelocity(Vector3::ScalarProduct(transform->GetForward(), 300.0f * DT));
 	animator->Play("Walking", true);
 }
 
@@ -254,8 +261,8 @@ void CGuardReturnState::Exit(CObject* object)
 
 void CGuardReturnState::Update(CObject* object)
 {
-	CGuard* guard = (CGuard*)object;
-	CStateMachine* stateMachine = static_cast<CStateMachine*>(guard->GetComponent(COMPONENT_TYPE::STATE_MACHINE));
+	CGuard* guard = static_cast<CGuard*>(object);
+	CStateMachine* stateMachine = guard->GetComponent<CStateMachine>();
 	CCharacter* target = guard->FindTarget(30.0f, 75.0f);
 
 	if (target != nullptr)
@@ -288,11 +295,12 @@ CGuardAssembleState::~CGuardAssembleState()
 
 void CGuardAssembleState::Enter(CObject* object)
 {
-	CRigidBody* rigidBody = static_cast<CRigidBody*>(object->GetComponent(COMPONENT_TYPE::RIGIDBODY));
-	CAnimator* animator = static_cast<CAnimator*>(object->GetComponent(COMPONENT_TYPE::ANIMATOR));
+	CRigidBody* rigidBody = object->GetComponent<CRigidBody>();
+	CAnimator* animator = object->GetComponent<CAnimator>();
+	CTransform* transform = object->GetComponent<CTransform>();
 
 	rigidBody->SetMaxSpeedXZ(500.0f);
-	rigidBody->AddVelocity(Vector3::ScalarProduct(500.0f * DT, object->GetForward(), false));
+	rigidBody->AddVelocity(Vector3::ScalarProduct(transform->GetForward(), 500.0f * DT));
 	animator->Play("Pistol_Run", true);
 }
 
@@ -302,8 +310,8 @@ void CGuardAssembleState::Exit(CObject* object)
 
 void CGuardAssembleState::Update(CObject* object)
 {
-	CGuard* guard = (CGuard*)object;
-	CStateMachine* stateMachine = static_cast<CStateMachine*>(guard->GetComponent(COMPONENT_TYPE::STATE_MACHINE));
+	CGuard* guard = static_cast<CGuard*>(object);
+	CStateMachine* stateMachine = guard->GetComponent<CStateMachine>();
 	CCharacter* target = guard->FindTarget(30.0f, 75.0f);
 
 	if (target != nullptr)
@@ -336,7 +344,7 @@ CGuardShootState::~CGuardShootState()
 
 void CGuardShootState::Enter(CObject* object)
 {
-	CAnimator* animator = static_cast<CAnimator*>(object->GetComponent(COMPONENT_TYPE::ANIMATOR));
+	CAnimator* animator = object->GetComponent<CAnimator>();
 
 	animator->Play("Shooting", false, true);
 }
@@ -347,20 +355,21 @@ void CGuardShootState::Exit(CObject* object)
 
 void CGuardShootState::Update(CObject* object)
 {
-	CGuard* guard = (CGuard*)object;
-	CStateMachine* stateMachine = static_cast<CStateMachine*>(guard->GetComponent(COMPONENT_TYPE::STATE_MACHINE));
-	CAnimator* animator = static_cast<CAnimator*>(guard->GetComponent(COMPONENT_TYPE::ANIMATOR));
+	CGuard* guard = static_cast<CGuard*>(object);
+	CAnimator* animator = guard->GetComponent<CAnimator>();
 
 	if (animator->IsFinished())
 	{
+		CStateMachine* stateMachine = guard->GetComponent<CStateMachine>();
+		CTransform* transform = guard->GetComponent<CTransform>();
 		CCharacter* target = guard->FindTarget(30.0f, 200.0f);
 
 		if (target != nullptr)
 		{
 			guard->SetTarget(target);
 
-			XMFLOAT3 position = guard->GetPosition();
-			XMFLOAT3 toTarget = Vector3::Subtract(target->GetPosition(), position);
+			XMFLOAT3 position = transform->GetPosition();
+			XMFLOAT3 toTarget = Vector3::Subtract(target->GetComponent<CTransform>()->GetPosition(), position);
 			float dist = Vector3::Length(toTarget);
 
 			// 타겟과의 거리가 10.0f이하라면, 다시 타겟을 향해 회전한 후 총을 쏘고 아닌 경우 ChaseState로 전이한다.
@@ -368,18 +377,18 @@ void CGuardShootState::Update(CObject* object)
 			{
 				toTarget = Vector3::Normalize(toTarget);
 
-				XMFLOAT3 forward = guard->GetForward();
+				XMFLOAT3 forward = transform->GetForward();
 				float angle = Vector3::Angle(forward, toTarget);
 
 				// 두 벡터를 외적하여 회전축을 구해 최소 회전 방향으로 회전시킨다.
-				float axis = Vector3::CrossProduct(forward, toTarget, false).y;
+				float axis = Vector3::CrossProduct(forward, toTarget).y;
 
 				if (axis < 0.0f)
 				{
 					angle = -angle;
 				}
 
-				guard->Rotate(guard->GetUp(), angle);
+				transform->Rotate(XMFLOAT3(0.0f, angle, 0.0f));
 				stateMachine->GetCurrentState()->Enter(guard);
 			}
 			else
@@ -407,7 +416,7 @@ CGuardHitState::~CGuardHitState()
 
 void CGuardHitState::Enter(CObject* object)
 {
-	CAnimator* animator = static_cast<CAnimator*>(object->GetComponent(COMPONENT_TYPE::ANIMATOR));
+	CAnimator* animator = object->GetComponent<CAnimator>();
 
 	animator->Play("Head_Hit", false);
 }
@@ -418,9 +427,9 @@ void CGuardHitState::Exit(CObject* object)
 
 void CGuardHitState::Update(CObject* object)
 {
-	CGuard* guard = (CGuard*)object;
-	CStateMachine* stateMachine = static_cast<CStateMachine*>(guard->GetComponent(COMPONENT_TYPE::STATE_MACHINE));
-	CAnimator* animator = static_cast<CAnimator*>(guard->GetComponent(COMPONENT_TYPE::ANIMATOR));
+	CGuard* guard = static_cast<CGuard*>(object);
+	CStateMachine* stateMachine = guard->GetComponent<CStateMachine>();
+	CAnimator* animator = guard->GetComponent<CAnimator>();
 
 	if (guard->GetHealth() <= 0)
 	{
@@ -444,7 +453,7 @@ CGuardDieState::~CGuardDieState()
 
 void CGuardDieState::Enter(CObject* object)
 {
-	CAnimator* animator = static_cast<CAnimator*>(object->GetComponent(COMPONENT_TYPE::ANIMATOR));
+	CAnimator* animator = object->GetComponent<CAnimator>();
 
 	animator->Play("Standing_React_Death_Backward", false);
 }

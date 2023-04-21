@@ -150,49 +150,47 @@ void CAnimator::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCo
 
 void CAnimator::Update()
 {
-	if (!m_isEnabled || m_isFinished)
+	if (m_isEnabled && !m_isFinished)
 	{
-		return;
-	}
-
-	if (m_playingAnimation != nullptr)
-	{
-		m_elapsedTime += DT;
-
-		float duration = 1.0f / m_playingAnimation->GetFrameRate();
-
-		while (m_elapsedTime >= duration)
+		if (m_playingAnimation != nullptr)
 		{
-			// 축적된 시간이 애니메이션의 한 프레임 지속시간을 넘어서는 경우를 대비하여 0.0f으로 만드는 것이 아니라, 두 값의 차이로 설정한다.
-			m_elapsedTime -= duration;
-			++m_frameIndex;
+			m_elapsedTime += DT;
 
-			if (m_frameIndex >= m_playingAnimation->GetFrameCount())
+			float duration = 1.0f / m_playingAnimation->GetFrameRate();
+
+			while (m_elapsedTime >= duration)
 			{
-				if (m_isLoop)
+				// 축적된 시간이 애니메이션의 한 프레임 지속시간을 넘어서는 경우를 대비하여 0.0f으로 만드는 것이 아니라, 두 값의 차이로 설정한다.
+				m_elapsedTime -= duration;
+				++m_frameIndex;
+
+				if (m_frameIndex >= m_playingAnimation->GetFrameCount())
 				{
-					m_frameIndex = 0;
-				}
-				else
-				{
-					--m_frameIndex;
-					m_isFinished = true;
-					break;
+					if (m_isLoop)
+					{
+						m_frameIndex = 0;
+					}
+					else
+					{
+						--m_frameIndex;
+						m_isFinished = true;
+						break;
+					}
 				}
 			}
-		}
 
-		// 이번 프레임의 애니메이션 변환 행렬을 각 뼈 프레임에 변환 행렬로 설정한다.
-		const vector<vector<vector<XMFLOAT4X4>>>& boneTransformMatrixes = m_playingAnimation->GetBoneTransformMatrixes();
+			// 이번 프레임의 애니메이션 변환 행렬을 각 뼈 프레임에 변환 행렬로 설정한다.
+			const vector<vector<vector<XMFLOAT4X4>>>& boneTransformMatrixes = m_playingAnimation->GetBoneTransformMatrixes();
 
-		for (int i = 0; i < m_skinnedMeshCache.size(); ++i)
-		{
-			for (int j = 0; j < m_boneFrameCaches[i].size(); ++j)
+			for (int i = 0; i < m_skinnedMeshCache.size(); ++i)
 			{
-				m_boneFrameCaches[i][j]->SetTransformMatrix(boneTransformMatrixes[i][j][m_frameIndex]);
+				for (int j = 0; j < m_boneFrameCaches[i].size(); ++j)
+				{
+					//m_boneFrameCaches[i][j]->SetTransformMatrix(boneTransformMatrixes[i][j][m_frameIndex]);
+				}
 			}
-		}
 
-		m_owner->UpdateTransform(true);
+			//m_owner->UpdateTransform(true);
+		}
 	}
 }

@@ -34,9 +34,9 @@ public:
 	void SetName(const string& name);
 	const string& GetName();
 
-	void AddObject(GROUP_TYPE group, CObject* object);
-	const vector<CObject*>& GetGroupObject(GROUP_TYPE group);
-	void DeleteGroupObject(GROUP_TYPE group);
+	void AddObject(GROUP_TYPE groupType, CObject* object);
+	const vector<CObject*>& GetGroupObject(GROUP_TYPE groupType);
+	void DeleteGroupObject(GROUP_TYPE groupType);
 
 	virtual void Init(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList) = 0;
 

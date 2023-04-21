@@ -4,8 +4,6 @@
 class CPlayer : public CCharacter
 {
 private:
-	XMFLOAT3 m_rotation;
-
 	bool	 m_isAiming;
 	int	     m_bulletCount;
 
@@ -14,8 +12,6 @@ private:
 public:
 	CPlayer();
 	virtual ~CPlayer();
-
-	const XMFLOAT3& GetRotation();
 
 	void SetAiming(bool isAiming);
 	bool IsAiming();

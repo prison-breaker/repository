@@ -7,6 +7,7 @@
 
 #include "Object.h"
 
+#include "Transform.h"
 #include "Collider.h"
 
 CCollisionManager::CCollisionManager() :
@@ -118,7 +119,7 @@ void CCollisionManager::ResetCollisionGroup()
 
 bool CCollisionManager::IsCollided(CObject* object1, CObject* object2)
 {
-	return Math::Distance(object1->GetPosition(), object2->GetPosition()) <= 2.0f;
+	return Math::Distance(object1->GetComponent<CTransform>()->GetPosition(), object2->GetComponent<CTransform>()->GetPosition()) <= 2.0f;
 }
 
 void CCollisionManager::Update()

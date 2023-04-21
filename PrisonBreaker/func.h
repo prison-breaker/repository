@@ -38,14 +38,14 @@ namespace Utility
 
 namespace DX
 {
-	void ThrowIfFailed(HRESULT Result);
+	void ThrowIfFailed(HRESULT result);
 
-	ComPtr<ID3D12Resource> CreateTextureResource(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, void* Data, const UINT64& Bytes, D3D12_HEAP_TYPE D3D12HeapType, D3D12_RESOURCE_STATES D3D12ResourceStates, ID3D12Resource** D3D12UploadBuffer, const UINT64& Width, UINT Height, UINT16 DepthOrArraySize, UINT16 MipLevels, D3D12_RESOURCE_DIMENSION D3D12ResourceDimension, D3D12_RESOURCE_FLAGS D3D12ResourceFlags, DXGI_FORMAT DXGIFormat);
-	ComPtr<ID3D12Resource> CreateBufferResource(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, void* Data, const UINT64& Bytes, D3D12_HEAP_TYPE D3D12HeapType, D3D12_RESOURCE_STATES D3D12ResourceStates, ID3D12Resource** D3D12UploadBuffer);
-	ComPtr<ID3D12Resource> CreateTexture2DResource(ID3D12Device* d3d12Device, const UINT64& Width, UINT Height, UINT16 DepthOrArraySize, UINT16 MipLevels, D3D12_RESOURCE_STATES D3D12ResourceStates, D3D12_RESOURCE_FLAGS D3D12ResourceFlags, DXGI_FORMAT DXGIFormat, const D3D12_CLEAR_VALUE& ClearValue);
-	ComPtr<ID3D12Resource> CreateTextureResourceFromDDSFile(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, const string& FileName, D3D12_RESOURCE_STATES D3D12ResourceStates, ID3D12Resource** D3D12UploadBuffer);
+	ComPtr<ID3D12Resource> CreateTextureResource(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, void* Data, const UINT64& bytes, D3D12_HEAP_TYPE d3d12HeapType, D3D12_RESOURCE_STATES d3d12ResourceStates, ID3D12Resource** d3d12UploadBuffer, const UINT64& width, UINT height, UINT16 depthOrArraySize, UINT16 mipLevels, D3D12_RESOURCE_DIMENSION d3d12ResourceDimension, D3D12_RESOURCE_FLAGS d3d12ResourceFlags, DXGI_FORMAT dxgiFormat);
+	ComPtr<ID3D12Resource> CreateBufferResource(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, void* Data, const UINT64& bytes, D3D12_HEAP_TYPE d3d12HeapType, D3D12_RESOURCE_STATES d3d12ResourceStates, ID3D12Resource** d3d12UploadBuffer);
+	ComPtr<ID3D12Resource> CreateTexture2DResource(ID3D12Device* d3d12Device, const UINT64& width, UINT height, UINT16 depthOrArraySize, UINT16 mipLevels, D3D12_RESOURCE_STATES d3d12ResourceStates, D3D12_RESOURCE_FLAGS d3d12ResourceFlags, DXGI_FORMAT dxgiFormat, const D3D12_CLEAR_VALUE& clearValue);
+	ComPtr<ID3D12Resource> CreateTextureResourceFromDDSFile(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, const string& fileName, D3D12_RESOURCE_STATES d3d12ResourceStates, ID3D12Resource** d3d12UploadBuffer);
 
-	void ResourceTransition(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState);
+	void ResourceTransition(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ID3D12Resource* resource, D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState);
 }
 
 namespace File
@@ -55,73 +55,67 @@ namespace File
 
 namespace Random
 {
-	float Range(float Min, float Max);
+	float Range(float min, float max);
 }
 
 namespace Math
 {
-	bool IsZero(float Value);
-	bool IsEqual(float Value1, float Value2);
+	bool IsZero(float f);
+	bool IsEqual(float f1, float f2);
 
-	float InverseSqrt(float Value);
+	float Distance(const XMFLOAT3& v1, const XMFLOAT3& v2);
 
-	float Distance(const XMFLOAT3& Vector1, const XMFLOAT3& Vector2);
+	bool IsInTriangle(const XMFLOAT3& v1, const XMFLOAT3& v2, const XMFLOAT3& v3, const XMFLOAT3& position);
+	UINT CalculateTriangleArea(const XMFLOAT3& v1, const XMFLOAT3& v2, const XMFLOAT3& v3);
 
-	UINT CalculateTriangleArea(const XMFLOAT3& Vertex1, const XMFLOAT3& Vertex2, const XMFLOAT3& Vertex3);
-	bool IsInTriangle(const XMFLOAT3& Vertex1, const XMFLOAT3& Vertex2, const XMFLOAT3& Vertex3, const XMFLOAT3& NewPosition);
-
-	int CounterClockWise(const XMFLOAT3& Vertex1, const XMFLOAT3& Vertex2, const XMFLOAT3& Vertex3);
-	bool LineIntersection(const XMFLOAT3& L1V1, const XMFLOAT3& L1V2, const XMFLOAT3& L2V1, const XMFLOAT3& L2V2);
+	int CounterClockWise(const XMFLOAT3& v1, const XMFLOAT3& v2, const XMFLOAT3& v3);
+	bool LineIntersection(const XMFLOAT3& v1, const XMFLOAT3& v2, const XMFLOAT3& v3, const XMFLOAT3& v4);
 }
 
 namespace Vector3
 {
-	bool IsZero(const XMFLOAT3& Vector);
+	bool IsZero(const XMFLOAT3& v);
+	bool IsEqual(const XMFLOAT3& v1, const XMFLOAT3& v2);
 
-	bool IsEqual(const XMFLOAT3& Vector1, const XMFLOAT3& Vector2);
+	float Length(const XMFLOAT3& v);
+	XMFLOAT3 Normalize(const XMFLOAT3& v);
+	XMFLOAT3 Inverse(const XMFLOAT3& v);
 
-	float Length(const XMFLOAT3& Vector);
-	XMFLOAT3 Normalize(const XMFLOAT3& Vector);
-	XMFLOAT3 Inverse(const XMFLOAT3& Vector);
+	XMFLOAT3 Add(const XMFLOAT3& v1, const XMFLOAT3& v2);
+	XMFLOAT3 Subtract(const XMFLOAT3& v1, const XMFLOAT3& v2);
+	XMFLOAT3 Multiply(const XMFLOAT3& v1, const XMFLOAT3& v2);
+	XMFLOAT3 Divide(const XMFLOAT3& v1, const XMFLOAT3& v2);
 
-	XMFLOAT3 XMVectorToXMFloat3(const XMVECTOR& Vector);
+	XMFLOAT3 ScalarProduct(const XMFLOAT3& v, float f);
+	float DotProduct(const XMFLOAT3& v1, const XMFLOAT3& v2);
+	XMFLOAT3 CrossProduct(const XMFLOAT3& v1, const XMFLOAT3& v2);
 
-	XMFLOAT3 Add(const XMFLOAT3& Vector1, const XMFLOAT3& Vector2);
-	XMFLOAT3 Subtract(const XMFLOAT3& Vector1, const XMFLOAT3& Vector2);
+	float Angle(const XMFLOAT3& v1, const XMFLOAT3& v2);
 
-	XMFLOAT3 ScalarProduct(float Scalar, const XMFLOAT3& Vector, bool Normalize);
-	float DotProduct(const XMFLOAT3& Vector1, const XMFLOAT3& Vector2);
-	XMFLOAT3 CrossProduct(const XMFLOAT3& Vector1, const XMFLOAT3& Vector2, bool Normalize);
-
-	float Angle(const XMVECTOR& Vector1, const XMVECTOR& Vector2);
-	float Angle(const XMFLOAT3& Vector1, const XMFLOAT3& Vector2);
-
-	XMFLOAT3 TransformNormal(const XMFLOAT3& Vector, const XMMATRIX& Matrix);
-	XMFLOAT3 TransformNormal(const XMFLOAT3& Vector, const XMFLOAT4X4& Matrix);
-	XMFLOAT3 TransformCoord(const XMFLOAT3& Vector, const XMMATRIX& Matrix);
-	XMFLOAT3 TransformCoord(const XMFLOAT3& Vector, const XMFLOAT4X4& Matrix);
+	XMFLOAT3 TransformNormal(const XMFLOAT3& v, const XMFLOAT4X4& m);
+	XMFLOAT3 TransformCoord(const XMFLOAT3& v, const XMFLOAT4X4& m);
 }
 
 namespace Matrix4x4
 {
 	XMFLOAT4X4 Identity();
-	XMFLOAT4X4 Inverse(const XMFLOAT4X4& Matrix);
-	XMFLOAT4X4 Transpose(const XMFLOAT4X4& Matrix);
+	XMFLOAT4X4 Transpose(const XMFLOAT4X4& m);
+	XMFLOAT4X4 Inverse(const XMFLOAT4X4& m);
 
-	XMFLOAT4X4 Multiply(const XMFLOAT4X4& Matrix1, const XMFLOAT4X4& Matrix2);
-	XMFLOAT4X4 Multiply(const XMFLOAT4X4& Matrix1, const XMMATRIX& Matrix2);
-	XMFLOAT4X4 Multiply(const XMMATRIX& Matrix1, const XMFLOAT4X4& Matrix2);
+	XMFLOAT4X4 Add(const XMFLOAT4X4& m1, const XMFLOAT4X4& m2);
+	XMFLOAT4X4 Subtract(const XMFLOAT4X4& m1, const XMFLOAT4X4& m2);
+	XMFLOAT4X4 Multiply(const XMFLOAT4X4& m1, const XMFLOAT4X4& m2);
 
-	XMFLOAT4X4 Scale(float Pitch, float Yaw, float Roll);
+	XMFLOAT4X4 Translation(const XMFLOAT3& position);
+	XMFLOAT4X4 Rotation(const XMFLOAT3& rotation);
+	XMFLOAT4X4 Rotation(const XMFLOAT3& axis, float angle);
+	XMFLOAT4X4 Scale(const XMFLOAT3& scale);
 
-	XMFLOAT4X4 RotationYawPitchRoll(float Pitch, float Yaw, float Roll);
-	XMFLOAT4X4 RotationAxis(const XMFLOAT3& Axis, float Angle);
+	XMFLOAT4X4 OrthographicFovLH(float viewWidth, float viewHeight, float nearZ, float farZ);
+	XMFLOAT4X4 PerspectiveFovLH(float fovAngleY, float aspectRatio, float nearZ, float farZ);
 
-	XMFLOAT4X4 OrthographicFovLH(float Width, float Height, float NearZ, float FarZ);
-	XMFLOAT4X4 PerspectiveFovLH(float FovAngleY, float AspectRatio, float NearZ, float FarZ);
-
-	XMFLOAT4X4 LookAtLH(const XMFLOAT3& Position, const XMFLOAT3& FocusPosition, const XMFLOAT3& UpDirection);
-	XMFLOAT4X4 LookToLH(const XMFLOAT3& Position, const XMFLOAT3& Look, const XMFLOAT3& WorldUp);
+	XMFLOAT4X4 LookAtLH(const XMFLOAT3& position, const XMFLOAT3& focusPosition, const XMFLOAT3& worldUp);
+	XMFLOAT4X4 LookToLH(const XMFLOAT3& position, const XMFLOAT3& forward, const XMFLOAT3& worldUp);
 }
 
 namespace Server

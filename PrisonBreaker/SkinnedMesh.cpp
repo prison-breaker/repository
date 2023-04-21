@@ -3,6 +3,8 @@
 
 #include "Object.h"
 
+#include "Transform.h"
+
 CSkinnedMesh::CSkinnedMesh(const CMesh& rhs) : CMesh(rhs),
 	m_boneCount(),
 	m_d3d12BoneIndexBuffer(),
@@ -110,7 +112,9 @@ void CSkinnedMesh::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12Graphic
 {
 	for (int i = 0; i < m_boneFrameCache->size(); ++i)
 	{
-		XMStoreFloat4x4(&m_mappedBoneTransformMatrixes[i], XMMatrixTranspose(XMLoadFloat4x4(&(*m_boneFrameCache)[i]->GetWorldMatrix())));
+		CTransform* transform = (*m_boneFrameCache)[i]->GetComponent<CTransform>();
+
+		XMStoreFloat4x4(&m_mappedBoneTransformMatrixes[i], XMMatrixTranspose(XMLoadFloat4x4(&transform->GetWorldMatrix())));
 	}
 
 	d3d12GraphicsCommandList->SetGraphicsRootConstantBufferView((UINT)ROOT_PARAMETER_TYPE::BONE_OFFSET, m_d3d12BoneOffsetMatrixes->GetGPUVirtualAddress());

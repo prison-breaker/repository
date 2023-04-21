@@ -7,11 +7,12 @@
 
 #include "Scene.h"
 
-#include "RigidBody.h"
-#include "StateMachine.h"
-
 #include "NavMesh.h"
 #include "NavNode.h"
+
+#include "StateMachine.h"
+#include "RigidBody.h"
+#include "Transform.h"
 
 #include "GuardStates.h"
 
@@ -73,9 +74,9 @@ CCharacter* CGuard::GetTarget()
 
 void CGuard::Init()
 {
-	CStateMachine* stateMachine = static_cast<CStateMachine*>(GetComponent(COMPONENT_TYPE::STATE_MACHINE));
+	//CStateMachine* stateMachine = GetComponent<CStateMachine>();
 
-	stateMachine->SetCurrentState(CGuardIdleState::GetInstance());
+	//stateMachine->SetCurrentState(CGuardIdleState::GetInstance());
 }
 
 void CGuard::OnCollisionEnter(CObject* collidedObject)
@@ -88,7 +89,7 @@ void CGuard::OnCollisionEnter(CObject* collidedObject)
 	if (collidedObject->GetName() == "Player")
 	{
 		CCharacter* target = static_cast<CCharacter*>(collidedObject);
-		CStateMachine* stateMachine = static_cast<CStateMachine*>(GetComponent(COMPONENT_TYPE::STATE_MACHINE));
+		CStateMachine* stateMachine = GetComponent<CStateMachine>();
 
 		SetTarget(target);
 		stateMachine->ChangeState(CGuardChaseState::GetInstance());
@@ -99,16 +100,20 @@ CCharacter* CGuard::FindTarget(float maxDist, float fov)
 {
 	CCharacter* target = nullptr;
 	float nearestDist = FLT_MAX;
+
 	const vector<CObject*>& players = CSceneManager::GetInstance()->GetCurrentScene()->GetGroupObject(GROUP_TYPE::PLAYER);
 	const vector<CObject*>& structures = CSceneManager::GetInstance()->GetCurrentScene()->GetGroupObject(GROUP_TYPE::STRUCTURE);
+
+	CTransform* transform = GetComponent<CTransform>();
 
 	for (const auto& object : players)
 	{
 		CCharacter* player = (CCharacter*)object;
+		CTransform* playerTransform = player->GetComponent<CTransform>();
 
 		if (player->GetHealth() > 0)
 		{
-			XMFLOAT3 toPlayer = Vector3::Subtract(player->GetPosition(), GetPosition());
+			XMFLOAT3 toPlayer = Vector3::Subtract(playerTransform->GetPosition(), transform->GetPosition());
 			float dist = Vector3::Length(toPlayer);
 
 			if (dist <= maxDist)
@@ -116,14 +121,14 @@ CCharacter* CGuard::FindTarget(float maxDist, float fov)
 				// 플레이어와의 사이각을 구한다.
 				toPlayer = Vector3::Normalize(toPlayer);
 
-				float angle = Vector3::Angle(GetForward(), toPlayer);
+				float angle = Vector3::Angle(transform->GetForward(), toPlayer);
 
 				// 사이각이 fov도 이하라면, toPlayer 방향으로 광선을 쏘아 차폐 여부를 파악하여 타겟을 설정한다.
 				if (angle <= fov)
 				{
 					float nearestHitDist = FLT_MAX;
 					bool isHit = false;
-					XMFLOAT3 rayOrigin = GetPosition();
+					XMFLOAT3 rayOrigin = transform->GetPosition();
 
 					rayOrigin.y = 5.0f;
 
@@ -178,7 +183,9 @@ void CGuard::CreatePath(vector<XMFLOAT3>& path, const XMFLOAT3& targetPosition)
 		navNodes[i]->Reset();
 	}
 
-	CNavNode* startNode = navNodes[navMesh->GetNodeIndex(GetPosition())];
+	CTransform* transform = GetComponent<CTransform>();
+
+	CNavNode* startNode = navNodes[navMesh->GetNodeIndex(transform->GetPosition())];
 	CNavNode* targetNode = navNodes[navMesh->GetNodeIndex(targetPosition)];
 	CNavNode* currentNode = nullptr;
 
@@ -239,7 +246,7 @@ void CGuard::CreatePath(vector<XMFLOAT3>& path, const XMFLOAT3& targetPosition)
 		currentNode = parentNode;
 	}
 
-	path.push_back(GetPosition());
+	path.push_back(transform->GetPosition());
 }
 
 void CGuard::OptimizePath(vector<XMFLOAT3>& path)
@@ -294,8 +301,9 @@ void CGuard::OptimizePath(vector<XMFLOAT3>& path)
 
 void CGuard::FollowMovePath(float force)
 {
-	XMFLOAT3 position = GetPosition();
-	XMFLOAT3 forward = GetForward();
+	CTransform* transform = GetComponent<CTransform>();
+	const XMFLOAT3& position = transform->GetPosition();
+	const XMFLOAT3& forward = transform->GetForward();
 
 	XMFLOAT3 toNextNode = Vector3::Subtract(m_movePath.back(), position);
 	float restDist = Vector3::Length(toNextNode);
@@ -315,27 +323,28 @@ void CGuard::FollowMovePath(float force)
 		float angle = Vector3::Angle(forward, toNextNode);
 
 		// 두 벡터를 외적하여 회전축을 구해 최소 회전 방향으로 회전시킨다.
-		float axis = Vector3::CrossProduct(forward, toNextNode, false).y;
+		float axis = Vector3::CrossProduct(forward, toNextNode).y;
 
 		if (axis < 0.0f)
 		{
 			angle = -angle;
 		}
 
-		Rotate(GetUp(), angle);
+		transform->Rotate(XMFLOAT3(0.0f, angle, 0.0f));
 	}
 	else
 	{
-		CRigidBody* rigidBody = static_cast<CRigidBody*>(GetComponent(COMPONENT_TYPE::RIGIDBODY));
+		CRigidBody* rigidBody = GetComponent<CRigidBody>();
 
-		rigidBody->AddForce(Vector3::ScalarProduct(force, forward, false));
+		rigidBody->AddForce(Vector3::ScalarProduct(forward, force));
 	}
 }
 
 void CGuard::FollowPatrolPath(float force)
 {
-	XMFLOAT3 position = GetPosition();
-	XMFLOAT3 forward = GetForward();
+	CTransform* transform = GetComponent<CTransform>();
+	const XMFLOAT3& position = transform->GetPosition();
+	const XMFLOAT3& forward = transform->GetForward();
 
 	XMFLOAT3 toNextNode = Vector3::Subtract(m_patrolPath[m_patrolIndex], position);
 	float restDist = Vector3::Length(toNextNode);
@@ -357,19 +366,19 @@ void CGuard::FollowPatrolPath(float force)
 		float angle = Vector3::Angle(forward, toNextNode);
 
 		// 두 벡터를 외적하여 회전축을 구해 최소 회전 방향으로 회전시킨다.
-		float axis = Vector3::CrossProduct(forward, toNextNode, false).y;
+		float axis = Vector3::CrossProduct(forward, toNextNode).y;
 
 		if (axis < 0.0f)
 		{
 			angle = -angle;
 		}
 
-		Rotate(GetUp(), angle);
+		transform->Rotate(XMFLOAT3(0.0f, angle, 0.0f));
 	}
 	else
 	{
-		CRigidBody* rigidBody = static_cast<CRigidBody*>(GetComponent(COMPONENT_TYPE::RIGIDBODY));
+		CRigidBody* rigidBody = GetComponent<CRigidBody>();
 
-		rigidBody->AddForce(Vector3::ScalarProduct(force, forward, false));
+		rigidBody->AddForce(Vector3::ScalarProduct(forward, force));
 	}
 }
