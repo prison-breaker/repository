@@ -131,7 +131,7 @@ void CCamera::CreateShaderVariables(ID3D12Device* d3d12Device, ID3D12GraphicsCom
 
 void CCamera::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
 {
-	CTransform* transform = GetComponent<CTransform>();
+	CTransform* transform = static_cast<CTransform*>(GetComponent(COMPONENT_TYPE::TRANSFORM));
 
 	XMStoreFloat4x4(&m_mappedData->m_viewMatrix, XMMatrixTranspose(XMLoadFloat4x4(&m_viewMatrix)));
 	XMStoreFloat4x4(&m_mappedData->m_projectionMatrix, XMMatrixTranspose(XMLoadFloat4x4(&m_projectionMatrix)));
@@ -152,7 +152,7 @@ void CCamera::RSSetViewportsAndScissorRects(ID3D12GraphicsCommandList* d3d12Grap
 
 void CCamera::GenerateViewMatrix(const XMFLOAT3& position, const XMFLOAT3& forward)
 {
-	CTransform* transform = GetComponent<CTransform>();
+	CTransform* transform = static_cast<CTransform*>(GetComponent(COMPONENT_TYPE::TRANSFORM));
 
 	transform->SetPosition(position);
 	transform->LookTo(forward);
@@ -162,7 +162,7 @@ void CCamera::GenerateViewMatrix(const XMFLOAT3& position, const XMFLOAT3& forwa
 
 void CCamera::RegenerateViewMatrix()
 {
-	CTransform* transform = GetComponent<CTransform>();
+	CTransform* transform = static_cast<CTransform*>(GetComponent(COMPONENT_TYPE::TRANSFORM));
 
 	m_viewMatrix = Matrix4x4::LookToLH(transform->GetPosition(), transform->GetForward(), CTransform::m_worldUp);
 
@@ -200,33 +200,31 @@ void CCamera::Update()
 {
 	if (m_target != nullptr)
 	{
-		CTransform* transform = GetComponent<CTransform>();
-		CTransform* targetTransform = m_target->GetComponent<CTransform>();
+		CTransform* transform = static_cast<CTransform*>(GetComponent(COMPONENT_TYPE::TRANSFORM));
+		CTransform* targetTransform = static_cast<CTransform*>(m_target->GetComponent(COMPONENT_TYPE::TRANSFORM));
+		XMFLOAT3 rotation = Vector3::Add(XMFLOAT3(transform->GetRotation().x, 0.0f, 0.0f), targetTransform->GetRotation());
+
+		transform->SetRotation(rotation);
+
+		XMFLOAT4X4 rotationMatrix = Matrix4x4::Rotation(rotation);
 		XMFLOAT3 focusPosition = targetTransform->GetPosition();
 
-		focusPosition.y += 4.5f;
-
-		if (m_magnification > 1.0f)
+		if (m_isZoomIn)
 		{
-			XMFLOAT3 zoomDirection = Vector3::Normalize(Vector3::Add(targetTransform->GetForward(), targetTransform->GetRight()));
-
+			XMFLOAT3 zoomDirection = Vector3::Normalize(Vector3::Add(transform->GetRight(), transform->GetForward()));
+		
 			zoomDirection = Vector3::ScalarProduct(zoomDirection, m_magnification);
 			focusPosition = Vector3::Add(focusPosition, zoomDirection);
 		}
 
-		XMFLOAT3 newOffset = Vector3::TransformNormal(m_offset, Matrix4x4::Rotation(targetTransform->GetRotation()));
-		XMFLOAT3 newPosition = Vector3::Add(focusPosition, newOffset);
+		XMFLOAT3 newPosition = Vector3::Add(focusPosition, Vector3::TransformNormal(m_offset, rotationMatrix));
 		XMFLOAT3 direction = Vector3::Subtract(newPosition, transform->GetPosition());
-		float shift = Vector3::Length(direction) * m_speed * DT;
+		float length = m_speed * Vector3::Length(direction) * DT;
 
-		if (shift > 0.0f)
+		if (length > 0.0f)
 		{
 			direction = Vector3::Normalize(direction);
-			transform->Translate(Vector3::ScalarProduct(direction, shift));
-
-			XMFLOAT3 forward = Vector3::Normalize(Vector3::Subtract(focusPosition, transform->GetPosition()));
-
-			transform->LookTo(forward);
+			transform->Translate(Vector3::ScalarProduct(direction, length));
 		}
 	}
 

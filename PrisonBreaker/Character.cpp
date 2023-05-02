@@ -72,13 +72,13 @@ void CCharacter::OnCollisionEnter(CObject* collidedObject)
 
 void CCharacter::OnCollision(CObject* collidedObject)
 {
-    CRigidBody* rigidBody = GetComponent<CRigidBody>();
+    CRigidBody* rigidBody = static_cast<CRigidBody*>(GetComponent(COMPONENT_TYPE::RIGIDBODY));
     float speedXZ = rigidBody->GetSpeedXZ();
 
     if (!Math::IsZero(speedXZ))
     {
-        CTransform* transform = GetComponent<CTransform>();
-        CTransform* collidedObjectTransform = collidedObject->GetComponent<CTransform>();
+        CTransform* transform = static_cast<CTransform*>(GetComponent(COMPONENT_TYPE::TRANSFORM));
+        CTransform* collidedObjectTransform = static_cast<CTransform*>(collidedObject->GetComponent(COMPONENT_TYPE::TRANSFORM));
 
         float angle = Vector3::Angle(transform->GetForward(), collidedObjectTransform->GetForward());
         XMFLOAT3 shift = {};

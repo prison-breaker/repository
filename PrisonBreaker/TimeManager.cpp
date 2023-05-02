@@ -11,7 +11,7 @@ CTimeManager::CTimeManager() :
 	m_accTime(),
 	m_callCount(),
 	m_fps(),
-	m_fpsLimit(60)
+	m_fpsLimit()
 {
 }
 

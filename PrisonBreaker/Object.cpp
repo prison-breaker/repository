@@ -3,6 +3,8 @@
 
 #include "AssetManager.h"
 
+#include "UI.h"
+
 #include "Mesh.h"
 #include "Shader.h"
 #include "Material.h"
@@ -37,6 +39,8 @@ CObject::CObject() :
 
 CObject::~CObject()
 {
+	// AssetManager는 원본 머터리얼을 저장하고 있고, 모든 오브젝트는 해당 머터리얼을 복사한 인스턴스를 가지기 때문에, 이 클래스에서 소멸시켜주어야 한다.
+	Utility::SafeDelete(m_materials);
 	Utility::SafeDelete(m_components);
 	Utility::SafeDelete(m_children);
 }
@@ -68,7 +72,7 @@ LoadedModel CObject::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* 
 
 	if (str == "<Animator>")
 	{
-		loadedModel.m_animator = new CAnimator();
+		loadedModel.m_animator = new CSkinningAnimator();
 
 		// 임시적으로 rootFrame을 owner로 지정하여 뼈정보를 저장시켜 놓는다.
 		loadedModel.m_animator->SetOwner(loadedModel.m_rootFrame);
@@ -104,29 +108,16 @@ CObject* CObject::LoadFrame(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList
 		}
 		else if (str == "<Transform>")
 		{
-			// <LocalPosition>
-			XMFLOAT3 localPosition = {};
+			// localPosition, localRotation, localScale
+			XMFLOAT3 t[3] = {};
 
-			File::ReadStringFromFile(in, str);
-			in.read(reinterpret_cast<char*>(&localPosition), sizeof(XMFLOAT3));
+			in.read(reinterpret_cast<char*>(&t[0]), 3 * sizeof(XMFLOAT3));
 
-			// <LocalRotation>
-			XMFLOAT3 localRotation = {};
+			CTransform* transform = static_cast<CTransform*>(object->GetComponent(COMPONENT_TYPE::TRANSFORM));
 
-			File::ReadStringFromFile(in, str);
-			in.read(reinterpret_cast<char*>(&localRotation), sizeof(XMFLOAT3));
-
-			// <LocalScale>
-			XMFLOAT3 localScale = {};
-
-			File::ReadStringFromFile(in, str);
-			in.read(reinterpret_cast<char*>(&localScale), sizeof(XMFLOAT3));
-
-			CTransform* transform = object->GetComponent<CTransform>();
-
-			transform->SetLocalPosition(localPosition);
-			transform->SetLocalRotation(localRotation);
-			transform->SetLocalScale(localScale);
+			transform->SetLocalPosition(t[0]);
+			transform->SetLocalRotation(t[1]);
+			transform->SetLocalScale(t[2]);
 		}
 		else if (str == "<Mesh>")
 		{
@@ -156,7 +147,8 @@ CObject* CObject::LoadFrame(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList
 				{
 					File::ReadStringFromFile(in, str);
 					
-					CMaterial* material = CAssetManager::GetInstance()->GetMaterial(str);
+					// 머터리얼 인스턴스를 생성하고 추가한다.
+					CMaterial* material = CAssetManager::GetInstance()->CreateMaterialInstance(str);
 
 					object->AddMaterial(material);
 				}
@@ -250,32 +242,36 @@ const vector<CMaterial*>& CObject::GetMaterials()
 
 CComponent* CObject::CreateComponent(COMPONENT_TYPE componentType)
 {
-	if (m_components[static_cast<int>(componentType)] == nullptr)
+	// 이미 해당 컴포넌트를 가지고 있었다면, 삭제 후 새로 생성한다.
+	if (m_components[static_cast<int>(componentType)] != nullptr)
 	{
-		switch (componentType)
-		{
-		case COMPONENT_TYPE::STATE_MACHINE:
-			m_components[static_cast<int>(componentType)] = new CStateMachine();
-			break;
-		case COMPONENT_TYPE::RIGIDBODY:
-			m_components[static_cast<int>(componentType)] = new CRigidBody();
-			break;
-		case COMPONENT_TYPE::ANIMATOR:
-			m_components[static_cast<int>(componentType)] = new CAnimator();
-			break;
-		case COMPONENT_TYPE::TRANSFORM:
-			m_components[static_cast<int>(componentType)] = new CTransform();
-			break;
-		case COMPONENT_TYPE::COLLIDER:
-			m_components[static_cast<int>(componentType)] = new CCollider();
-			break;
-		case COMPONENT_TYPE::SPRITE_RENDERER:
-			m_components[static_cast<int>(componentType)] = new CSpriteRenderer();
-			break;
-		}
-
-		m_components[static_cast<int>(componentType)]->SetOwner(this);
+		delete m_components[static_cast<int>(componentType)];
+		m_components[static_cast<int>(componentType)] = nullptr;
 	}
+
+	switch (componentType)
+	{
+	case COMPONENT_TYPE::STATE_MACHINE:
+		m_components[static_cast<int>(componentType)] = new CStateMachine();
+		break;
+	case COMPONENT_TYPE::RIGIDBODY:
+		m_components[static_cast<int>(componentType)] = new CRigidBody();
+		break;
+	case COMPONENT_TYPE::ANIMATOR:
+		m_components[static_cast<int>(componentType)] = new CSkinningAnimator();
+		break;
+	case COMPONENT_TYPE::TRANSFORM:
+		m_components[static_cast<int>(componentType)] = new CTransform();
+		break;
+	case COMPONENT_TYPE::COLLIDER:
+		m_components[static_cast<int>(componentType)] = new CCollider();
+		break;
+	case COMPONENT_TYPE::SPRITE_RENDERER:
+		m_components[static_cast<int>(componentType)] = new CSpriteRenderer();
+		break;
+	}
+
+	m_components[static_cast<int>(componentType)]->SetOwner(this);
 
 	return m_components[static_cast<int>(componentType)];
 }
@@ -305,9 +301,9 @@ void CObject::SetComponent(COMPONENT_TYPE componentType, CComponent* newComponen
 	m_components[static_cast<int>(componentType)] = newComponent;
 }
 
-const vector<CComponent*>& CObject::GetComponents()
+CComponent* CObject::GetComponent(COMPONENT_TYPE componentType)
 {
-	return m_components;
+	return m_components[static_cast<int>(componentType)];
 }
 
 CObject* CObject::GetParent()
@@ -392,7 +388,7 @@ CObject* CObject::CheckRayIntersection(const XMFLOAT3& rayOrigin, const XMFLOAT3
 			// 광원과 바운딩 박스 사이의 거리가 MaxDistance보다 작거나 같다면 광선과 메쉬(삼각형)의 교차를 검사한다.
 			if (hitDistance <= maxDistance)
 			{
-				CTransform* transform = GetComponent<CTransform>();
+				CTransform* transform = static_cast<CTransform*>(GetComponent(COMPONENT_TYPE::TRANSFORM));
 
 				if (m_mesh->CheckRayIntersection(rayOrigin, rayDirection, XMLoadFloat4x4(&transform->GetWorldMatrix()), hitDistance))
 				{
@@ -450,27 +446,11 @@ void CObject::OnCollisionExit(CObject* collidedObject)
 
 void CObject::Update()
 {
-	//if (m_components[static_cast<int>(COMPONENT_TYPE::STATE_MACHINE)] != nullptr)
-	//{
-	//	m_components[static_cast<int>(COMPONENT_TYPE::STATE_MACHINE)]->Update();
-	//}
-
-	//for (const auto& child : m_children)
-	//{
-	//	if (child->m_isActive && !child->m_isDeleted)
-	//	{
-	//		child->Update();
-	//	}
-	//}
-}
-
-void CObject::LateUpdate()
-{
-	for (int i = static_cast<int>(COMPONENT_TYPE::RIGIDBODY); i < static_cast<int>(COMPONENT_TYPE::COUNT); ++i)
+	for (const auto& component : m_components)
 	{
-		if (m_components[i] != nullptr)
+		if (component != nullptr)
 		{
-			m_components[i]->Update();
+			component->Update();
 		}
 	}
 
@@ -478,7 +458,7 @@ void CObject::LateUpdate()
 	{
 		if (child->m_isActive && !child->m_isDeleted)
 		{
-			child->LateUpdate();
+			child->Update();
 		}
 	}
 }

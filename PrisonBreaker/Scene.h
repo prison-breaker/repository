@@ -9,7 +9,7 @@ class CScene abstract
 private:
 	string			 m_name;
 
-	vector<CObject*> m_objects[(int)GROUP_TYPE::COUNT];
+	vector<CObject*> m_objects[static_cast<int>(GROUP_TYPE::COUNT)];
 
 protected:
 	// 이 객체의 생성은 오로지 CSceneManager에 의해서만 일어난다.
@@ -43,7 +43,6 @@ public:
 	void ReleaseUploadBuffers();
 
 	virtual void Update();
-	virtual void LateUpdate();
 
 	virtual void PreRender(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
 	virtual void Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);

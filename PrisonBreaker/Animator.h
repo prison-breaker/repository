@@ -4,9 +4,9 @@
 class CSkinnedMesh;
 class CAnimation;
 
-class CAnimator : public CComponent
+class CAnimator abstract : public CComponent
 {
-private:
+protected:
 	bool							   m_isLoop;
 	bool							   m_isFinished;
 
@@ -14,12 +14,6 @@ private:
 	CAnimation*						   m_playingAnimation;
 	int							       m_frameIndex;
 	float							   m_elapsedTime;
-
-	vector<CSkinnedMesh*>			   m_skinnedMeshCache;
-	vector<vector<CObject*>>           m_boneFrameCaches; // [skinnedMesh][boneFrame]
-
-	vector<ComPtr<ID3D12Resource>>	   m_d3d12BoneTransformMatrixes;
-	vector<XMFLOAT4X4*>				   m_mappedBoneTransformMatrixes;
 
 public:
 	CAnimator();
@@ -30,11 +24,47 @@ public:
 	void SetFrameIndex(int frameIndex);
 	int GetFrameIndex();
 
-	void Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in);
-
 	void Play(const string& key, bool isLoop, bool duplicatable = false);
 
+	virtual void Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in) = 0;
+
+	virtual void Update() = 0;
+};
+
+//=========================================================================================================================
+
+class CSkinningAnimator : public CAnimator
+{
+private:
+	vector<CSkinnedMesh*>		   m_skinnedMeshCache;
+	vector<vector<CObject*>>       m_boneFrameCaches; // [skinnedMesh][boneFrame]
+
+	vector<ComPtr<ID3D12Resource>> m_d3d12BoneTransformMatrixes;
+	vector<XMFLOAT4X4*>			   m_mappedBoneTransformMatrixes;
+
+public:
+	CSkinningAnimator();
+	virtual ~CSkinningAnimator();
+
+	virtual void Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in);
+
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
+
+	virtual void Update();
+};
+
+//=========================================================================================================================
+
+class CUIAnimator : public CAnimator
+{
+private:
+	vector<CObject*> m_uiFrameCache;
+
+public:
+	CUIAnimator();
+	virtual ~CUIAnimator();
+
+	virtual void Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in);
 
 	virtual void Update();
 };

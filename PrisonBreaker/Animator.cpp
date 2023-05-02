@@ -7,7 +7,10 @@
 #include "Object.h"
 
 #include "SkinnedMesh.h"
+#include "Material.h"
 #include "Animation.h"
+
+#include "Transform.h"
 
 CAnimator::CAnimator() :
 	m_isLoop(),
@@ -15,11 +18,7 @@ CAnimator::CAnimator() :
 	m_animations(),
 	m_playingAnimation(),
 	m_frameIndex(),
-	m_elapsedTime(),
-	m_skinnedMeshCache(),
-	m_boneFrameCaches(),
-	m_d3d12BoneTransformMatrixes(),
-	m_mappedBoneTransformMatrixes()
+	m_elapsedTime()
 {
 }
 
@@ -47,8 +46,36 @@ int CAnimator::GetFrameIndex()
 	return m_frameIndex;
 }
 
-void CAnimator::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in)
-{	
+void CAnimator::Play(const string& key, bool isLoop, bool duplicatable)
+{
+	// 중복을 허용했다면, 동일 애니메이션으로 전이할 수 있다.
+	if ((m_animations.find(key) == m_animations.end()) || ((!duplicatable) && (m_animations[key] == m_playingAnimation)))
+	{
+		return;
+	}
+
+	m_isLoop = isLoop;
+	m_isFinished = false;
+	m_playingAnimation = m_animations[key];
+	m_frameIndex = 0;
+}
+
+//=========================================================================================================================
+
+CSkinningAnimator::CSkinningAnimator() :
+	m_skinnedMeshCache(),
+	m_boneFrameCaches(),
+	m_d3d12BoneTransformMatrixes(),
+	m_mappedBoneTransformMatrixes()
+{
+}
+
+CSkinningAnimator::~CSkinningAnimator()
+{
+}
+
+void CSkinningAnimator::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in)
+{
 	string str;
 
 	while (true)
@@ -58,14 +85,14 @@ void CAnimator::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12
 		if (str == "<FileName>")
 		{
 			File::ReadStringFromFile(in, str);
-			CAssetManager::GetInstance()->LoadAnimations(d3d12Device, d3d12GraphicsCommandList, str);
+			CAssetManager::GetInstance()->LoadSkinningAnimations(str);
 
 			// str.length() - 14: _Animation.bin
 			const vector<CAnimation*>& animations = CAssetManager::GetInstance()->GetAnimations(str.substr(0, str.length() - 14));
 
-			for (int i = 0; i < animations.size(); ++i)
+			for (const auto& animation : animations)
 			{
-				m_animations.emplace(animations[i]->GetName(), animations[i]);
+				m_animations.emplace(animation->GetName(), animation);
 			}
 		}
 		else if (str == "<SkinnedMeshes>")
@@ -84,7 +111,7 @@ void CAnimator::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12
 				File::ReadStringFromFile(in, str);
 
 				File::ReadStringFromFile(in, str);
-				m_skinnedMeshCache[i] = (CSkinnedMesh*)CAssetManager::GetInstance()->GetMesh(str);
+				m_skinnedMeshCache[i] = static_cast<CSkinnedMesh*>(CAssetManager::GetInstance()->GetMesh(str));
 
 				// <Bones>
 				File::ReadStringFromFile(in, str);
@@ -125,21 +152,7 @@ void CAnimator::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12
 	}
 }
 
-void CAnimator::Play(const string& key, bool isLoop, bool duplicatable)
-{
-	// 중복을 허용했다면, 동일 애니메이션으로 전이할 수 있다.
-	if ((m_animations.find(key) == m_animations.end()) || ((!duplicatable) && (m_animations[key] == m_playingAnimation)))
-	{
-		return;
-	}
-
-	m_isLoop = isLoop;
-	m_isFinished = false;
-	m_playingAnimation = m_animations[key];
-	m_frameIndex = 0;
-}
-
-void CAnimator::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+void CSkinningAnimator::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
 {
 	// 공유되는 스킨 메쉬에 현재 애니메이션 컨트롤러의 뼈 변환 행렬 리소스를 설정해준다.
 	for (int i = 0; i < m_skinnedMeshCache.size(); ++i)
@@ -148,7 +161,7 @@ void CAnimator::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCo
 	}
 }
 
-void CAnimator::Update()
+void CSkinningAnimator::Update()
 {
 	if (m_isEnabled && !m_isFinished)
 	{
@@ -180,17 +193,122 @@ void CAnimator::Update()
 			}
 
 			// 이번 프레임의 애니메이션 변환 행렬을 각 뼈 프레임에 변환 행렬로 설정한다.
-			const vector<vector<vector<XMFLOAT4X4>>>& boneTransformMatrixes = m_playingAnimation->GetBoneTransformMatrixes();
+			CSkinningAnimation* playingAnimation = static_cast<CSkinningAnimation*>(m_playingAnimation);
+			const vector<vector<vector<XMFLOAT3>>>& bonePositions = playingAnimation->GetPositions();
+			const vector<vector<vector<XMFLOAT3>>>& boneRotations = playingAnimation->GetRotations();
+			const vector<vector<vector<XMFLOAT3>>>& boneScales = playingAnimation->GetScales();
 
 			for (int i = 0; i < m_skinnedMeshCache.size(); ++i)
 			{
 				for (int j = 0; j < m_boneFrameCaches[i].size(); ++j)
 				{
-					//m_boneFrameCaches[i][j]->SetTransformMatrix(boneTransformMatrixes[i][j][m_frameIndex]);
+					CTransform* transform = static_cast<CTransform*>(m_boneFrameCaches[i][j]->GetComponent(COMPONENT_TYPE::TRANSFORM));
+
+					transform->SetLocalPosition(bonePositions[i][j][m_frameIndex]);
+					transform->SetLocalRotation(boneRotations[i][j][m_frameIndex]);
+					transform->SetLocalScale(boneScales[i][j][m_frameIndex]);
+				}
+			}
+		}
+	}
+}
+
+//=========================================================================================================================
+
+CUIAnimator::CUIAnimator() :
+	m_uiFrameCache()
+{
+}
+
+CUIAnimator::~CUIAnimator()
+{
+}
+
+void CUIAnimator::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in)
+{
+	CAssetManager::GetInstance()->LoadUIAnimations(in, m_owner->GetName());
+	const vector<CAnimation*>& animations = CAssetManager::GetInstance()->GetAnimations(m_owner->GetName());
+
+	for (const auto& animation : animations)
+	{
+		m_animations.emplace(animation->GetName(), animation);
+	}
+
+	// 스택을 사용하여 깊이 우선 탐색(DFS)으로 owner의 모든 객체를 순회하며 저장한다.
+	stack<CObject*> st;
+
+	st.push(m_owner);
+
+	while (!st.empty())
+	{
+		CObject* ui = st.top();
+
+		st.pop();
+		m_uiFrameCache.push_back(ui);
+
+		const vector<CObject*>& children = ui->GetChildren();
+
+		// 첫번
+		for (int i = static_cast<int>(children.size() - 1); i >= 0; --i)
+		{
+			st.push(children[i]);
+		}
+	}
+}
+
+void CUIAnimator::Update()
+{
+	if (m_isEnabled && !m_isFinished)
+	{
+		if (m_playingAnimation != nullptr)
+		{
+			m_elapsedTime += DT;
+
+			float duration = 1.0f / m_playingAnimation->GetFrameRate();
+
+			while (m_elapsedTime >= duration)
+			{
+				// 축적된 시간이 애니메이션의 한 프레임 지속시간을 넘어서는 경우를 대비하여 0.0f으로 만드는 것이 아니라, 두 값의 차이로 설정한다.
+				m_elapsedTime -= duration;
+				++m_frameIndex;
+
+				if (m_frameIndex >= m_playingAnimation->GetFrameCount())
+				{
+					if (m_isLoop)
+					{
+						m_frameIndex = 0;
+					}
+					else
+					{
+						--m_frameIndex;
+						m_isFinished = true;
+						break;
+					}
 				}
 			}
 
-			//m_owner->UpdateTransform(true);
+			// 이번 프레임의 애니메이션 변환 행렬을 각 뼈 프레임에 변환 행렬로 설정한다.
+			CUIAnimation* playingAnimation = static_cast<CUIAnimation*>(m_playingAnimation);
+			const vector<vector<XMFLOAT3>>& uiPositions = playingAnimation->GetPositions();
+			const vector<vector<XMFLOAT3>>& uiRotations = playingAnimation->GetRotations();
+			const vector<vector<XMFLOAT3>>& uiScales = playingAnimation->GetScales();
+			const vector<vector<XMFLOAT4>>& uiColors = playingAnimation->GetColors();
+
+			for (int i = 0, j = 0; i < m_uiFrameCache.size(); ++i)
+			{
+				CRectTransform* transform = static_cast<CRectTransform*>(m_uiFrameCache[i]->GetComponent(COMPONENT_TYPE::TRANSFORM));
+
+				transform->SetLocalPosition(uiPositions[m_frameIndex][i]);
+				transform->SetLocalRotation(uiRotations[m_frameIndex][i]);
+				transform->SetLocalScale(uiScales[m_frameIndex][i]);
+
+				const vector<CMaterial*>& materials = m_uiFrameCache[i]->GetMaterials();
+
+				if (!materials.empty())
+				{
+					materials[0]->SetColor(uiColors[m_frameIndex][j++]);
+				}
+			}
 		}
 	}
 }

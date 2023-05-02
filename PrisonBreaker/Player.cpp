@@ -54,9 +54,9 @@ void CPlayer::Init()
 	SetWeapon(weapon);
 	m_bulletCount = 5;
 
-	//CStateMachine* stateMachine = GetComponent<CStateMachine>();
+	CStateMachine* stateMachine = static_cast<CStateMachine*>(GetComponent(COMPONENT_TYPE::STATE_MACHINE));
 
-	//stateMachine->SetCurrentState(CPlayerIdleState::GetInstance());
+	stateMachine->SetCurrentState(CPlayerIdleState::GetInstance());
 }
 
 void CPlayer::SwapWeapon(WEAPON_TYPE weaponType)
@@ -69,35 +69,29 @@ void CPlayer::SwapWeapon(WEAPON_TYPE weaponType)
 
 		const vector<CObject*>& uis = CSceneManager::GetInstance()->GetCurrentScene()->GetGroupObject(GROUP_TYPE::UI);
 
-		for (const auto& ui : uis)
+		switch (weaponType)
 		{
-			if (ui->GetName() == "Status")
-			{
-				switch (weaponType)
-				{
-				case WEAPON_TYPE::PUNCH:
-					ui->FindFrame("Punch")->SetActive(true);
-					ui->FindFrame("Pistol")->SetActive(false);
-					break;
-				case WEAPON_TYPE::PISTOL:
-					ui->FindFrame("Punch")->SetActive(false);
-					ui->FindFrame("Pistol")->SetActive(true);
-					break;
-				}
-			}
+		case WEAPON_TYPE::PUNCH:
+			uis[0]->FindFrame("Punch")->SetActive(true);
+			uis[0]->FindFrame("Pistol")->SetActive(false);
+			break;
+		case WEAPON_TYPE::PISTOL:
+			uis[0]->FindFrame("Punch")->SetActive(false);
+			uis[0]->FindFrame("Pistol")->SetActive(true);
+			break;
 		}
 	}
 }
 
 void CPlayer::Punch()
 {
-	CTransform* transform = GetComponent<CTransform>();
+	CTransform* transform = static_cast<CTransform*>(GetComponent(COMPONENT_TYPE::TRANSFORM));
 	const vector<CObject*>& guards = CSceneManager::GetInstance()->GetCurrentScene()->GetGroupObject(GROUP_TYPE::ENEMY);
 
 	for (const auto& object : guards)
 	{
 		CGuard* guard = static_cast<CGuard*>(object);
-		CTransform* guardTransform = guard->GetComponent<CTransform>();
+		CTransform* guardTransform = static_cast<CTransform*>(guard->GetComponent(COMPONENT_TYPE::TRANSFORM));
 
 		if (guard->GetHealth() > 0)
 		{
@@ -117,7 +111,7 @@ void CPlayer::Punch()
 					// 플레이어의 forward 벡터와 교도관의 forward 벡터 간의 각이 40도 이하일 때 후면 타격(즉사)으로 처리한다.
 					angle = Vector3::Angle(forward, guardTransform->GetForward());
 
-					CStateMachine* stateMachine = guard->GetComponent<CStateMachine>();
+					CStateMachine* stateMachine = static_cast<CStateMachine*>(guard->GetComponent(COMPONENT_TYPE::STATE_MACHINE));
 
 					if (angle <= 40.0f)
 					{
@@ -142,7 +136,8 @@ void CPlayer::Shoot()
 	CObject* nearestIntersectedObject = nullptr;
 	float nearestHitDist = FLT_MAX;
 
-	CTransform* cameraTransform = CCameraManager::GetInstance()->GetMainCamera()->GetComponent<CTransform>();
+	CCamera* camera = CCameraManager::GetInstance()->GetMainCamera();
+	CTransform* cameraTransform = static_cast<CTransform*>(camera->GetComponent(COMPONENT_TYPE::TRANSFORM));
 	const XMFLOAT3& rayOrigin = cameraTransform->GetPosition();
 	const XMFLOAT3& rayDirection = cameraTransform->GetForward();
 
@@ -179,7 +174,7 @@ void CPlayer::Shoot()
 		if ((nearestIntersectedRootObject != nullptr) && (typeid(*nearestIntersectedRootObject) == typeid(CGuard)))
 		{
 			CGuard* guard = static_cast<CGuard*>(nearestIntersectedRootObject);
-			CStateMachine* stateMachine = guard->GetComponent<CStateMachine>();
+			CStateMachine* stateMachine = static_cast<CStateMachine*>(guard->GetComponent(COMPONENT_TYPE::STATE_MACHINE));
 			const string& hitFrameName = nearestIntersectedObject->GetName();
 
 			// 머리에 맞은 경우, 즉사시킨다.
@@ -199,17 +194,9 @@ void CPlayer::Shoot()
 
 	// 총알 UI를 한개씩 지운다.
 	const vector<CObject*>& uis = CSceneManager::GetInstance()->GetCurrentScene()->GetGroupObject(GROUP_TYPE::UI);
+	const vector<CObject*>& children = uis[0]->FindFrame("Pistol")->GetChildren();
 
-	for (const auto& ui : uis)
-	{
-		if (ui->GetName() == "Status")
-		{
-			const vector<CObject*>& children = ui->FindFrame("Pistol")->GetChildren();
-
-			children[m_bulletCount--]->SetActive(false);
-			break;
-		}
-	}
+	children[--m_bulletCount]->SetActive(false);
 }
 
 void CPlayer::Update()
@@ -238,10 +225,31 @@ void CPlayer::Update()
 
 		SetCursorPos(oldCursor.x, oldCursor.y);
 
+		// 카메라 X축 회전
+		if (!Math::IsZero(delta.y))
+		{
+			CCamera* camera = CCameraManager::GetInstance()->GetMainCamera();
+			CTransform* cameraTransform = static_cast<CTransform*>(camera->GetComponent(COMPONENT_TYPE::TRANSFORM));
+			XMFLOAT3 cameraRotation = cameraTransform->GetRotation();
+
+			cameraRotation.x += delta.y;
+
+			if (cameraRotation.x < -5.0f)
+			{
+				cameraRotation.x -= (cameraRotation.x + 5.0f);
+			}
+			else if (cameraRotation.x > 5.0f)
+			{
+				cameraRotation.x -= (cameraRotation.x - 5.0f);
+			}
+
+			cameraTransform->SetRotation(cameraRotation);
+		}
+
 		// 플레이어 Y축 회전
 		if (!Math::IsZero(delta.x))
 		{
-			CTransform* transform = GetComponent<CTransform>();
+			CTransform* transform = static_cast<CTransform*>(GetComponent(COMPONENT_TYPE::TRANSFORM));
 			XMFLOAT3 rotation = transform->GetRotation();
 
 			rotation.y += delta.x;

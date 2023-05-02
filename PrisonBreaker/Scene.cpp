@@ -23,7 +23,7 @@ CScene::~CScene()
 {
 	ReleaseShaderVariables();
 
-	for (int i = 0; i < (int)GROUP_TYPE::COUNT; ++i)
+	for (int i = 0; i < static_cast<int>(GROUP_TYPE::COUNT); ++i)
 	{
 		Utility::SafeDelete(m_objects[i]);
 	}
@@ -54,92 +54,91 @@ void CScene::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Gra
 
 			in.read(reinterpret_cast<char*>(&instanceCount), sizeof(int));
 
-			for (int i = 0; i < instanceCount; ++i)
+			// <IsActive>
+			File::ReadStringFromFile(in, str);
+
+			vector<int> isActives(instanceCount);
+
+			in.read(reinterpret_cast<char*>(isActives.data()), instanceCount * sizeof(int));
+
+			// <Transforms>
+			File::ReadStringFromFile(in, str);
+
+			// localPosition, localRotation, localScale
+			vector<XMFLOAT3> transforms(3 * instanceCount);
+
+			in.read(reinterpret_cast<char*>(transforms.data()), 3 * instanceCount * sizeof(XMFLOAT3));
+
+			switch (groupType)
 			{
-				LoadedModel loadedModel = CObject::Load(d3d12Device, d3d12GraphicsCommandList, modelFileName);
-
-				// <IsActive>
-				File::ReadStringFromFile(in, str);
-
-				int isActive = 0;
-				in.read(reinterpret_cast<char*>(&isActive), sizeof(int));
-
-				// <Transform>
-				File::ReadStringFromFile(in, str);
-
-				// <Position>
-				XMFLOAT3 position = {};
-
-				File::ReadStringFromFile(in, str);
-				in.read(reinterpret_cast<char*>(&position), sizeof(XMFLOAT3));
-
-				// <Rotation>
-				XMFLOAT3 rotation = {};
-
-				File::ReadStringFromFile(in, str);
-				in.read(reinterpret_cast<char*>(&rotation), sizeof(XMFLOAT3));
-
-				// <Scale>
-				XMFLOAT3 scale = {};
-
-				File::ReadStringFromFile(in, str);
-				in.read(reinterpret_cast<char*>(&scale), sizeof(XMFLOAT3));
-
-				switch (groupType)
-				{
-				case GROUP_TYPE::TERRAIN:
-				case GROUP_TYPE::STRUCTURE:
+			case GROUP_TYPE::TERRAIN:
+			case GROUP_TYPE::STRUCTURE:
+				for (int i = 0; i < instanceCount; ++i)
 				{
 					CObject* object = new CObject();
-					CTransform* transform = object->GetComponent<CTransform>();
+					LoadedModel loadedModel = CObject::Load(d3d12Device, d3d12GraphicsCommandList, modelFileName);
+					CTransform* transform = static_cast<CTransform*>(object->GetComponent(COMPONENT_TYPE::TRANSFORM));
 
-					object->SetActive(isActive);
-					transform->SetPosition(position);
-					transform->SetRotation(rotation);
-					transform->SetScale(scale);
+					object->SetActive(isActives[i]);
+					transform->SetPosition(transforms[3 * i]);
+					transform->SetRotation(transforms[3 * i + 1]);
+					transform->SetScale(transforms[3 * i + 2]);
+					transform->Update();
 					object->AddChild(loadedModel.m_rootFrame);
 					object->Init();
+
 					AddObject(groupType, object);
 				}
-					break;
-				case GROUP_TYPE::ENEMY:
+			break;
+			case GROUP_TYPE::ENEMY:
+			{
+				// <TargetPosition>
+				File::ReadStringFromFile(in, str);
+
+				// localPosition, localRotation, localScale
+				vector<XMFLOAT3> targetPositions(instanceCount);
+
+				in.read(reinterpret_cast<char*>(targetPositions.data()), instanceCount * sizeof(XMFLOAT3));
+
+				for (int i = 0; i < instanceCount; ++i)
 				{
 					CGuard* guard = new CGuard();
-					CTransform* transform = guard->GetComponent<CTransform>();
+					LoadedModel loadedModel = CObject::Load(d3d12Device, d3d12GraphicsCommandList, modelFileName);
+					CTransform* transform = static_cast<CTransform*>(guard->GetComponent(COMPONENT_TYPE::TRANSFORM));
 
-					guard->SetActive(isActive);
+					guard->SetActive(isActives[i]);
 					guard->SetComponent(COMPONENT_TYPE::ANIMATOR, loadedModel.m_animator);
-					transform->SetPosition(position);
-					transform->SetRotation(rotation);
-					transform->SetScale(scale);
+					transform->SetPosition(transforms[3 * i]);
+					transform->SetRotation(transforms[3 * i + 1]);
+					transform->SetScale(transforms[3 * i + 2]);
+					transform->Update();
+					guard->CreatePatrolPath(targetPositions[i]);
 					guard->AddChild(loadedModel.m_rootFrame);
 					guard->Init();
 
-					// <TargetPosition>
-					XMFLOAT3 targetPosition = {};
-
-					File::ReadStringFromFile(in, str);
-					in.read(reinterpret_cast<char*>(&targetPosition), sizeof(XMFLOAT3));
-					guard->CreatePatrolPath(targetPosition);
 					AddObject(groupType, guard);
 				}
-					break;
-				case GROUP_TYPE::PLAYER:
+			}
+			break;
+			case GROUP_TYPE::PLAYER:
+				for (int i = 0; i < instanceCount; ++i)
 				{
 					CPlayer* player = new CPlayer();
-					CTransform* transform = player->GetComponent<CTransform>();
+					LoadedModel loadedModel = CObject::Load(d3d12Device, d3d12GraphicsCommandList, modelFileName);
+					CTransform* transform = static_cast<CTransform*>(player->GetComponent(COMPONENT_TYPE::TRANSFORM));
 
-					player->SetActive(isActive);
+					player->SetActive(isActives[i]);
 					player->SetComponent(COMPONENT_TYPE::ANIMATOR, loadedModel.m_animator);
-					transform->SetPosition(position);
-					transform->SetRotation(rotation);
-					transform->SetScale(scale);
+					transform->SetPosition(transforms[3 * i]);
+					transform->SetRotation(transforms[3 * i + 1]);
+					transform->SetScale(transforms[3 * i + 2]);
+					transform->Update();
 					player->AddChild(loadedModel.m_rootFrame);
 					player->Init();
+
 					AddObject(groupType, player);
 				}
-					break;
-				}
+			break;
 			}
 		}
 		else if (str == "</Scene>")
@@ -162,9 +161,9 @@ void CScene::LoadUI(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12G
 
 		if (str == "<UI>")
 		{
-			//CUI* ui = CUI::Load(d3d12Device, d3d12GraphicsCommandList, in);
+			CUI* ui = CUI::Load(d3d12Device, d3d12GraphicsCommandList, in);
 
-			//AddObject(GROUP_TYPE::UI, ui);
+			AddObject(GROUP_TYPE::UI, ui);
 		}
 		else if (str == "</UIs>")
 		{
@@ -216,7 +215,7 @@ void CScene::DeleteGroupObject(GROUP_TYPE groupType)
 
 void CScene::ReleaseUploadBuffers()
 {
-	for (int i = 0; i < (int)GROUP_TYPE::COUNT; ++i)
+	for (int i = 0; i < static_cast<int>(GROUP_TYPE::COUNT); ++i)
 	{
 		for (const auto& object : m_objects[i])
 		{
@@ -227,27 +226,13 @@ void CScene::ReleaseUploadBuffers()
 
 void CScene::Update()
 {
-	for (int i = 0; i < (int)GROUP_TYPE::COUNT; ++i)
+	for (int i = 0; i < static_cast<int>(GROUP_TYPE::COUNT); ++i)
 	{
 		for (const auto& object : m_objects[i])
 		{
 			if (object->IsActive() && !object->IsDeleted())
 			{
 				object->Update();
-			}
-		}
-	}
-}
-
-void CScene::LateUpdate()
-{
-	for (int i = 0; i < (int)GROUP_TYPE::COUNT; ++i)
-	{
-		for (const auto& object : m_objects[i])
-		{
-			if (object->IsActive() && !object->IsDeleted())
-			{
-				object->LateUpdate();
 			}
 		}
 	}
@@ -264,7 +249,7 @@ void CScene::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
 	camera->RSSetViewportsAndScissorRects(d3d12GraphicsCommandList);
 	camera->UpdateShaderVariables(d3d12GraphicsCommandList);
 
-	for (int i = 0; i <= (int)GROUP_TYPE::BILBOARD; ++i)
+	for (int i = 0; i <= static_cast<int>(GROUP_TYPE::BILBOARD); ++i)
 	{
 		for (const auto& object : m_objects[i])
 		{
@@ -279,7 +264,7 @@ void CScene::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
 	camera->RSSetViewportsAndScissorRects(d3d12GraphicsCommandList);
 	camera->UpdateShaderVariables(d3d12GraphicsCommandList);
 
-	for (const auto& object : m_objects[(int)GROUP_TYPE::UI])
+	for (const auto& object : m_objects[static_cast<int>(GROUP_TYPE::UI)])
 	{
 		if (object->IsActive() && !object->IsDeleted())
 		{

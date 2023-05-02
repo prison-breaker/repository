@@ -75,32 +75,32 @@ CSkyBox::CSkyBox(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Grap
 	// Left
 	vertices[0].m_position = XMFLOAT3(-10.0f, 0.0f, 0.0f);
 	vertices[0].m_size = XMFLOAT2(20.0f, 20.0f);
-	vertices[0].m_color = XMFLOAT3(1.0f, 1.0f, 1.0f);
+	vertices[0].m_color = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	// Right
 	vertices[1].m_position = XMFLOAT3(+10.0f, 0.0f, 0.0f);
 	vertices[1].m_size = XMFLOAT2(20.0f, 20.0f);
-	vertices[1].m_color = XMFLOAT3(1.0f, 1.0f, 1.0f);
+	vertices[1].m_color = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	// Bottom
 	vertices[2].m_position = XMFLOAT3(0.0f, -10.0f, 0.0f);
 	vertices[2].m_size = XMFLOAT2(20.0f, 20.0f);
-	vertices[2].m_color = XMFLOAT3(1.0f, 1.0f, 1.0f);
+	vertices[2].m_color = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	// Top
 	vertices[3].m_position = XMFLOAT3(0.0f, +10.0f, 0.0f);
 	vertices[3].m_size = XMFLOAT2(20.0f, 20.0f);
-	vertices[3].m_color = XMFLOAT3(1.0f, 1.0f, 1.0f);
+	vertices[3].m_color = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	// Back
 	vertices[4].m_position = XMFLOAT3(0.0f, 0.0f, -10.0f);
 	vertices[4].m_size = XMFLOAT2(20.0f, 20.0f);
-	vertices[4].m_color = XMFLOAT3(1.0f, 1.0f, 1.0f);
+	vertices[4].m_color = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	// Front
 	vertices[5].m_position = XMFLOAT3(0.0f, 0.0f, +10.0f);
 	vertices[5].m_size = XMFLOAT2(20.0f, 20.0f);
-	vertices[5].m_color = XMFLOAT3(1.0f, 1.0f, 1.0f);
+	vertices[5].m_color = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	m_d3d12VertexBuffer = DX::CreateBufferResource(d3d12Device, d3d12GraphicsCommandList, vertices.data(), sizeof(QuadInfo) * m_maxVertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_d3d12VertexUploadBuffer.GetAddressOf());
 	m_d3d12VertexBufferView.BufferLocation = m_d3d12VertexBuffer->GetGPUVirtualAddress();
@@ -218,28 +218,28 @@ CTree::CTree(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Graphics
 
 			vertices[i].m_position = XMFLOAT3(-215.0f + 3.8f * (i / 4), 1.05f + 0.5f * randomSize, -215.0f + randomOffset);
 			vertices[i].m_size = XMFLOAT2(randomSize, randomSize);
-			vertices[i].m_color = XMFLOAT3(1.0f, 1.0f, 1.0f);
+			vertices[i].m_color = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
 			// Front
 			randomSize = Random::Range(10.0f, 14.0f);
 			randomOffset = Random::Range(0.0f, 5.0f);
 			vertices[i + 1].m_position = XMFLOAT3(-215.0f + 3.8f * (i / 4), 1.05f + 0.5f * randomSize, 215.0f + randomOffset);
 			vertices[i + 1].m_size = XMFLOAT2(randomSize, randomSize);
-			vertices[i + 1].m_color = XMFLOAT3(1.0f, 1.0f, 1.0f);
+			vertices[i + 1].m_color = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
 			// Left
 			randomSize = Random::Range(10.0f, 14.0f);
 			randomOffset = Random::Range(-5.0f, 0.0f);
 			vertices[i + 2].m_position = XMFLOAT3(-215.0f + randomOffset, 1.05f + 0.5f * randomSize, -215.0f + 3.8f * (i / 4));
 			vertices[i + 2].m_size = XMFLOAT2(randomSize, randomSize);
-			vertices[i + 2].m_color = XMFLOAT3(1.0f, 1.0f, 1.0f);
+			vertices[i + 2].m_color = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
 			// Right
 			randomSize = Random::Range(10.0f, 14.0f);
 			randomOffset = Random::Range(0.0f, 5.0f);
 			vertices[i + 3].m_position = XMFLOAT3(215.0f + randomOffset, 1.05f + 0.5f * randomSize, -215.0f + 3.8f * (i / 4));
 			vertices[i + 3].m_size = XMFLOAT2(randomSize, randomSize);
-			vertices[i + 3].m_color = XMFLOAT3(1.0f, 1.0f, 1.0f);
+			vertices[i + 3].m_color = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 		}
 		break;
 	case SCENE_TYPE::ENDING:

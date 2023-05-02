@@ -8,7 +8,7 @@ public:
 	static const XMFLOAT3 m_worldUp;
 	static const XMFLOAT3 m_worldForward;
 
-private:
+protected:
 	XMFLOAT3              m_position;
 	XMFLOAT3              m_rotation;
 	XMFLOAT3              m_scale;
@@ -56,4 +56,21 @@ public:
 	void MultiplyScale(const XMFLOAT3& scale);
 
 	virtual void Update();
+};
+
+//=========================================================================================================================
+
+class CRectTransform : public CTransform
+{
+private:
+	XMFLOAT2 m_rect; // width, height
+
+public:
+	CRectTransform();
+	virtual ~CRectTransform();
+
+	void SetRect(const XMFLOAT2& rect);
+	const XMFLOAT2& GetRect();
+
+	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
 };

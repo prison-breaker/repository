@@ -147,7 +147,7 @@
     <ClCompile Include="GuardStates.cpp">
       <Filter>소스 파일\08. State</Filter>
     </ClCompile>
-    <ClCompile Include="State_MissionUI.cpp">
+    <ClCompile Include="UIStates.cpp">
       <Filter>소스 파일\08. State</Filter>
     </ClCompile>
     <ClCompile Include="EventTrigger.cpp">
@@ -156,17 +156,8 @@
     <ClCompile Include="EventTriggers.cpp">
       <Filter>소스 파일\09. Trigger</Filter>
     </ClCompile>
-    <ClCompile Include="State_KeyUI.cpp">
-      <Filter>소스 파일\08. State</Filter>
-    </ClCompile>
-    <ClCompile Include="State_HitUI.cpp">
-      <Filter>소스 파일\08. State</Filter>
-    </ClCompile>
     <ClCompile Include="TitleScene.cpp">
       <Filter>소스 파일\04. Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="State_Background.cpp">
-      <Filter>소스 파일\08. State</Filter>
     </ClCompile>
     <ClCompile Include="SoundManager.cpp">
       <Filter>소스 파일\02. Manager</Filter>
@@ -229,9 +220,6 @@
       <Filter>소스 파일\06. Asset\Shader</Filter>
     </ClCompile>
     <ClCompile Include="Animator.cpp">
-      <Filter>소스 파일\07. Component</Filter>
-    </ClCompile>
-    <ClCompile Include="UIAnimationController.cpp">
       <Filter>소스 파일\07. Component</Filter>
     </ClCompile>
     <ClCompile Include="StateMachine.cpp">
@@ -323,7 +311,7 @@
     <ClInclude Include="GuardStates.h">
       <Filter>헤더 파일\08. State</Filter>
     </ClInclude>
-    <ClInclude Include="State_MissionUI.h">
+    <ClInclude Include="UIStates.h">
       <Filter>헤더 파일\08. State</Filter>
     </ClInclude>
     <ClInclude Include="EventTrigger.h">
@@ -332,17 +320,8 @@
     <ClInclude Include="EventTriggers.h">
       <Filter>헤더 파일\09. Trigger</Filter>
     </ClInclude>
-    <ClInclude Include="State_KeyUI.h">
-      <Filter>헤더 파일\08. State</Filter>
-    </ClInclude>
-    <ClInclude Include="State_HitUI.h">
-      <Filter>헤더 파일\08. State</Filter>
-    </ClInclude>
     <ClInclude Include="TitleScene.h">
       <Filter>헤더 파일\04. Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="State_Background.h">
-      <Filter>헤더 파일\08. State</Filter>
     </ClInclude>
     <ClInclude Include="SoundManager.h">
       <Filter>헤더 파일\02. Manager</Filter>
@@ -411,9 +390,6 @@
       <Filter>헤더 파일\07. Component</Filter>
     </ClInclude>
     <ClInclude Include="Animator.h">
-      <Filter>헤더 파일\07. Component</Filter>
-    </ClInclude>
-    <ClInclude Include="UIAnimationController.h">
       <Filter>헤더 파일\07. Component</Filter>
     </ClInclude>
     <ClInclude Include="NavMesh.h">

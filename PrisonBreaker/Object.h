@@ -26,7 +26,8 @@ class CObject
 private:
 	static UINT		    m_nextInstanceID;
 	UINT			    m_instanceID;
-					    
+		
+protected:
 	string              m_name;
 					    
 	bool			    m_isActive;
@@ -64,25 +65,9 @@ public:
 	void AddMaterial(CMaterial* material);
 	const vector<CMaterial*>& GetMaterials();
 
-	CComponent* CreateComponent(COMPONENT_TYPE componentType);
+	virtual CComponent* CreateComponent(COMPONENT_TYPE componentType);
 	void SetComponent(COMPONENT_TYPE componentType, CComponent* newComponent);
-	template <typename T>
-	T* GetComponent()
-	{
-		for (int i = static_cast<int>(COMPONENT_TYPE::STATE_MACHINE); i < static_cast<int>(COMPONENT_TYPE::COUNT); ++i)
-		{
-			if (m_components[i] != nullptr)
-			{
-				if (typeid(T).raw_name() == typeid(*m_components[i]).raw_name())
-				{
-					return reinterpret_cast<T*>(m_components[i]);
-				}
-			}
-		}
-
-		return nullptr;
-	}
-	const vector<CComponent*>& GetComponents();
+	CComponent* GetComponent(COMPONENT_TYPE componentType);
 
 	CObject* GetParent();
 
@@ -108,7 +93,6 @@ public:
 	virtual void OnCollisionExit(CObject* collidedObject);
 
 	virtual void Update();
-	virtual void LateUpdate();
 
 	virtual void PreRender(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCamera* camera);
 	virtual void Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCamera* camera);

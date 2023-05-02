@@ -57,7 +57,6 @@ void CSceneManager::ReleaseUploadBuffers()
 void CSceneManager::Update()
 {
 	m_currentScene->Update();
-	m_currentScene->LateUpdate();
 }
 
 void CSceneManager::PreRender(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)

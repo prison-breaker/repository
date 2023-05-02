@@ -30,6 +30,8 @@ void CCollider::Update()
 {
     if (m_isEnabled)
     {
-        m_owner->GetMesh()->GetBoundingBox().Transform(m_boundingBox, XMLoadFloat4x4(&m_owner->GetComponent<CTransform>()->GetWorldMatrix()));
+        CTransform* transform = static_cast<CTransform*>(m_owner->GetComponent(COMPONENT_TYPE::TRANSFORM));
+
+        m_owner->GetMesh()->GetBoundingBox().Transform(m_boundingBox, XMLoadFloat4x4(&transform->GetWorldMatrix()));
     }
 }

@@ -20,9 +20,10 @@ CState* CStateMachine::GetPreviousState()
 
 void CStateMachine::SetCurrentState(CState* state)
 {
-	if (m_currentState == nullptr)
+	m_currentState = state;
+
+	if (m_currentState != nullptr)
 	{
-		m_currentState = state;
 		m_currentState->Enter(m_owner);
 	}
 }

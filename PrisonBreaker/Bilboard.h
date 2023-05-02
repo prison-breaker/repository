@@ -9,7 +9,7 @@ struct QuadInfo
 	XMUINT2  m_spriteSize;
 	float	 m_spriteIndex;
 
-	XMFLOAT3 m_color;
+	XMFLOAT4 m_color;
 };
 
 class CBilboard abstract : public CObject

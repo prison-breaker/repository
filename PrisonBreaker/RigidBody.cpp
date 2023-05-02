@@ -128,7 +128,7 @@ void CRigidBody::AddVelocity(const XMFLOAT3& velocity)
 
 void CRigidBody::MovePosition()
 {    
-    CTransform* transform = m_owner->GetComponent<CTransform>();
+    CTransform* transform = static_cast<CTransform*>(m_owner->GetComponent(COMPONENT_TYPE::TRANSFORM));
     const XMFLOAT3& position = transform->GetPosition();
     XMFLOAT3 shift = Vector3::ScalarProduct(m_velocity, DT);
     XMFLOAT3 newPosition = Vector3::Add(position, shift);

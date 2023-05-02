@@ -119,7 +119,10 @@ void CCollisionManager::ResetCollisionGroup()
 
 bool CCollisionManager::IsCollided(CObject* object1, CObject* object2)
 {
-	return Math::Distance(object1->GetComponent<CTransform>()->GetPosition(), object2->GetComponent<CTransform>()->GetPosition()) <= 2.0f;
+	CTransform* transform1 = static_cast<CTransform*>(object1->GetComponent(COMPONENT_TYPE::TRANSFORM));
+	CTransform* transform2 = static_cast<CTransform*>(object2->GetComponent(COMPONENT_TYPE::TRANSFORM));
+
+	return Math::Distance(transform1->GetPosition(), transform2->GetPosition()) <= 2.0f;
 }
 
 void CCollisionManager::Update()

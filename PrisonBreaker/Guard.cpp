@@ -74,9 +74,9 @@ CCharacter* CGuard::GetTarget()
 
 void CGuard::Init()
 {
-	//CStateMachine* stateMachine = GetComponent<CStateMachine>();
+	CStateMachine* stateMachine = static_cast<CStateMachine*>(GetComponent(COMPONENT_TYPE::STATE_MACHINE));
 
-	//stateMachine->SetCurrentState(CGuardIdleState::GetInstance());
+	stateMachine->SetCurrentState(CGuardIdleState::GetInstance());
 }
 
 void CGuard::OnCollisionEnter(CObject* collidedObject)
@@ -89,7 +89,7 @@ void CGuard::OnCollisionEnter(CObject* collidedObject)
 	if (collidedObject->GetName() == "Player")
 	{
 		CCharacter* target = static_cast<CCharacter*>(collidedObject);
-		CStateMachine* stateMachine = GetComponent<CStateMachine>();
+		CStateMachine* stateMachine = static_cast<CStateMachine*>(GetComponent(COMPONENT_TYPE::STATE_MACHINE));
 
 		SetTarget(target);
 		stateMachine->ChangeState(CGuardChaseState::GetInstance());
@@ -104,12 +104,12 @@ CCharacter* CGuard::FindTarget(float maxDist, float fov)
 	const vector<CObject*>& players = CSceneManager::GetInstance()->GetCurrentScene()->GetGroupObject(GROUP_TYPE::PLAYER);
 	const vector<CObject*>& structures = CSceneManager::GetInstance()->GetCurrentScene()->GetGroupObject(GROUP_TYPE::STRUCTURE);
 
-	CTransform* transform = GetComponent<CTransform>();
+	CTransform* transform = static_cast<CTransform*>(GetComponent(COMPONENT_TYPE::TRANSFORM));
 
 	for (const auto& object : players)
 	{
-		CCharacter* player = (CCharacter*)object;
-		CTransform* playerTransform = player->GetComponent<CTransform>();
+		CCharacter* player = static_cast<CCharacter*>(object);
+		CTransform* playerTransform = static_cast<CTransform*>(player->GetComponent(COMPONENT_TYPE::TRANSFORM));
 
 		if (player->GetHealth() > 0)
 		{
@@ -183,7 +183,7 @@ void CGuard::CreatePath(vector<XMFLOAT3>& path, const XMFLOAT3& targetPosition)
 		navNodes[i]->Reset();
 	}
 
-	CTransform* transform = GetComponent<CTransform>();
+	CTransform* transform = static_cast<CTransform*>(GetComponent(COMPONENT_TYPE::TRANSFORM));
 
 	CNavNode* startNode = navNodes[navMesh->GetNodeIndex(transform->GetPosition())];
 	CNavNode* targetNode = navNodes[navMesh->GetNodeIndex(targetPosition)];
@@ -301,7 +301,7 @@ void CGuard::OptimizePath(vector<XMFLOAT3>& path)
 
 void CGuard::FollowMovePath(float force)
 {
-	CTransform* transform = GetComponent<CTransform>();
+	CTransform* transform = static_cast<CTransform*>(GetComponent(COMPONENT_TYPE::TRANSFORM));
 	const XMFLOAT3& position = transform->GetPosition();
 	const XMFLOAT3& forward = transform->GetForward();
 
@@ -334,7 +334,7 @@ void CGuard::FollowMovePath(float force)
 	}
 	else
 	{
-		CRigidBody* rigidBody = GetComponent<CRigidBody>();
+		CRigidBody* rigidBody = static_cast<CRigidBody*>(GetComponent(COMPONENT_TYPE::RIGIDBODY));
 
 		rigidBody->AddForce(Vector3::ScalarProduct(forward, force));
 	}
@@ -342,7 +342,7 @@ void CGuard::FollowMovePath(float force)
 
 void CGuard::FollowPatrolPath(float force)
 {
-	CTransform* transform = GetComponent<CTransform>();
+	CTransform* transform = static_cast<CTransform*>(GetComponent(COMPONENT_TYPE::TRANSFORM));
 	const XMFLOAT3& position = transform->GetPosition();
 	const XMFLOAT3& forward = transform->GetForward();
 
@@ -377,7 +377,7 @@ void CGuard::FollowPatrolPath(float force)
 	}
 	else
 	{
-		CRigidBody* rigidBody = GetComponent<CRigidBody>();
+		CRigidBody* rigidBody = static_cast<CRigidBody*>(GetComponent(COMPONENT_TYPE::RIGIDBODY));
 
 		rigidBody->AddForce(Vector3::ScalarProduct(forward, force));
 	}

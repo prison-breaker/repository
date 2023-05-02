@@ -328,9 +328,7 @@ bool CMesh::CheckRayIntersection(const XMFLOAT3& rayOrigin, const XMFLOAT3& rayD
 
 	for (int i = 0; i < subMeshCount; ++i)
 	{
-		int primitiveCount = (int)m_indices[i].size();
-
-		for (int j = 0; j < primitiveCount; j += 3)
+		for (int j = 0; j < m_indices[i].size(); j += 3)
 		{
 			XMVECTOR vertex1 = XMVector3TransformCoord(XMLoadFloat3(&m_positions[m_indices[i][j]]), worldMatrix);
 			XMVECTOR vertex2 = XMVector3TransformCoord(XMLoadFloat3(&m_positions[m_indices[i][j + 1]]), worldMatrix);
@@ -360,16 +358,16 @@ void CMesh::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, int subS
 	d3d12GraphicsCommandList->IASetVertexBuffers(0, _countof(vertexBufferViews), vertexBufferViews);
 	d3d12GraphicsCommandList->IASetPrimitiveTopology(m_d3d12PrimitiveTopology);
 
-	int bufferSize = (int)m_d3d12IndexBuffers.size();
+	int bufferSize = static_cast<int>(m_d3d12IndexBuffers.size());
 
 	if (bufferSize > 0 && subSetIndex < bufferSize)
 	{
 		d3d12GraphicsCommandList->IASetIndexBuffer(&m_d3d12IndexBufferViews[subSetIndex]);
-		d3d12GraphicsCommandList->DrawIndexedInstanced((UINT)m_indices[subSetIndex].size(), 1, 0, 0, 0);
+		d3d12GraphicsCommandList->DrawIndexedInstanced(static_cast<UINT>(m_indices[subSetIndex].size()), 1, 0, 0, 0);
 	}
 	else
 	{
-		d3d12GraphicsCommandList->DrawInstanced((UINT)m_positions.size(), 1, 0, 0);
+		d3d12GraphicsCommandList->DrawInstanced(static_cast<UINT>(m_positions.size()), 1, 0, 0);
 	}
 }
 
@@ -380,5 +378,5 @@ void CMesh::RenderBoundingBox(ID3D12GraphicsCommandList* d3d12GraphicsCommandLis
 	d3d12GraphicsCommandList->IASetVertexBuffers(0, _countof(vertexBufferViews), vertexBufferViews);
 	d3d12GraphicsCommandList->IASetPrimitiveTopology(m_d3d12PrimitiveTopology);
 	d3d12GraphicsCommandList->IASetIndexBuffer(&m_d3d12IndexBufferViews.back());
-	d3d12GraphicsCommandList->DrawIndexedInstanced((UINT)m_indices.back().size(), 1, 0, 0, 0);
+	d3d12GraphicsCommandList->DrawIndexedInstanced(static_cast<UINT>(m_indices.back().size()), 1, 0, 0, 0);
 }

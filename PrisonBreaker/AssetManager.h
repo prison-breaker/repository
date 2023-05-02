@@ -44,10 +44,12 @@ public:
 	int GetShaderCount();
 
 	CMaterial* CreateMaterial(const string& key);
+	CMaterial* CreateMaterialInstance(const string& key);
 	CMaterial* GetMaterial(const string& key);
 	int GetMaterialCount();
 
-	void LoadAnimations(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, const string& fileName);
+	void LoadSkinningAnimations(const string& fileName);
+	void LoadUIAnimations(ifstream& in, const string& key);
 	const vector<CAnimation*>& GetAnimations(const string& key);
 	int GetAnimationCount(const string& key);
 

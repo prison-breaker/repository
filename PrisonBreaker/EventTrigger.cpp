@@ -72,7 +72,7 @@ void CEventTrigger::LoadEventTriggerFromFile(ifstream& in)
 			{
 				File::ReadStringFromFile(in, str);
 
-				shared_ptr<CObject> TargetObject{ GameObjects[OBJECT_TYPE_STRUCTURE][TargetRootIndex]->FindFrame(str) };
+				shared_ptr<CObject> TargetObject{ GameObjects[OBJECT_TYPE::STRUCTURE][TargetRootIndex]->FindFrame(str) };
 
 				if (TargetObject)
 				{

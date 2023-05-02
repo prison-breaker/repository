@@ -15,10 +15,10 @@
 #include "UI.h"
 
 #include "Texture.h"
-#include "Material.h"
 #include "Shader.h"
 
 #include "StateMachine.h"
+#include "Animator.h"
 #include "Transform.h"
 
 #include "Camera.h"
@@ -27,6 +27,7 @@
 #include "NavNode.h"
 
 #include "GuardStates.h"
+#include "UIStates.h"
 
 CGameScene::CGameScene() :
 	m_d3d12GameScene(),
@@ -71,9 +72,9 @@ void CGameScene::Enter()
 	ShowCursor(false);
 
 	// 카메라의 타겟 설정
-	//const vector<CObject*>& objects = GetGroupObject(GROUP_TYPE::PLAYER);
+	const vector<CObject*>& objects = GetGroupObject(GROUP_TYPE::PLAYER);
 
-	//CCameraManager::GetInstance()->GetMainCamera()->SetTarget((CPlayer*)objects[0]);
+	CCameraManager::GetInstance()->GetMainCamera()->SetTarget((CPlayer*)objects[0]);
 	//CSoundManager::GetInstance()->Play(SOUND_TYPE_INGAME_BGM_1, 0.3f, false);
 }
 
@@ -92,7 +93,7 @@ void CGameScene::Init(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d1
 {
 	// 씬 로드
 	Load(d3d12Device, d3d12GraphicsCommandList, "GameScene.bin");
-	//LoadUI(d3d12Device, d3d12GraphicsCommandList, "GameScene_UI.bin");
+	LoadUI(d3d12Device, d3d12GraphicsCommandList, "GameSceneUI.bin");
 
 	// 구조물을 순회하며, 감시탑의 조명 프레임을 찾아 저장한다.
 	const vector<CObject*>& structures = GetGroupObject(GROUP_TYPE::STRUCTURE);
@@ -117,24 +118,6 @@ void CGameScene::Init(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d1
 	object = new CTree(d3d12Device, d3d12GraphicsCommandList, SCENE_TYPE::GAME);
 	AddObject(GROUP_TYPE::BILBOARD, object);
 
-	// UI 테스트
-	//object = new CUI();
-	//object->SetActive(true);
-	//object->SetMesh(CAssetManager::GetInstance()->GetMesh("Plane.002"));
-
-	//CMaterial* material = CAssetManager::GetInstance()->CreateMaterial("BOL4");
-	//CTexture* texture = CAssetManager::GetInstance()->CreateTexture("BOL4");
-	//CShader* shader = CAssetManager::GetInstance()->GetShader("UI");
-
-	//texture->Load(d3d12Device, d3d12GraphicsCommandList, "BOL4.dds", TEXTURE_TYPE::ALBEDO_MAP);
-	//material->SetTexture(texture);
-	//material->AddShader(shader);
-	//object->AddMaterial(material);
-	//object->Scale(256.0f, 384.0f, 1.0f);
-	//object->Rotate(90.0f, 180.0f, 0.0f);
-	//object->UpdateTransform(true);
-	//AddObject(GROUP_TYPE::UI, object);
-
 	// 충돌 그룹 설정
 	CCollisionManager::GetInstance()->SetCollisionGroup(GROUP_TYPE::ENEMY, GROUP_TYPE::ENEMY);
 	CCollisionManager::GetInstance()->SetCollisionGroup(GROUP_TYPE::ENEMY, GROUP_TYPE::PLAYER);
@@ -147,7 +130,7 @@ void CGameScene::Init(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d1
 
 	m_mappedGameScene->m_lights[0].m_isActive = true;
 	m_mappedGameScene->m_lights[0].m_shadowMapping = true;
-	m_mappedGameScene->m_lights[0].m_type = (int)LIGHT_TYPE::DIRECTIONAL;
+	m_mappedGameScene->m_lights[0].m_type = static_cast<int>(LIGHT_TYPE::DIRECTIONAL);
 	m_mappedGameScene->m_lights[0].m_position = XMFLOAT3(0.0f, 100.0f, 130.0f);
 	m_mappedGameScene->m_lights[0].m_direction = Vector3::Normalize(XMFLOAT3(0.0f, -1.0f, -1.0f));
 	m_mappedGameScene->m_lights[0].m_color = XMFLOAT4(0.5f, 0.5f, 0.6f, 0.0f);
@@ -156,7 +139,7 @@ void CGameScene::Init(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d1
 
 	m_towerLightAngle = XMConvertToRadians(90.0f);
 	m_mappedGameScene->m_lights[1].m_isActive = true;
-	m_mappedGameScene->m_lights[1].m_type = (int)LIGHT_TYPE::SPOT;
+	m_mappedGameScene->m_lights[1].m_type = static_cast<int>(LIGHT_TYPE::SPOT);
 	m_mappedGameScene->m_lights[1].m_position = XMFLOAT3(0.0f, 50.0f, 0.0f);
 	m_mappedGameScene->m_lights[1].m_direction = Vector3::Normalize(XMFLOAT3(cosf(m_towerLightAngle), -1.0f, sinf(m_towerLightAngle)));
 	m_mappedGameScene->m_lights[1].m_color = XMFLOAT4(0.7f, 0.7f, 0.3f, 0.0f);
@@ -167,7 +150,7 @@ void CGameScene::Init(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d1
 	m_mappedGameScene->m_lights[1].m_phi = cosf(XMConvertToRadians(10.0f));
 
 	m_mappedGameScene->m_lights[2].m_isActive = true;
-	m_mappedGameScene->m_lights[2].m_type = (int)LIGHT_TYPE::POINT;
+	m_mappedGameScene->m_lights[2].m_type = static_cast<int>(LIGHT_TYPE::POINT);
 	m_mappedGameScene->m_lights[2].m_position = XMFLOAT3(7.5f * cosf(m_towerLightAngle), 37.0f, 7.5f * sinf(m_towerLightAngle));
 	m_mappedGameScene->m_lights[2].m_color = XMFLOAT4(1.0f, 1.0f, 0.8f, 0.0f);
 	m_mappedGameScene->m_lights[2].m_attenuation = XMFLOAT3(0.5f, 0.01f, 0.0f);
@@ -180,13 +163,22 @@ void CGameScene::Update()
 	{
 		CNavMesh* navMesh = (CNavMesh*)CAssetManager::GetInstance()->GetMesh("NavMesh");
 		const vector<CObject*>& objects = GetGroupObject(GROUP_TYPE::PLAYER);
-		CTransform* transform = objects[0]->GetComponent<CTransform>();
+		CTransform* transform = static_cast<CTransform*>(objects[0]->GetComponent(COMPONENT_TYPE::TRANSFORM));
 
 		transform->SetPosition(navMesh->GetNavNodes()[100]->GetTriangle().m_centroid);
 	}
 
-	CScene::Update();
+	if (KEY_TAP(KEY::NUM3))
+	{
+		const vector<CObject*>& uis = GetGroupObject(GROUP_TYPE::UI);
+		CObject* keyUI = uis[0]->FindFrame("Key");
+		CStateMachine* stateMachine = static_cast<CStateMachine*>(keyUI->GetComponent(COMPONENT_TYPE::STATE_MACHINE));
+
+		stateMachine->SetCurrentState(CKeyUIActivateState::GetInstance());
+	}
+
 	UpdateLightTower();
+	CScene::Update();
 }
 
 void CGameScene::UpdateLightTower()
@@ -203,7 +195,7 @@ void CGameScene::UpdateLightTower()
 		const vector<CObject*> structures = GetGroupObject(GROUP_TYPE::STRUCTURE);
 
 		// 감시탑 조명 프레임의 transform
-		CTransform* towerLightTransform = m_towerLight->GetComponent<CTransform>();
+		CTransform* towerLightTransform = static_cast<CTransform*>(m_towerLight->GetComponent(COMPONENT_TYPE::TRANSFORM));
 
 		for (const auto& object1 : players)
 		{
@@ -211,7 +203,7 @@ void CGameScene::UpdateLightTower()
 
 			if (player->GetHealth() > 0)
 			{
-				CTransform* playerTransform = player->GetComponent<CTransform>();
+				CTransform* playerTransform = static_cast<CTransform*>(player->GetComponent(COMPONENT_TYPE::TRANSFORM));
 				float dist = Math::Distance(playerTransform->GetPosition(), lightCenter);
 
 				if (dist <= radius)
@@ -241,7 +233,7 @@ void CGameScene::UpdateLightTower()
 						for (const auto& object3 : guards)
 						{
 							CGuard* guard = static_cast<CGuard*>(object3);
-							CTransform* guardTransform = guard->GetComponent<CTransform>();
+							CTransform* guardTransform = static_cast<CTransform*>(guard->GetComponent(COMPONENT_TYPE::TRANSFORM));
 
 							if (guard->GetHealth() > 0)
 							{
@@ -250,7 +242,7 @@ void CGameScene::UpdateLightTower()
 								// 조명의 중심에서 거리가 80.0f이하인 교도관들을 플레이어의 위치로 불러들인다.
 								if (dist <= 80.0f)
 								{
-									CStateMachine* stateMachine = guard->GetComponent<CStateMachine>();
+									CStateMachine* stateMachine = static_cast<CStateMachine*>(guard->GetComponent(COMPONENT_TYPE::STATE_MACHINE));
 									CState* currentState = stateMachine->GetCurrentState();
 
 									if (currentState == CGuardIdleState::GetInstance() ||

@@ -94,11 +94,6 @@ void CMaterial::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12
 		if (str == "<Name>")
 		{
 			File::ReadStringFromFile(in, m_name);
-
-			if (m_name == "cone")
-			{
-				cout << "ÀâÀ½\n";
-			}
 		}
 		else if (str == "<Color>")
 		{

@@ -206,7 +206,7 @@ void CAssetManager::LoadMaterials(ID3D12Device* d3d12Device, ID3D12GraphicsComma
 	}
 }
 
-void CAssetManager::LoadAnimations(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, const string& fileName)
+void CAssetManager::LoadSkinningAnimations(const string& fileName)
 {
 	// str.length() - 14 : _Animation.bin
 	string modelName = fileName.substr(0, fileName.length() - 14);
@@ -231,16 +231,47 @@ void CAssetManager::LoadAnimations(ID3D12Device* d3d12Device, ID3D12GraphicsComm
 			}
 			else if (str == "<Animation>")
 			{
-				CAnimation* animation = new CAnimation();
+				CAnimation* skinningAnimation = new CSkinningAnimation();
 
-				animation->Load(in);
-				m_animations[modelName].push_back(animation);
+				skinningAnimation->Load(in);
+				m_animations[modelName].push_back(skinningAnimation);
 			}
 			else if (str == "</Animations>")
 			{
 				cout << fileName << " 애니메이션 로드 완료...\n";
 				break;
 			}
+		}
+	}
+}
+
+void CAssetManager::LoadUIAnimations(ifstream& in, const string& key)
+{
+	string str;
+
+	while (true)
+	{
+		File::ReadStringFromFile(in, str);
+
+		if (str == "<Animations>")
+		{
+			int animationCount = 0;
+
+			in.read(reinterpret_cast<char*>(&animationCount), sizeof(int));
+			m_animations[key].reserve(animationCount);
+			cout << key << " 애니메이션 로드 시작...\n";
+		}
+		else if (str == "<Animation>")
+		{
+			CAnimation* uiAnimation = new CUIAnimation();
+
+			uiAnimation->Load(in);
+			m_animations[key].push_back(uiAnimation);
+		}
+		else if (str == "</Animations>")
+		{
+			cout << key << " 애니메이션 로드 완료...\n";
+			break;
 		}
 	}
 }
@@ -264,7 +295,7 @@ CMesh* CAssetManager::GetMesh(const string& key)
 
 int CAssetManager::GetMeshCount()
 {
-	return (int)m_meshes.size();
+	return static_cast<int>(m_meshes.size());
 }
 
 CTexture* CAssetManager::CreateTexture(const string& key)
@@ -294,7 +325,7 @@ CTexture* CAssetManager::GetTexture(const string& key)
 
 int CAssetManager::GetTextureCount()
 {
-	return (int)m_textures.size();
+	return static_cast<int>(m_textures.size());
 }
 
 CShader* CAssetManager::GetShader(const string& key)
@@ -311,7 +342,7 @@ CShader* CAssetManager::GetShader(const string& key)
 
 int CAssetManager::GetShaderCount()
 {
-	return (int)m_shaders.size();
+	return static_cast<int>(m_shaders.size());
 }
 
 CMaterial* CAssetManager::CreateMaterial(const string& key)
@@ -322,6 +353,22 @@ CMaterial* CAssetManager::CreateMaterial(const string& key)
 	{
 		material = new CMaterial();
 		m_materials.emplace(key, material);
+	}
+
+	material = CreateMaterialInstance(key);
+
+	return material;
+}
+
+CMaterial* CAssetManager::CreateMaterialInstance(const string& key)
+{
+	CMaterial* material = GetMaterial(key);
+
+	// 해당 key를 가진 머터리얼이 존재하면, 복사 생성자로 인스턴스를 생성한 후에 반환한다.
+	if (material != nullptr)
+	{
+		material = new CMaterial(*material);
+		material->SetName(material->GetName() + "_Instance");
 	}
 
 	return material;
@@ -341,7 +388,7 @@ CMaterial* CAssetManager::GetMaterial(const string& key)
 
 int CAssetManager::GetMaterialCount()
 {
-	return (int)m_materials.size();
+	return static_cast<int>(m_materials.size());
 }
 
 const vector<CAnimation*>& CAssetManager::GetAnimations(const string& key)
@@ -351,7 +398,7 @@ const vector<CAnimation*>& CAssetManager::GetAnimations(const string& key)
 
 int CAssetManager::GetAnimationCount(const string& key)
 {
-	return (int)m_animations[key].size();
+	return static_cast<int>(m_animations[key].size());
 }
 
 void CAssetManager::Init(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ID3D12RootSignature* D3D12RootSignature)

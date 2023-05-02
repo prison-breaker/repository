@@ -7,13 +7,19 @@
 #include "Mesh.h"
 #include "Material.h"
 
+#include "StateMachine.h"
 #include "Animator.h"
+#include "Transform.h"
 #include "SpriteRenderer.h"
+
+#include "UIStates.h"
 
 CUI::CUI() :
     m_isFixed(true),
     m_isCursorOver()
 {
+	// 부모 클래스인 CObject의 생성자가 먼저 실행되므로, 이 함수에서 똑같이 Transform 컴포넌트를 생성하여 RectTransformn 컴포넌트를 갖도록 만든다.
+	CreateComponent(COMPONENT_TYPE::TRANSFORM);
 }
 
 CUI::~CUI()
@@ -33,11 +39,18 @@ CUI* CUI::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Graphi
 		{
 			int type = 0;
 
-			in.read((char*)&type, sizeof(int));
+			in.read(reinterpret_cast<char*>(&type), sizeof(int));
+
+			switch (type)
+			{
+			case 0: ui = new CUI(); break;
+			case 2: ui = new CMissionUI(); break;
+			case 3: ui = new CKeyUI(); break;
+			case 4: ui = new CHitUI(); break;
+			}
 
 			CMesh* mesh = CAssetManager::GetInstance()->GetMesh("Quad");
 
-			ui = new CUI();
 			ui->SetMesh(mesh);
 		}
 		else if (str == "<Name>")
@@ -49,28 +62,31 @@ CUI* CUI::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Graphi
 		{
 			int isActive = false;
 
-			in.read((char*)&isActive, sizeof(int));
+			in.read(reinterpret_cast<char*>(&isActive), sizeof(int));
 			ui->SetActive(isActive);
 		}
-		else if (str == "<Position>")
+		else if (str == "<RectTransform>")
 		{
-			XMFLOAT2 position = {};
+			// localPosition, localRotation, localScale, rect
+			XMFLOAT3 transform[3] = {};
+			XMFLOAT2 rect = {};
 
-			in.read((char*)&position, sizeof(XMFLOAT2));
-			ui->SetPosition(position);
-		}
-		else if (str == "<Size>")
-		{
-			XMFLOAT2 size = {};
+			in.read(reinterpret_cast<char*>(&transform[0]), 3 * sizeof(XMFLOAT3));
+			in.read(reinterpret_cast<char*>(&rect), sizeof(XMFLOAT2));
 
-			in.read((char*)&size, sizeof(XMFLOAT2));
-			ui->SetSize(size);
+			CRectTransform* rectTransform = static_cast<CRectTransform*>(ui->GetComponent(COMPONENT_TYPE::TRANSFORM));
+
+			rectTransform->SetLocalPosition(transform[0]);
+			rectTransform->SetLocalRotation(transform[1]);
+			rectTransform->SetLocalScale(transform[2]);
+			rectTransform->SetRect(rect);
+			rectTransform->Update();
 		}
 		else if (str == "<Material>")
 		{
 			File::ReadStringFromFile(in, str);
 
-			CMaterial* material = CAssetManager::GetInstance()->GetMaterial(str);
+			CMaterial* material = CAssetManager::GetInstance()->CreateMaterialInstance(str);
 
 			ui->AddMaterial(material);
 		}
@@ -79,15 +95,15 @@ CUI* CUI::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Graphi
 			CSpriteRenderer* spriteRenderer = static_cast<CSpriteRenderer*>(ui->CreateComponent(COMPONENT_TYPE::SPRITE_RENDERER));
 			XMINT2 spriteSize = {};
 
-			in.read((char*)&spriteSize, sizeof(XMINT2));
+			in.read(reinterpret_cast<char*>(&spriteSize), sizeof(XMINT2));
 			spriteRenderer->SetSpriteSize(spriteSize);
 		}
 		else if (str == "<FrameIndex>")
 		{
-			CSpriteRenderer* spriteRenderer = ui->GetComponent<CSpriteRenderer>();
+			CSpriteRenderer* spriteRenderer = static_cast<CSpriteRenderer*>(ui->GetComponent(COMPONENT_TYPE::SPRITE_RENDERER));
 			int frameIndex = 0;
 
-			in.read((char*)&frameIndex, sizeof(int));
+			in.read(reinterpret_cast<char*>(&frameIndex), sizeof(int));
 			spriteRenderer->SetFrameIndex(frameIndex);
 		}
 		else if (str == "<ChildCount>")
@@ -106,9 +122,15 @@ CUI* CUI::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Graphi
 				}
 			}
 		}
+		else if (str == "<Animator>")
+		{
+			CAnimator* animator = static_cast<CAnimator*>(ui->CreateComponent(COMPONENT_TYPE::ANIMATOR));
+
+			animator->Load(d3d12Device, d3d12GraphicsCommandList, in);
+		}
 		else if (str == "</Frame>")
 		{
-			cout << endl;
+			ui->Init();
 			break;
 		}
 	}
@@ -128,12 +150,13 @@ bool CUI::IsFixed()
 
 void CUI::CheckCursorOver()
 {
+	CRectTransform* rectTransform = static_cast<CRectTransform*>(GetComponent(COMPONENT_TYPE::TRANSFORM));
+	const XMFLOAT3& position = rectTransform->GetPosition();
+	const XMFLOAT2& rect = rectTransform->GetRect();
     const XMFLOAT2& cursor = CURSOR;
-    XMFLOAT2 position = GetPosition();
-    XMFLOAT2 size = GetSize();
 
-    if ((position.x - 0.5f * size.x <= cursor.x) && (cursor.x <= position.x + 0.5f * size.x) &&
-        (position.y - 0.5f * size.y <= cursor.y) && (cursor.y <= position.y + 0.5f * size.y))
+    if ((position.x - 0.5f * rect.x <= cursor.x) && (cursor.x <= position.x + 0.5f * rect.x) &&
+        (position.y - 0.5f * rect.y <= cursor.y) && (cursor.y <= position.y + 0.5f * rect.y))
     {
         m_isCursorOver = true;
     }
@@ -148,40 +171,33 @@ bool CUI::IsCursorOver()
     return m_isCursorOver;
 }
 
-void CUI::SetPosition(const XMFLOAT2& position)
+CComponent* CUI::CreateComponent(COMPONENT_TYPE componentType)
 {
-	XMFLOAT4X4 transformMatrix = GetTransformMatrix();
+	// 이미 해당 컴포넌트를 가지고 있었다면, 삭제 후 새로 생성한다.
+	if (m_components[static_cast<int>(componentType)] != nullptr)
+	{
+		delete m_components[static_cast<int>(componentType)];
+		m_components[static_cast<int>(componentType)] = nullptr;
+	}
 
-	transformMatrix._41 = position.x;
-	transformMatrix._42 = position.y;
+	switch (componentType)
+	{
+		// UI는 CSkinningAnimator 컴포넌트가 아닌 CUIAnimator 컴포넌트를 사용한다.
+	case COMPONENT_TYPE::ANIMATOR:
+		m_components[static_cast<int>(componentType)] = new CUIAnimator();
+		break;
+	case COMPONENT_TYPE::TRANSFORM:
+		// UI는 CTransform 컴포넌트가 아닌 CRectTransform 컴포넌트를 사용한다.
+		m_components[static_cast<int>(componentType)] = new CRectTransform();
+		break;
+	default:
+		// 그 외의 컴포넌트는 CObject의 함수를 호출한다.
+		return CObject::CreateComponent(componentType);
+	}
 
-	SetTransformMatrix(transformMatrix);
-	UpdateTransform(false);
-}
+	m_components[static_cast<int>(componentType)]->SetOwner(this);
 
-XMFLOAT2 CUI::GetPosition()
-{
-	const XMFLOAT4X4& worldMatrix = GetWorldMatrix();
-
-	return XMFLOAT2(worldMatrix._41, worldMatrix._42);
-}
-
-void CUI::SetSize(const XMFLOAT2& size)
-{
-	XMFLOAT4X4 transformMatrix = GetTransformMatrix();
-
-	transformMatrix._11 = size.x;
-	transformMatrix._22 = size.y;
-
-	SetTransformMatrix(transformMatrix);
-	UpdateTransform(false);
-}
-
-XMFLOAT2 CUI::GetSize()
-{
-    const XMFLOAT4X4& worldMatrix = GetWorldMatrix();
-
-    return XMFLOAT2(worldMatrix._11, worldMatrix._22);
+	return m_components[static_cast<int>(componentType)];
 }
 
 void CUI::OnCursorOver()
@@ -200,30 +216,20 @@ void CUI::OnCursorLeftButtonClick()
 {
 }
 
-void CUI::LateUpdate()
+void CUI::Update()
 {
-    CObject::LateUpdate();
+    CObject::Update();
     CheckCursorOver();
 }
 
 void CUI::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCamera* camera)
 {
-	const vector<CComponent*>& components = GetComponents();
-
-	for (const auto& component : components)
-	{
-		if (component != nullptr)
-		{
-			component->UpdateShaderVariables(d3d12GraphicsCommandList);
-		}
-	}
+	UpdateShaderVariables(d3d12GraphicsCommandList);
 
 	CMesh* mesh = GetMesh();
 
 	if (mesh != nullptr)
 	{
-		UpdateShaderVariables(d3d12GraphicsCommandList);
-
 		const vector<CMaterial*>& materials = GetMaterials();
 
 		for (int i = 0; i < materials.size(); ++i)
@@ -243,4 +249,49 @@ void CUI::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCamera* c
 			child->Render(d3d12GraphicsCommandList, camera);
 		}
 	}
+}
+
+//=========================================================================================================================
+
+CMissionUI::CMissionUI()
+{
+	CreateComponent(COMPONENT_TYPE::STATE_MACHINE);
+}
+
+CMissionUI::~CMissionUI()
+{
+}
+
+void CMissionUI::Init()
+{
+	CStateMachine* stateMachine = static_cast<CStateMachine*>(GetComponent(COMPONENT_TYPE::STATE_MACHINE));
+
+	stateMachine->SetCurrentState(CMissionUIShowState::GetInstance());
+}
+
+//=========================================================================================================================
+
+CKeyUI::CKeyUI()
+{
+	CreateComponent(COMPONENT_TYPE::STATE_MACHINE);
+}
+
+CKeyUI::~CKeyUI()
+{
+}
+
+//=========================================================================================================================
+
+CHitUI::CHitUI()
+{
+	CreateComponent(COMPONENT_TYPE::STATE_MACHINE);
+}
+
+CHitUI::~CHitUI()
+{
+}
+
+void CHitUI::Init()
+{
+	SetActive(false);
 }

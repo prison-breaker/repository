@@ -119,7 +119,7 @@ XMFLOAT3 CTransform::GetRight()
 	// 부모가 없는 최상위 노드가 아니었다면, 부모 행렬을 곱한다.
 	if (parent != nullptr)
 	{
-		CTransform* parentTransform = parent->GetComponent<CTransform>();
+		CTransform* parentTransform = static_cast<CTransform*>(parent->GetComponent(COMPONENT_TYPE::TRANSFORM));
 
 		right = Vector3::TransformNormal(right, parentTransform->GetWorldMatrix());
 	}
@@ -135,7 +135,7 @@ XMFLOAT3 CTransform::GetUp()
 	// 부모가 없는 최상위 노드가 아니었다면, 부모 행렬을 곱한다.
 	if (parent != nullptr)
 	{
-		CTransform* parentTransform = parent->GetComponent<CTransform>();
+		CTransform* parentTransform = static_cast<CTransform*>(parent->GetComponent(COMPONENT_TYPE::TRANSFORM));
 
 		up = Vector3::TransformNormal(up, parentTransform->GetWorldMatrix());
 	}
@@ -151,7 +151,7 @@ XMFLOAT3 CTransform::GetForward()
 	// 부모가 없는 최상위 노드가 아니었다면, 부모 행렬을 곱한다.
 	if (parent != nullptr)
 	{
-		CTransform* parentTransform = parent->GetComponent<CTransform>();
+		CTransform* parentTransform = static_cast<CTransform*>(parent->GetComponent(COMPONENT_TYPE::TRANSFORM));
 
 		forward = Vector3::TransformNormal(forward, parentTransform->GetWorldMatrix());
 	}
@@ -196,7 +196,7 @@ void CTransform::Rotate(const XMFLOAT3& rotation)
 void CTransform::LookTo(const XMFLOAT3& direction)
 {
 	// 회전 행렬로부터 쿼터니언을 얻어온다.
-	// 이때, DirectXMath의 LookToLH 함수는 뷰변환을 구하기 위한 함수이기 때문에 행렬이 전치되어 반환되므로, 다시 전치시켜주어야 한다.
+	// 이때, DirectXMath의 LookToLH 함수는 카메라 변환 행렬을 구하기 위한 함수이기 때문에 행렬이 전치되어 반환되므로, 다시 전치시켜주어야 한다.
 	XMFLOAT4X4 rotationMatrix = Matrix4x4::Transpose(Matrix4x4::LookToLH(XMFLOAT3(0.0f, 0.0f, 0.0f), direction, m_worldUp));
 	XMFLOAT4 quaternion = {};
 
@@ -264,7 +264,7 @@ void CTransform::Update()
 		m_worldMatrix = Matrix4x4::Multiply(m_worldMatrix, Matrix4x4::Translation(m_localPosition));
 
 		// 위에서 구한 월드 변환 행렬에 부모의 월드 변환행렬을 곱한다.
-		CTransform* parentTransform = parent->GetComponent<CTransform>();
+		CTransform* parentTransform = static_cast<CTransform*>(parent->GetComponent(COMPONENT_TYPE::TRANSFORM));
 
 		m_worldMatrix = Matrix4x4::Multiply(m_worldMatrix, parentTransform->GetWorldMatrix());
 
@@ -285,4 +285,36 @@ void CTransform::Update()
 		// position 값을 이용하여 이동 행렬을 구한다.
 		m_worldMatrix = Matrix4x4::Multiply(m_worldMatrix, Matrix4x4::Translation(m_position));
 	}
+}
+
+//=========================================================================================================================
+
+CRectTransform::CRectTransform() :
+	m_rect()
+{
+}
+
+CRectTransform::~CRectTransform()
+{
+}
+
+void CRectTransform::SetRect(const XMFLOAT2& rect)
+{
+	if ((rect.x >= 0.0f) && (rect.y >= 0.0f))
+	{
+		m_rect = rect;
+	}
+}
+
+const XMFLOAT2& CRectTransform::GetRect()
+{
+	return m_rect;
+}
+
+void CRectTransform::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+{
+	XMFLOAT4X4 worldMatrix = Matrix4x4::Multiply(Matrix4x4::Scale(XMFLOAT3(m_rect.x, m_rect.y, 1.0f)), m_worldMatrix);
+
+	XMStoreFloat4x4(&worldMatrix, XMMatrixTranspose(XMLoadFloat4x4(&worldMatrix)));
+	d3d12GraphicsCommandList->SetGraphicsRoot32BitConstants(static_cast<UINT>(ROOT_PARAMETER_TYPE::OBJECT), 16, &worldMatrix, 0);
 }
