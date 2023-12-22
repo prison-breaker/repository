@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "Bilboard.h"
 
+#include "Core.h"
+
 #include "AssetManager.h"
 
 #include "Texture.h"
@@ -35,8 +37,9 @@ void CBilboard::ReleaseUploadBuffers()
 	}
 }
 
-void CBilboard::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCamera* camera)
+void CBilboard::Render(CCamera* camera)
 {
+	ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferViews[] = { m_d3d12VertexBufferView };
 
 	d3d12GraphicsCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
@@ -46,8 +49,8 @@ void CBilboard::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCam
 
 	for (int i = 0; i < materials.size(); ++i)
 	{
-		materials[i]->SetPipelineState(d3d12GraphicsCommandList, RENDER_TYPE::STANDARD);
-		materials[i]->UpdateShaderVariables(d3d12GraphicsCommandList);
+		materials[i]->SetPipelineState(RENDER_TYPE::STANDARD);
+		materials[i]->UpdateShaderVariables();
 
 		d3d12GraphicsCommandList->DrawInstanced(m_vertexCount, 1, 0, 0);
 	}
@@ -58,18 +61,19 @@ void CBilboard::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCam
 	{
 		if (child->IsActive() && !child->IsDeleted())
 		{
-			child->Render(d3d12GraphicsCommandList, camera);
+			child->Render(camera);
 		}
 	}
 }
 
 //=========================================================================================================================
 
-CSkyBox::CSkyBox(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+CSkyBox::CSkyBox()
 {
 	SetActive(true);
 
 	m_maxVertexCount = m_vertexCount = 6;
+
 	vector<QuadInfo> vertices(m_maxVertexCount);
 
 	// Left
@@ -102,6 +106,9 @@ CSkyBox::CSkyBox(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Grap
 	vertices[5].m_size = XMFLOAT2(20.0f, 20.0f);
 	vertices[5].m_color = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
+	ID3D12Device* d3d12Device = CCore::GetInstance()->GetDevice();
+	ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
+
 	m_d3d12VertexBuffer = DX::CreateBufferResource(d3d12Device, d3d12GraphicsCommandList, vertices.data(), sizeof(QuadInfo) * m_maxVertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_d3d12VertexUploadBuffer.GetAddressOf());
 	m_d3d12VertexBufferView.BufferLocation = m_d3d12VertexBuffer->GetGPUVirtualAddress();
 	m_d3d12VertexBufferView.StrideInBytes = sizeof(QuadInfo);
@@ -112,7 +119,7 @@ CSkyBox::CSkyBox(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Grap
 	CTexture* texture = CAssetManager::GetInstance()->CreateTexture("SkyBox_Left");
 	CShader* shader = CAssetManager::GetInstance()->GetShader("Bilboard");
 
-	texture->Load(d3d12Device, d3d12GraphicsCommandList, "SkyBox_Left.dds", TEXTURE_TYPE::ALBEDO_MAP);
+	texture->Load("SkyBox_Left.dds", TEXTURE_TYPE::ALBEDO_MAP);
 	material->SetTexture(texture);
 	material->AddShader(shader);
 	material->SetStateNum(1);
@@ -121,7 +128,7 @@ CSkyBox::CSkyBox(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Grap
 	// Right
 	material = CAssetManager::GetInstance()->CreateMaterial("SkyBox_Right");
 	texture = CAssetManager::GetInstance()->CreateTexture("SkyBox_Right");
-	texture->Load(d3d12Device, d3d12GraphicsCommandList, "SkyBox_Right.dds", TEXTURE_TYPE::ALBEDO_MAP);
+	texture->Load("SkyBox_Right.dds", TEXTURE_TYPE::ALBEDO_MAP);
 	material->SetTexture(texture);
 	material->AddShader(shader);
 	material->SetStateNum(1);
@@ -130,7 +137,7 @@ CSkyBox::CSkyBox(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Grap
 	// Bottom
 	material = CAssetManager::GetInstance()->CreateMaterial("SkyBox_Bottom");
 	texture = CAssetManager::GetInstance()->CreateTexture("SkyBox_Bottom");
-	texture->Load(d3d12Device, d3d12GraphicsCommandList, "SkyBox_Bottom.dds", TEXTURE_TYPE::ALBEDO_MAP);
+	texture->Load("SkyBox_Bottom.dds", TEXTURE_TYPE::ALBEDO_MAP);
 	material->SetTexture(texture);
 	material->AddShader(shader);
 	material->SetStateNum(1);
@@ -139,7 +146,7 @@ CSkyBox::CSkyBox(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Grap
 	// Top
 	material = CAssetManager::GetInstance()->CreateMaterial("SkyBox_Top");
 	texture = CAssetManager::GetInstance()->CreateTexture("SkyBox_Top");
-	texture->Load(d3d12Device, d3d12GraphicsCommandList, "SkyBox_Top.dds", TEXTURE_TYPE::ALBEDO_MAP);
+	texture->Load("SkyBox_Top.dds", TEXTURE_TYPE::ALBEDO_MAP);
 	material->SetTexture(texture);
 	material->AddShader(shader);
 	material->SetStateNum(1);
@@ -148,7 +155,7 @@ CSkyBox::CSkyBox(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Grap
 	// Back
 	material = CAssetManager::GetInstance()->CreateMaterial("SkyBox_Back");
 	texture = CAssetManager::GetInstance()->CreateTexture("SkyBox_Back");
-	texture->Load(d3d12Device, d3d12GraphicsCommandList, "SkyBox_Back.dds", TEXTURE_TYPE::ALBEDO_MAP);
+	texture->Load("SkyBox_Back.dds", TEXTURE_TYPE::ALBEDO_MAP);
 	material->SetTexture(texture);
 	material->AddShader(shader);
 	material->SetStateNum(1);
@@ -157,7 +164,7 @@ CSkyBox::CSkyBox(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Grap
 	// Front
 	material = CAssetManager::GetInstance()->CreateMaterial("SkyBox_Front");
 	texture = CAssetManager::GetInstance()->CreateTexture("SkyBox_Front");
-	texture->Load(d3d12Device, d3d12GraphicsCommandList, "SkyBox_Front.dds", TEXTURE_TYPE::ALBEDO_MAP);
+	texture->Load("SkyBox_Front.dds", TEXTURE_TYPE::ALBEDO_MAP);
 	material->SetTexture(texture);
 	material->AddShader(shader);
 	material->SetStateNum(1);
@@ -168,8 +175,9 @@ CSkyBox::~CSkyBox()
 {
 }
 
-void CSkyBox::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCamera* camera)
+void CSkyBox::Render(CCamera* camera)
 {
+	ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferViews[] = { m_d3d12VertexBufferView };
 
 	d3d12GraphicsCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
@@ -179,8 +187,8 @@ void CSkyBox::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCamer
 
 	for (int i = 0; i < materials.size(); ++i)
 	{
-		materials[i]->SetPipelineState(d3d12GraphicsCommandList, RENDER_TYPE::STANDARD);
-		materials[i]->UpdateShaderVariables(d3d12GraphicsCommandList);
+		materials[i]->SetPipelineState(RENDER_TYPE::STANDARD);
+		materials[i]->UpdateShaderVariables();
 
 		d3d12GraphicsCommandList->DrawInstanced(1, 1, i, 0);
 	}
@@ -191,14 +199,14 @@ void CSkyBox::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCamer
 	{
 		if (child->IsActive() && !child->IsDeleted())
 		{
-			child->Render(d3d12GraphicsCommandList, camera);
+			child->Render(camera);
 		}
 	}
 }
 
 //=========================================================================================================================
 
-CTree::CTree(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, SCENE_TYPE sceneType)
+CTree::CTree(SCENE_TYPE sceneType)
 {
 	SetActive(true);
 
@@ -262,6 +270,9 @@ CTree::CTree(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Graphics
 		break;
 	}
 
+	ID3D12Device* d3d12Device = CCore::GetInstance()->GetDevice();
+	ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
+
 	m_d3d12VertexBuffer = DX::CreateBufferResource(d3d12Device, d3d12GraphicsCommandList, vertices.data(), sizeof(QuadInfo) * m_maxVertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_d3d12VertexUploadBuffer.GetAddressOf());
 	m_d3d12VertexBufferView.BufferLocation = m_d3d12VertexBuffer->GetGPUVirtualAddress();
 	m_d3d12VertexBufferView.StrideInBytes = sizeof(QuadInfo);
@@ -271,7 +282,7 @@ CTree::CTree(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Graphics
 	CTexture* texture = CAssetManager::GetInstance()->CreateTexture("Tree");
 	CShader* shader = CAssetManager::GetInstance()->GetShader("Bilboard");
 
-	texture->Load(d3d12Device, d3d12GraphicsCommandList, "Tree.dds", TEXTURE_TYPE::ALBEDO_MAP);
+	texture->Load("Tree.dds", TEXTURE_TYPE::ALBEDO_MAP);
 	material->SetTexture(texture);
 	material->AddShader(shader);
 	material->SetStateNum(0);

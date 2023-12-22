@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "Shader.h"
 
+#include "Core.h"
+
 #include "AssetManager.h"
 
 CShader::CShader() :
@@ -164,8 +166,10 @@ DXGI_FORMAT CShader::GetDSVFormat(int stateNum)
 	return DXGI_FORMAT_D24_UNORM_S8_UINT;
 }
 
-void CShader::CreatePipelineState(ID3D12Device* d3d12Device, ID3D12RootSignature* d3d12RootSignature, int stateNum)
+void CShader::CreatePipelineState(int stateNum)
 {
+	ID3D12Device* d3d12Device = CCore::GetInstance()->GetDevice();
+	ID3D12RootSignature* d3d12RootSignature = CCore::GetInstance()->GetRootSignature();
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC d3d12GraphicsPipelineState = {};
 	ComPtr<ID3DBlob> D3D12VertexShaderBlobs[] = { nullptr, nullptr, nullptr, nullptr, nullptr };
 	
@@ -196,18 +200,20 @@ void CShader::CreatePipelineState(ID3D12Device* d3d12Device, ID3D12RootSignature
 	}
 }
 
-void CShader::CreatePipelineStates(ID3D12Device* d3d12Device, ID3D12RootSignature* d3d12RootSignature, int stateCount)
+void CShader::CreatePipelineStates(int stateCount)
 {
 	m_d3d12PipelineStates.resize(stateCount);
 
 	for (int i = 0; i < stateCount; ++i)
 	{
-		CreatePipelineState(d3d12Device, d3d12RootSignature, i);
+		CreatePipelineState(i);
 	}
 }
 
-void CShader::SetPipelineState(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, int stateNum)
+void CShader::SetPipelineState(int stateNum)
 {
+	ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
+
 	d3d12GraphicsCommandList->SetPipelineState(m_d3d12PipelineStates[stateNum].Get());
 }
 
@@ -239,11 +245,13 @@ const XMUINT3& CComputeShader::GetThreadGroup()
 	return m_threadGroup;
 }
 
-void CComputeShader::CreatePipelineState(ID3D12Device* d3d12Device, ID3D12RootSignature* d3d12RootSignature, int stateNum)
+void CComputeShader::CreatePipelineState(int stateNum)
 {
-	D3D12_CACHED_PIPELINE_STATE D3D12CachedPipelineState{};
-	D3D12_COMPUTE_PIPELINE_STATE_DESC D3D12ComputePipelineStateDesc{};
-	ComPtr<ID3DBlob> D3D12ComputeShaderBlob{};
+	ID3D12Device* d3d12Device = CCore::GetInstance()->GetDevice();
+	ID3D12RootSignature* d3d12RootSignature = CCore::GetInstance()->GetRootSignature();
+	D3D12_CACHED_PIPELINE_STATE D3D12CachedPipelineState = {};
+	D3D12_COMPUTE_PIPELINE_STATE_DESC D3D12ComputePipelineStateDesc = {};
+	ComPtr<ID3DBlob> D3D12ComputeShaderBlob = {};
 
 	D3D12ComputePipelineStateDesc.pRootSignature = d3d12RootSignature;
 	D3D12ComputePipelineStateDesc.CS = CreateComputeShader(D3D12ComputeShaderBlob.Get(), stateNum);
@@ -254,8 +262,10 @@ void CComputeShader::CreatePipelineState(ID3D12Device* d3d12Device, ID3D12RootSi
 	DX::ThrowIfFailed(d3d12Device->CreateComputePipelineState(&D3D12ComputePipelineStateDesc, __uuidof(ID3D12PipelineState), reinterpret_cast<void**>(m_d3d12PipelineStates[stateNum].GetAddressOf())));
 }
 
-void CComputeShader::Dispatch(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, int stateNum)
+void CComputeShader::Dispatch(int stateNum)
 {
+	ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
+
 	d3d12GraphicsCommandList->SetPipelineState(m_d3d12PipelineStates[stateNum].Get());
 	d3d12GraphicsCommandList->Dispatch(m_threadGroup.x, m_threadGroup.y, m_threadGroup.z);
 }

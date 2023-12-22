@@ -1,6 +1,7 @@
 #pragma once
 
 class CObject;
+class CCamera;
 
 class CComponent abstract
 {
@@ -22,9 +23,10 @@ public:
 	void SetOwner(CObject* owner);
 	CObject* GetOwner();
 
-	virtual void CreateShaderVariables(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
-	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
+	virtual void CreateShaderVariables();
+	virtual void UpdateShaderVariables();
 	virtual void ReleaseShaderVariables();
 
 	virtual void Update() = 0;
+	virtual void Render(CCamera* camera);
 };

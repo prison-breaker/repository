@@ -7,7 +7,7 @@ struct Fog
 	float	 m_density;
 };
 
-struct Light
+struct LIGHT
 {
 	bool	   m_isActive;
 			   
@@ -30,7 +30,7 @@ struct Light
 
 struct CB_GameScene
 {
-	Light m_lights[MAX_LIGHTS];
+	LIGHT m_lights[MAX_LIGHTS];
 	Fog   m_fog;
 };
 
@@ -53,8 +53,8 @@ private:
 	virtual void Enter();
 	virtual void Exit();
 
-	virtual void CreateShaderVariables(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
-	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
+	virtual void CreateShaderVariables();
+	virtual void UpdateShaderVariables();
 	virtual void ReleaseShaderVariables();
 
 	void UpdateLightTower();
@@ -62,10 +62,10 @@ private:
 public:
 	virtual ~CGameScene();
 
-	virtual void Init(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
+	virtual void Init();
 
 	virtual void Update();
 
-	virtual void PreRender(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
-	virtual void Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
+	virtual void PreRender();
+	virtual void Render();
 };

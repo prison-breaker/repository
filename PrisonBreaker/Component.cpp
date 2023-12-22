@@ -31,14 +31,18 @@ CObject* CComponent::GetOwner()
 	return m_owner;
 }
 
-void CComponent::CreateShaderVariables(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+void CComponent::CreateShaderVariables()
 {
 }
 
-void CComponent::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+void CComponent::UpdateShaderVariables()
 {
 }
 
 void CComponent::ReleaseShaderVariables()
+{
+}
+
+void CComponent::Render(CCamera* camera)
 {
 }

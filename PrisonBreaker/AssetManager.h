@@ -25,10 +25,10 @@ private:
 	CAssetManager();
 	virtual ~CAssetManager();
 
-	void LoadMeshes(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, const string& fileName);
-	void LoadTextures(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, const string& fileName);
-	void LoadShaders(ID3D12Device* d3d12Device, ID3D12RootSignature* D3D12RootSignature);
-	void LoadMaterials(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, const string& fileName);
+	void LoadMeshes(const string& fileName);
+	void LoadTextures(const string& fileName);
+	void LoadShaders();
+	void LoadMaterials(const string& fileName);
 
 public:
 	const string& GetAssetPath();
@@ -53,9 +53,9 @@ public:
 	const vector<CAnimation*>& GetAnimations(const string& key);
 	int GetAnimationCount(const string& key);
 
-	void Init(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ID3D12RootSignature* D3D12RootSignature);
+	virtual void Init();
 
-	void CreateShaderResourceViews(ID3D12Device* d3d12Device);
+	void CreateShaderResourceViews();
 
 	void ReleaseUploadBuffers();
 };

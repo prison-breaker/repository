@@ -36,11 +36,11 @@ public:
 
 	void SetBoneInfo(vector<CObject*>* boneFrameCache, const ComPtr<ID3D12Resource>& d3d12BoneTransformMatrixes, XMFLOAT4X4* mappedBoneTransformMatrixes);
 
-	void LoadSkinInfo(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in);
+	void LoadSkinInfo(ifstream& in);
 
-	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
+	virtual void UpdateShaderVariables();
 
 	virtual void ReleaseUploadBuffers();
 
-	virtual void Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, int subSetIndex);
+	virtual void Render(int subSetIndex);
 };

@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "SpriteRenderer.h"
 
+#include "Core.h"
+
 #include "TimeManager.h"
 
 CSpriteRenderer::CSpriteRenderer() :
@@ -48,12 +50,10 @@ float CSpriteRenderer::GetDuration()
     return m_duration;
 }
 
-void CSpriteRenderer::CreateShaderVariables(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+void CSpriteRenderer::UpdateShaderVariables()
 {
-}
+    ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
 
-void CSpriteRenderer::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
-{
     d3d12GraphicsCommandList->SetGraphicsRoot32BitConstants(static_cast<UINT>(ROOT_PARAMETER_TYPE::SPRITE), 2, &m_spriteSize, 0);
     d3d12GraphicsCommandList->SetGraphicsRoot32BitConstants(static_cast<UINT>(ROOT_PARAMETER_TYPE::SPRITE), 1, &m_frameIndex, 2);
 }

@@ -29,13 +29,13 @@ protected:
 	virtual DXGI_FORMAT GetRTVFormat(int renderTargetNum, int stateNum);
 	virtual DXGI_FORMAT GetDSVFormat(int stateNum);
 
-	virtual void CreatePipelineState(ID3D12Device* d3d12Device, ID3D12RootSignature* d3d12RootSignature, int stateNum);
+	virtual void CreatePipelineState(int stateNum);
 
 public:
 	virtual ~CShader();
 
-	void CreatePipelineStates(ID3D12Device* d3d12Device, ID3D12RootSignature* d3d12RootSignature, int stateCount);
-	void SetPipelineState(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, int stateNum);
+	void CreatePipelineStates(int stateCount);
+	void SetPipelineState(int stateNum);
 };
 
 //=========================================================================================================================
@@ -58,7 +58,7 @@ public:
 	void SetThreadGroup(const XMUINT3& threadGroup);
 	const XMUINT3& GetThreadGroup();
 
-	virtual void CreatePipelineState(ID3D12Device* d3d12Device, ID3D12RootSignature* d3d12RootSignature, int stateNum);
+	virtual void CreatePipelineState(int stateNum);
 	
-	void Dispatch(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, int stateNum);
+	void Dispatch(int stateNum);
 };

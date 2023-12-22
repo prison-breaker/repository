@@ -26,7 +26,7 @@ public:
 
 	void Play(const string& key, bool isLoop, bool duplicatable = false);
 
-	virtual void Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in) = 0;
+	virtual void Load(ifstream& in) = 0;
 
 	virtual void Update() = 0;
 };
@@ -46,9 +46,9 @@ public:
 	CSkinningAnimator();
 	virtual ~CSkinningAnimator();
 
-	virtual void Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in);
+	virtual void Load(ifstream& in);
 
-	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
+	virtual void UpdateShaderVariables();
 
 	virtual void Update();
 };
@@ -64,7 +64,7 @@ public:
 	CUIAnimator();
 	virtual ~CUIAnimator();
 
-	virtual void Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in);
+	virtual void Load(ifstream& in);
 
 	virtual void Update();
 };

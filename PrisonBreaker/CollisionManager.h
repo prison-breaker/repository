@@ -18,8 +18,8 @@ class CCollisionManager : public CSingleton<CCollisionManager>
 	friend class CSingleton;
 
 private:
-	UINT						m_layerMask[(int)GROUP_TYPE::COUNT]; // 그룹 간의 충돌체크 여부
-	unordered_map<UINT64, bool> m_collisionStates;					 // 객체 간의 충돌 상태
+	UINT						m_layerMask[static_cast<int>(GROUP_TYPE::COUNT)]; // 그룹 간의 충돌체크 여부
+	unordered_map<UINT64, bool> m_collisionStates;								  // 객체 간의 충돌 상태
 
 private:
 	CCollisionManager();

@@ -25,11 +25,11 @@ public:
 	void SetGpuDescriptorHandle(const D3D12_GPU_DESCRIPTOR_HANDLE& D3D12GpuDescriptorHandle);
 	const D3D12_GPU_DESCRIPTOR_HANDLE& GetGpuDescriptorHandle();
 
-	void Create(ID3D12Device* d3d12Device, const UINT64& Width, UINT Height, D3D12_RESOURCE_STATES D3D12ResourceStates, D3D12_RESOURCE_FLAGS D3D12ResourceFlags, DXGI_FORMAT DxgiFormat, const D3D12_CLEAR_VALUE& D3D12ClearValue, TEXTURE_TYPE textureType);
-	void Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in);
-	void Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, const string& fileName, TEXTURE_TYPE textureType);
+	void Create(const UINT64& Width, UINT Height, D3D12_RESOURCE_STATES D3D12ResourceStates, D3D12_RESOURCE_FLAGS D3D12ResourceFlags, DXGI_FORMAT DxgiFormat, const D3D12_CLEAR_VALUE& D3D12ClearValue, TEXTURE_TYPE textureType);
+	void Load(ifstream& in);
+	void Load(const string& fileName, TEXTURE_TYPE textureType);
 
-	virtual void UpdateShaderVariable(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
+	virtual void UpdateShaderVariable();
 
-	void ReleaseUploadBuffers();
+	virtual void ReleaseUploadBuffers();
 };

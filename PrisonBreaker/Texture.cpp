@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "Texture.h"
 
+#include "Core.h"
+
 #include "AssetManager.h"
 
 CTexture::CTexture() :
@@ -35,13 +37,15 @@ const D3D12_GPU_DESCRIPTOR_HANDLE& CTexture::GetGpuDescriptorHandle()
 	return m_d3d12GpuDescriptorHandle;
 }
 
-void CTexture::Create(ID3D12Device* d3d12Device, const UINT64& Width, UINT Height, D3D12_RESOURCE_STATES D3D12ResourceStates, D3D12_RESOURCE_FLAGS D3D12ResourceFlags, DXGI_FORMAT DxgiFormat, const D3D12_CLEAR_VALUE& D3D12ClearValue, TEXTURE_TYPE textureType)
+void CTexture::Create(const UINT64& Width, UINT Height, D3D12_RESOURCE_STATES D3D12ResourceStates, D3D12_RESOURCE_FLAGS D3D12ResourceFlags, DXGI_FORMAT DxgiFormat, const D3D12_CLEAR_VALUE& D3D12ClearValue, TEXTURE_TYPE textureType)
 {
+	ID3D12Device* d3d12Device = CCore::GetInstance()->GetDevice();
+
 	m_type = textureType;
 	m_d3d12Texture = DX::CreateTexture2DResource(d3d12Device, Width, Height, 1, 0, D3D12ResourceStates, D3D12ResourceFlags, DxgiFormat, D3D12ClearValue);
 }
 
-void CTexture::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in)
+void CTexture::Load(ifstream& in)
 {
 	string str;
 
@@ -56,7 +60,7 @@ void CTexture::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12G
 		else if (str == "<FileName>")
 		{
 			File::ReadStringFromFile(in, str);
-			Load(d3d12Device, d3d12GraphicsCommandList, str, m_type);
+			Load(str, m_type);
 		}
 		else if (str == "</Texture>")
 		{
@@ -65,8 +69,10 @@ void CTexture::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12G
 	}
 }
 
-void CTexture::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, const string& fileName, TEXTURE_TYPE textureType)
+void CTexture::Load(const string& fileName, TEXTURE_TYPE textureType)
 {
+	ID3D12Device* d3d12Device = CCore::GetInstance()->GetDevice();
+	ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
 	string filePath = CAssetManager::GetInstance()->GetAssetPath() + "Texture\\" + fileName;
 
 	// .dds 부분을 제외한 나머지를 이름으로 설정한다.
@@ -75,8 +81,10 @@ void CTexture::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12G
 	m_d3d12Texture = DX::CreateTextureResourceFromDDSFile(d3d12Device, d3d12GraphicsCommandList, filePath, D3D12_RESOURCE_STATE_GENERIC_READ, m_d3d12UploadBuffer.GetAddressOf());
 }
 
-void CTexture::UpdateShaderVariable(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+void CTexture::UpdateShaderVariable()
 {
+	ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
+
 	switch (m_type)
 	{
 	case TEXTURE_TYPE::ALBEDO_MAP:

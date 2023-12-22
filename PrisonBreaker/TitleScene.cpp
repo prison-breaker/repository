@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "TitleScene.h"
 
+#include "Core.h"
+
 CTitleScene::CTitleScene()
 {
 }
@@ -44,8 +46,11 @@ void CTitleScene::Exit()
 	//CSoundManager::GetInstance()->Stop(SOUND_TYPE_TITLE_BGM);
 }
 
-void CTitleScene::Init(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+void CTitleScene::Init()
 {
+	//ID3D12Device* d3d12Device = CCore::GetInstance()->GetDevice();
+	//ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
+
 	//// 렌더링에 필요한 셰이더 객체(PSO)를 생성한다.
 	//shared_ptr<CGraphicsShader> Shader{ make_shared<CQuadShader>() };
 

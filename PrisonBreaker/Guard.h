@@ -34,7 +34,7 @@ public:
 
 	virtual void Init();
 
-	virtual void OnCollisionEnter(CObject* collidedObject);
+	//virtual void OnCollisionEnter(CObject* collidedObject);
 
 	CCharacter* FindTarget(float maxDist, float fov);
 

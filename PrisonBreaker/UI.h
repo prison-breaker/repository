@@ -11,7 +11,7 @@ public:
 	CUI();
 	virtual ~CUI();
 	
-	static CUI* Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in);
+	static CUI* Load(ifstream& in);
 
 	void SetFixed(bool isFixed);
 	bool IsFixed();
@@ -27,7 +27,7 @@ public:
 
 	virtual void Update();
 
-	virtual void Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCamera* camera);
+	virtual void Render(CCamera* camera);
 
 private:
 	void CheckCursorOver();

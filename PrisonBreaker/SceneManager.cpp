@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "SceneManager.h"
 
+#include "Core.h"
+
 #include "TitleScene.h"
 #include "GameScene.h"
 
@@ -18,7 +20,7 @@ CSceneManager::~CSceneManager()
 void CSceneManager::ChangeScene(SCENE_TYPE sceneType)
 {
 	m_currentScene->Exit();
-	m_currentScene = m_scenes[(int)sceneType];
+	m_currentScene = m_scenes[static_cast<int>(sceneType)];
 	m_currentScene->Enter();
 }
 
@@ -27,25 +29,24 @@ CScene* CSceneManager::GetCurrentScene()
 	return m_currentScene;
 }
 
-void CSceneManager::Init(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+void CSceneManager::Init()
 {
+	ID3D12Device* d3d12Device = CCore::GetInstance()->GetDevice();
+	ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
+
 	// ¾À »ý¼º
-	m_scenes.resize((int)SCENE_TYPE::COUNT);
-
-	//m_scenes[(int)SCENE_TYPE::TITLE] = new CTitleScene();
-	//m_scenes[(int)SCENE_TYPE::TITLE]->Init(d3d12Device, d3d12GraphicsCommandList, D3D12RootSignature);
-
-	m_scenes[(int)SCENE_TYPE::GAME] = new CGameScene();
-	m_scenes[(int)SCENE_TYPE::GAME]->Init(d3d12Device, d3d12GraphicsCommandList);
-
+	m_scenes.resize(static_cast<int>(SCENE_TYPE::COUNT));
+	m_scenes[static_cast<int>(SCENE_TYPE::GAME)] = new CGameScene();
+	m_scenes[static_cast<int>(SCENE_TYPE::GAME)]->Init();
+											   
 	// ÇöÀç ¾À ¼³Á¤
-	m_currentScene = m_scenes[(int)SCENE_TYPE::GAME];
+	m_currentScene = m_scenes[static_cast<int>(SCENE_TYPE::GAME)];
 	m_currentScene->Enter();
 }
 
 void CSceneManager::ReleaseUploadBuffers()
 {
-	for (int i = 0; i < (int)SCENE_TYPE::COUNT; ++i)
+	for (int i = 0; i < static_cast<int>(SCENE_TYPE::COUNT); ++i)
 	{
 		if (m_scenes[i] != nullptr)
 		{
@@ -59,19 +60,19 @@ void CSceneManager::Update()
 	m_currentScene->Update();
 }
 
-void CSceneManager::PreRender(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+void CSceneManager::PreRender()
 {
-	m_currentScene->PreRender(d3d12GraphicsCommandList);
+	m_currentScene->PreRender();
 }
 
-void CSceneManager::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+void CSceneManager::Render()
 {
-	m_currentScene->Render(d3d12GraphicsCommandList);
+	m_currentScene->Render();
 }
 
-void CSceneManager::PostRender(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+void CSceneManager::PostRender()
 {
-	m_currentScene->PostRender(d3d12GraphicsCommandList);
+	m_currentScene->PostRender();
 }
 
 //void CSceneManager::ProcessPacket()

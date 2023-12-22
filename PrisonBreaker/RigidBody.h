@@ -14,9 +14,6 @@ private:
 	float    m_maxSpeedXZ;	   // XZ축 최대 속력
 	float    m_maxSpeedY;      // Y축 최대 속력
 
-	float    m_frictionCoeffX; // X축 마찰계수
-	float    m_frictionCoeffZ; // Z축 마찰계수
-
 public:
 	CRigidBody();
 	virtual ~CRigidBody();
@@ -34,12 +31,6 @@ public:
 
 	float GetSpeedXZ();
 	float GetSpeedY();
-
-	void SetFrictionCoeffX(float frictionCoeffX);
-	float GetFrictionCoeffX();
-
-	void SetFrictionCoeffZ(float frictionCoeffZ);
-	float GetFrictionCoeffZ();
 
 	void AddForce(const XMFLOAT3& force);
 	void AddVelocity(const XMFLOAT3& velocity);

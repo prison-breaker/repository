@@ -94,12 +94,6 @@
     <Filter Include="헤더 파일\00. Dependency">
       <UniqueIdentifier>{a423c7b4-b3da-49b7-b2e5-2b087c21e44d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="소스 파일\09. Trigger">
-      <UniqueIdentifier>{e497fe1a-23bc-4897-8e89-47317c9d37fa}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="헤더 파일\09. Trigger">
-      <UniqueIdentifier>{c2c38898-6902-4ad4-80f9-2edadc1a04d5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="소스 파일\05. Object\05-01. Character">
       <UniqueIdentifier>{30aef1ec-0a3a-46c0-81c0-fd71da1645aa}</UniqueIdentifier>
     </Filter>
@@ -117,6 +111,12 @@
     </Filter>
     <Filter Include="헤더 파일\05. Object\05-03. UI">
       <UniqueIdentifier>{6d6859d7-6b1e-4e8b-87c5-53e293effba0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\05. Object\05-04. Trigger">
+      <UniqueIdentifier>{b446108e-0a8c-4c95-b3eb-77bfed5ac282}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\05. Object\05-04. Trigger">
+      <UniqueIdentifier>{90594dfb-98e5-46a6-ba69-03e1970d81be}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -149,12 +149,6 @@
     </ClCompile>
     <ClCompile Include="UIStates.cpp">
       <Filter>소스 파일\08. State</Filter>
-    </ClCompile>
-    <ClCompile Include="EventTrigger.cpp">
-      <Filter>소스 파일\09. Trigger</Filter>
-    </ClCompile>
-    <ClCompile Include="EventTriggers.cpp">
-      <Filter>소스 파일\09. Trigger</Filter>
     </ClCompile>
     <ClCompile Include="TitleScene.cpp">
       <Filter>소스 파일\04. Scene</Filter>
@@ -279,11 +273,11 @@
     <ClCompile Include="UILayer.cpp">
       <Filter>소스 파일\05. Object\05-03. UI</Filter>
     </ClCompile>
-    <ClCompile Include="UIObjects.cpp">
-      <Filter>소스 파일\05. Object\05-03. UI</Filter>
-    </ClCompile>
     <ClCompile Include="Transform.cpp">
       <Filter>소스 파일\07. Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Trigger.cpp">
+      <Filter>소스 파일\05. Object\05-04. Trigger</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -313,12 +307,6 @@
     </ClInclude>
     <ClInclude Include="UIStates.h">
       <Filter>헤더 파일\08. State</Filter>
-    </ClInclude>
-    <ClInclude Include="EventTrigger.h">
-      <Filter>헤더 파일\09. Trigger</Filter>
-    </ClInclude>
-    <ClInclude Include="EventTriggers.h">
-      <Filter>헤더 파일\09. Trigger</Filter>
     </ClInclude>
     <ClInclude Include="TitleScene.h">
       <Filter>헤더 파일\04. Scene</Filter>
@@ -449,11 +437,11 @@
     <ClInclude Include="UILayer.h">
       <Filter>헤더 파일\05. Object\05-03. UI</Filter>
     </ClInclude>
-    <ClInclude Include="UIObjects.h">
-      <Filter>헤더 파일\05. Object\05-03. UI</Filter>
-    </ClInclude>
     <ClInclude Include="Transform.h">
       <Filter>헤더 파일\07. Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Trigger.h">
+      <Filter>헤더 파일\05. Object\05-04. Trigger</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

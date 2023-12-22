@@ -47,7 +47,7 @@ public:
 	XMFLOAT3 GetUp();
 	XMFLOAT3 GetForward();
 
-	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
+	virtual void UpdateShaderVariables();
 
 	void Translate(const XMFLOAT3& shift);
 	void Rotate(const XMFLOAT3& rotation);
@@ -72,5 +72,5 @@ public:
 	void SetRect(const XMFLOAT2& rect);
 	const XMFLOAT2& GetRect();
 
-	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
+	virtual void UpdateShaderVariables();
 };

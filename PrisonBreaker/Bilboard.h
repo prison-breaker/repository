@@ -29,7 +29,7 @@ public:
 
 	virtual void ReleaseUploadBuffers();
 
-	virtual void Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCamera* camera);
+	virtual void Render(CCamera* camera);
 };
 
 //=========================================================================================================================
@@ -37,10 +37,10 @@ public:
 class CSkyBox : public CBilboard
 {
 public:
-	CSkyBox(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
+	CSkyBox();
 	virtual ~CSkyBox();
 
-	virtual void Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCamera* camera);
+	virtual void Render(CCamera* camera);
 };
 
 //=========================================================================================================================
@@ -48,6 +48,6 @@ public:
 class CTree : public CBilboard
 {
 public:
-	CTree(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, SCENE_TYPE sceneType);
+	CTree(SCENE_TYPE sceneType);
 	virtual ~CTree();
 };

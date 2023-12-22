@@ -1,7 +1,5 @@
 #pragma once
 
-class CObject;
-
 class CMesh;
 class CMaterial;
 
@@ -14,12 +12,6 @@ class CSpriteRenderer;
 class CCollider;
 
 class CCamera;
-
-struct LoadedModel
-{
-	CObject*   m_rootFrame;
-	CAnimator* m_animator;
-};
 
 class CObject
 {
@@ -46,7 +38,7 @@ public:
 	CObject(const CObject& rhs) = delete;
 	virtual ~CObject();
 
-	static LoadedModel Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, const string& fileName);
+	static CObject* Load(const string& fileName);
 
 	UINT GetInstanceID();
 
@@ -66,7 +58,6 @@ public:
 	const vector<CMaterial*>& GetMaterials();
 
 	virtual CComponent* CreateComponent(COMPONENT_TYPE componentType);
-	void SetComponent(COMPONENT_TYPE componentType, CComponent* newComponent);
 	CComponent* GetComponent(COMPONENT_TYPE componentType);
 
 	CObject* GetParent();
@@ -76,8 +67,8 @@ public:
 
 	virtual void Init();
 
-	virtual void CreateShaderVariables(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
-	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
+	virtual void CreateShaderVariables();
+	virtual void UpdateShaderVariables();
 	virtual void ReleaseShaderVariables();
 
 	virtual void ReleaseUploadBuffers();
@@ -94,9 +85,9 @@ public:
 
 	virtual void Update();
 
-	virtual void PreRender(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCamera* camera);
-	virtual void Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCamera* camera);
+	virtual void PreRender(CCamera* camera);
+	virtual void Render(CCamera* camera);
 
 private:
-	static CObject* LoadFrame(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in);
+	static CObject* LoadFrame(ifstream& in);
 };

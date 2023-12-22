@@ -19,15 +19,15 @@ private:
 public:
 	CScene* GetCurrentScene();
 
-	void Init(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
+	virtual void Init();
 
 	void ReleaseUploadBuffers();
 
 	void Update();
 
-	void PreRender(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
-	void Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
-	void PostRender(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
+	void PreRender();
+	void Render();
+	void PostRender();
 
 	//void ProcessPacket();
 };

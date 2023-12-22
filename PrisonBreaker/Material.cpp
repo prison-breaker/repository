@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "Material.h"
 
+#include "Core.h"
+
 #include "AssetManager.h"
 
 #include "Texture.h"
@@ -83,8 +85,10 @@ const vector<CShader*>& CMaterial::GetShaders()
 	return m_shaders;
 }
 
-void CMaterial::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in)
+void CMaterial::Load(ifstream& in)
 {
+	ID3D12Device* d3d12Device = CCore::GetInstance()->GetDevice();
+	ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
 	string str;
 
 	while (true)
@@ -140,8 +144,10 @@ void CMaterial::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12
 	}
 }
 
-void CMaterial::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+void CMaterial::UpdateShaderVariables()
 {
+	ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
+
 	d3d12GraphicsCommandList->SetGraphicsRoot32BitConstants(static_cast<UINT>(ROOT_PARAMETER_TYPE::OBJECT), 4, &m_color, 16);
 	d3d12GraphicsCommandList->SetGraphicsRoot32BitConstants(static_cast<UINT>(ROOT_PARAMETER_TYPE::OBJECT), 1, &m_textureMask, 20);
 	d3d12GraphicsCommandList->SetGraphicsRoot32BitConstants(static_cast<UINT>(ROOT_PARAMETER_TYPE::OBJECT), 2, &m_textureScale, 21);
@@ -150,12 +156,12 @@ void CMaterial::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCo
 	{
 		if (texture != nullptr)
 		{
-			texture->UpdateShaderVariable(d3d12GraphicsCommandList);
+			texture->UpdateShaderVariable();
 		}
 	}
 }
 
-void CMaterial::SetPipelineState(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, RENDER_TYPE renderType)
+void CMaterial::SetPipelineState(RENDER_TYPE renderType)
 {
-	m_shaders[static_cast<int>(renderType)]->SetPipelineState(d3d12GraphicsCommandList, m_stateNum);
+	m_shaders[static_cast<int>(renderType)]->SetPipelineState(m_stateNum);
 }

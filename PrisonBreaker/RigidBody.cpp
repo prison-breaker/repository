@@ -16,9 +16,7 @@ CRigidBody::CRigidBody() :
     m_velocity(),
     m_accel(),
     m_maxSpeedXZ(),
-    m_maxSpeedY(),
-    m_frictionCoeffX(2.0f),
-    m_frictionCoeffZ(2.0f)
+    m_maxSpeedY()
 {
 }
 
@@ -76,36 +74,6 @@ float CRigidBody::GetMaxSpeedY()
     return m_maxSpeedY;
 }
 
-void CRigidBody::SetFrictionCoeffX(float frictionCoeffX)
-{
-    if (frictionCoeffX < 0.0f)
-    {
-        frictionCoeffX = 0.0f;
-    }
-
-    m_frictionCoeffX = frictionCoeffX;
-}
-
-float CRigidBody::GetFrictionCoeffX()
-{
-    return m_frictionCoeffX;
-}
-
-void CRigidBody::SetFrictionCoeffZ(float frictionCoeffZ)
-{
-    if (frictionCoeffZ < 0.0f)
-    {
-        frictionCoeffZ = 0.0f;
-    }
-
-    m_frictionCoeffZ = frictionCoeffZ;
-}
-
-float CRigidBody::GetFrictionCoeffZ()
-{
-    return m_frictionCoeffZ;
-}
-
 float CRigidBody::GetSpeedXZ()
 {
     return Vector3::Length(XMFLOAT3(m_velocity.x, 0.0f, m_velocity.z));
@@ -132,7 +100,6 @@ void CRigidBody::MovePosition()
     const XMFLOAT3& position = transform->GetPosition();
     XMFLOAT3 shift = Vector3::ScalarProduct(m_velocity, DT);
     XMFLOAT3 newPosition = Vector3::Add(position, shift);
-
     CNavMesh* navMesh = static_cast<CNavMesh*>(CAssetManager::GetInstance()->GetMesh("NavMesh"));
 
     if (navMesh->IsInNavMesh(position, newPosition))
@@ -161,9 +128,9 @@ void CRigidBody::Update()
 
     if (speedXZ > 0.0f)
     {
-        // 이번 프레임에 X, Z축 성분으로 누적된 힘이 없을 경우, 마찰력을 급증시킨다.
-        float frictionCoeffX = (Math::IsZero(m_force.x)) ? 200.0f * m_frictionCoeffX : m_frictionCoeffX;
-        float frictionCoeffZ = (Math::IsZero(m_force.z)) ? 200.0f * m_frictionCoeffZ : m_frictionCoeffZ;
+        // 이번 프레임에 X, Z축 성분으로 각각 누적된 힘이 없을 경우, 해당 성분에 매우 큰 마찰력을 적용하여 캐릭터가 빠르게 멈추게 만든다.
+        float frictionCoeffX = (Math::IsZero(m_force.x)) ? 100.0f : 0.0f;
+        float frictionCoeffZ = (Math::IsZero(m_force.z)) ? 100.0f : 0.0f;
         XMFLOAT3 direction = XMFLOAT3(m_velocity.x / speedXZ, 0.0f, m_velocity.z / speedXZ);
         XMFLOAT3 friction = Vector3::Inverse(direction);
 
@@ -204,9 +171,9 @@ void CRigidBody::Update()
             m_velocity.x *= ratio;
             m_velocity.z *= ratio;
         }
+
+        MovePosition();
     }
-    
-    MovePosition();
 
     // 이번 프레임에 누적된 힘의 양 초기화
     m_force = XMFLOAT3(0.0f, 0.0f, 0.0f);

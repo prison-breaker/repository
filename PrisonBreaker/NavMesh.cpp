@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "NavMesh.h"
 
+#include "Core.h"
+
 #include "AssetManager.h"
 
 #include "NavNode.h"
@@ -48,8 +50,10 @@ int CNavMesh::GetNodeIndex(const XMFLOAT3& position)
 	return index;
 }
 
-void CNavMesh::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, const string& fileName)
+void CNavMesh::Load(const string& fileName)
 {
+	ID3D12Device* d3d12Device = CCore::GetInstance()->GetDevice();
+	ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
 	string filePath = CAssetManager::GetInstance()->GetAssetPath() + "Mesh\\" + fileName;
 	ifstream in(filePath, ios::binary);
 	string str;

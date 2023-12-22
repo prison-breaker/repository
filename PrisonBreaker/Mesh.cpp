@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "Mesh.h"
 
+#include "Core.h"
+
 CMesh::CMesh() :
 	m_d3d12PrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST),
 	m_positions(),
@@ -20,13 +22,9 @@ CMesh::CMesh() :
 	m_d3d12TexCoordBuffer(),
 	m_d3d12TexCoordUploadBuffer(),
 	m_d3d12TexCoordBufferView(),
-	m_d3d12BoundingBoxPositionBuffer(),
-	m_d3d12BoundingBoxPositionUploadBuffer(),
-	m_d3d12BoundingBoxPositionBufferView(),
 	m_d3d12IndexBuffers(),
 	m_d3d12IndexUploadBuffers(),
-	m_d3d12IndexBufferViews(),
-	m_boundingBox()
+	m_d3d12IndexBufferViews()
 {
 }
 
@@ -49,22 +47,16 @@ CMesh::CMesh(const CMesh& rhs) :
 	m_d3d12TexCoordBuffer(rhs.m_d3d12TexCoordBuffer),
 	m_d3d12TexCoordUploadBuffer(),
 	m_d3d12TexCoordBufferView(rhs.m_d3d12TexCoordBufferView),
-	m_d3d12BoundingBoxPositionBuffer(rhs.m_d3d12BoundingBoxPositionBuffer),
-	m_d3d12BoundingBoxPositionUploadBuffer(),
-	m_d3d12BoundingBoxPositionBufferView(rhs.m_d3d12BoundingBoxPositionBufferView),
 	m_d3d12IndexBuffers(rhs.m_d3d12IndexBuffers),
 	m_d3d12IndexUploadBuffers(),
-	m_d3d12IndexBufferViews(rhs.m_d3d12IndexBufferViews),
-	m_boundingBox(rhs.m_boundingBox)
+	m_d3d12IndexBufferViews(rhs.m_d3d12IndexBufferViews)
 {
 	m_name = rhs.m_name;
-
 	m_d3d12PositionBuffer->AddRef();
 	m_d3d12NormalBuffer->AddRef();
 	m_d3d12TangentBuffer->AddRef();
 	m_d3d12BiTangentBuffer->AddRef();
 	m_d3d12TexCoordBuffer->AddRef();
-	m_d3d12BoundingBoxPositionBuffer->AddRef();
 
 	for (int i = 0; i < m_d3d12IndexBuffers.size(); ++i)
 	{
@@ -76,13 +68,10 @@ CMesh::~CMesh()
 {
 }
 
-const BoundingBox& CMesh::GetBoundingBox()
+void CMesh::Load(ifstream& in)
 {
-	return m_boundingBox;
-}
-
-void CMesh::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in)
-{
+	ID3D12Device* d3d12Device = CCore::GetInstance()->GetDevice();
+	ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
 	string str;
 
 	while (true)
@@ -191,11 +180,10 @@ void CMesh::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Grap
 
 			if (SubMeshCount > 0)
 			{
-				// +1: BoundingBox
-				m_indices.resize(SubMeshCount + 1);
-				m_d3d12IndexBuffers.resize(SubMeshCount + 1);
-				m_d3d12IndexUploadBuffers.resize(SubMeshCount + 1);
-				m_d3d12IndexBufferViews.resize(SubMeshCount + 1);
+				m_indices.resize(SubMeshCount);
+				m_d3d12IndexBuffers.resize(SubMeshCount);
+				m_d3d12IndexUploadBuffers.resize(SubMeshCount);
+				m_d3d12IndexBufferViews.resize(SubMeshCount);
 
 				for (int i = 0; i < SubMeshCount; ++i)
 				{
@@ -220,61 +208,11 @@ void CMesh::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Grap
 				}
 			}
 		}
-		else if (str == "<Bounds>")
-		{
-			in.read(reinterpret_cast<char*>(&m_boundingBox.Center), sizeof(XMFLOAT3));
-			in.read(reinterpret_cast<char*>(&m_boundingBox.Extents), sizeof(XMFLOAT3));
-
-			const UINT VertexCount = 8;
-			XMFLOAT3 Positions[VertexCount] =
-			{
-				{ m_boundingBox.Center.x - m_boundingBox.Extents.x, m_boundingBox.Center.y + m_boundingBox.Extents.y, m_boundingBox.Center.z + m_boundingBox.Extents.z },
-				{ m_boundingBox.Center.x + m_boundingBox.Extents.x, m_boundingBox.Center.y + m_boundingBox.Extents.y, m_boundingBox.Center.z + m_boundingBox.Extents.z },
-				{ m_boundingBox.Center.x - m_boundingBox.Extents.x, m_boundingBox.Center.y + m_boundingBox.Extents.y, m_boundingBox.Center.z - m_boundingBox.Extents.z },
-				{ m_boundingBox.Center.x + m_boundingBox.Extents.x, m_boundingBox.Center.y + m_boundingBox.Extents.y, m_boundingBox.Center.z - m_boundingBox.Extents.z },
-				{ m_boundingBox.Center.x - m_boundingBox.Extents.x, m_boundingBox.Center.y - m_boundingBox.Extents.y, m_boundingBox.Center.z + m_boundingBox.Extents.z },
-				{ m_boundingBox.Center.x + m_boundingBox.Extents.x, m_boundingBox.Center.y - m_boundingBox.Extents.y, m_boundingBox.Center.z + m_boundingBox.Extents.z },
-				{ m_boundingBox.Center.x - m_boundingBox.Extents.x, m_boundingBox.Center.y - m_boundingBox.Extents.y, m_boundingBox.Center.z - m_boundingBox.Extents.z },
-				{ m_boundingBox.Center.x + m_boundingBox.Extents.x, m_boundingBox.Center.y - m_boundingBox.Extents.y, m_boundingBox.Center.z - m_boundingBox.Extents.z }
-			};
-
-			m_d3d12BoundingBoxPositionBuffer = DX::CreateBufferResource(d3d12Device, d3d12GraphicsCommandList, Positions, sizeof(XMFLOAT3) * VertexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_d3d12BoundingBoxPositionUploadBuffer.GetAddressOf());
-			m_d3d12BoundingBoxPositionBufferView.BufferLocation = m_d3d12BoundingBoxPositionBuffer->GetGPUVirtualAddress();
-			m_d3d12BoundingBoxPositionBufferView.StrideInBytes = sizeof(XMFLOAT3);
-			m_d3d12BoundingBoxPositionBufferView.SizeInBytes = sizeof(XMFLOAT3) * VertexCount;
-
-			const UINT IndexCount = 36;
-			UINT Indices[IndexCount] = { 0, 1, 2, 1, 3, 2, 4, 6, 5, 5, 6, 7, 0, 4, 1, 1, 4, 5, 2, 3, 6, 3, 7, 6, 0, 2, 6, 0, 6, 4, 1, 5, 7, 1, 7, 3 };
-
-			m_indices.back().reserve(IndexCount);
-
-			for (UINT i = 0; i < IndexCount; ++i)
-			{
-				m_indices.back().push_back(Indices[i]);
-			}
-
-			m_d3d12IndexBuffers.back() = DX::CreateBufferResource(d3d12Device, d3d12GraphicsCommandList, Indices, sizeof(UINT) * IndexCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_INDEX_BUFFER, m_d3d12IndexUploadBuffers.back().GetAddressOf());
-			m_d3d12IndexBufferViews.back().BufferLocation = m_d3d12IndexBuffers.back()->GetGPUVirtualAddress();
-			m_d3d12IndexBufferViews.back().Format = DXGI_FORMAT_R32_UINT;
-			m_d3d12IndexBufferViews.back().SizeInBytes = sizeof(UINT) * IndexCount;
-		}
 		else if (str == "</Mesh>" || str == "</SkinnedMesh>")
 		{
 			break;
 		}
 	}
-}
-
-void CMesh::CreateShaderVariables(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
-{
-}
-
-void CMesh::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
-{
-}
-
-void CMesh::ReleaseShaderVariables()
-{
 }
 
 void CMesh::ReleaseUploadBuffers()
@@ -351,8 +289,9 @@ bool CMesh::CheckRayIntersection(const XMFLOAT3& rayOrigin, const XMFLOAT3& rayD
 	return intersected;
 }
 
-void CMesh::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, int subSetIndex)
+void CMesh::Render(int subSetIndex)
 {
+	ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferViews[] = { m_d3d12PositionBufferView, m_d3d12NormalBufferView, m_d3d12TangentBufferView, m_d3d12BiTangentBufferView, m_d3d12TexCoordBufferView };
 
 	d3d12GraphicsCommandList->IASetVertexBuffers(0, _countof(vertexBufferViews), vertexBufferViews);
@@ -369,14 +308,4 @@ void CMesh::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, int subS
 	{
 		d3d12GraphicsCommandList->DrawInstanced(static_cast<UINT>(m_positions.size()), 1, 0, 0);
 	}
-}
-
-void CMesh::RenderBoundingBox(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
-{
-	D3D12_VERTEX_BUFFER_VIEW vertexBufferViews[] = { m_d3d12BoundingBoxPositionBufferView };
-
-	d3d12GraphicsCommandList->IASetVertexBuffers(0, _countof(vertexBufferViews), vertexBufferViews);
-	d3d12GraphicsCommandList->IASetPrimitiveTopology(m_d3d12PrimitiveTopology);
-	d3d12GraphicsCommandList->IASetIndexBuffer(&m_d3d12IndexBufferViews.back());
-	d3d12GraphicsCommandList->DrawIndexedInstanced(static_cast<UINT>(m_indices.back().size()), 1, 0, 0, 0);
 }

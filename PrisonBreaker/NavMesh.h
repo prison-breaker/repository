@@ -26,7 +26,7 @@ public:
 	const vector<CNavNode*>& GetNavNodes();
 	int GetNodeIndex(const XMFLOAT3& position);
 
-	void Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, const string& fileName);
+	void Load(const string& fileName);
 
 	bool IsInNavMesh(const XMFLOAT3& position, XMFLOAT3& newPosition);
 };

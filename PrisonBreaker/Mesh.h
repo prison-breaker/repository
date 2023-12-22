@@ -31,16 +31,10 @@ protected:
 	ComPtr<ID3D12Resource>	        m_d3d12TexCoordUploadBuffer;
 	D3D12_VERTEX_BUFFER_VIEW        m_d3d12TexCoordBufferView;
 	
-	ComPtr<ID3D12Resource>			m_d3d12BoundingBoxPositionBuffer;
-	ComPtr<ID3D12Resource>	        m_d3d12BoundingBoxPositionUploadBuffer;
-	D3D12_VERTEX_BUFFER_VIEW        m_d3d12BoundingBoxPositionBufferView;
-
 	vector<ComPtr<ID3D12Resource>>  m_d3d12IndexBuffers;
 	vector<ComPtr<ID3D12Resource>>  m_d3d12IndexUploadBuffers;
 	vector<D3D12_INDEX_BUFFER_VIEW>	m_d3d12IndexBufferViews;
 							 
-	BoundingBox						m_boundingBox;
-
 protected:
 	CMesh();
 	CMesh(const CMesh& rhs);
@@ -48,18 +42,11 @@ protected:
 public:
 	virtual ~CMesh();
 
-	const BoundingBox& GetBoundingBox();
-
-	void Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in);
-
-	virtual void CreateShaderVariables(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
-	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
-	virtual void ReleaseShaderVariables();
+	void Load(ifstream& in);
 
 	virtual void ReleaseUploadBuffers();
 
 	bool CheckRayIntersection(const XMFLOAT3& rayOrigin, const XMFLOAT3& rayDirection, const XMMATRIX& worldMatrix, float& hitDistance);
 
-	virtual void Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, int subSetIndex);
-	void RenderBoundingBox(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
+	virtual void Render(int subSetIndex);
 };

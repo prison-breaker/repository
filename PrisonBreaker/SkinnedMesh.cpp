@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "SkinnedMesh.h"
 
+#include "Core.h"
+
 #include "Object.h"
 
 #include "Transform.h"
@@ -33,8 +35,10 @@ void CSkinnedMesh::SetBoneInfo(vector<CObject*>* boneFrameCache, const ComPtr<ID
 	m_mappedBoneTransformMatrixes = mappedBoneTransformMatrixes;
 }
 
-void CSkinnedMesh::CSkinnedMesh::LoadSkinInfo(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in)
+void CSkinnedMesh::CSkinnedMesh::LoadSkinInfo(ifstream& in)
 {
+	ID3D12Device* d3d12Device = CCore::GetInstance()->GetDevice();
+	ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
 	string str;
 
 	while (true)
@@ -108,7 +112,7 @@ void CSkinnedMesh::CSkinnedMesh::LoadSkinInfo(ID3D12Device* d3d12Device, ID3D12G
 	}
 }
 
-void CSkinnedMesh::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+void CSkinnedMesh::UpdateShaderVariables()
 {
 	for (int i = 0; i < m_boneFrameCache->size(); ++i)
 	{
@@ -116,6 +120,8 @@ void CSkinnedMesh::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12Graphic
 
 		XMStoreFloat4x4(&m_mappedBoneTransformMatrixes[i], XMMatrixTranspose(XMLoadFloat4x4(&transform->GetWorldMatrix())));
 	}
+
+	ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
 
 	d3d12GraphicsCommandList->SetGraphicsRootConstantBufferView(static_cast<UINT>(ROOT_PARAMETER_TYPE::BONE_OFFSET), m_d3d12BoneOffsetMatrixes->GetGPUVirtualAddress());
 	d3d12GraphicsCommandList->SetGraphicsRootConstantBufferView(static_cast<UINT>(ROOT_PARAMETER_TYPE::BONE_TRANSFORM), m_d3d12BoneTransformMatrixes->GetGPUVirtualAddress());
@@ -134,24 +140,25 @@ void CSkinnedMesh::ReleaseUploadBuffers()
 	}
 }
 
-void CSkinnedMesh::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, int subSetIndex)
+void CSkinnedMesh::Render(int subSetIndex)
 {
-	UpdateShaderVariables(d3d12GraphicsCommandList);
+	UpdateShaderVariables();
 
+	ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferViews[] = { m_d3d12PositionBufferView, m_d3d12NormalBufferView, m_d3d12TangentBufferView, m_d3d12BiTangentBufferView, m_d3d12TexCoordBufferView, m_d3d12BoneIndexBufferView, m_d3d12BoneWeightBufferView };
 
 	d3d12GraphicsCommandList->IASetVertexBuffers(0, _countof(vertexBufferViews), vertexBufferViews);
 	d3d12GraphicsCommandList->IASetPrimitiveTopology(m_d3d12PrimitiveTopology);
 
-	int bufferSize = (int)m_d3d12IndexBuffers.size();
+	int bufferSize = static_cast<int>(m_d3d12IndexBuffers.size());
 
 	if (bufferSize > 0 && subSetIndex < bufferSize)
 	{
 		d3d12GraphicsCommandList->IASetIndexBuffer(&m_d3d12IndexBufferViews[subSetIndex]);
-		d3d12GraphicsCommandList->DrawIndexedInstanced((UINT)m_indices[subSetIndex].size(), 1, 0, 0, 0);
+		d3d12GraphicsCommandList->DrawIndexedInstanced(static_cast<UINT>(m_indices[subSetIndex].size()), 1, 0, 0, 0);
 	}
 	else
 	{
-		d3d12GraphicsCommandList->DrawInstanced((UINT)m_positions.size(), 1, 0, 0);
+		d3d12GraphicsCommandList->DrawInstanced(static_cast<UINT>(m_positions.size()), 1, 0, 0);
 	}
 }

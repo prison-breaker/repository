@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "Animator.h"
 
+#include "Core.h"
+
 #include "TimeManager.h"
 #include "AssetManager.h"
 
@@ -74,8 +76,10 @@ CSkinningAnimator::~CSkinningAnimator()
 {
 }
 
-void CSkinningAnimator::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in)
+void CSkinningAnimator::Load(ifstream& in)
 {
+	ID3D12Device* d3d12Device = CCore::GetInstance()->GetDevice();
+	ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
 	string str;
 
 	while (true)
@@ -152,8 +156,10 @@ void CSkinningAnimator::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandLis
 	}
 }
 
-void CSkinningAnimator::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+void CSkinningAnimator::UpdateShaderVariables()
 {
+	ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
+
 	// 공유되는 스킨 메쉬에 현재 애니메이션 컨트롤러의 뼈 변환 행렬 리소스를 설정해준다.
 	for (int i = 0; i < m_skinnedMeshCache.size(); ++i)
 	{
@@ -163,7 +169,7 @@ void CSkinningAnimator::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12Gr
 
 void CSkinningAnimator::Update()
 {
-	if (m_isEnabled && !m_isFinished)
+	if ((m_isEnabled) && (!m_isFinished))
 	{
 		if (m_playingAnimation != nullptr)
 		{
@@ -224,8 +230,9 @@ CUIAnimator::~CUIAnimator()
 {
 }
 
-void CUIAnimator::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in)
+void CUIAnimator::Load(ifstream& in)
 {
+	ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
 	CAssetManager::GetInstance()->LoadUIAnimations(in, m_owner->GetName());
 	const vector<CAnimation*>& animations = CAssetManager::GetInstance()->GetAnimations(m_owner->GetName());
 
@@ -248,7 +255,6 @@ void CUIAnimator::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d
 
 		const vector<CObject*>& children = ui->GetChildren();
 
-		// 첫번
 		for (int i = static_cast<int>(children.size() - 1); i >= 0; --i)
 		{
 			st.push(children[i]);

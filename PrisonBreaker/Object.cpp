@@ -3,7 +3,10 @@
 
 #include "AssetManager.h"
 
+#include "Player.h"
+#include "Guard.h"
 #include "UI.h"
+#include "Trigger.h"
 
 #include "Mesh.h"
 #include "Shader.h"
@@ -45,9 +48,9 @@ CObject::~CObject()
 	Utility::SafeDelete(m_children);
 }
 
-LoadedModel CObject::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, const string& fileName)
+CObject* CObject::Load(const string& fileName)
 {
-	LoadedModel loadedModel = {};
+	CObject* object = {};
 	string filePath = CAssetManager::GetInstance()->GetAssetPath() + "Model\\" + fileName;
 	ifstream in(filePath, ios::binary);
 	string str;
@@ -59,7 +62,7 @@ LoadedModel CObject::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* 
 		if (str == "<Frames>")
 		{
 			cout << fileName << " 모델 로드 시작...\n";
-			loadedModel.m_rootFrame = CObject::LoadFrame(d3d12Device, d3d12GraphicsCommandList, in);
+			object = CObject::LoadFrame(in);
 		}
 		else if (str == "</Frames>")
 		{
@@ -72,17 +75,15 @@ LoadedModel CObject::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* 
 
 	if (str == "<Animator>")
 	{
-		loadedModel.m_animator = new CSkinningAnimator();
+		CAnimator* animator = static_cast<CAnimator*>(object->CreateComponent(COMPONENT_TYPE::ANIMATOR));
 
-		// 임시적으로 rootFrame을 owner로 지정하여 뼈정보를 저장시켜 놓는다.
-		loadedModel.m_animator->SetOwner(loadedModel.m_rootFrame);
-		loadedModel.m_animator->Load(d3d12Device, d3d12GraphicsCommandList, in);
+		animator->Load(in);
 	}
 
-	return loadedModel;
+	return object;
 }
 
-CObject* CObject::LoadFrame(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in)
+CObject* CObject::LoadFrame(ifstream& in)
 {
 	CObject* object = nullptr;
 	string str;
@@ -91,9 +92,25 @@ CObject* CObject::LoadFrame(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList
 	{
 		File::ReadStringFromFile(in, str);
 
-		if (str == "<Frame>")
+		if (str == "<ClassType>")
 		{
-			object = new CObject();
+			int classType = 0;
+
+			in.read(reinterpret_cast<char*>(&classType), sizeof(int));
+
+			switch (classType)
+			{
+			// Character
+			case 0: object = new CObject(); break;
+			case 1: object = new CPlayer(); break;
+			case 2: object = new CGuard(); break;
+
+			// Trigger
+			case 3: object = new COpenDoorTrigger(); break;
+			case 4: object = new CPowerDownTrigger(); break;
+			case 5: object = new COperateSirenTrigger(); break;
+			case 6: object = new COpenGateTrigger(); break;
+			}
 		}
 		else if (str == "<Name>")
 		{
@@ -101,10 +118,7 @@ CObject* CObject::LoadFrame(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList
 		}
 		else if (str == "<IsActive>")
 		{
-			int isActive = 0;
-
-			in.read(reinterpret_cast<char*>(&isActive), sizeof(int));
-			object->SetActive(isActive);
+			in.read(reinterpret_cast<char*>(&object->m_isActive), sizeof(int));
 		}
 		else if (str == "<Transform>")
 		{
@@ -126,9 +140,6 @@ CObject* CObject::LoadFrame(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList
 			CMesh* mesh = CAssetManager::GetInstance()->GetMesh(str);
 
 			object->SetMesh(mesh);
-
-			// 메쉬를 가진 프레임은 콜라이더 컴포넌트를 생성한다.
-			object->CreateComponent(COMPONENT_TYPE::COLLIDER);
 		}
 		else if (str == "<Materials>")
 		{
@@ -154,6 +165,21 @@ CObject* CObject::LoadFrame(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList
 				}
 			}
 		}
+		else if (str == "<Collider>")
+		{
+			XMFLOAT3 center = {};
+			XMFLOAT3 extents = {};
+
+			in.read(reinterpret_cast<char*>(&center), sizeof(XMFLOAT3));
+			in.read(reinterpret_cast<char*>(&extents), sizeof(XMFLOAT3));
+
+			// 메쉬를 가진 프레임은 콜라이더 컴포넌트를 생성한다.
+			object->CreateComponent(COMPONENT_TYPE::COLLIDER);
+			
+			CCollider* collider = static_cast<CCollider*>(object->GetComponent(COMPONENT_TYPE::COLLIDER));
+
+			collider->SetBoundingBox(center, extents);
+		}
 		else if (str == "<ChildCount>")
 		{
 			int childCount = 0;
@@ -164,7 +190,7 @@ CObject* CObject::LoadFrame(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList
 			{
 				for (int i = 0; i < childCount; ++i)
 				{
-					CObject* child = CObject::LoadFrame(d3d12Device, d3d12GraphicsCommandList, in);
+					CObject* child = CObject::LoadFrame(in);
 
 					if (child != nullptr)
 					{
@@ -276,31 +302,6 @@ CComponent* CObject::CreateComponent(COMPONENT_TYPE componentType)
 	return m_components[static_cast<int>(componentType)];
 }
 
-void CObject::SetComponent(COMPONENT_TYPE componentType, CComponent* newComponent)
-{
-	// 기존에 해당 타입의 컴포넌트를 가지고 있었다면 소멸시킨다.
-	if (m_components[static_cast<int>(componentType)] != nullptr)
-	{
-		delete m_components[static_cast<int>(componentType)];
-		m_components[static_cast<int>(componentType)] = nullptr;
-	}
-
-	if (newComponent != nullptr)
-	{
-		// newComponent의 owner가 있었다면, 연결을 해지시킨다.
-		CObject* owner = newComponent->GetOwner();
-
-		if (owner != nullptr)
-		{
-			owner->SetComponent(componentType, nullptr);
-		}
-
-		newComponent->SetOwner(this);
-	}
-	
-	m_components[static_cast<int>(componentType)] = newComponent;
-}
-
 CComponent* CObject::GetComponent(COMPONENT_TYPE componentType)
 {
 	return m_components[static_cast<int>(componentType)];
@@ -329,17 +330,17 @@ void CObject::Init()
 {
 }
 
-void CObject::CreateShaderVariables(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+void CObject::CreateShaderVariables()
 {
 }
 
-void CObject::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+void CObject::UpdateShaderVariables()
 {
 	for (const auto& component : m_components)
 	{
 		if (component != nullptr)
 		{
-			component->UpdateShaderVariables(d3d12GraphicsCommandList);
+			component->UpdateShaderVariables();
 		}
 	}
 }
@@ -434,6 +435,7 @@ bool CObject::IsVisible(CCamera* camera)
 
 void CObject::OnCollisionEnter(CObject* collidedObject)
 {
+	cout << "OnCollisionEnter()\n";
 }
 
 void CObject::OnCollision(CObject* collidedObject)
@@ -442,6 +444,7 @@ void CObject::OnCollision(CObject* collidedObject)
 
 void CObject::OnCollisionExit(CObject* collidedObject)
 {
+	cout << "OnCollisionExit()\n";
 }
 
 void CObject::Update()
@@ -456,24 +459,24 @@ void CObject::Update()
 
 	for (const auto& child : m_children)
 	{
-		if (child->m_isActive && !child->m_isDeleted)
+		if ((child->m_isActive) && (!child->m_isDeleted))
 		{
 			child->Update();
 		}
 	}
 }
 
-void CObject::PreRender(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCamera* camera)
+void CObject::PreRender(CCamera* camera)
 {
-	UpdateShaderVariables(d3d12GraphicsCommandList);
+	UpdateShaderVariables();
 
 	// DepthWrite의 경우, 직교 투영변환 행렬을 사용하기 때문에 프러스텀 컬링을 수행할 수 없다.
 	if (m_mesh != nullptr)
 	{
 		for (int i = 0; i < m_materials.size(); ++i)
 		{
-			m_materials[i]->SetPipelineState(d3d12GraphicsCommandList, RENDER_TYPE::DEPTH_WRITE);
-			m_mesh->Render(d3d12GraphicsCommandList, i);
+			m_materials[i]->SetPipelineState(RENDER_TYPE::DEPTH_WRITE);
+			m_mesh->Render(i);
 		}
 	}
 
@@ -481,14 +484,14 @@ void CObject::PreRender(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCa
 	{
 		if (child->IsActive() && !child->IsDeleted())
 		{
-			child->PreRender(d3d12GraphicsCommandList, camera);
+			child->PreRender(camera);
 		}
 	}
 }
 
-void CObject::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCamera* camera)
+void CObject::Render(CCamera* camera)
 {
-	UpdateShaderVariables(d3d12GraphicsCommandList);
+	UpdateShaderVariables();
 
 	if (IsVisible(camera))
 	{
@@ -496,22 +499,26 @@ void CObject::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCamer
 		{
 			for (int i = 0; i < m_materials.size(); ++i)
 			{
-				m_materials[i]->SetPipelineState(d3d12GraphicsCommandList, RENDER_TYPE::STANDARD);
-				m_materials[i]->UpdateShaderVariables(d3d12GraphicsCommandList);
-				m_mesh->Render(d3d12GraphicsCommandList, i);
+				m_materials[i]->SetPipelineState(RENDER_TYPE::STANDARD);
+				m_materials[i]->UpdateShaderVariables();
+				m_mesh->Render(i);
 			}
-
-			// [Debug] Render BoundingBox
-			//CAssetManager::GetInstance()->GetShader("WireFrame")->SetPipelineState(d3d12GraphicsCommandList, 0);
-			//m_mesh->RenderBoundingBox(d3d12GraphicsCommandList);
 		}
+	}
+
+	// [Debug] Render BoundingBox
+	CComponent* collider = GetComponent(COMPONENT_TYPE::COLLIDER);
+
+	if (collider != nullptr)
+	{
+		collider->Render(camera);
 	}
 
 	for (const auto& child : m_children)
 	{
 		if (child->IsActive() && !child->IsDeleted())
 		{
-			child->Render(d3d12GraphicsCommandList, camera);
+			child->Render(camera);
 		}
 	}
 }

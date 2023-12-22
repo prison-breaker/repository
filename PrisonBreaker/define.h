@@ -71,6 +71,7 @@ enum class SCENE_TYPE
 
 enum class GROUP_TYPE
 {
+	TRIGGER,
 	TERRAIN,
 	STRUCTURE,
 	ENEMY,
@@ -97,7 +98,7 @@ enum class CAMERA_TYPE
 {
 	MAIN,
 	UI,
-	Light,
+	LIGHT,
 
 	COUNT
 };

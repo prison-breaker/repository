@@ -37,7 +37,7 @@ CAssetManager::~CAssetManager()
 	}
 }
 
-void CAssetManager::LoadMeshes(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, const string& fileName)
+void CAssetManager::LoadMeshes(const string& fileName)
 {
 	string filePath = m_assetPath + "Mesh\\" + fileName;
 	ifstream in(filePath, ios::binary);
@@ -64,7 +64,7 @@ void CAssetManager::LoadMeshes(ID3D12Device* d3d12Device, ID3D12GraphicsCommandL
 		{
 			CMesh* mesh = new CMesh();
 
-			mesh->Load(d3d12Device, d3d12GraphicsCommandList, in);
+			mesh->Load(in);
 			m_meshes.emplace(mesh->GetName(), mesh);
 		}
 		else if (str == "<SkinnedMesh>")
@@ -75,7 +75,7 @@ void CAssetManager::LoadMeshes(ID3D12Device* d3d12Device, ID3D12GraphicsCommandL
 
 			CSkinnedMesh* skinnedMesh = new CSkinnedMesh(*GetMesh(str));
 
-			skinnedMesh->LoadSkinInfo(d3d12Device, d3d12GraphicsCommandList, in);
+			skinnedMesh->LoadSkinInfo(in);
 			m_meshes.emplace(skinnedMesh->GetName(), skinnedMesh);
 		}
 		else if (str == "</Meshes>")
@@ -88,11 +88,11 @@ void CAssetManager::LoadMeshes(ID3D12Device* d3d12Device, ID3D12GraphicsCommandL
 	// NavMesh
 	CNavMesh* navMesh = new CNavMesh();
 
-	navMesh->Load(d3d12Device, d3d12GraphicsCommandList, "NavMesh.bin");
+	navMesh->Load("NavMesh.bin");
 	m_meshes.emplace(navMesh->GetName(), navMesh);
 }
 
-void CAssetManager::LoadTextures(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, const string& fileName)
+void CAssetManager::LoadTextures(const string& fileName)
 {
 	string filePath = m_assetPath + "Texture\\" + fileName;
 	ifstream in(filePath, ios::binary);
@@ -118,7 +118,7 @@ void CAssetManager::LoadTextures(ID3D12Device* d3d12Device, ID3D12GraphicsComman
 		{
 			CTexture* texture = new CTexture();
 
-			texture->Load(d3d12Device, d3d12GraphicsCommandList, in);
+			texture->Load(in);
 			m_textures.emplace(texture->GetName(), texture);
 		}
 		else if (str == "</Textures>")
@@ -133,43 +133,43 @@ void CAssetManager::LoadTextures(ID3D12Device* d3d12Device, ID3D12GraphicsComman
 	CTexture* texture = new CTexture();
 
 	texture->SetName("DepthWrite");
-	texture->Create(d3d12Device, (UINT64)DEPTH_BUFFER_WIDTH, (UINT)DEPTH_BUFFER_HEIGHT, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, DXGI_FORMAT_R32_FLOAT, D3D12_CLEAR_VALUE{ DXGI_FORMAT_R32_FLOAT, { 1.0f, 1.0f, 1.0f, 1.0f } }, TEXTURE_TYPE::SHADOW_MAP);
+	texture->Create(static_cast<UINT64>(DEPTH_BUFFER_WIDTH), static_cast<UINT>(DEPTH_BUFFER_HEIGHT), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, DXGI_FORMAT_R32_FLOAT, D3D12_CLEAR_VALUE{ DXGI_FORMAT_R32_FLOAT, { 1.0f, 1.0f, 1.0f, 1.0f } }, TEXTURE_TYPE::SHADOW_MAP);
 	m_textures.emplace(texture->GetName(), texture);
 
 	// PostProcessing Texture
 }
 
-void CAssetManager::LoadShaders(ID3D12Device* d3d12Device, ID3D12RootSignature* D3D12RootSignature)
+void CAssetManager::LoadShaders()
 {
 	// 렌더링에 필요한 셰이더 객체(PSO)를 생성한다.
 	CShader* shader = new CDepthWriteShader();
 
 	shader->SetName("DepthWrite");
-	shader->CreatePipelineStates(d3d12Device, D3D12RootSignature, 3);
+	shader->CreatePipelineStates(3);
 	m_shaders.emplace(shader->GetName(), shader);
 
 	shader = new CObjectShader();
 	shader->SetName("Object");
-	shader->CreatePipelineStates(d3d12Device, D3D12RootSignature, 2);
+	shader->CreatePipelineStates(2);
 	m_shaders.emplace(shader->GetName(), shader);
 
 	shader = new CBilboardShader();
 	shader->SetName("Bilboard");
-	shader->CreatePipelineStates(d3d12Device, D3D12RootSignature, 2);
+	shader->CreatePipelineStates(2);
 	m_shaders.emplace(shader->GetName(), shader);
 
 	shader = new CUIShader();
 	shader->SetName("UI");
-	shader->CreatePipelineStates(d3d12Device, D3D12RootSignature, 2);
+	shader->CreatePipelineStates(2);
 	m_shaders.emplace(shader->GetName(), shader);
 
 	shader = new CWireFrameShader();
 	shader->SetName("WireFrame");
-	shader->CreatePipelineStates(d3d12Device, D3D12RootSignature, 1);
+	shader->CreatePipelineStates(1);
 	m_shaders.emplace(shader->GetName(), shader);
 }
 
-void CAssetManager::LoadMaterials(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, const string& fileName)
+void CAssetManager::LoadMaterials(const string& fileName)
 {
 	string filePath = m_assetPath + "Material\\" + fileName;
 	ifstream in(filePath, ios::binary);
@@ -195,7 +195,7 @@ void CAssetManager::LoadMaterials(ID3D12Device* d3d12Device, ID3D12GraphicsComma
 		{
 			CMaterial* material = new CMaterial();
 
-			material->Load(d3d12Device, d3d12GraphicsCommandList, in);
+			material->Load(in);
 			m_materials.emplace(material->GetName(), material);
 		}
 		else if (str == "</Materials>")
@@ -401,7 +401,7 @@ int CAssetManager::GetAnimationCount(const string& key)
 	return static_cast<int>(m_animations[key].size());
 }
 
-void CAssetManager::Init(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ID3D12RootSignature* D3D12RootSignature)
+void CAssetManager::Init()
 {
 	// 프로젝트 설정의 디버깅 탭에서 현재 디렉토리를 설정하면 Visual Studio에서 실행 시, 해당 경로를 작업 디텍토리로 설정한다.
 	// 하지만, Debug로 빌드된 파일을 직접 실행하는 경우에는, 해당 실행 파일의 경로가 작업 디렉토리로 설정되므로, 현재 작업 디렉토리에서
@@ -412,7 +412,7 @@ void CAssetManager::Init(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d
 	GetCurrentDirectoryA(255, assetPath);
 
 	// 상위 폴더 경로를 구한다.
-	for (int i = (int)strlen(assetPath) - 1; i >= 0; --i)
+	for (int i = static_cast<int>(strlen(assetPath) - 1); i >= 0; --i)
 	{
 		if (assetPath[i] == '\\')
 		{
@@ -425,14 +425,15 @@ void CAssetManager::Init(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d
 	strcat_s(assetPath, 255, "\\Release\\Asset\\");
 	m_assetPath = assetPath;
 
-	LoadMeshes(d3d12Device, d3d12GraphicsCommandList, "Meshes.bin");
-	LoadTextures(d3d12Device, d3d12GraphicsCommandList, "Textures.bin");
-	LoadShaders(d3d12Device, D3D12RootSignature);
-	LoadMaterials(d3d12Device, d3d12GraphicsCommandList, "Materials.bin");
+	LoadMeshes("Meshes.bin");
+	LoadTextures("Textures.bin");
+	LoadShaders();
+	LoadMaterials("Materials.bin");
 }
 
-void CAssetManager::CreateShaderResourceViews(ID3D12Device* d3d12Device)
+void CAssetManager::CreateShaderResourceViews()
 {
+	ID3D12Device* d3d12Device = CCore::GetInstance()->GetDevice();
 	D3D12_CPU_DESCRIPTOR_HANDLE d3d12CpuDescriptorHandle = CCore::GetInstance()->GetCbvSrvUavDescriptorHeap()->GetCPUDescriptorHandleForHeapStart();
 	D3D12_GPU_DESCRIPTOR_HANDLE d3d12GpuDescriptorHandle = CCore::GetInstance()->GetCbvSrvUavDescriptorHeap()->GetGPUDescriptorHandleForHeapStart();
 	UINT descriptorIncrementSize = d3d12Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);

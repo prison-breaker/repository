@@ -77,6 +77,26 @@ const XMFLOAT2& CCore::GetResolution()
 	return m_resolution;
 }
 
+ID3D12Device* CCore::GetDevice()
+{
+	return m_d3d12Device.Get();
+}
+
+ID3D12CommandQueue* CCore::GetCommandQueue()
+{
+	return m_d3d12CommandQueue.Get();
+}
+
+ID3D12GraphicsCommandList* CCore::GetGraphicsCommandList()
+{
+	return m_d3d12GraphicsCommandList.Get();
+}
+
+ID3D12RootSignature* CCore::GetRootSignature()
+{
+	return m_d3d12RootSignature.Get();
+}
+
 ID3D12DescriptorHeap* CCore::GetRtvDescriptorHeap()
 {
 	return m_d3d12RtvDescriptorHeap.Get();
@@ -116,9 +136,9 @@ void CCore::Init(HWND hWnd, const XMFLOAT2& resolution)
 	// Close 상태의 커맨드리스트를 Open 상태로 변경시킨다.
 	DX::ThrowIfFailed(m_d3d12GraphicsCommandList->Reset(m_d3d12CommandAllocator.Get(), nullptr));
 
-	CAssetManager::GetInstance()->Init(m_d3d12Device.Get(), m_d3d12GraphicsCommandList.Get(), m_d3d12RootSignature.Get());
-	CCameraManager::GetInstance()->Init(m_d3d12Device.Get(), m_d3d12GraphicsCommandList.Get());
-	CSceneManager::GetInstance()->Init(m_d3d12Device.Get(), m_d3d12GraphicsCommandList.Get());
+	CAssetManager::GetInstance()->Init();
+	CCameraManager::GetInstance()->Init();
+	CSceneManager::GetInstance()->Init();
 	CInputManager::GetInstance()->Init();
 	CTimeManager::GetInstance()->Init();
 
@@ -372,7 +392,7 @@ void CCore::CreateDepthStencilView()
 
 void CCore::CreateShaderResourceViews()
 {
-	CAssetManager::GetInstance()->CreateShaderResourceViews(m_d3d12Device.Get());
+	CAssetManager::GetInstance()->CreateShaderResourceViews();
 }
 
 void CCore::CreateRootSignature()
@@ -523,12 +543,12 @@ void CCore::MoveToNextFrame()
 
 void CCore::PreRender()
 {
-	CSceneManager::GetInstance()->PreRender(m_d3d12GraphicsCommandList.Get());
+	CSceneManager::GetInstance()->PreRender();
 }
 
 void CCore::Render()
 {
-	CSceneManager::GetInstance()->Render(m_d3d12GraphicsCommandList.Get());
+	CSceneManager::GetInstance()->Render();
 }
 
 void CCore::PostRender()

@@ -43,8 +43,10 @@ CGameScene::~CGameScene()
 	ReleaseShaderVariables();
 }
 
-void CGameScene::CreateShaderVariables(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+void CGameScene::CreateShaderVariables()
 {
+	ID3D12Device* d3d12Device = CCore::GetInstance()->GetDevice();
+	ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
 	UINT bytes = (sizeof(CB_GameScene) + 255) & ~255;
 
 	m_d3d12GameScene = DX::CreateBufferResource(d3d12Device, d3d12GraphicsCommandList, nullptr, bytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, nullptr);
@@ -54,8 +56,10 @@ void CGameScene::CreateShaderVariables(ID3D12Device* d3d12Device, ID3D12Graphics
 	m_mappedGameScene->m_fog.m_density = 0.015f;
 }
 
-void CGameScene::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+void CGameScene::UpdateShaderVariables()
 {
+	ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
+
 	d3d12GraphicsCommandList->SetGraphicsRootConstantBufferView(static_cast<UINT>(ROOT_PARAMETER_TYPE::GAME_SCENE), m_d3d12GameScene->GetGPUVirtualAddress());
 }
 
@@ -74,7 +78,7 @@ void CGameScene::Enter()
 	// 카메라의 타겟 설정
 	const vector<CObject*>& objects = GetGroupObject(GROUP_TYPE::PLAYER);
 
-	CCameraManager::GetInstance()->GetMainCamera()->SetTarget((CPlayer*)objects[0]);
+	CCameraManager::GetInstance()->GetMainCamera()->SetTarget(static_cast<CPlayer*>(objects[0]));
 	//CSoundManager::GetInstance()->Play(SOUND_TYPE_INGAME_BGM_1, 0.3f, false);
 }
 
@@ -89,11 +93,11 @@ void CGameScene::Exit()
 	//CSoundManager::GetInstance()->Stop(SOUND_TYPE_INGAME_BGM_2);
 }
 
-void CGameScene::Init(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+void CGameScene::Init()
 {
 	// 씬 로드
-	Load(d3d12Device, d3d12GraphicsCommandList, "GameScene.bin");
-	LoadUI(d3d12Device, d3d12GraphicsCommandList, "GameSceneUI.bin");
+	Load("GameScene.bin");
+	LoadUI("GameSceneUI.bin");
 
 	// 구조물을 순회하며, 감시탑의 조명 프레임을 찾아 저장한다.
 	const vector<CObject*>& structures = GetGroupObject(GROUP_TYPE::STRUCTURE);
@@ -110,20 +114,21 @@ void CGameScene::Init(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d1
 	}
 
 	// 스카이박스 추가
-	CObject* object = new CSkyBox(d3d12Device, d3d12GraphicsCommandList);
+	CObject* object = new CSkyBox();
 
 	AddObject(GROUP_TYPE::BILBOARD, object);
 
 	// 나무 추가
-	object = new CTree(d3d12Device, d3d12GraphicsCommandList, SCENE_TYPE::GAME);
+	object = new CTree(SCENE_TYPE::GAME);
 	AddObject(GROUP_TYPE::BILBOARD, object);
 
 	// 충돌 그룹 설정
 	CCollisionManager::GetInstance()->SetCollisionGroup(GROUP_TYPE::ENEMY, GROUP_TYPE::ENEMY);
 	CCollisionManager::GetInstance()->SetCollisionGroup(GROUP_TYPE::ENEMY, GROUP_TYPE::PLAYER);
 	CCollisionManager::GetInstance()->SetCollisionGroup(GROUP_TYPE::PLAYER, GROUP_TYPE::PLAYER);
+	CCollisionManager::GetInstance()->SetCollisionGroup(GROUP_TYPE::PLAYER, GROUP_TYPE::TRIGGER);
 
-	CreateShaderVariables(d3d12Device, d3d12GraphicsCommandList);
+	CreateShaderVariables();
 
 	// 조명(Light) 생성
 	const vector<CCamera*>& cameras = CCameraManager::GetInstance()->GetCameras();
@@ -296,17 +301,18 @@ void CGameScene::UpdateLightTower()
 	}
 }
 
-void CGameScene::PreRender(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+void CGameScene::PreRender()
 {
-	UpdateShaderVariables(d3d12GraphicsCommandList);
+	UpdateShaderVariables();
 
+	ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
 	const vector<CCamera*>& cameras = CCameraManager::GetInstance()->GetCameras();
 
 	for (const auto& camera : cameras)
 	{
-		if (camera->GetType() == CAMERA_TYPE::Light)
+		if (camera->GetType() == CAMERA_TYPE::LIGHT)
 		{
-			Light* light = camera->GetLight();
+			LIGHT* light = camera->GetLight();
 
 			if ((light != nullptr) && (light->m_isActive) && (light->m_shadowMapping))
 			{
@@ -351,19 +357,19 @@ void CGameScene::PreRender(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
 				d3d12GraphicsCommandList->ClearDepthStencilView(d3d12DsvCPUDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 				d3d12GraphicsCommandList->OMSetRenderTargets(1, &d3d12RtvCPUDescriptorHandle, TRUE, &d3d12DsvCPUDescriptorHandle);
 
-				camera->RSSetViewportsAndScissorRects(d3d12GraphicsCommandList);
-				camera->UpdateShaderVariables(d3d12GraphicsCommandList);
-				depthTexture->UpdateShaderVariable(d3d12GraphicsCommandList);
+				camera->RSSetViewportsAndScissorRects();
+				camera->UpdateShaderVariables();
+				depthTexture->UpdateShaderVariable();
 
-				for (int i = (int)GROUP_TYPE::STRUCTURE; i <= (int)GROUP_TYPE::PLAYER; ++i)
+				for (int i = static_cast<int>(GROUP_TYPE::STRUCTURE); i <= static_cast<int>(GROUP_TYPE::PLAYER); ++i)
 				{
 					const vector<CObject*>& objects = GetGroupObject(static_cast<GROUP_TYPE>(i));
 
 					for (const auto& object : objects)
 					{
-						if (object->IsActive() && !object->IsDeleted())
+						if ((object->IsActive()) && (!object->IsDeleted()))
 						{
-							object->PreRender(d3d12GraphicsCommandList, camera);
+							object->PreRender(camera);
 						}
 					}
 				}
@@ -374,26 +380,26 @@ void CGameScene::PreRender(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
 	}
 }
 
-void CGameScene::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+void CGameScene::Render()
 {
-	CScene::Render(d3d12GraphicsCommandList);
+	CScene::Render();
+
+	//ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
 
 	// [Debug] Render NavMesh
-	//XMFLOAT4X4 worldMatrix = {}, identity = Matrix4x4::Identity();
-
-	//XMStoreFloat4x4(&worldMatrix, XMMatrixTranspose(XMLoadFloat4x4(&identity)));
+	//XMFLOAT4X4 worldMatrix = Matrix4x4::Identity();
+	
 	//d3d12GraphicsCommandList->SetGraphicsRoot32BitConstants((UINT)ROOT_PARAMETER_TYPE::OBJECT, 16, &worldMatrix, 0);
-
 	//CAssetManager::GetInstance()->GetShader("WireFrame")->SetPipelineState(d3d12GraphicsCommandList, 0);
 	//CAssetManager::GetInstance()->GetMesh("NavMesh")->Render(d3d12GraphicsCommandList, 0);
-
+	
 	// [Debug] Render DepthTexture
 	//const XMFLOAT2& resolution = CCore::GetInstance()->GetResolution();
 	//D3D12_VIEWPORT d3d12Viewport = { 0.0f, 0.0f, resolution.x * 0.4f, resolution.y * 0.4f, 0.0f, 1.0f };
 	//D3D12_RECT d3d12ScissorRect = { 0, 0,(LONG)(resolution.x * 0.4f), (LONG)(resolution.y * 0.4f) };
 	//CTexture* texture = CAssetManager::GetInstance()->GetTexture("DepthWrite");
 	//CShader* shader = CAssetManager::GetInstance()->GetShader("DepthWrite");
-
+	
 	//texture->UpdateShaderVariable(d3d12GraphicsCommandList);
 	//shader->SetPipelineState(d3d12GraphicsCommandList, 2);
 	//d3d12GraphicsCommandList->RSSetViewports(1, &d3d12Viewport);

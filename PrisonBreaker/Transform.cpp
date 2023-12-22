@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "Transform.h"
 
+#include "Core.h"
+
 #include "Object.h"
 
 const XMFLOAT3 CTransform::m_worldRight   = XMFLOAT3(1.0f, 0.0f, 0.0f);
@@ -159,8 +161,9 @@ XMFLOAT3 CTransform::GetForward()
 	return forward;
 }
 
-void CTransform::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+void CTransform::UpdateShaderVariables()
 {
+	ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
 	XMFLOAT4X4 worldMatrix = {};
 
 	XMStoreFloat4x4(&worldMatrix, XMMatrixTranspose(XMLoadFloat4x4(&m_worldMatrix)));
@@ -196,7 +199,8 @@ void CTransform::Rotate(const XMFLOAT3& rotation)
 void CTransform::LookTo(const XMFLOAT3& direction)
 {
 	// 회전 행렬로부터 쿼터니언을 얻어온다.
-	// 이때, DirectXMath의 LookToLH 함수는 카메라 변환 행렬을 구하기 위한 함수이기 때문에 행렬이 전치되어 반환되므로, 다시 전치시켜주어야 한다.
+	// 이때, DirectXMath의 LookToLH 함수는 카메라 변환 행렬을 구하기 위한 함수이기 때문에 역행렬을 구해야 한다.
+	// 하지만 회전 행렬은 직교 행렬이므로 전치 행렬과 역행렬이 같으므로 연산이 더 적은 전치 행렬을 사용하였다.
 	XMFLOAT4X4 rotationMatrix = Matrix4x4::Transpose(Matrix4x4::LookToLH(XMFLOAT3(0.0f, 0.0f, 0.0f), direction, m_worldUp));
 	XMFLOAT4 quaternion = {};
 
@@ -207,13 +211,11 @@ void CTransform::LookTo(const XMFLOAT3& direction)
 	// 참고: https://m.blog.naver.com/PostView.naver?isHttpsRedirect=true&blogId=spinx85&logNo=140120555548 
 	float qx = quaternion.x, qy = quaternion.y, qz = quaternion.z, qw = quaternion.w;
 	float sqx = qx * qx, sqy = qy * qy, sqz = qz * qz, sqw = qw * qw;
-
 	XMFLOAT3 rotation = {};
 
 	rotation.x = XMConvertToDegrees(asinf(2.0f * (qx * qw - qy * qz)));
 	rotation.y = XMConvertToDegrees(atan2f(2.0f * (qx * qz + qy * qw), -sqx - sqy + sqz + sqw));
 	rotation.z = XMConvertToDegrees(atan2f(2.0f * (qx * qy + qz * qw), -sqx + sqy - sqz + sqw));
-
 	SetRotation(rotation);
 }
 
@@ -267,9 +269,7 @@ void CTransform::Update()
 		CTransform* parentTransform = static_cast<CTransform*>(parent->GetComponent(COMPONENT_TYPE::TRANSFORM));
 
 		m_worldMatrix = Matrix4x4::Multiply(m_worldMatrix, parentTransform->GetWorldMatrix());
-
-		// 회전이나 신축 정도는 부모의 값에 로컬 값을 더하거나 곱하면 되지만, 위치의 경우에는 연산 순서의 영향을 받으므로 최종적인 월드 변환행렬에서 추출한다.
-		m_position = XMFLOAT3(m_worldMatrix._41, m_worldMatrix._42, m_worldMatrix._43);
+		m_position = Vector3::Add(parentTransform->GetPosition(), m_localPosition);
 		m_rotation = Vector3::Add(parentTransform->GetRotation(), m_localRotation);
 		m_scale = Vector3::Multiply(parentTransform->GetScale(), m_localScale);
 	}
@@ -311,8 +311,9 @@ const XMFLOAT2& CRectTransform::GetRect()
 	return m_rect;
 }
 
-void CRectTransform::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+void CRectTransform::UpdateShaderVariables()
 {
+	ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
 	XMFLOAT4X4 worldMatrix = Matrix4x4::Multiply(Matrix4x4::Scale(XMFLOAT3(m_rect.x, m_rect.y, 1.0f)), m_worldMatrix);
 
 	XMStoreFloat4x4(&worldMatrix, XMMatrixTranspose(XMLoadFloat4x4(&worldMatrix)));

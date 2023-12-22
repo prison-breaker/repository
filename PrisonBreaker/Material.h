@@ -36,9 +36,9 @@ public:
 	void AddShader(CShader* shader);
 	const vector<CShader*>& GetShaders();
 
-	void Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in);
+	void Load(ifstream& in);
 
-	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList);
+	virtual void UpdateShaderVariables();
 
-	void SetPipelineState(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, RENDER_TYPE renderType);
+	void SetPipelineState(RENDER_TYPE renderType);
 };

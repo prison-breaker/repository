@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "Camera.h"
 
+#include "Core.h"
+
 #include "TimeManager.h"
 
 #include "Transform.h"
@@ -111,26 +113,29 @@ CObject* CCamera::GetTarget()
 	return m_target;
 }
 
-void CCamera::SetLight(Light* light)
+void CCamera::SetLight(LIGHT* light)
 {
 	m_light = light;
 }
 
-Light* CCamera::GetLight()
+LIGHT* CCamera::GetLight()
 {
 	return m_light;
 }
 
-void CCamera::CreateShaderVariables(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+void CCamera::CreateShaderVariables()
 {
+	ID3D12Device* d3d12Device = CCore::GetInstance()->GetDevice();
+	ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
 	UINT bytes = (sizeof(CB_CAMERA) + 255) & ~255;
 
 	m_d3d12Buffer = DX::CreateBufferResource(d3d12Device, d3d12GraphicsCommandList, nullptr, bytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, nullptr);
 	DX::ThrowIfFailed(m_d3d12Buffer->Map(0, nullptr, reinterpret_cast<void**>(&m_mappedData)));
 }
 
-void CCamera::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+void CCamera::UpdateShaderVariables()
 {
+	ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
 	CTransform* transform = static_cast<CTransform*>(GetComponent(COMPONENT_TYPE::TRANSFORM));
 
 	XMStoreFloat4x4(&m_mappedData->m_viewMatrix, XMMatrixTranspose(XMLoadFloat4x4(&m_viewMatrix)));
@@ -144,8 +149,10 @@ void CCamera::ReleaseShaderVariables()
 	m_d3d12Buffer->Unmap(0, nullptr);
 }
 
-void CCamera::RSSetViewportsAndScissorRects(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+void CCamera::RSSetViewportsAndScissorRects()
 {
+	ID3D12GraphicsCommandList* d3d12GraphicsCommandList = CCore::GetInstance()->GetGraphicsCommandList();
+
 	d3d12GraphicsCommandList->RSSetViewports(1, &m_d3d12Viewport);
 	d3d12GraphicsCommandList->RSSetScissorRects(1, &m_d3d12ScissorRect);
 }

@@ -79,22 +79,22 @@ void CGuard::Init()
 	stateMachine->SetCurrentState(CGuardIdleState::GetInstance());
 }
 
-void CGuard::OnCollisionEnter(CObject* collidedObject)
-{
-	if (GetHealth() <= 0)
-	{
-		return;
-	}
-
-	if (collidedObject->GetName() == "Player")
-	{
-		CCharacter* target = static_cast<CCharacter*>(collidedObject);
-		CStateMachine* stateMachine = static_cast<CStateMachine*>(GetComponent(COMPONENT_TYPE::STATE_MACHINE));
-
-		SetTarget(target);
-		stateMachine->ChangeState(CGuardChaseState::GetInstance());
-	}
-}
+//void CGuard::OnCollisionEnter(CObject* collidedObject)
+//{
+//	if (GetHealth() <= 0)
+//	{
+//		return;
+//	}
+//
+//	if (collidedObject->GetName() == "Player")
+//	{
+//		CCharacter* target = static_cast<CCharacter*>(collidedObject);
+//		CStateMachine* stateMachine = static_cast<CStateMachine*>(GetComponent(COMPONENT_TYPE::STATE_MACHINE));
+//
+//		SetTarget(target);
+//		stateMachine->ChangeState(CGuardChaseState::GetInstance());
+//	}
+//}
 
 CCharacter* CGuard::FindTarget(float maxDist, float fov)
 {

@@ -1,12 +1,15 @@
 #include "pch.h"
 #include "Scene.h"
 
+#include "Core.h"
+
 #include "AssetManager.h"
 #include "CameraManager.h"
 
 #include "Player.h"
 #include "Guard.h"
 #include "UI.h"
+#include "Trigger.h"
 
 #include "Animator.h"
 #include "Transform.h"
@@ -29,12 +32,12 @@ CScene::~CScene()
 	}
 }
 
-void CScene::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, const string& fileName)
+void CScene::Load(const string& fileName)
 {
 	string filePath = CAssetManager::GetInstance()->GetAssetPath() + "Scene\\" + fileName;
 	ifstream in(filePath, ios::binary);
 	string str, modelFileName;
-	GROUP_TYPE groupType;
+	GROUP_TYPE groupType = {};
 
 	while (true)
 	{
@@ -73,10 +76,10 @@ void CScene::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Gra
 			{
 			case GROUP_TYPE::TERRAIN:
 			case GROUP_TYPE::STRUCTURE:
+			case GROUP_TYPE::PLAYER:
 				for (int i = 0; i < instanceCount; ++i)
 				{
-					CObject* object = new CObject();
-					LoadedModel loadedModel = CObject::Load(d3d12Device, d3d12GraphicsCommandList, modelFileName);
+					CObject* object = CObject::Load(modelFileName);
 					CTransform* transform = static_cast<CTransform*>(object->GetComponent(COMPONENT_TYPE::TRANSFORM));
 
 					object->SetActive(isActives[i]);
@@ -84,12 +87,11 @@ void CScene::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Gra
 					transform->SetRotation(transforms[3 * i + 1]);
 					transform->SetScale(transforms[3 * i + 2]);
 					transform->Update();
-					object->AddChild(loadedModel.m_rootFrame);
 					object->Init();
 
 					AddObject(groupType, object);
 				}
-			break;
+				break;
 			case GROUP_TYPE::ENEMY:
 			{
 				// <TargetPosition>
@@ -102,42 +104,82 @@ void CScene::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Gra
 
 				for (int i = 0; i < instanceCount; ++i)
 				{
-					CGuard* guard = new CGuard();
-					LoadedModel loadedModel = CObject::Load(d3d12Device, d3d12GraphicsCommandList, modelFileName);
+					CGuard* guard = static_cast<CGuard*>(CObject::Load(modelFileName));
 					CTransform* transform = static_cast<CTransform*>(guard->GetComponent(COMPONENT_TYPE::TRANSFORM));
 
 					guard->SetActive(isActives[i]);
-					guard->SetComponent(COMPONENT_TYPE::ANIMATOR, loadedModel.m_animator);
 					transform->SetPosition(transforms[3 * i]);
 					transform->SetRotation(transforms[3 * i + 1]);
 					transform->SetScale(transforms[3 * i + 2]);
 					transform->Update();
 					guard->CreatePatrolPath(targetPositions[i]);
-					guard->AddChild(loadedModel.m_rootFrame);
 					guard->Init();
 
 					AddObject(groupType, guard);
 				}
 			}
-			break;
-			case GROUP_TYPE::PLAYER:
+				break;
+			case GROUP_TYPE::TRIGGER:
+			{
+				// <RootObject>
+				string rootObjectName;
+				vector<string> targetObjectNames;
+
+				File::ReadStringFromFile(in, str);
+				File::ReadStringFromFile(in, rootObjectName);
+
+				if (rootObjectName != "None")
+				{
+					// <TargetObjects>
+					File::ReadStringFromFile(in, str);
+
+					int targetCount = 0;
+
+					in.read(reinterpret_cast<char*>(&targetCount), sizeof(int));
+					targetObjectNames.resize(targetCount);
+
+					for (int i = 0; i < targetCount; ++i)
+					{
+						File::ReadStringFromFile(in, targetObjectNames[i]);
+					}
+				}
+
+				const vector<CObject*>& structures = GetGroupObject(GROUP_TYPE::STRUCTURE);
+
 				for (int i = 0; i < instanceCount; ++i)
 				{
-					CPlayer* player = new CPlayer();
-					LoadedModel loadedModel = CObject::Load(d3d12Device, d3d12GraphicsCommandList, modelFileName);
-					CTransform* transform = static_cast<CTransform*>(player->GetComponent(COMPONENT_TYPE::TRANSFORM));
+					CTrigger* trigger = static_cast<CTrigger*>(CObject::Load(modelFileName));
+					CTransform* transform = static_cast<CTransform*>(trigger->GetComponent(COMPONENT_TYPE::TRANSFORM));
 
-					player->SetActive(isActives[i]);
-					player->SetComponent(COMPONENT_TYPE::ANIMATOR, loadedModel.m_animator);
+					trigger->SetActive(isActives[i]);
 					transform->SetPosition(transforms[3 * i]);
 					transform->SetRotation(transforms[3 * i + 1]);
 					transform->SetScale(transforms[3 * i + 2]);
 					transform->Update();
-					player->AddChild(loadedModel.m_rootFrame);
-					player->Init();
+					trigger->Init();
 
-					AddObject(groupType, player);
+					for (const auto& structure : structures)
+					{
+						// 타겟 오브젝트의 최상위 프레임을 찾는다.
+						CObject* rootObject = structure->FindFrame(rootObjectName);
+
+						if (rootObject != nullptr)
+						{
+							for (const auto& targetObjectName : targetObjectNames)
+							{
+								// 최상위 프레임에서 타겟 오브젝트를 찾아 트리거에 추가한다.
+								CObject* targetObject = rootObject->FindFrame(targetObjectName);
+
+								trigger->AddTargetObject(targetObject);
+							}
+
+							break;
+						}
+					}
+
+					AddObject(groupType, trigger);
 				}
+			}
 			break;
 			}
 		}
@@ -149,7 +191,7 @@ void CScene::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Gra
 	}
 }
 
-void CScene::LoadUI(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, const string& fileName)
+void CScene::LoadUI(const string& fileName)
 {
 	string filePath = CAssetManager::GetInstance()->GetAssetPath() + "Scene\\" + fileName;
 	ifstream in(filePath, ios::binary);
@@ -161,7 +203,7 @@ void CScene::LoadUI(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12G
 
 		if (str == "<UI>")
 		{
-			CUI* ui = CUI::Load(d3d12Device, d3d12GraphicsCommandList, in);
+			CUI* ui = CUI::Load(in);
 
 			AddObject(GROUP_TYPE::UI, ui);
 		}
@@ -173,11 +215,11 @@ void CScene::LoadUI(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12G
 	}
 }
 
-void CScene::CreateShaderVariables(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+void CScene::CreateShaderVariables()
 {
 }
 
-void CScene::UpdateShaderVariables(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+void CScene::UpdateShaderVariables()
 {
 }
 
@@ -230,7 +272,7 @@ void CScene::Update()
 	{
 		for (const auto& object : m_objects[i])
 		{
-			if (object->IsActive() && !object->IsDeleted())
+			if ((object->IsActive()) && (!object->IsDeleted()))
 			{
 				object->Update();
 			}
@@ -238,41 +280,41 @@ void CScene::Update()
 	}
 }
 
-void CScene::PreRender(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+void CScene::PreRender()
 {
 }
 
-void CScene::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+void CScene::Render()
 {
 	CCamera* camera = CCameraManager::GetInstance()->GetMainCamera();
 
-	camera->RSSetViewportsAndScissorRects(d3d12GraphicsCommandList);
-	camera->UpdateShaderVariables(d3d12GraphicsCommandList);
+	camera->RSSetViewportsAndScissorRects();
+	camera->UpdateShaderVariables();
 
 	for (int i = 0; i <= static_cast<int>(GROUP_TYPE::BILBOARD); ++i)
 	{
 		for (const auto& object : m_objects[i])
 		{
-			if (object->IsActive() && !object->IsDeleted())
+			if ((object->IsActive()) && (!object->IsDeleted()))
 			{
-				object->Render(d3d12GraphicsCommandList, camera);
+				object->Render(camera);
 			}
 		}
 	}
-
+	
 	camera = CCameraManager::GetInstance()->GetUICamera();
-	camera->RSSetViewportsAndScissorRects(d3d12GraphicsCommandList);
-	camera->UpdateShaderVariables(d3d12GraphicsCommandList);
+	camera->RSSetViewportsAndScissorRects();
+	camera->UpdateShaderVariables();
 
 	for (const auto& object : m_objects[static_cast<int>(GROUP_TYPE::UI)])
 	{
-		if (object->IsActive() && !object->IsDeleted())
+		if ((object->IsActive()) && (!object->IsDeleted()))
 		{
-			object->Render(d3d12GraphicsCommandList, camera);
+			object->Render(camera);
 		}
 	}
 }
 
-void CScene::PostRender(ID3D12GraphicsCommandList* d3d12GraphicsCommandList)
+void CScene::PostRender()
 {
 }

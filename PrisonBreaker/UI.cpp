@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "UI.h"
 
+#include "Core.h"
+
 #include "AssetManager.h"
 #include "InputManager.h"
 
@@ -26,7 +28,7 @@ CUI::~CUI()
 {
 }
 
-CUI* CUI::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12GraphicsCommandList, ifstream& in)
+CUI* CUI::Load(ifstream& in)
 {
 	CUI* ui = nullptr;
 	string str;
@@ -35,35 +37,27 @@ CUI* CUI::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Graphi
 	{
 		File::ReadStringFromFile(in, str);
 
-		if (str == "<Type>")
+		if (str == "<ClassType>")
 		{
-			int type = 0;
+			int classType = 0;
 
-			in.read(reinterpret_cast<char*>(&type), sizeof(int));
+			in.read(reinterpret_cast<char*>(&classType), sizeof(int));
 
-			switch (type)
+			switch (classType)
 			{
 			case 0: ui = new CUI(); break;
 			case 2: ui = new CMissionUI(); break;
 			case 3: ui = new CKeyUI(); break;
 			case 4: ui = new CHitUI(); break;
 			}
-
-			CMesh* mesh = CAssetManager::GetInstance()->GetMesh("Quad");
-
-			ui->SetMesh(mesh);
 		}
 		else if (str == "<Name>")
 		{
-			File::ReadStringFromFile(in, str);
-			ui->SetName(str);
+			File::ReadStringFromFile(in, ui->m_name);
 		}
 		else if (str == "<IsActive>")
 		{
-			int isActive = false;
-
-			in.read(reinterpret_cast<char*>(&isActive), sizeof(int));
-			ui->SetActive(isActive);
+			in.read(reinterpret_cast<char*>(&ui->m_isActive), sizeof(int));
 		}
 		else if (str == "<RectTransform>")
 		{
@@ -82,13 +76,37 @@ CUI* CUI::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Graphi
 			rectTransform->SetRect(rect);
 			rectTransform->Update();
 		}
-		else if (str == "<Material>")
+		else if (str == "<Mesh>")
 		{
 			File::ReadStringFromFile(in, str);
 
-			CMaterial* material = CAssetManager::GetInstance()->CreateMaterialInstance(str);
+			CMesh* mesh = CAssetManager::GetInstance()->GetMesh(str);
 
-			ui->AddMaterial(material);
+			ui->SetMesh(mesh);
+		}
+		else if (str == "<Materials>")
+		{
+			int materialCount = 0;
+
+			in.read(reinterpret_cast<char*>(&materialCount), sizeof(int));
+
+			if (materialCount > 0)
+			{
+				ui->m_materials.reserve(materialCount);
+
+				// <Material>
+				File::ReadStringFromFile(in, str);
+
+				for (int i = 0; i < materialCount; ++i)
+				{
+					File::ReadStringFromFile(in, str);
+
+					// 머터리얼 인스턴스를 생성하고 추가한다.
+					CMaterial* material = CAssetManager::GetInstance()->CreateMaterialInstance(str);
+
+					ui->AddMaterial(material);
+				}
+			}
 		}
 		else if (str == "<SpriteSize>")
 		{
@@ -114,7 +132,7 @@ CUI* CUI::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Graphi
 
 			for (int i = 0; i < childCount; ++i)
 			{
-				CUI* child = CUI::Load(d3d12Device, d3d12GraphicsCommandList, in);
+				CUI* child = CUI::Load(in);
 
 				if (child != nullptr)
 				{
@@ -126,7 +144,7 @@ CUI* CUI::Load(ID3D12Device* d3d12Device, ID3D12GraphicsCommandList* d3d12Graphi
 		{
 			CAnimator* animator = static_cast<CAnimator*>(ui->CreateComponent(COMPONENT_TYPE::ANIMATOR));
 
-			animator->Load(d3d12Device, d3d12GraphicsCommandList, in);
+			animator->Load(in);
 		}
 		else if (str == "</Frame>")
 		{
@@ -222,9 +240,9 @@ void CUI::Update()
     CheckCursorOver();
 }
 
-void CUI::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCamera* camera)
+void CUI::Render(CCamera* camera)
 {
-	UpdateShaderVariables(d3d12GraphicsCommandList);
+	UpdateShaderVariables();
 
 	CMesh* mesh = GetMesh();
 
@@ -234,9 +252,9 @@ void CUI::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCamera* c
 
 		for (int i = 0; i < materials.size(); ++i)
 		{
-			materials[i]->SetPipelineState(d3d12GraphicsCommandList, RENDER_TYPE::STANDARD);
-			materials[i]->UpdateShaderVariables(d3d12GraphicsCommandList);
-			mesh->Render(d3d12GraphicsCommandList, i);
+			materials[i]->SetPipelineState(RENDER_TYPE::STANDARD);
+			materials[i]->UpdateShaderVariables();
+			mesh->Render(i);
 		}
 	}
 	
@@ -246,7 +264,7 @@ void CUI::Render(ID3D12GraphicsCommandList* d3d12GraphicsCommandList, CCamera* c
 	{
 		if (child->IsActive() && !child->IsDeleted())
 		{
-			child->Render(d3d12GraphicsCommandList, camera);
+			child->Render(camera);
 		}
 	}
 }

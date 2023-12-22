@@ -60,7 +60,7 @@ private:
 	//shared_ptr<CUILayer>			  m_UILayer;
 
 	// 네트워크 통신 관련 변수
-	//SOCKET_INFO						  m_SocketInfo;
+	//SOCKET_INFO				      m_SocketInfo;
 
 private:
 	CCore();
@@ -106,6 +106,11 @@ private:
 public:
 	HWND GetHwnd();
 	const XMFLOAT2& GetResolution();
+
+	ID3D12Device* GetDevice();
+	ID3D12CommandQueue* GetCommandQueue();
+	ID3D12GraphicsCommandList* GetGraphicsCommandList();
+	ID3D12RootSignature* GetRootSignature();
 
 	ID3D12DescriptorHeap* GetRtvDescriptorHeap();
 	ID3D12DescriptorHeap* GetDsvDescriptorHeap();
